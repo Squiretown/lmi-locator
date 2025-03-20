@@ -9,13 +9,77 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      census_cache: {
+        Row: {
+          cached_at: string | null
+          data: Json
+          expires_at: string
+          id: string
+          tract_id: string
+        }
+        Insert: {
+          cached_at?: string | null
+          data: Json
+          expires_at: string
+          id?: string
+          tract_id: string
+        }
+        Update: {
+          cached_at?: string | null
+          data?: Json
+          expires_at?: string
+          id?: string
+          tract_id?: string
+        }
+        Relationships: []
+      }
+      search_history: {
+        Row: {
+          address: string
+          id: string
+          income_category: string | null
+          is_eligible: boolean | null
+          result: Json
+          searched_at: string | null
+          tract_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          address: string
+          id?: string
+          income_category?: string | null
+          is_eligible?: boolean | null
+          result: Json
+          searched_at?: string | null
+          tract_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          address?: string
+          id?: string
+          income_category?: string | null
+          is_eligible?: boolean | null
+          result?: Json
+          searched_at?: string | null
+          tract_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_popular_searches: {
+        Args: {
+          result_limit?: number
+        }
+        Returns: {
+          address: string
+          search_count: number
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never
