@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { SearchIcon, XCircleIcon } from 'lucide-react';
+import { SearchIcon, XCircleIcon, BookmarkIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
@@ -22,6 +22,11 @@ const AddressForm: React.FC<AddressFormProps> = ({
   isLoading 
 }) => {
   const [address, setAddress] = useState('');
+  const [savedAddresses, setSavedAddresses] = useState<string[]>(() => {
+    // Initialize from localStorage
+    const saved = localStorage.getItem('savedAddresses');
+    return saved ? JSON.parse(saved) : [];
+  });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -57,9 +62,25 @@ const AddressForm: React.FC<AddressFormProps> = ({
     }
   };
 
+  const saveProperty = () => {
+    if (!address.trim() || savedAddresses.includes(address)) {
+      return;
+    }
+    
+    const updatedAddresses = [...savedAddresses, address];
+    setSavedAddresses(updatedAddresses);
+    
+    // Save to localStorage
+    localStorage.setItem('savedAddresses', JSON.stringify(updatedAddresses));
+    
+    toast.success('Property saved to your collection');
+  };
+
   const clearAddress = () => {
     setAddress('');
   };
+
+  const isAddressSaved = savedAddresses.includes(address);
 
   return (
     <motion.div
@@ -97,13 +118,28 @@ const AddressForm: React.FC<AddressFormProps> = ({
               </button>
             )}
           </div>
-          <Button 
-            type="submit" 
-            className="w-full transition-all"
-            disabled={isLoading || !address.trim()}
-          >
-            {isLoading ? <LoadingSpinner /> : 'Check LMI Status'}
-          </Button>
+          <div className="flex gap-2">
+            <Button 
+              type="submit" 
+              className="flex-1 transition-all"
+              disabled={isLoading || !address.trim()}
+            >
+              {isLoading ? <LoadingSpinner /> : 'Check LMI Status'}
+            </Button>
+            
+            {address.trim() && (
+              <Button
+                type="button"
+                variant={isAddressSaved ? "secondary" : "outline"}
+                className={`px-3 transition-all ${isAddressSaved ? 'bg-primary/10 text-primary' : ''}`}
+                onClick={saveProperty}
+                disabled={isLoading || isAddressSaved}
+                title={isAddressSaved ? "Property already saved" : "Save property"}
+              >
+                <BookmarkIcon className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
         </form>
       </Card>
     </motion.div>

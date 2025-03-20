@@ -5,6 +5,7 @@ import Header from '@/components/Header';
 import AddressForm from '@/components/AddressForm';
 import Result from '@/components/Result';
 import ResultsMap from '@/components/ResultsMap';
+import SavedProperties from '@/components/SavedProperties';
 import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
 import { ArrowUpIcon } from 'lucide-react';
@@ -28,6 +29,7 @@ const Index = () => {
   const [result, setResult] = useState<LmiResult | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
+  const [currentAddress, setCurrentAddress] = useState('');
 
   const handleResultReceived = (data: LmiResult) => {
     setResult(data);
@@ -39,6 +41,23 @@ const Index = () => {
 
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleSavedAddressSelect = (address: string) => {
+    setCurrentAddress(address);
+    
+    // Find the form input and set its value
+    const inputElement = document.getElementById('address') as HTMLInputElement;
+    if (inputElement) {
+      inputElement.value = address;
+      
+      // Create and dispatch an input event to trigger onChange
+      const event = new Event('input', { bubbles: true });
+      inputElement.dispatchEvent(event);
+      
+      // Focus on the input
+      inputElement.focus();
+    }
   };
 
   // Handle scroll event to show/hide the scroll-to-top button
@@ -105,6 +124,8 @@ const Index = () => {
         </AnimatePresence>
       </main>
       
+      <SavedProperties onAddressSelect={handleSavedAddressSelect} />
+      
       <Footer />
       
       <AnimatePresence>
@@ -113,7 +134,7 @@ const Index = () => {
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.8 }}
-            className="fixed bottom-6 right-6 z-50"
+            className="fixed bottom-6 left-6 z-50"
           >
             <Button
               size="icon"
