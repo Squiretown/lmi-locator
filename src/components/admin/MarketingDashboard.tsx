@@ -1,466 +1,316 @@
 
-import React, { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { Progress } from '@/components/ui/progress';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { useToast } from '@/components/ui/use-toast';
-import { Textarea } from '@/components/ui/textarea';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Label } from '@/components/ui/label';
+import React, { useEffect, useState } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Chart } from "@/components/ui/chart";
+import { Badge } from "@/components/ui/badge";
+import { supabase } from "@/integrations/supabase/client";
+import { LoadingSpinner } from '@/components/LoadingSpinner';
 
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8'];
-
-type NotificationSummary = {
-  unread_count: number;
-  read_count: number;
-  total_count: number;
-};
-
-type MarketingSummary = {
-  pending_count: number;
-  processing_count: number;
-  completed_count: number;
-  total_addresses: number;
-  eligible_addresses: number;
-};
-
-type UserTypeSummary = {
-  user_type: string;
-  count: number;
-};
-
-type Challenge = {
-  id: string;
-  question: string;
-  answers: string[];
-  difficulty: number;
-  is_active: boolean;
-};
-
-const MarketingDashboard = () => {
-  const [notificationStats, setNotificationStats] = useState<NotificationSummary | null>(null);
-  const [marketingStats, setMarketingStats] = useState<MarketingSummary | null>(null);
-  const [userTypeStats, setUserTypeStats] = useState<UserTypeSummary[]>([]);
-  const [verificationChallenges, setVerificationChallenges] = useState<Challenge[]>([]);
-  const [newChallenge, setNewChallenge] = useState<{
-    question: string;
-    answers: string;
-    difficulty: string;
-  }>({
-    question: '',
-    answers: '',
-    difficulty: '1',
-  });
+export const MarketingDashboard = () => {
   const [loading, setLoading] = useState(true);
-  const { toast } = useToast();
+  const [userTypeCounts, setUserTypeCounts] = useState<Record<string, number>>({});
+  const [marketingStats, setMarketingStats] = useState({
+    pending: 0,
+    processing: 0,
+    completed: 0,
+    totalJobs: 0,
+    totalAddresses: 0,
+    eligibleAddresses: 0
+  });
+  const [recentActivity, setRecentActivity] = useState<any[]>([]);
+  const [notifications, setNotifications] = useState({
+    total: 0,
+    read: 0,
+    unread: 0,
+    byType: {} as Record<string, number>
+  });
+  const [verificationChallenges, setVerificationChallenges] = useState<any[]>([]);
 
   useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        // Fetch user type counts
+        const { data: userData } = await supabase
+          .from('user_profiles')
+          .select('user_type')
+          .not('user_type', 'is', null);
+          
+        if (userData) {
+          const counts: Record<string, number> = {};
+          userData.forEach((user) => {
+            const type = user.user_type || 'unknown';
+            counts[type] = (counts[type] || 0) + 1;
+          });
+          setUserTypeCounts(counts);
+        }
+
+        // Fetch marketing stats
+        const { data: marketingData } = await supabase
+          .from('marketing_jobs')
+          .select('*');
+          
+        if (marketingData) {
+          const stats = {
+            pending: marketingData.filter(job => job.status === 'pending').length,
+            processing: marketingData.filter(job => job.status === 'processing').length,
+            completed: marketingData.filter(job => job.status === 'completed').length,
+            totalJobs: marketingData.length,
+            totalAddresses: marketingData.reduce((sum, job) => sum + (job.total_addresses || 0), 0),
+            eligibleAddresses: marketingData.reduce((sum, job) => sum + (job.eligible_addresses || 0), 0)
+          };
+          setMarketingStats(stats);
+        }
+
+        // Fetch recent activity
+        const { data: activityData } = await supabase
+          .from('activity_logs')
+          .select('*')
+          .order('created_at', { ascending: false })
+          .limit(5);
+          
+        if (activityData) {
+          setReactivity(activityData);
+        }
+
+        // Fetch notification stats
+        const { data: notificationData } = await supabase
+          .from('notifications')
+          .select('*');
+          
+        if (notificationData) {
+          const notifStats = {
+            total: notificationData.length,
+            read: notificationData.filter(n => n.is_read).length,
+            unread: notificationData.filter(n => !n.is_read).length,
+            byType: {} as Record<string, number>
+          };
+          
+          notificationData.forEach(n => {
+            const type = n.notification_type || 'unknown';
+            notifStats.byType[type] = (notifStats.byType[type] || 0) + 1;
+          });
+          
+          setNotifications(notifStats);
+        }
+
+        // Fetch verification challenges
+        const { data: challengeData } = await supabase
+          .from('verification_challenges')
+          .select('*');
+          
+        if (challengeData) {
+          setVerificationChallenges(challengeData);
+        }
+      } catch (error) {
+        console.error('Error fetching marketing dashboard data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
     fetchDashboardData();
   }, []);
 
-  const fetchDashboardData = async () => {
-    setLoading(true);
-    try {
-      // Fetch notification stats using our helper function
-      const { data: notificationData, error: notificationError } = await supabase.rpc(
-        'get_notification_counts',
-        { user_uuid: null } // null means all users for admin view
-      );
-
-      if (notificationError) throw notificationError;
-      setNotificationStats(notificationData[0] || { unread_count: 0, read_count: 0, total_count: 0 });
-
-      // Fetch marketing stats using our helper function
-      const { data: marketingData, error: marketingError } = await supabase.rpc(
-        'get_marketing_summary',
-        { user_uuid: null } // null means all users for admin view
-      );
-
-      if (marketingError) throw marketingError;
-      setMarketingStats(marketingData[0] || {
-        pending_count: 0,
-        processing_count: 0,
-        completed_count: 0,
-        total_addresses: 0,
-        eligible_addresses: 0
-      });
-
-      // Fetch user type distribution
-      const { data: userTypeData, error: userTypeError } = await supabase
-        .from('user_profiles')
-        .select('user_type, count')
-        .execute();
-
-      if (userTypeError) throw userTypeError;
-      
-      // Transform the data into the format we need
-      const transformedUserTypeData: UserTypeSummary[] = [];
-      if (userTypeData) {
-        const userTypeMap = new Map<string, number>();
-        userTypeData.forEach((item: any) => {
-          const type = item.user_type || 'unknown';
-          userTypeMap.set(type, (userTypeMap.get(type) || 0) + 1);
-        });
-        
-        userTypeMap.forEach((count, user_type) => {
-          transformedUserTypeData.push({ user_type, count });
-        });
-      }
-      
-      setUserTypeStats(transformedUserTypeData.length > 0 ? transformedUserTypeData : [
-        { user_type: 'standard', count: 0 },
-        { user_type: 'admin', count: 0 },
-        { user_type: 'realtor', count: 0 }
-      ]);
-
-      // Fetch verification challenges
-      const { data: challengeData, error: challengeError } = await supabase
-        .from('verification_challenges')
-        .select('*')
-        .order('difficulty', { ascending: true });
-
-      if (challengeError) throw challengeError;
-      setVerificationChallenges(challengeData || []);
-
-    } catch (error) {
-      console.error('Error fetching dashboard data:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to load dashboard data',
-        variant: 'destructive',
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const addVerificationChallenge = async () => {
-    if (!newChallenge.question || !newChallenge.answers) {
-      toast({
-        title: 'Missing fields',
-        description: 'Please fill in all required fields',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    try {
-      // Split answers by comma and trim whitespace
-      const answersArray = newChallenge.answers.split(',').map(a => a.trim());
-
-      const { error } = await supabase
-        .from('verification_challenges')
-        .insert({
-          question: newChallenge.question,
-          answers: answersArray,
-          difficulty: parseInt(newChallenge.difficulty),
-          is_active: true
-        });
-
-      if (error) throw error;
-
-      toast({
-        title: 'Success',
-        description: 'Verification challenge added successfully',
-      });
-
-      // Reset form and refetch data
-      setNewChallenge({
-        question: '',
-        answers: '',
-        difficulty: '1',
-      });
-      fetchDashboardData();
-
-    } catch (error) {
-      console.error('Error adding verification challenge:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to add verification challenge',
-        variant: 'destructive',
-      });
-    }
-  };
-
-  const toggleChallengeStatus = async (id: string, currentStatus: boolean) => {
-    try {
-      const { error } = await supabase
-        .from('verification_challenges')
-        .update({ is_active: !currentStatus })
-        .eq('id', id);
-
-      if (error) throw error;
-
-      toast({
-        title: 'Success',
-        description: `Challenge ${currentStatus ? 'disabled' : 'enabled'} successfully`,
-      });
-
-      fetchDashboardData();
-    } catch (error) {
-      console.error('Error toggling challenge status:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to update challenge status',
-        variant: 'destructive',
-      });
-    }
-  };
+  if (loading) {
+    return <LoadingSpinner />;
+  }
 
   // Prepare data for charts
-  const notificationChartData = notificationStats ? [
-    { name: 'Unread', value: notificationStats.unread_count },
-    { name: 'Read', value: notificationStats.read_count }
-  ] : [];
+  const userTypeChartData = {
+    labels: Object.keys(userTypeCounts),
+    datasets: [
+      {
+        data: Object.values(userTypeCounts),
+        backgroundColor: [
+          '#10b981', // green
+          '#3b82f6', // blue
+          '#f59e0b', // yellow
+          '#ef4444', // red
+          '#8b5cf6'  // purple
+        ],
+        hoverBackgroundColor: [
+          '#047857',
+          '#1d4ed8',
+          '#b45309',
+          '#b91c1c',
+          '#6d28d9'
+        ],
+      },
+    ],
+  };
 
-  const marketingStatusData = marketingStats ? [
-    { name: 'Pending', value: marketingStats.pending_count },
-    { name: 'Processing', value: marketingStats.processing_count },
-    { name: 'Completed', value: marketingStats.completed_count }
-  ] : [];
+  const marketingStatusChartData = {
+    labels: ['Pending', 'Processing', 'Completed'],
+    datasets: [
+      {
+        data: [marketingStats.pending, marketingStats.processing, marketingStats.completed],
+        backgroundColor: ['#f59e0b', '#3b82f6', '#10b981'],
+        hoverBackgroundColor: ['#b45309', '#1d4ed8', '#047857'],
+      },
+    ],
+  };
 
-  const conversionRate = marketingStats && marketingStats.total_addresses > 0
-    ? (marketingStats.eligible_addresses / marketingStats.total_addresses) * 100
-    : 0;
+  const notificationTypeChartData = {
+    labels: Object.keys(notifications.byType),
+    datasets: [
+      {
+        data: Object.values(notifications.byType),
+        backgroundColor: [
+          '#10b981',
+          '#3b82f6',
+          '#f59e0b',
+          '#ef4444',
+          '#8b5cf6'
+        ],
+      },
+    ],
+  };
 
   return (
-    <div className="space-y-8">
-      <h2 className="text-3xl font-bold">Marketing & Administration Dashboard</h2>
+    <div className="space-y-4">
+      <h1 className="text-2xl font-bold">Marketing Dashboard</h1>
       
+      {/* User Types */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <Card className="col-span-1">
+          <CardHeader>
+            <CardTitle>User Types</CardTitle>
+            <CardDescription>Distribution of users by type</CardDescription>
+          </CardHeader>
+          <CardContent className="flex justify-center">
+            <div className="h-60 w-60">
+              <Chart type="pie" data={userTypeChartData} />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Notification Statistics */}
+        <Card className="col-span-1">
+          <CardHeader>
+            <CardTitle>Notification Statistics</CardTitle>
+            <CardDescription>Overview of system notifications</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-3 gap-4 mb-6">
+              <div className="text-center">
+                <div className="text-2xl font-bold">{notifications.total}</div>
+                <div className="text-sm text-gray-500">Total</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-green-600">{notifications.read}</div>
+                <div className="text-sm text-gray-500">Read</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-amber-600">{notifications.unread}</div>
+                <div className="text-sm text-gray-500">Unread</div>
+              </div>
+            </div>
+            <div className="h-40">
+              <Chart type="doughnut" data={notificationTypeChartData} />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Marketing Performance */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle>Notifications</CardTitle>
-            <CardDescription>System notification statistics</CardDescription>
+            <CardTitle className="text-sm font-medium">Total Marketing Jobs</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="h-60">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={notificationChartData}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    outerRadius={80}
-                    fill="#8884d8"
-                    dataKey="value"
-                    label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                  >
-                    {notificationChartData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
+            <div className="text-2xl font-bold">{marketingStats.totalJobs}</div>
           </CardContent>
-          <CardFooter>
-            <p className="text-sm text-muted-foreground">
-              Total: {notificationStats?.total_count || 0} notifications
-            </p>
-          </CardFooter>
         </Card>
-
+        
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle>Marketing Campaigns</CardTitle>
-            <CardDescription>Campaign status breakdown</CardDescription>
+            <CardTitle className="text-sm font-medium">Total Addresses</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="h-60">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={marketingStatusData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" />
-                  <YAxis />
-                  <Tooltip />
-                  <Bar dataKey="value" fill="#8884d8" />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
+            <div className="text-2xl font-bold">{marketingStats.totalAddresses}</div>
           </CardContent>
-          <CardFooter>
-            <p className="text-sm text-muted-foreground">
-              Total campaigns: {marketingStatusData.reduce((sum, item) => sum + item.value, 0)}
-            </p>
-          </CardFooter>
         </Card>
-
+        
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle>User Types</CardTitle>
-            <CardDescription>Distribution of user types</CardDescription>
+            <CardTitle className="text-sm font-medium">Eligible Addresses</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="h-60">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={userTypeStats}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    outerRadius={80}
-                    fill="#8884d8"
-                    dataKey="count"
-                    nameKey="user_type"
-                    label={({ user_type, percent }) => `${user_type}: ${(percent * 100).toFixed(0)}%`}
-                  >
-                    {userTypeStats.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
-              </ResponsiveContainer>
+            <div className="text-2xl font-bold">{marketingStats.eligibleAddresses}</div>
+            <div className="text-sm text-gray-500">
+              {marketingStats.totalAddresses ? 
+                `${Math.round((marketingStats.eligibleAddresses / marketingStats.totalAddresses) * 100)}%` : 
+                '0%'}
             </div>
           </CardContent>
-          <CardFooter>
-            <p className="text-sm text-muted-foreground">
-              Total users: {userTypeStats.reduce((sum, item) => sum + item.count, 0)}
-            </p>
-          </CardFooter>
         </Card>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Card>
+        <Card className="col-span-1">
           <CardHeader>
-            <CardTitle>Marketing Performance</CardTitle>
-            <CardDescription>Address verification and eligibility metrics</CardDescription>
+            <CardTitle>Marketing Job Status</CardTitle>
+            <CardDescription>Current status of marketing campaigns</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <div className="flex justify-between mb-1">
-                <span className="text-sm font-medium">Eligible Properties</span>
-                <span className="text-sm font-medium">
-                  {marketingStats?.eligible_addresses || 0} / {marketingStats?.total_addresses || 0}
-                </span>
-              </div>
-              <Progress value={conversionRate} className="h-2" />
-              <p className="text-xs text-muted-foreground mt-1">
-                {conversionRate.toFixed(1)}% of properties are eligible for LMI programs
-              </p>
+          <CardContent className="flex justify-center">
+            <div className="h-60 w-60">
+              <Chart type="pie" data={marketingStatusChartData} />
             </div>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="col-span-1">
           <CardHeader>
-            <CardTitle>Verification Challenges</CardTitle>
-            <CardDescription>Anti-bot verification management</CardDescription>
+            <CardTitle>Recent Activity</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <Tabs defaultValue="existing">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="existing">Existing Challenges</TabsTrigger>
-                <TabsTrigger value="add">Add New</TabsTrigger>
-              </TabsList>
-              
-              <TabsContent value="existing" className="max-h-96 overflow-y-auto">
-                <div className="space-y-4">
-                  {verificationChallenges.length === 0 ? (
-                    <p className="text-muted-foreground">No challenges found.</p>
-                  ) : (
-                    verificationChallenges.map((challenge) => (
-                      <div key={challenge.id} className="border rounded-lg p-3 space-y-2">
-                        <div className="flex justify-between items-start">
-                          <div>
-                            <p className="font-medium">{challenge.question}</p>
-                            <p className="text-sm text-muted-foreground">
-                              Answers: {challenge.answers.join(', ')}
-                            </p>
-                            <div className="flex items-center gap-2 mt-1">
-                              <Badge variant={challenge.difficulty > 1 ? "secondary" : "outline"}>
-                                Level {challenge.difficulty}
-                              </Badge>
-                              <Badge variant={challenge.is_active ? "outline" : "destructive"}>
-                                {challenge.is_active ? "Active" : "Disabled"}
-                              </Badge>
-                            </div>
-                          </div>
-                          <Button 
-                            variant={challenge.is_active ? "outline" : "default"}
-                            size="sm"
-                            onClick={() => toggleChallengeStatus(challenge.id, challenge.is_active)}
-                          >
-                            {challenge.is_active ? "Disable" : "Enable"}
-                          </Button>
-                        </div>
-                      </div>
-                    ))
-                  )}
+          <CardContent>
+            <div className="space-y-4">
+              {recentActivity.map((activity) => (
+                <div key={activity.id} className="border-b pb-2">
+                  <div className="font-medium">{activity.activity_type}</div>
+                  <div className="text-sm">{activity.description}</div>
+                  <div className="text-sm text-gray-500">
+                    {new Date(activity.created_at).toLocaleString()}
+                  </div>
                 </div>
-              </TabsContent>
-              
-              <TabsContent value="add">
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="question">Question</Label>
-                    <Textarea 
-                      id="question"
-                      placeholder="Enter verification question..." 
-                      value={newChallenge.question}
-                      onChange={(e) => setNewChallenge({...newChallenge, question: e.target.value})}
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="answers">Answers (comma separated)</Label>
-                    <Textarea 
-                      id="answers"
-                      placeholder="blue, sky blue" 
-                      value={newChallenge.answers}
-                      onChange={(e) => setNewChallenge({...newChallenge, answers: e.target.value})}
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      Separate multiple acceptable answers with commas
-                    </p>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label>Difficulty Level</Label>
-                    <RadioGroup 
-                      defaultValue="1" 
-                      value={newChallenge.difficulty}
-                      onValueChange={(value) => setNewChallenge({...newChallenge, difficulty: value})}
-                      className="flex space-x-4"
-                    >
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="1" id="level1" />
-                        <Label htmlFor="level1">Easy</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="2" id="level2" />
-                        <Label htmlFor="level2">Medium</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="3" id="level3" />
-                        <Label htmlFor="level3">Hard</Label>
-                      </div>
-                    </RadioGroup>
-                  </div>
-                  
-                  <Button 
-                    onClick={addVerificationChallenge}
-                    className="w-full"
-                  >
-                    Add Challenge
-                  </Button>
-                </div>
-              </TabsContent>
-            </Tabs>
+              ))}
+            </div>
           </CardContent>
         </Card>
       </div>
+
+      {/* Verification Challenges */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Verification Challenges</CardTitle>
+          <CardDescription>Active verification questions for anti-bot measures</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {verificationChallenges.map((challenge) => (
+              <div key={challenge.id} className="border-b pb-4">
+                <div className="flex justify-between items-start">
+                  <div className="font-medium">{challenge.question}</div>
+                  <Badge variant={challenge.is_active ? "success" : "destructive"}>
+                    {challenge.is_active ? 'Active' : 'Inactive'}
+                  </Badge>
+                </div>
+                <div className="text-sm mt-1">
+                  <span className="text-gray-500">Difficulty:</span> {challenge.difficulty}
+                </div>
+                <div className="text-sm mt-1">
+                  <span className="text-gray-500">Answers:</span> {challenge.answers.join(', ')}
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };
 
-export default MarketingDashboard;
+function setReactivity(activityData: any[]) {
+  setRecentActivity(activityData);
+}

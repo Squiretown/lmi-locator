@@ -1,3 +1,4 @@
+
 // API Response Types
 export interface CheckLmiStatusResponse {
   is_approved: boolean;
@@ -143,19 +144,19 @@ export interface SavedProperty {
 
 export interface SearchHistory {
   id: string;
-  user_id?: string;
+  user_id?: string | null;
   address: string;
   search_query?: string;
-  search_params?: Record<string, any>;
-  result_count?: number;
-  lmi_result_count?: number;
+  search_params?: Record<string, any>; // Changed from Json
+  result_count?: number | null;
+  lmi_result_count?: number | null;
   tract_id?: string;
-  result: Record<string, any>;
+  result: Record<string, any>; // Changed from Json
   is_eligible?: boolean;
   income_category?: string;
   searched_at: string;
-  ip_address?: string;
-  user_agent?: string;
+  ip_address?: string | null;
+  user_agent?: string | null;
 }
 
 export interface ApiUsage {
@@ -222,6 +223,8 @@ export interface AssistanceProgram {
   program_details?: Record<string, any>;
   created_at: string;
   updated_at: string;
+  program_locations?: ProgramLocation[];
+  property_types_eligible?: PropertyTypeEligible[];
 }
 
 export interface ProgramLocation {
@@ -323,6 +326,13 @@ export interface EligibilityScreenerFormData {
   military_status: string;
   residence_intent: boolean;
   timeframe: string;
+}
+
+// Program Results Props
+export interface ProgramResultsProps {
+  programs: AssistanceProgram[];
+  address: string;
+  onConnectSpecialist?: () => void;
 }
 
 // Dashboard Statistics Interface

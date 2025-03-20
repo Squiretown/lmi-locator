@@ -21,8 +21,8 @@ export const getAllAssistancePrograms = async (): Promise<AssistanceProgram[]> =
     // Transform data to match the expected types
     return (data || []).map(program => ({
       ...program,
-      contact_info: program.contact_info ? JSON.parse(JSON.stringify(program.contact_info)) : {},
-      program_details: program.program_details ? JSON.parse(JSON.stringify(program.program_details)) : {},
+      contact_info: program.contact_info ? (typeof program.contact_info === 'string' ? JSON.parse(program.contact_info) : program.contact_info) : {},
+      program_details: program.program_details ? (typeof program.program_details === 'string' ? JSON.parse(program.program_details) : program.program_details) : {},
       program_locations: program.program_locations || [],
       property_types_eligible: program.property_types_eligible || []
     }));
@@ -58,8 +58,8 @@ export const getAssistanceProgramsByLocation = async (
     // Transform data to match the expected types
     return (data || []).map(program => ({
       ...program,
-      contact_info: program.contact_info ? JSON.parse(JSON.stringify(program.contact_info)) : {},
-      program_details: program.program_details ? JSON.parse(JSON.stringify(program.program_details)) : {},
+      contact_info: program.contact_info ? (typeof program.contact_info === 'string' ? JSON.parse(program.contact_info) : program.contact_info) : {},
+      program_details: program.program_details ? (typeof program.program_details === 'string' ? JSON.parse(program.program_details) : program.program_details) : {},
       program_locations: program.program_locations || [],
       property_types_eligible: program.property_types_eligible || []
     }));
@@ -95,7 +95,10 @@ export const saveProgramEligibilityCheck = async (
     const typedResult: ProgramEligibilityCheck = {
       ...result,
       eligible_programs: result.eligible_programs ? 
-        JSON.parse(JSON.stringify(result.eligible_programs)) : []
+        (typeof result.eligible_programs === 'string' ? 
+          JSON.parse(result.eligible_programs) : 
+          result.eligible_programs) : 
+        []
     };
     
     return typedResult;

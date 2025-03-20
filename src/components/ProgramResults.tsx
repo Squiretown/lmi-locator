@@ -1,230 +1,139 @@
 
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { useToast } from '@/components/ui/use-toast';
-import { createProfessionalLead } from '@/lib/assistance-programs-api';
-import { AssistanceProgram } from '@/lib/types';
+import React from 'react';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { AssistanceProgram, ProgramResultsProps } from '@/lib/types';
 
-interface ProgramResultsProps {
-  programs: AssistanceProgram[];
-  address?: string;
-}
-
-const ProgramResults: React.FC<ProgramResultsProps> = ({ programs, address }) => {
-  const navigate = useNavigate();
-  const { toast } = useToast();
-  const [isDialogOpen, setIsDialogOpen] = useState<boolean>(false);
-  const [selectedProgram, setSelectedProgram] = useState<AssistanceProgram | null>(null);
-  const [leadData, setLeadData] = useState({
-    clientName: '',
-    email: '',
-    phone: '',
-    notes: ''
-  });
-  
-  const handleConnect = (program: AssistanceProgram) => {
-    setSelectedProgram(program);
-    setIsDialogOpen(true);
-  };
-  
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setLeadData(prev => ({ ...prev, [name]: value }));
-  };
-  
-  const handleSubmitLead = async () => {
-    if (!leadData.clientName) {
-      toast({
-        title: "Error",
-        description: "Please enter your name to continue.",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    try {
-      // Create the lead in the database
-      const success = await createProfessionalLead({
-        client_name: leadData.clientName,
-        email: leadData.email,
-        phone: leadData.phone,
-        property_address: address,
-        notes: leadData.notes,
-        source: "program_results"
-      });
-      
-      if (success) {
-        toast({
-          title: "Request Submitted",
-          description: "A specialist will contact you soon about this program.",
-        });
-        
-        setIsDialogOpen(false);
-        setLeadData({
-          clientName: '',
-          email: '',
-          phone: '',
-          notes: ''
-        });
-      } else {
-        throw new Error("Failed to submit request");
-      }
-    } catch (error) {
-      console.error("Error creating lead:", error);
-      toast({
-        title: "Error",
-        description: "There was a problem submitting your request. Please try again.",
-        variant: "destructive"
-      });
-    }
-  };
-  
+const ProgramResults: React.FC<ProgramResultsProps> = ({ programs, address, onConnectSpecialist }) => {
   if (!programs || programs.length === 0) {
     return (
-      <Card className="w-full max-w-3xl mx-auto my-8">
+      <Card>
         <CardHeader>
-          <CardTitle className="text-2xl">Available Programs</CardTitle>
-          <CardDescription>Programs you may be eligible for based on the property location</CardDescription>
+          <CardTitle>No Programs Found</CardTitle>
+          <CardDescription>We couldn't find any assistance programs for {address}</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="text-center py-8">
-            <p className="text-gray-500">No assistance programs found for this location</p>
-          </div>
+          <p>Try searching a different address or contact a housing specialist for personalized assistance.</p>
         </CardContent>
+        <CardFooter>
+          {onConnectSpecialist && (
+            <Button onClick={onConnectSpecialist}>Connect with a Specialist</Button>
+          )}
+        </CardFooter>
       </Card>
     );
   }
-  
+
   return (
-    <div className="space-y-6 w-full max-w-4xl mx-auto my-8">
-      <h2 className="text-2xl font-bold text-center">Available Programs</h2>
-      <p className="text-gray-500 text-center">The following programs may be available based on the property location</p>
+    <div className="space-y-6">
+      <h2 className="text-2xl font-bold">Available Programs for {address}</h2>
+      <p className="text-gray-500">
+        We found {programs.length} program{programs.length !== 1 ? 's' : ''} that may be available for this address.
+      </p>
       
-      <div className="grid grid-cols-1 gap-6">
+      <div className="space-y-4">
         {programs.map((program) => (
-          <Card key={program.id} className="overflow-hidden">
-            <CardHeader className="bg-blue-50">
-              <CardTitle>{program.name}</CardTitle>
-              <CardDescription>{program.funding_source}</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4 pt-6">
-              <div>
-                <p className="text-gray-700">{program.description}</p>
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+          <Card key={program.id}>
+            <CardHeader>
+              <div className="flex justify-between items-start">
                 <div>
-                  <h4 className="font-semibold text-sm text-gray-500 mb-1">Benefit</h4>
-                  <p className="font-medium">
-                    {program.benefit_amount ? `$${program.benefit_amount.toLocaleString()}` : ''} {program.benefit_type}
-                  </p>
+                  <CardTitle>{program.name}</CardTitle>
+                  <CardDescription>
+                    {program.funding_source && <span>Funded by: {program.funding_source}</span>}
+                  </CardDescription>
                 </div>
+                <Badge variant="outline">{program.benefit_type || 'Assistance Program'}</Badge>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                <p>{program.description}</p>
                 
-                <div>
-                  <h4 className="font-semibold text-sm text-gray-500 mb-1">Requirements</h4>
-                  <ul className="list-disc list-inside space-y-1">
-                    {program.first_time_buyer_required && <li>First-time homebuyer</li>}
-                    {program.min_credit_score && <li>Min. credit score: {program.min_credit_score}</li>}
-                    {program.income_limit_percentage && (
-                      <li>Income limit: {program.income_limit_percentage}% of Area Median Income</li>
+                {program.benefit_amount && (
+                  <div>
+                    <p className="font-semibold">Benefit Amount:</p>
+                    <p>${program.benefit_amount.toLocaleString()}</p>
+                  </div>
+                )}
+                
+                {program.program_locations && program.program_locations.length > 0 && (
+                  <div>
+                    <p className="font-semibold">Available in:</p>
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      {program.program_locations.map((location) => (
+                        <Badge key={location.id} variant="secondary">
+                          {location.location_value}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
+                {program.property_types_eligible && program.property_types_eligible.length > 0 && (
+                  <div>
+                    <p className="font-semibold">Eligible Property Types:</p>
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      {program.property_types_eligible.map((property) => (
+                        <Badge key={property.id} variant="outline">
+                          {property.property_type}
+                          {property.max_units && ` (up to ${property.max_units} units)`}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                  <div>
+                    <p className="font-semibold">Requirements:</p>
+                    <ul className="list-disc list-inside">
+                      {program.income_limit_percentage && (
+                        <li>Income limit: {program.income_limit_percentage}% of AMI</li>
+                      )}
+                      {program.min_credit_score && (
+                        <li>Minimum credit score: {program.min_credit_score}</li>
+                      )}
+                      {program.first_time_buyer_required && (
+                        <li>First-time homebuyer required</li>
+                      )}
+                      {program.military_status_required && (
+                        <li>Military status: {program.military_status_required}</li>
+                      )}
+                    </ul>
+                  </div>
+                  
+                  <div>
+                    <p className="font-semibold">Contact Information:</p>
+                    {program.contact_info && (
+                      <div className="space-y-1">
+                        {program.contact_info.name && <p>{program.contact_info.name}</p>}
+                        {program.contact_info.phone && <p>Phone: {program.contact_info.phone}</p>}
+                        {program.contact_info.email && <p>Email: {program.contact_info.email}</p>}
+                      </div>
                     )}
-                    {program.military_status_required && <li>Military status: {program.military_status_required}</li>}
-                  </ul>
+                  </div>
                 </div>
               </div>
             </CardContent>
-            <CardFooter className="flex justify-between border-t pt-4">
-              {program.application_url ? (
-                <Button variant="outline" onClick={() => window.open(program.application_url, '_blank')}>
-                  Visit Program Website
+            <CardFooter className="flex justify-between">
+              {program.application_url && (
+                <Button asChild>
+                  <a href={program.application_url} target="_blank" rel="noopener noreferrer">
+                    Apply Now
+                  </a>
                 </Button>
-              ) : <div />}
+              )}
               
-              <Button onClick={() => handleConnect(program)}>Connect with Specialist</Button>
+              {onConnectSpecialist && (
+                <Button variant="outline" onClick={onConnectSpecialist}>
+                  Speak with a Specialist
+                </Button>
+              )}
             </CardFooter>
           </Card>
         ))}
       </div>
-      
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Connect with a Program Specialist</DialogTitle>
-            <DialogDescription>
-              Complete this form to be connected with a specialist who can help you with the{' '}
-              {selectedProgram?.name} program.
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="clientName" className="text-right">
-                Name
-              </Label>
-              <Input
-                id="clientName"
-                name="clientName"
-                value={leadData.clientName}
-                onChange={handleInputChange}
-                className="col-span-3"
-              />
-            </div>
-            
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="email" className="text-right">
-                Email
-              </Label>
-              <Input
-                id="email"
-                name="email"
-                type="email"
-                value={leadData.email}
-                onChange={handleInputChange}
-                className="col-span-3"
-              />
-            </div>
-            
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="phone" className="text-right">
-                Phone
-              </Label>
-              <Input
-                id="phone"
-                name="phone"
-                type="tel"
-                value={leadData.phone}
-                onChange={handleInputChange}
-                className="col-span-3"
-              />
-            </div>
-            
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="notes" className="text-right">
-                Notes
-              </Label>
-              <Input
-                id="notes"
-                name="notes"
-                value={leadData.notes}
-                onChange={handleInputChange}
-                className="col-span-3"
-              />
-            </div>
-          </div>
-          
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
-              Cancel
-            </Button>
-            <Button onClick={handleSubmitLead}>Submit Request</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };
