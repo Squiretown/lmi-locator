@@ -60,24 +60,35 @@ const Dashboard: React.FC = () => {
         const lmiEligible = searchHistoryData?.filter(item => item.is_eligible).length || 0;
         
         // Calculate popular zip codes
-        const zipCodes = {};
+        const zipCodes: Record<string, number> = {};
         searchHistoryData?.forEach(search => {
-          if (search.result && search.result.zip_code) {
-            zipCodes[search.result.zip_code] = (zipCodes[search.result.zip_code] || 0) + 1;
+          if (search.result && typeof search.result === 'object') {
+            // Handle case where zip_code might be in the result object
+            const zipCode = search.result.zip_code as string;
+            if (zipCode) {
+              zipCodes[zipCode] = (zipCodes[zipCode] || 0) + 1;
+            }
           }
         });
         
         const popularZipCodes = Object.entries(zipCodes)
-          .map(([zipCode, count]) => ({ zipCode, count: count as number }))
+          .map(([zipCode, count]) => ({ zipCode, count }))
           .sort((a, b) => b.count - a.count)
           .slice(0, 5);
+        
+        // Transform search history data to match our types
+        const typedSearchHistory = searchHistoryData?.map(item => ({
+          ...item,
+          search_params: item.search_params as Record<string, any>,
+          result: item.result as Record<string, any>
+        })) as SearchHistory[];
         
         setStats({
           totalSearches: searchHistoryData?.length || 0,
           lmiProperties: lmiEligible,
           lmiPercentage: searchHistoryData?.length ? 
             Math.round((lmiEligible / searchHistoryData.length) * 100) : 0,
-          recentSearches: searchHistoryData?.slice(0, 10) || [],
+          recentSearches: typedSearchHistory?.slice(0, 10) || [],
           totalUsers: userCount || 0,
           totalProperties: propertyCount || 0, 
           totalRealtors: realtorCount || 0,
