@@ -3,7 +3,6 @@
 import { geocodeAddress } from './geocode';
 import { getMedianIncome } from './income';
 import { formatTractId, getIncomeCategory } from './census-helpers';
-import { saveSearch } from '../supabase-api';
 
 // Check if a location is in an LMI eligible census tract
 export const checkLmiStatus = async (address: string): Promise<any> => {
@@ -66,14 +65,6 @@ export const checkLmiStatus = async (address: string): Promise<any> => {
       timestamp: new Date().toISOString(),
       data_source: "U.S. Census Bureau American Community Survey 5-Year Estimates"
     };
-    
-    // Save the search to Supabase
-    try {
-      await saveSearch(address, result);
-    } catch (error) {
-      console.warn('Error saving search to Supabase:', error);
-      // Continue with the response even if saving fails
-    }
     
     return result;
   } catch (error) {

@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { checkLmiStatus } from '@/lib/api';
+import { saveSearch } from '@/lib/supabase-api';
 import LoadingSpinner from './LoadingSpinner';
 import { toast } from 'sonner';
 
@@ -34,13 +35,21 @@ const AddressForm: React.FC<AddressFormProps> = ({
     
     try {
       const result = await checkLmiStatus(address);
+      
+      // Save the search to Supabase
+      try {
+        await saveSearch(address, result);
+        // Show toast notification for search saving
+        if (result.status === 'success') {
+          toast.success('Search saved to history');
+        }
+      } catch (error) {
+        console.warn('Error saving search to Supabase:', error);
+        // Continue with the response even if saving fails
+      }
+      
       onResultReceived(result);
       setIsLoading(false);
-      
-      // Show toast notification for search saving
-      if (result.status === 'success') {
-        toast.success('Search saved to history');
-      }
     } catch (error) {
       console.error('Error checking LMI status:', error);
       toast.error('Error checking address. Please try again.');
