@@ -204,6 +204,127 @@ export interface ActivityLog {
   created_at: string;
 }
 
+// Down Payment Assistance Program Types
+export interface AssistanceProgram {
+  id: string;
+  name: string;
+  description?: string;
+  funding_source?: string;
+  benefit_amount?: number;
+  benefit_type?: string;
+  income_limit_percentage?: number;
+  min_credit_score?: number;
+  first_time_buyer_required: boolean;
+  military_status_required?: string;
+  status: string;
+  application_url?: string;
+  contact_info?: Record<string, any>;
+  program_details?: Record<string, any>;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ProgramLocation {
+  id: string;
+  program_id: string;
+  location_type: string;
+  location_value: string;
+  created_at: string;
+}
+
+export interface PropertyTypeEligible {
+  id: string;
+  program_id: string;
+  property_type: string;
+  max_units?: number;
+  max_price?: number;
+  other_requirements?: Record<string, any>;
+  created_at: string;
+}
+
+export interface ClientProfile {
+  id: string;
+  professional_id: string;
+  first_name: string;
+  last_name: string;
+  email?: string;
+  phone?: string;
+  status: string;
+  notes?: string;
+  income?: number;
+  household_size?: number;
+  first_time_buyer?: boolean;
+  military_status?: string;
+  timeline?: string;
+  saved_properties?: Record<string, any>;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface BatchSearchJob {
+  id: string;
+  user_id: string;
+  name: string;
+  status: string;
+  total_addresses: number;
+  processed_addresses: number;
+  addresses: Record<string, any>;
+  results?: Record<string, any>;
+  created_at: string;
+  updated_at: string;
+  completed_at?: string;
+}
+
+export interface ProfessionalLead {
+  id: string;
+  professional_id?: string;
+  client_name: string;
+  email?: string;
+  phone?: string;
+  property_address?: string;
+  property_id?: string;
+  status: string;
+  source?: string;
+  notes?: string;
+  eligible_programs?: Record<string, any>;
+  created_at: string;
+  updated_at: string;
+  last_contacted_at?: string;
+}
+
+export interface ProgramEligibilityCheck {
+  id: string;
+  user_id?: string;
+  search_id?: string;
+  property_id?: string;
+  first_time_buyer?: boolean;
+  military_status?: string;
+  residence_intent?: boolean;
+  timeframe?: string;
+  eligible_programs?: AssistanceProgram[];
+  created_at: string;
+}
+
+// Extended UserProfile interface
+export interface ExtendedUserProfile extends UserProfile {
+  user_type?: string;
+  company_name?: string;
+  company_address?: string;
+  company_website?: string;
+  license_number?: string;
+  subscription_tier?: string;
+  subscription_starts_at?: string;
+  subscription_ends_at?: string;
+}
+
+// Form submission types
+export interface EligibilityScreenerFormData {
+  first_time_buyer: boolean;
+  military_status: string;
+  residence_intent: boolean;
+  timeframe: string;
+}
+
 // Dashboard Statistics Interface
 export interface DashboardStats {
   totalSearches: number;

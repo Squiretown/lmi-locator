@@ -166,6 +166,105 @@ export type Database = {
         }
         Relationships: []
       }
+      assistance_programs: {
+        Row: {
+          application_url: string | null
+          benefit_amount: number | null
+          benefit_type: string | null
+          contact_info: Json | null
+          created_at: string | null
+          description: string | null
+          first_time_buyer_required: boolean | null
+          funding_source: string | null
+          id: string
+          income_limit_percentage: number | null
+          military_status_required: string | null
+          min_credit_score: number | null
+          name: string
+          program_details: Json | null
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          application_url?: string | null
+          benefit_amount?: number | null
+          benefit_type?: string | null
+          contact_info?: Json | null
+          created_at?: string | null
+          description?: string | null
+          first_time_buyer_required?: boolean | null
+          funding_source?: string | null
+          id?: string
+          income_limit_percentage?: number | null
+          military_status_required?: string | null
+          min_credit_score?: number | null
+          name: string
+          program_details?: Json | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          application_url?: string | null
+          benefit_amount?: number | null
+          benefit_type?: string | null
+          contact_info?: Json | null
+          created_at?: string | null
+          description?: string | null
+          first_time_buyer_required?: boolean | null
+          funding_source?: string | null
+          id?: string
+          income_limit_percentage?: number | null
+          military_status_required?: string | null
+          min_credit_score?: number | null
+          name?: string
+          program_details?: Json | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      batch_search_jobs: {
+        Row: {
+          addresses: Json
+          completed_at: string | null
+          created_at: string | null
+          id: string
+          name: string
+          processed_addresses: number | null
+          results: Json | null
+          status: string | null
+          total_addresses: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          addresses: Json
+          completed_at?: string | null
+          created_at?: string | null
+          id?: string
+          name: string
+          processed_addresses?: number | null
+          results?: Json | null
+          status?: string | null
+          total_addresses?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          addresses?: Json
+          completed_at?: string | null
+          created_at?: string | null
+          id?: string
+          name?: string
+          processed_addresses?: number | null
+          results?: Json | null
+          status?: string | null
+          total_addresses?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       census_cache: {
         Row: {
           cached_at: string | null
@@ -187,6 +286,63 @@ export type Database = {
           expires_at?: string
           id?: string
           tract_id?: string
+        }
+        Relationships: []
+      }
+      client_profiles: {
+        Row: {
+          created_at: string | null
+          email: string | null
+          first_name: string
+          first_time_buyer: boolean | null
+          household_size: number | null
+          id: string
+          income: number | null
+          last_name: string
+          military_status: string | null
+          notes: string | null
+          phone: string | null
+          professional_id: string
+          saved_properties: Json | null
+          status: string | null
+          timeline: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          email?: string | null
+          first_name: string
+          first_time_buyer?: boolean | null
+          household_size?: number | null
+          id?: string
+          income?: number | null
+          last_name: string
+          military_status?: string | null
+          notes?: string | null
+          phone?: string | null
+          professional_id: string
+          saved_properties?: Json | null
+          status?: string | null
+          timeline?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          email?: string | null
+          first_name?: string
+          first_time_buyer?: boolean | null
+          household_size?: number | null
+          id?: string
+          income?: number | null
+          last_name?: string
+          military_status?: string | null
+          notes?: string | null
+          phone?: string | null
+          professional_id?: string
+          saved_properties?: Json | null
+          status?: string | null
+          timeline?: string | null
+          updated_at?: string | null
         }
         Relationships: []
       }
@@ -237,6 +393,151 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      professional_leads: {
+        Row: {
+          client_name: string
+          created_at: string | null
+          eligible_programs: Json | null
+          email: string | null
+          id: string
+          last_contacted_at: string | null
+          notes: string | null
+          phone: string | null
+          professional_id: string | null
+          property_address: string | null
+          property_id: string | null
+          source: string | null
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          client_name: string
+          created_at?: string | null
+          eligible_programs?: Json | null
+          email?: string | null
+          id?: string
+          last_contacted_at?: string | null
+          notes?: string | null
+          phone?: string | null
+          professional_id?: string | null
+          property_address?: string | null
+          property_id?: string | null
+          source?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          client_name?: string
+          created_at?: string | null
+          eligible_programs?: Json | null
+          email?: string | null
+          id?: string
+          last_contacted_at?: string | null
+          notes?: string | null
+          phone?: string | null
+          professional_id?: string | null
+          property_address?: string | null
+          property_id?: string | null
+          source?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "professional_leads_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      program_eligibility_checks: {
+        Row: {
+          created_at: string | null
+          eligible_programs: Json | null
+          first_time_buyer: boolean | null
+          id: string
+          military_status: string | null
+          property_id: string | null
+          residence_intent: boolean | null
+          search_id: string | null
+          timeframe: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          eligible_programs?: Json | null
+          first_time_buyer?: boolean | null
+          id?: string
+          military_status?: string | null
+          property_id?: string | null
+          residence_intent?: boolean | null
+          search_id?: string | null
+          timeframe?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          eligible_programs?: Json | null
+          first_time_buyer?: boolean | null
+          id?: string
+          military_status?: string | null
+          property_id?: string | null
+          residence_intent?: boolean | null
+          search_id?: string | null
+          timeframe?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "program_eligibility_checks_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "program_eligibility_checks_search_id_fkey"
+            columns: ["search_id"]
+            isOneToOne: false
+            referencedRelation: "search_history"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      program_locations: {
+        Row: {
+          created_at: string | null
+          id: string
+          location_type: string
+          location_value: string
+          program_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          location_type: string
+          location_value: string
+          program_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          location_type?: string
+          location_value?: string
+          program_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "program_locations_program_id_fkey"
+            columns: ["program_id"]
+            isOneToOne: false
+            referencedRelation: "assistance_programs"
             referencedColumns: ["id"]
           },
         ]
@@ -398,6 +699,44 @@ export type Database = {
             columns: ["property_id"]
             isOneToOne: false
             referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      property_types_eligible: {
+        Row: {
+          created_at: string | null
+          id: string
+          max_price: number | null
+          max_units: number | null
+          other_requirements: Json | null
+          program_id: string | null
+          property_type: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          max_price?: number | null
+          max_units?: number | null
+          other_requirements?: Json | null
+          program_id?: string | null
+          property_type: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          max_price?: number | null
+          max_units?: number | null
+          other_requirements?: Json | null
+          program_id?: string | null
+          property_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "property_types_eligible_program_id_fkey"
+            columns: ["program_id"]
+            isOneToOne: false
+            referencedRelation: "assistance_programs"
             referencedColumns: ["id"]
           },
         ]
@@ -596,13 +935,21 @@ export type Database = {
           bio: string | null
           city: string | null
           company: string | null
+          company_address: string | null
+          company_name: string | null
+          company_website: string | null
           id: string
           job_title: string | null
+          license_number: string | null
           notification_preferences: Json | null
           phone: string | null
           profile_image: string | null
           state: string | null
+          subscription_ends_at: string | null
+          subscription_starts_at: string | null
+          subscription_tier: string | null
           user_id: string
+          user_type: string | null
           zip_code: string | null
         }
         Insert: {
@@ -610,13 +957,21 @@ export type Database = {
           bio?: string | null
           city?: string | null
           company?: string | null
+          company_address?: string | null
+          company_name?: string | null
+          company_website?: string | null
           id?: string
           job_title?: string | null
+          license_number?: string | null
           notification_preferences?: Json | null
           phone?: string | null
           profile_image?: string | null
           state?: string | null
+          subscription_ends_at?: string | null
+          subscription_starts_at?: string | null
+          subscription_tier?: string | null
           user_id: string
+          user_type?: string | null
           zip_code?: string | null
         }
         Update: {
@@ -624,13 +979,21 @@ export type Database = {
           bio?: string | null
           city?: string | null
           company?: string | null
+          company_address?: string | null
+          company_name?: string | null
+          company_website?: string | null
           id?: string
           job_title?: string | null
+          license_number?: string | null
           notification_preferences?: Json | null
           phone?: string | null
           profile_image?: string | null
           state?: string | null
+          subscription_ends_at?: string | null
+          subscription_starts_at?: string | null
+          subscription_tier?: string | null
           user_id?: string
+          user_type?: string | null
           zip_code?: string | null
         }
         Relationships: [
