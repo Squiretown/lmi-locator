@@ -1,69 +1,109 @@
-# Welcome to your Lovable project
 
-## Project info
+# Census LMI Finder
 
-**URL**: https://lovable.dev/projects/358d21c3-f455-4e18-831b-51824c4e2cd4
+A web application and API that uses U.S. Census Bureau data to determine if an address is in a Low-to-Moderate Income (LMI) eligible census tract.
 
-## How can I edit this code?
+## Features
 
-There are several ways of editing your application.
+- Address geocoding using Census and ESRI APIs
+- Census tract identification
+- Median household income determination via Census ACS 5-Year Estimates
+- LMI eligibility calculation based on Area Median Income (AMI)
+- Interactive map display of results
+- RESTful API for integration with other systems
 
-**Use Lovable**
+## Setup and Installation
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/358d21c3-f455-4e18-831b-51824c4e2cd4) and start prompting.
+### Prerequisites
 
-Changes made via Lovable will be committed automatically to this repo.
+- Node.js & npm
+- Supabase account (for backend services)
+- Census API key (register at [api.census.gov](https://api.census.gov/data/key_signup.html))
 
-**Use your preferred IDE**
+### Environment Variables
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+Set the following environment variables in your Supabase project:
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+```
+CENSUS_API_KEY=your_census_api_key
+ESRI_API_KEY=your_esri_api_key (optional, for backup geocoding)
+HUD_AMI=area_median_income_value
 ```
 
-**Edit a file directly in GitHub**
+### Installation
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+1. Clone the repository
+2. Install dependencies:
+   ```
+   npm install
+   ```
+3. Run the development server:
+   ```
+   npm run dev
+   ```
 
-**Use GitHub Codespaces**
+## API Usage
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+### Check LMI Status
 
-## What technologies are used for this project?
+**Endpoint:** `POST /api/check_lmi`
 
-This project is built with .
+**Request Format:**
+```json
+{
+  "address": "123 Main St, Anytown, ST 12345"
+}
+```
+
+**Response Format:**
+```json
+{
+  "status": "success",
+  "address": "123 MAIN ST, ANYTOWN, ST 12345",
+  "lat": 37.7749,
+  "lon": -122.4194,
+  "tract_id": "06075010800",
+  "median_income": 75000,
+  "ami": 100000,
+  "income_category": "Moderate Income",
+  "percentage_of_ami": 75.0,
+  "eligibility": "Eligible",
+  "color_code": "success",
+  "is_approved": true,
+  "approval_message": "APPROVED - This location is in a Moderate Income Census Tract",
+  "lmi_status": "Yes",
+  "timestamp": "2025-03-19T10:30:45.123456",
+  "data_source": "U.S. Census Bureau American Community Survey"
+}
+```
+
+## Technology Stack
+
+This project is built with:
 
 - Vite
 - TypeScript
 - React
 - shadcn-ui
 - Tailwind CSS
+- Supabase (backend)
 
-## How can I deploy this project?
+## Census API Attribution
 
-Simply open [Lovable](https://lovable.dev/projects/358d21c3-f455-4e18-831b-51824c4e2cd4) and click on Share -> Publish.
+This application uses data from the U.S. Census Bureau's APIs. Per Census Bureau guidelines, all implementations must include proper attribution.
 
-## I want to use a custom domain - is that possible?
+**Source:** U.S. Census Bureau American Community Survey 5-Year Estimates
 
-We don't support custom domains (yet). If you want to deploy your project under your own domain then we recommend using Netlify. Visit our docs for more details: [Custom domains](https://docs.lovable.dev/tips-tricks/custom-domain/)
+## Census API Limitations
+
+- Daily query limit: 500 queries per API key
+- Response caching is enabled to minimize API calls and stay within rate limits
+
+## License
+
+[MIT License](LICENSE)
+
+## How to Deploy
+
+To deploy this project, visit [Lovable](https://lovable.dev/projects/358d21c3-f455-4e18-831b-51824c4e2cd4) and click on Share -> Publish.
+
