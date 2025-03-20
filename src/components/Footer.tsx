@@ -1,7 +1,6 @@
-
 import React from 'react';
 import { motion } from 'framer-motion';
-import { InfoIcon, GitHubIcon, BookIcon } from 'lucide-react';
+import { Info as InfoIcon, Github as GithubIcon, Book as BookIcon } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 
 const Footer = () => {
@@ -28,7 +27,7 @@ const Footer = () => {
                 className="p-2 hover:text-foreground transition-colors"
                 aria-label="GitHub repository"
               >
-                <GitHubIcon className="h-5 w-5" />
+                <GithubIcon className="h-5 w-5" />
               </a>
               <a 
                 href="#" 
