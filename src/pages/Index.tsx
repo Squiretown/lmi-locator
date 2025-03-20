@@ -1,152 +1,122 @@
-
 import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import Header from '@/components/Header';
-import AddressForm from '@/components/AddressForm';
-import Result from '@/components/Result';
-import ResultsMap from '@/components/ResultsMap';
-import SavedProperties from '@/components/SavedProperties';
-import Footer from '@/components/Footer';
-import { Button } from '@/components/ui/button';
-import { ArrowUpIcon } from 'lucide-react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form"
+import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { CheckLmiStatusResponse } from '@/lib/types';
+import { useToast } from "@/hooks/use-toast"
+import { Dot } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
-interface LmiResult {
-  address: string;
-  lat: number;
-  lon: number;
-  tract_id: string;
-  median_income: number;
-  ami: number;
-  income_category: string;
-  percentage_of_ami: number;
-  eligibility: string;
-  is_approved: boolean;
-  approval_message: string;
-  lmi_status: string;
-}
+const formSchema = z.object({
+  address: z.string().min(2, {
+    message: "Address must be at least 2 characters.",
+  }),
+})
 
 const Index = () => {
-  const [result, setResult] = useState<LmiResult | null>(null);
+  const [lmiStatus, setLmiStatus] = useState<CheckLmiStatusResponse | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [showScrollTop, setShowScrollTop] = useState(false);
-  const [currentAddress, setCurrentAddress] = useState('');
+  const { toast } = useToast()
+  const navigate = useNavigate();
 
-  const handleResultReceived = (data: LmiResult) => {
-    setResult(data);
-  };
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      address: "",
+    },
+  })
 
-  const resetSearch = () => {
-    setResult(null);
-  };
-
-  const scrollToTop = () => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
-  const handleSavedAddressSelect = (address: string) => {
-    setCurrentAddress(address);
-    
-    // Find the form input and set its value
-    const inputElement = document.getElementById('address') as HTMLInputElement;
-    if (inputElement) {
-      inputElement.value = address;
-      
-      // Create and dispatch an input event to trigger onChange
-      const event = new Event('input', { bubbles: true });
-      inputElement.dispatchEvent(event);
-      
-      // Focus on the input
-      inputElement.focus();
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    setIsLoading(true);
+    setLmiStatus(null);
+    try {
+      const response = await fetch(`/api/check-lmi-status?address=${values.address}`);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const result = await response.json();
+      setLmiStatus(result);
+    } catch (error: any) {
+      console.error("Failed to check LMI status:", error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to check LMI status",
+        variant: "destructive",
+      })
+    } finally {
+      setIsLoading(false);
     }
-  };
-
-  // Handle scroll event to show/hide the scroll-to-top button
-  React.useEffect(() => {
-    const handleScroll = () => {
-      setShowScrollTop(window.scrollY > 500);
-    };
-
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+  }
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <Header />
+    <div className="container mx-auto px-4 py-8">
+      <header className="mb-8 text-center">
+        <h1 className="text-3xl font-bold mb-2">LMI Property Checker</h1>
+        <p className="text-gray-600 max-w-2xl mx-auto">
+          Check if a property is in a Low-to-Moderate Income (LMI) census tract
+          and eligible for special programs and incentives.
+        </p>
+        <div className="mt-4">
+          <a href="/admin" className="text-blue-600 hover:text-blue-800 font-medium">
+            Admin Dashboard →
+          </a>
+        </div>
+      </header>
       
-      <main className="flex-grow container mx-auto px-4 pb-16">
-        <AddressForm 
-          onResultReceived={handleResultReceived} 
-          setIsLoading={setIsLoading}
-          isLoading={isLoading}
-        />
-        
-        <AnimatePresence>
-          {result && (
-            <>
-              <motion.div 
-                key="result"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="mt-12"
-              >
-                <Result data={result} />
-              </motion.div>
-              
-              <motion.div
-                key="map"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-              >
-                <ResultsMap 
-                  lat={result.lat} 
-                  lon={result.lon}
-                  isEligible={result.is_approved}
-                />
-              </motion.div>
-              
-              <motion.div
-                key="new-search"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0 }}
-                transition={{ delay: 0.3 }}
-                className="flex justify-center mt-10"
-              >
-                <Button onClick={resetSearch} variant="outline">
-                  Check Another Address
-                </Button>
-              </motion.div>
-            </>
-          )}
-        </AnimatePresence>
-      </main>
-      
-      <SavedProperties onAddressSelect={handleSavedAddressSelect} />
-      
-      <Footer />
-      
-      <AnimatePresence>
-        {showScrollTop && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.8 }}
-            className="fixed bottom-6 left-6 z-50"
-          >
-            <Button
-              size="icon"
-              className="rounded-full shadow-lg"
-              onClick={scrollToTop}
-              aria-label="Scroll to top"
-            >
-              <ArrowUpIcon className="h-5 w-5" />
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <FormField
+            control={form.control}
+            name="address"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Property Address</FormLabel>
+                <FormControl>
+                  <Input placeholder="123 Main St, Anytown, CA" {...field} />
+                </FormControl>
+                <FormDescription>
+                  Enter the full street address to check LMI eligibility.
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <Button type="submit" disabled={isLoading}>
+            {isLoading ? "Checking..." : "Check LMI Status"}
+          </Button>
+        </form>
+      </Form>
+
+      {lmiStatus && (
+        <Card className="mt-8">
+          <CardContent className="space-y-2">
+            <div className="flex items-center space-x-2">
+              <Badge variant={lmiStatus.is_approved ? "success" : "destructive"}>
+                {lmiStatus.is_approved ? "LMI Eligible" : "Not LMI Eligible"}
+              </Badge>
+              <Dot className={lmiStatus.is_approved ? "text-green-500" : "text-red-500"} size={16} />
+              <span>{lmiStatus.address}</span>
+            </div>
+            <p className="text-sm text-gray-500">{lmiStatus.approval_message}</p>
+            <Button variant="link" onClick={() => navigate('/api-docs')}>
+              Learn more about the data source
             </Button>
-          </motion.div>
-        )}
-      </AnimatePresence>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 };
