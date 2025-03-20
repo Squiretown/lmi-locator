@@ -346,38 +346,202 @@ export type Database = {
         }
         Relationships: []
       }
+      clients: {
+        Row: {
+          client_id: string
+          created_at: string | null
+          email: string | null
+          first_name: string
+          last_name: string
+          notes: string | null
+          phone: string | null
+          professional_id: string
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          client_id?: string
+          created_at?: string | null
+          email?: string | null
+          first_name: string
+          last_name: string
+          notes?: string | null
+          phone?: string | null
+          professional_id: string
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          client_id?: string
+          created_at?: string | null
+          email?: string | null
+          first_name?: string
+          last_name?: string
+          notes?: string | null
+          phone?: string | null
+          professional_id?: string
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      marketing_addresses: {
+        Row: {
+          address: string
+          created_at: string | null
+          error_message: string | null
+          id: string
+          is_eligible: boolean | null
+          marketing_id: string
+          status: string | null
+          verification_details: Json | null
+          verified_at: string | null
+        }
+        Insert: {
+          address: string
+          created_at?: string | null
+          error_message?: string | null
+          id?: string
+          is_eligible?: boolean | null
+          marketing_id: string
+          status?: string | null
+          verification_details?: Json | null
+          verified_at?: string | null
+        }
+        Update: {
+          address?: string
+          created_at?: string | null
+          error_message?: string | null
+          id?: string
+          is_eligible?: boolean | null
+          marketing_id?: string
+          status?: string | null
+          verification_details?: Json | null
+          verified_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketing_addresses_marketing_id_fkey"
+            columns: ["marketing_id"]
+            isOneToOne: false
+            referencedRelation: "marketing_jobs"
+            referencedColumns: ["marketing_id"]
+          },
+        ]
+      }
+      marketing_jobs: {
+        Row: {
+          campaign_name: string
+          completed_at: string | null
+          created_at: string | null
+          eligible_addresses: number | null
+          marketing_id: string
+          notification_sent: boolean | null
+          processed_addresses: number | null
+          status: string | null
+          total_addresses: number | null
+          user_id: string
+        }
+        Insert: {
+          campaign_name: string
+          completed_at?: string | null
+          created_at?: string | null
+          eligible_addresses?: number | null
+          marketing_id?: string
+          notification_sent?: boolean | null
+          processed_addresses?: number | null
+          status?: string | null
+          total_addresses?: number | null
+          user_id: string
+        }
+        Update: {
+          campaign_name?: string
+          completed_at?: string | null
+          created_at?: string | null
+          eligible_addresses?: number | null
+          marketing_id?: string
+          notification_sent?: boolean | null
+          processed_addresses?: number | null
+          status?: string | null
+          total_addresses?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      notification_preferences: {
+        Row: {
+          email_enabled: boolean | null
+          frequency: string | null
+          in_app_enabled: boolean | null
+          notification_type: string
+          preference_id: string
+          sms_enabled: boolean | null
+          user_id: string
+        }
+        Insert: {
+          email_enabled?: boolean | null
+          frequency?: string | null
+          in_app_enabled?: boolean | null
+          notification_type: string
+          preference_id?: string
+          sms_enabled?: boolean | null
+          user_id: string
+        }
+        Update: {
+          email_enabled?: boolean | null
+          frequency?: string | null
+          in_app_enabled?: boolean | null
+          notification_type?: string
+          preference_id?: string
+          sms_enabled?: boolean | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           alert_id: string | null
           created_at: string
           data: Json | null
+          delivered_at: string | null
+          delivery_method: string | null
           id: string
           is_read: boolean | null
+          link_url: string | null
           message: string
           notification_type: string | null
           read_at: string | null
+          title: string | null
           user_id: string
         }
         Insert: {
           alert_id?: string | null
           created_at?: string
           data?: Json | null
+          delivered_at?: string | null
+          delivery_method?: string | null
           id?: string
           is_read?: boolean | null
+          link_url?: string | null
           message: string
           notification_type?: string | null
           read_at?: string | null
+          title?: string | null
           user_id: string
         }
         Update: {
           alert_id?: string | null
           created_at?: string
           data?: Json | null
+          delivered_at?: string | null
+          delivery_method?: string | null
           id?: string
           is_read?: boolean | null
+          link_url?: string | null
           message?: string
           notification_type?: string | null
           read_at?: string | null
+          title?: string | null
           user_id?: string
         }
         Relationships: [
@@ -741,6 +905,36 @@ export type Database = {
           },
         ]
       }
+      rate_limits: {
+        Row: {
+          count: number | null
+          endpoint: string
+          first_request: string | null
+          id: string
+          ip_address: string
+          is_blocked: boolean | null
+          last_request: string | null
+        }
+        Insert: {
+          count?: number | null
+          endpoint: string
+          first_request?: string | null
+          id?: string
+          ip_address: string
+          is_blocked?: boolean | null
+          last_request?: string | null
+        }
+        Update: {
+          count?: number | null
+          endpoint?: string
+          first_request?: string | null
+          id?: string
+          ip_address?: string
+          is_blocked?: boolean | null
+          last_request?: string | null
+        }
+        Relationships: []
+      }
       realtors: {
         Row: {
           bio: string | null
@@ -941,15 +1135,20 @@ export type Database = {
           id: string
           job_title: string | null
           license_number: string | null
+          license_verified: boolean | null
           notification_preferences: Json | null
           phone: string | null
+          professional_bio: string | null
           profile_image: string | null
           state: string | null
+          subscription_end_date: string | null
           subscription_ends_at: string | null
+          subscription_start_date: string | null
           subscription_starts_at: string | null
           subscription_tier: string | null
           user_id: string
           user_type: string | null
+          website: string | null
           zip_code: string | null
         }
         Insert: {
@@ -963,15 +1162,20 @@ export type Database = {
           id?: string
           job_title?: string | null
           license_number?: string | null
+          license_verified?: boolean | null
           notification_preferences?: Json | null
           phone?: string | null
+          professional_bio?: string | null
           profile_image?: string | null
           state?: string | null
+          subscription_end_date?: string | null
           subscription_ends_at?: string | null
+          subscription_start_date?: string | null
           subscription_starts_at?: string | null
           subscription_tier?: string | null
           user_id: string
           user_type?: string | null
+          website?: string | null
           zip_code?: string | null
         }
         Update: {
@@ -985,15 +1189,20 @@ export type Database = {
           id?: string
           job_title?: string | null
           license_number?: string | null
+          license_verified?: boolean | null
           notification_preferences?: Json | null
           phone?: string | null
+          professional_bio?: string | null
           profile_image?: string | null
           state?: string | null
+          subscription_end_date?: string | null
           subscription_ends_at?: string | null
+          subscription_start_date?: string | null
           subscription_starts_at?: string | null
           subscription_tier?: string | null
           user_id?: string
           user_type?: string | null
+          website?: string | null
           zip_code?: string | null
         }
         Relationships: [
@@ -1010,38 +1219,80 @@ export type Database = {
         Row: {
           created_at: string
           email: string
+          failed_login_attempts: number | null
           first_name: string | null
           id: string
           is_active: boolean
           is_admin: boolean
+          last_ip_address: string | null
           last_login: string | null
           last_name: string | null
           password_hash: string
           username: string
+          verification_date: string | null
+          verification_method: string | null
+          verification_status: string | null
         }
         Insert: {
           created_at?: string
           email: string
+          failed_login_attempts?: number | null
           first_name?: string | null
           id?: string
           is_active?: boolean
           is_admin?: boolean
+          last_ip_address?: string | null
           last_login?: string | null
           last_name?: string | null
           password_hash: string
           username: string
+          verification_date?: string | null
+          verification_method?: string | null
+          verification_status?: string | null
         }
         Update: {
           created_at?: string
           email?: string
+          failed_login_attempts?: number | null
           first_name?: string | null
           id?: string
           is_active?: boolean
           is_admin?: boolean
+          last_ip_address?: string | null
           last_login?: string | null
           last_name?: string | null
           password_hash?: string
           username?: string
+          verification_date?: string | null
+          verification_method?: string | null
+          verification_status?: string | null
+        }
+        Relationships: []
+      }
+      verification_challenges: {
+        Row: {
+          answers: string[]
+          created_at: string | null
+          difficulty: number | null
+          id: string
+          is_active: boolean | null
+          question: string
+        }
+        Insert: {
+          answers: string[]
+          created_at?: string | null
+          difficulty?: number | null
+          id?: string
+          is_active?: boolean | null
+          question: string
+        }
+        Update: {
+          answers?: string[]
+          created_at?: string | null
+          difficulty?: number | null
+          id?: string
+          is_active?: boolean | null
+          question?: string
         }
         Relationships: []
       }
@@ -1050,6 +1301,28 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_marketing_summary: {
+        Args: {
+          user_uuid: string
+        }
+        Returns: {
+          pending_count: number
+          processing_count: number
+          completed_count: number
+          total_addresses: number
+          eligible_addresses: number
+        }[]
+      }
+      get_notification_counts: {
+        Args: {
+          user_uuid: string
+        }
+        Returns: {
+          unread_count: number
+          read_count: number
+          total_count: number
+        }[]
+      }
       get_popular_searches: {
         Args: {
           result_limit?: number
@@ -1058,6 +1331,16 @@ export type Database = {
           address: string
           search_count: number
         }[]
+      }
+      user_is_admin: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
+      user_owns_marketing_job: {
+        Args: {
+          marketing_id: string
+        }
+        Returns: boolean
       }
     }
     Enums: {
