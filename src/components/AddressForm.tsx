@@ -36,6 +36,11 @@ const AddressForm: React.FC<AddressFormProps> = ({
       const result = await checkLmiStatus(address);
       onResultReceived(result);
       setIsLoading(false);
+      
+      // Show toast notification for search saving
+      if (result.status === 'success') {
+        toast.success('Search saved to history');
+      }
     } catch (error) {
       console.error('Error checking LMI status:', error);
       toast.error('Error checking address. Please try again.');

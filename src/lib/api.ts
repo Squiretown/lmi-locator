@@ -1,7 +1,7 @@
-
 // Census API integration with caching for LMI determination
 
 import { createClient } from '@supabase/supabase-js';
+import { getCachedCensusResult, cacheCensusResult, saveSearch } from './supabase-api';
 
 // Configuration for Census API
 const CENSUS_API_BASE_URL = 'https://api.census.gov/data';
@@ -65,7 +65,7 @@ const cachedFetch = async (url: string, options: RequestInit = {}): Promise<any>
   const cachedResponse = apiCache.get(cacheKey);
   
   if (cachedResponse) {
-    console.log('Using cached response for:', url);
+    console.log('Using cached response from local cache for:', url);
     return cachedResponse;
   }
 
@@ -136,6 +136,18 @@ export const geocodeAddress = async (address: string): Promise<{lat: number, lon
 const getMedianIncome = async (geoid: string): Promise<number> => {
   console.log('Getting median income for tract:', geoid);
   
+  // Check Supabase cache first
+  try {
+    const cachedResult = await getCachedCensusResult(geoid);
+    if (cachedResult && cachedResult.success && cachedResult.data) {
+      console.log('Using cached result from Supabase for tract:', geoid);
+      return cachedResult.data.medianIncome;
+    }
+  } catch (error) {
+    console.warn('Error checking Supabase cache:', error);
+    // Continue with API request if cache check fails
+  }
+  
   // Create URL for ACS API request
   const { state, county, tract } = parseGeoId(geoid);
   
@@ -147,11 +159,21 @@ const getMedianIncome = async (geoid: string): Promise<number> => {
   await new Promise(resolve => setTimeout(resolve, 800));
   
   // Return mock median income based on geoid
+  let medianIncome: number;
   if (geoid === '06037701000') { // Beverly Hills
-    return 150000;
+    medianIncome = 150000;
+  } else {
+    medianIncome = 62500; // San Francisco moderate income tract
   }
   
-  return 62500; // San Francisco moderate income tract
+  // Cache the result in Supabase
+  try {
+    await cacheCensusResult(geoid, { medianIncome });
+  } catch (error) {
+    console.warn('Error caching Census result in Supabase:', error);
+  }
+  
+  return medianIncome;
 };
 
 // Determine income category based on percentage of AMI
@@ -189,45 +211,51 @@ export const checkLmiStatus = async (address: string): Promise<any> => {
     const isEligible = percentageOfAmi <= 80; // LMI eligible if <= 80% of AMI
     
     // Mock different response types based on eligibility
-    if (isEligible) {
-      return {
-        status: "success",
-        address: address.toUpperCase(),
-        lat,
-        lon,
-        tract_id: formatTractId(geoid),
-        median_income: medianIncome,
-        ami,
-        income_category: incomeCategory,
-        percentage_of_ami: parseFloat(percentageOfAmi.toFixed(1)),
-        eligibility: "Eligible",
-        color_code: "success",
-        is_approved: true,
-        approval_message: `APPROVED - This location is in a ${incomeCategory} Census Tract`,
-        lmi_status: "LMI Eligible",
-        timestamp: new Date().toISOString(),
-        data_source: "U.S. Census Bureau American Community Survey 5-Year Estimates"
-      };
-    } else {
-      return {
-        status: "success",
-        address: address.toUpperCase(),
-        lat,
-        lon,
-        tract_id: formatTractId(geoid),
-        median_income: medianIncome,
-        ami,
-        income_category: incomeCategory,
-        percentage_of_ami: parseFloat(percentageOfAmi.toFixed(1)),
-        eligibility: "Ineligible",
-        color_code: "danger",
-        is_approved: false,
-        approval_message: "NOT APPROVED - This location is not in an LMI Census Tract",
-        lmi_status: "Not LMI Eligible",
-        timestamp: new Date().toISOString(),
-        data_source: "U.S. Census Bureau American Community Survey 5-Year Estimates"
-      };
+    const result = isEligible ? {
+      status: "success",
+      address: address.toUpperCase(),
+      lat,
+      lon,
+      tract_id: formatTractId(geoid),
+      median_income: medianIncome,
+      ami,
+      income_category: incomeCategory,
+      percentage_of_ami: parseFloat(percentageOfAmi.toFixed(1)),
+      eligibility: "Eligible",
+      color_code: "success",
+      is_approved: true,
+      approval_message: `APPROVED - This location is in a ${incomeCategory} Census Tract`,
+      lmi_status: "LMI Eligible",
+      timestamp: new Date().toISOString(),
+      data_source: "U.S. Census Bureau American Community Survey 5-Year Estimates"
+    } : {
+      status: "success",
+      address: address.toUpperCase(),
+      lat,
+      lon,
+      tract_id: formatTractId(geoid),
+      median_income: medianIncome,
+      ami,
+      income_category: incomeCategory,
+      percentage_of_ami: parseFloat(percentageOfAmi.toFixed(1)),
+      eligibility: "Ineligible",
+      color_code: "danger",
+      is_approved: false,
+      approval_message: "NOT APPROVED - This location is not in an LMI Census Tract",
+      lmi_status: "Not LMI Eligible",
+      timestamp: new Date().toISOString(),
+      data_source: "U.S. Census Bureau American Community Survey 5-Year Estimates"
+    };
+    
+    // Save the search to Supabase
+    try {
+      await saveSearch(address, result);
+    } catch (error) {
+      console.warn('Error saving search to Supabase:', error);
+      // Continue with the response even if saving fails
     }
+    
+    return result;
   } catch (error) {
     console.error('Error in checkLmiStatus:', error);
     
