@@ -39,3 +39,44 @@ export async function getPopularSearches(supabase: any, limit: number = 5) {
     return { success: false, error: error.message };
   }
 }
+
+// Get analytics summary for dashboard
+export async function getDashboardStats(supabase: any) {
+  try {
+    // Get total searches
+    const { data: totalSearches, error: searchError } = await supabase
+      .from("search_history")
+      .select("id", { count: "exact" });
+    
+    // Get LMI eligible properties
+    const { data: lmiProperties, error: lmiError } = await supabase
+      .from("search_history")
+      .select("id", { count: "exact" })
+      .eq("is_eligible", true);
+    
+    // Get recent searches
+    const { data: recentSearches, error: recentError } = await supabase
+      .from("search_history")
+      .select("*")
+      .order("searched_at", { ascending: false })
+      .limit(5);
+    
+    if (searchError || lmiError || recentError) {
+      throw searchError || lmiError || recentError;
+    }
+    
+    return { 
+      success: true, 
+      data: {
+        totalSearches: totalSearches?.length || 0,
+        lmiProperties: lmiProperties?.length || 0,
+        lmiPercentage: totalSearches?.length ? 
+          Math.round((lmiProperties?.length / totalSearches?.length) * 100) : 0,
+        recentSearches: recentSearches || []
+      }
+    };
+  } catch (error) {
+    console.error("Error retrieving dashboard stats:", error);
+    return { success: false, error: error.message };
+  }
+}

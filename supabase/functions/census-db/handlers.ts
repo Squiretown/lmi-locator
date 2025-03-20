@@ -4,7 +4,7 @@
 // Database operations
 import { saveSearch } from './searchOperations';
 import { cacheCensusResult, getCachedCensusResult } from './cacheOperations';
-import { getSearchHistory, getPopularSearches } from './queryOperations';
+import { getSearchHistory, getPopularSearches, getDashboardStats } from './queryOperations';
 
 // Process different types of API requests
 export async function handleApiRequest(supabase: any, action: string, params: any) {
@@ -19,6 +19,8 @@ export async function handleApiRequest(supabase: any, action: string, params: an
       return await getCachedCensusResult(supabase, params.tractId);
     case "getPopularSearches":
       return await getPopularSearches(supabase, params.limit);
+    case "getDashboardStats":
+      return await getDashboardStats(supabase);
     default:
       return { success: false, error: "Invalid action" };
   }
