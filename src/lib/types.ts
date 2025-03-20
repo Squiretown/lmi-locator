@@ -1,9 +1,15 @@
-
 // API Response Types
 export interface CheckLmiStatusResponse {
   is_approved: boolean;
   address: string;
   approval_message: string;
+  tract_id: string;
+  median_income: number;
+  ami: number;
+  income_category: string;
+  percentage_of_ami: number;
+  eligibility: string;
+  lmi_status: string;
 }
 
 // Database Models
