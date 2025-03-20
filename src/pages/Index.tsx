@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -104,7 +105,7 @@ const Index = () => {
         <Card className="mt-8">
           <CardContent className="space-y-2">
             <div className="flex items-center space-x-2">
-              <Badge variant={lmiStatus.is_approved ? "success" : "destructive"}>
+              <Badge variant={lmiStatus.is_approved ? "secondary" : "destructive"}>
                 {lmiStatus.is_approved ? "LMI Eligible" : "Not LMI Eligible"}
               </Badge>
               <Dot className={lmiStatus.is_approved ? "text-green-500" : "text-red-500"} size={16} />
