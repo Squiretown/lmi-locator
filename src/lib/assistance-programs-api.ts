@@ -24,7 +24,10 @@ export const getAllAssistancePrograms = async (): Promise<AssistanceProgram[]> =
       contact_info: program.contact_info ? (typeof program.contact_info === 'string' ? JSON.parse(program.contact_info) : program.contact_info) : {},
       program_details: program.program_details ? (typeof program.program_details === 'string' ? JSON.parse(program.program_details) : program.program_details) : {},
       program_locations: program.program_locations || [],
-      property_types_eligible: program.property_types_eligible || []
+      property_types_eligible: (program.property_types_eligible || []).map(pt => ({
+        ...pt,
+        other_requirements: pt.other_requirements ? (typeof pt.other_requirements === 'string' ? JSON.parse(pt.other_requirements) : pt.other_requirements) : {}
+      }))
     }));
   } catch (error) {
     console.error('Error fetching assistance programs:', error);
@@ -61,7 +64,10 @@ export const getAssistanceProgramsByLocation = async (
       contact_info: program.contact_info ? (typeof program.contact_info === 'string' ? JSON.parse(program.contact_info) : program.contact_info) : {},
       program_details: program.program_details ? (typeof program.program_details === 'string' ? JSON.parse(program.program_details) : program.program_details) : {},
       program_locations: program.program_locations || [],
-      property_types_eligible: program.property_types_eligible || []
+      property_types_eligible: (program.property_types_eligible || []).map(pt => ({
+        ...pt,
+        other_requirements: pt.other_requirements ? (typeof pt.other_requirements === 'string' ? JSON.parse(pt.other_requirements) : pt.other_requirements) : {}
+      }))
     }));
   } catch (error) {
     console.error('Error fetching assistance programs by location:', error);

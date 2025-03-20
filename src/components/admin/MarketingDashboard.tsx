@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Chart } from "@/components/ui/chart";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
-import { LoadingSpinner } from '@/components/LoadingSpinner';
+import LoadingSpinner from '@/components/LoadingSpinner';
 
 export const MarketingDashboard = () => {
   const [loading, setLoading] = useState(true);
@@ -69,7 +69,7 @@ export const MarketingDashboard = () => {
           .limit(5);
           
         if (activityData) {
-          setReactivity(activityData);
+          setRecentActivity(activityData);
         }
 
         // Fetch notification stats
@@ -116,55 +116,21 @@ export const MarketingDashboard = () => {
   }
 
   // Prepare data for charts
-  const userTypeChartData = {
-    labels: Object.keys(userTypeCounts),
-    datasets: [
-      {
-        data: Object.values(userTypeCounts),
-        backgroundColor: [
-          '#10b981', // green
-          '#3b82f6', // blue
-          '#f59e0b', // yellow
-          '#ef4444', // red
-          '#8b5cf6'  // purple
-        ],
-        hoverBackgroundColor: [
-          '#047857',
-          '#1d4ed8',
-          '#b45309',
-          '#b91c1c',
-          '#6d28d9'
-        ],
-      },
-    ],
-  };
+  const userTypeChartData = Object.keys(userTypeCounts).map(key => ({
+    name: key,
+    data: userTypeCounts[key]
+  }));
 
-  const marketingStatusChartData = {
-    labels: ['Pending', 'Processing', 'Completed'],
-    datasets: [
-      {
-        data: [marketingStats.pending, marketingStats.processing, marketingStats.completed],
-        backgroundColor: ['#f59e0b', '#3b82f6', '#10b981'],
-        hoverBackgroundColor: ['#b45309', '#1d4ed8', '#047857'],
-      },
-    ],
-  };
+  const marketingStatusChartData = [
+    { name: 'Pending', data: marketingStats.pending },
+    { name: 'Processing', data: marketingStats.processing },
+    { name: 'Completed', data: marketingStats.completed }
+  ];
 
-  const notificationTypeChartData = {
-    labels: Object.keys(notifications.byType),
-    datasets: [
-      {
-        data: Object.values(notifications.byType),
-        backgroundColor: [
-          '#10b981',
-          '#3b82f6',
-          '#f59e0b',
-          '#ef4444',
-          '#8b5cf6'
-        ],
-      },
-    ],
-  };
+  const notificationTypeChartData = Object.keys(notifications.byType).map(key => ({
+    name: key,
+    data: notifications.byType[key]
+  }));
 
   return (
     <div className="space-y-4">
@@ -292,7 +258,7 @@ export const MarketingDashboard = () => {
               <div key={challenge.id} className="border-b pb-4">
                 <div className="flex justify-between items-start">
                   <div className="font-medium">{challenge.question}</div>
-                  <Badge variant={challenge.is_active ? "success" : "destructive"}>
+                  <Badge variant={challenge.is_active ? "default" : "destructive"}>
                     {challenge.is_active ? 'Active' : 'Inactive'}
                   </Badge>
                 </div>
@@ -310,7 +276,3 @@ export const MarketingDashboard = () => {
     </div>
   );
 };
-
-function setReactivity(activityData: any[]) {
-  setRecentActivity(activityData);
-}

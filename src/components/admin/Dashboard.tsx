@@ -1,38 +1,81 @@
 
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { getDashboardStats } from '@/lib/supabase-api';
-import { SearchHistory, DashboardStats } from '@/lib/types';
+import { getDashboardStats } from "@/lib/supabase-api";
+import { DashboardStats, SearchHistory } from '@/lib/types';
 import { Chart } from "@/components/ui/chart";
-import { LoadingSpinner } from '@/components/LoadingSpinner';
+import LoadingSpinner from "@/components/LoadingSpinner";
 
-export const Dashboard = () => {
+export const Dashboard: React.FC = () => {
   const [loading, setLoading] = useState(true);
-  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [stats, setStats] = useState<DashboardStats>({
+    totalSearches: 0,
+    lmiProperties: 0,
+    lmiPercentage: 0,
+    recentSearches: [],
+    totalUsers: 0,
+    totalProperties: 0,
+    totalRealtors: 0,
+    popularZipCodes: []
+  });
 
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
         const data = await getDashboardStats();
-        if (data.searchHistory && Array.isArray(data.searchHistory)) {
-          // Map the search history to our expected format
-          const searchHistory: SearchHistory[] = data.searchHistory.map((search: any) => ({
-            ...search,
-            result: typeof search.result === 'string' ? JSON.parse(search.result) : search.result,
-            search_params: typeof search.search_params === 'string' ? JSON.parse(search.search_params) : search.search_params
-          }));
-  
-          const dashboardStats: DashboardStats = {
-            totalSearches: searchHistory.length,
-            lmiProperties: searchHistory.filter(s => s.is_eligible).length,
-            lmiPercentage: Math.round((searchHistory.filter(s => s.is_eligible).length / searchHistory.length) * 100) || 0,
-            recentSearches: searchHistory.slice(0, 5),
+        
+        if (data?.searchHistory) {
+          const totalSearches = data.searchHistory.length;
+          const lmiProperties = data.searchHistory.filter(s => s.is_eligible).length;
+          const lmiPercentage = totalSearches > 0 ? (lmiProperties / totalSearches) * 100 : 0;
+          
+          // Extract zip codes for visualization
+          const zipCodeCounts: Record<string, number> = {};
+          data.searchHistory.forEach(search => {
+            try {
+              // Try to extract zip code from address or result
+              let zipCode = '';
+              
+              // Try to parse result if it's a string
+              const result = typeof search.result === 'string' 
+                ? JSON.parse(search.result) 
+                : search.result;
+              
+              if (result && result.address) {
+                const addressParts = result.address.split(',');
+                if (addressParts.length > 0) {
+                  const lastPart = addressParts[addressParts.length - 1].trim();
+                  const zipMatch = lastPart.match(/\d{5}/);
+                  if (zipMatch) {
+                    zipCode = zipMatch[0];
+                  }
+                }
+              }
+              
+              if (zipCode) {
+                zipCodeCounts[zipCode] = (zipCodeCounts[zipCode] || 0) + 1;
+              }
+            } catch (e) {
+              console.error('Error parsing search result:', e);
+            }
+          });
+          
+          // Convert to array for chart
+          const popularZipCodes = Object.entries(zipCodeCounts)
+            .map(([zipCode, count]) => ({ zipCode, count }))
+            .sort((a, b) => b.count - a.count)
+            .slice(0, 5);
+          
+          setStats({
+            totalSearches,
+            lmiProperties,
+            lmiPercentage,
+            recentSearches: data.searchHistory.slice(0, 10),
             totalUsers: data.userCount || 0,
             totalProperties: data.propertyCount || 0,
-            totalRealtors: data.realtorCount || 0
-          };
-          
-          setStats(dashboardStats);
+            totalRealtors: data.realtorCount || 0,
+            popularZipCodes
+          });
         }
       } catch (error) {
         console.error('Error fetching dashboard data:', error);
@@ -48,27 +91,23 @@ export const Dashboard = () => {
     return <LoadingSpinner />;
   }
 
-  if (!stats) {
-    return <div>No data available</div>;
-  }
-
   // Prepare data for charts
-  const searchChartData = {
-    labels: ['LMI Eligible', 'Non-LMI'],
-    datasets: [
-      {
-        data: [stats.lmiProperties, stats.totalSearches - stats.lmiProperties],
-        backgroundColor: ['#10b981', '#6b7280'],
-        hoverBackgroundColor: ['#047857', '#4b5563'],
-      },
-    ],
-  };
+  const zipCodeChartData = stats.popularZipCodes?.map(item => ({
+    name: item.zipCode,
+    data: item.count
+  })) || [];
+
+  const lmiStatusData = [
+    { name: 'LMI Eligible', data: stats.lmiProperties },
+    { name: 'Not Eligible', data: stats.totalSearches - stats.lmiProperties }
+  ];
 
   return (
     <div className="space-y-4">
-      <h1 className="text-2xl font-bold">Dashboard</h1>
+      <h1 className="text-2xl font-bold">Admin Dashboard</h1>
       
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      {/* Overview Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium">Total Searches</CardTitle>
@@ -84,88 +123,84 @@ export const Dashboard = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.lmiProperties}</div>
+            <div className="text-xs text-muted-foreground">
+              {stats.lmiPercentage.toFixed(1)}% of total
+            </div>
           </CardContent>
         </Card>
         
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">LMI Percentage</CardTitle>
+            <CardTitle className="text-sm font-medium">Users</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.lmiPercentage}%</div>
+            <div className="text-2xl font-bold">{stats.totalUsers}</div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium">Realtors</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.totalRealtors}</div>
           </CardContent>
         </Card>
       </div>
 
+      {/* Charts */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Card className="col-span-1">
           <CardHeader>
-            <CardTitle>Property Statistics</CardTitle>
-            <CardDescription>
-              Distribution of LMI eligible properties
-            </CardDescription>
+            <CardTitle>LMI Status Distribution</CardTitle>
+            <CardDescription>Proportion of LMI eligible properties</CardDescription>
           </CardHeader>
           <CardContent className="flex justify-center">
             <div className="h-60 w-60">
-              <Chart type="pie" data={searchChartData} />
+              <Chart type="pie" data={lmiStatusData} />
             </div>
           </CardContent>
         </Card>
 
         <Card className="col-span-1">
           <CardHeader>
-            <CardTitle>Recent Searches</CardTitle>
+            <CardTitle>Popular ZIP Codes</CardTitle>
+            <CardDescription>Most searched ZIP codes</CardDescription>
           </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {stats.recentSearches.map((search) => (
-                <div key={search.id} className="border-b pb-2">
-                  <div className="font-medium">{search.address}</div>
-                  <div className="text-sm text-gray-500">
-                    {new Date(search.searched_at || '').toLocaleString()}
-                  </div>
-                  <div className="text-sm">
-                    {search.is_eligible ? 
-                      <span className="text-green-600">LMI Eligible</span> : 
-                      <span className="text-gray-600">Not Eligible</span>
-                    }
-                  </div>
-                </div>
-              ))}
-            </div>
+          <CardContent className="h-60">
+            <Chart type="bar" data={zipCodeChartData} />
           </CardContent>
         </Card>
       </div>
 
-      {/* User and Property Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Total Users</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.totalUsers || 0}</div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Total Properties</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.totalProperties || 0}</div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Total Realtors</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.totalRealtors || 0}</div>
-          </CardContent>
-        </Card>
-      </div>
+      {/* Recent Searches */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Recent Searches</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {stats.recentSearches.length > 0 ? (
+              stats.recentSearches.map((search: SearchHistory) => (
+                <div key={search.id} className="border-b pb-2">
+                  <div className="font-medium">{search.address}</div>
+                  <div className="text-sm text-gray-500">
+                    {search.searched_at ? new Date(search.searched_at).toLocaleString() : 'Unknown date'}
+                  </div>
+                  <div className="text-sm">
+                    <span className={search.is_eligible ? "text-green-500" : "text-red-500"}>
+                      {search.is_eligible ? "LMI Eligible" : "Not Eligible"}
+                    </span>
+                    {search.income_category && <span className="ml-2">({search.income_category})</span>}
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="text-gray-500">No recent searches found</div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };

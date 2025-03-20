@@ -24,6 +24,11 @@ export interface User {
   last_login?: string;
   is_active: boolean;
   is_admin: boolean;
+  verification_status?: string;
+  verification_method?: string;
+  verification_date?: string;
+  failed_login_attempts?: number;
+  last_ip_address?: string;
 }
 
 export interface UserProfile {
@@ -43,6 +48,15 @@ export interface UserProfile {
     in_app: boolean;
     sms: boolean;
   };
+  user_type?: string;
+  company_name?: string;
+  license_number?: string;
+  license_verified?: boolean;
+  professional_bio?: string;
+  website?: string;
+  subscription_tier?: string;
+  subscription_start_date?: string;
+  subscription_end_date?: string;
 }
 
 export interface Realtor {
@@ -130,6 +144,10 @@ export interface Notification {
   created_at: string;
   is_read: boolean;
   read_at?: string;
+  title?: string;
+  link_url?: string;
+  delivered_at?: string;
+  delivery_method?: string;
 }
 
 export interface SavedProperty {
@@ -147,11 +165,11 @@ export interface SearchHistory {
   user_id?: string | null;
   address: string;
   search_query?: string;
-  search_params?: Record<string, any>; // Changed from Json
+  search_params?: Record<string, any>;
   result_count?: number | null;
   lmi_result_count?: number | null;
   tract_id?: string;
-  result: Record<string, any>; // Changed from Json
+  result: Record<string, any>;
   is_eligible?: boolean;
   income_category?: string;
   searched_at: string;
@@ -305,6 +323,74 @@ export interface ProgramEligibilityCheck {
   residence_intent?: boolean;
   timeframe?: string;
   eligible_programs?: AssistanceProgram[];
+  created_at: string;
+}
+
+// New interfaces for database extensions
+export interface NotificationPreference {
+  preference_id: string;
+  user_id: string;
+  notification_type: string;
+  email_enabled: boolean;
+  sms_enabled: boolean;
+  in_app_enabled: boolean;
+  frequency: string;
+}
+
+export interface MarketingJob {
+  marketing_id: string;
+  user_id: string;
+  campaign_name: string;
+  status: string;
+  total_addresses: number;
+  processed_addresses: number;
+  eligible_addresses: number;
+  created_at: string;
+  completed_at?: string;
+  notification_sent: boolean;
+}
+
+export interface MarketingAddress {
+  id: string;
+  marketing_id: string;
+  address: string;
+  status: string;
+  is_eligible?: boolean;
+  verification_details?: Record<string, any>;
+  error_message?: string;
+  created_at: string;
+  verified_at?: string;
+}
+
+export interface Client {
+  client_id: string;
+  professional_id: string;
+  first_name: string;
+  last_name: string;
+  email?: string;
+  phone?: string;
+  status: string;
+  notes?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface RateLimit {
+  id: string;
+  ip_address: string;
+  endpoint: string;
+  count: number;
+  first_request: string;
+  last_request: string;
+  is_blocked: boolean;
+}
+
+export interface VerificationChallenge {
+  id: string;
+  question: string;
+  answers: string[];
+  difficulty: number;
+  is_active: boolean;
   created_at: string;
 }
 
