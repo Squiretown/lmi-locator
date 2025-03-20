@@ -17,7 +17,15 @@ export const getAllAssistancePrograms = async (): Promise<AssistanceProgram[]> =
       .eq('status', 'active');
       
     if (error) throw error;
-    return data || [];
+    
+    // Transform data to match the expected types
+    return (data || []).map(program => ({
+      ...program,
+      contact_info: program.contact_info ? JSON.parse(JSON.stringify(program.contact_info)) : {},
+      program_details: program.program_details ? JSON.parse(JSON.stringify(program.program_details)) : {},
+      program_locations: program.program_locations || [],
+      property_types_eligible: program.property_types_eligible || []
+    }));
   } catch (error) {
     console.error('Error fetching assistance programs:', error);
     return [];
@@ -46,7 +54,15 @@ export const getAssistanceProgramsByLocation = async (
       .eq('program_locations.location_value', locationValue);
       
     if (error) throw error;
-    return data || [];
+    
+    // Transform data to match the expected types
+    return (data || []).map(program => ({
+      ...program,
+      contact_info: program.contact_info ? JSON.parse(JSON.stringify(program.contact_info)) : {},
+      program_details: program.program_details ? JSON.parse(JSON.stringify(program.program_details)) : {},
+      program_locations: program.program_locations || [],
+      property_types_eligible: program.property_types_eligible || []
+    }));
   } catch (error) {
     console.error('Error fetching assistance programs by location:', error);
     return [];
@@ -61,14 +77,28 @@ export const saveProgramEligibilityCheck = async (
   data: Partial<ProgramEligibilityCheck>
 ): Promise<ProgramEligibilityCheck | null> => {
   try {
+    // Need to transform eligible_programs to a JSON compatible format
+    const dbData = {
+      ...data,
+      eligible_programs: data.eligible_programs ? JSON.stringify(data.eligible_programs) : null
+    };
+    
     const { data: result, error } = await supabase
       .from('program_eligibility_checks')
-      .insert(data)
+      .insert(dbData)
       .select()
       .single();
       
     if (error) throw error;
-    return result;
+    
+    // Transform back to the expected type
+    const typedResult: ProgramEligibilityCheck = {
+      ...result,
+      eligible_programs: result.eligible_programs ? 
+        JSON.parse(JSON.stringify(result.eligible_programs)) : []
+    };
+    
+    return typedResult;
   } catch (error) {
     console.error('Error saving program eligibility check:', error);
     return null;

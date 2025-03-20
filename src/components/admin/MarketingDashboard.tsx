@@ -92,14 +92,30 @@ const MarketingDashboard = () => {
       // Fetch user type distribution
       const { data: userTypeData, error: userTypeError } = await supabase
         .from('user_profiles')
-        .select('user_type, count(*)')
-        .group('user_type');
+        .select('user_type, count')
+        .execute();
 
       if (userTypeError) throw userTypeError;
-      setUserTypeStats(userTypeData.map(item => ({
-        user_type: item.user_type || 'unknown',
-        count: item.count
-      })));
+      
+      // Transform the data into the format we need
+      const transformedUserTypeData: UserTypeSummary[] = [];
+      if (userTypeData) {
+        const userTypeMap = new Map<string, number>();
+        userTypeData.forEach((item: any) => {
+          const type = item.user_type || 'unknown';
+          userTypeMap.set(type, (userTypeMap.get(type) || 0) + 1);
+        });
+        
+        userTypeMap.forEach((count, user_type) => {
+          transformedUserTypeData.push({ user_type, count });
+        });
+      }
+      
+      setUserTypeStats(transformedUserTypeData.length > 0 ? transformedUserTypeData : [
+        { user_type: 'standard', count: 0 },
+        { user_type: 'admin', count: 0 },
+        { user_type: 'realtor', count: 0 }
+      ]);
 
       // Fetch verification challenges
       const { data: challengeData, error: challengeError } = await supabase
@@ -108,7 +124,7 @@ const MarketingDashboard = () => {
         .order('difficulty', { ascending: true });
 
       if (challengeError) throw challengeError;
-      setVerificationChallenges(challengeData);
+      setVerificationChallenges(challengeData || []);
 
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
@@ -364,7 +380,7 @@ const MarketingDashboard = () => {
                               <Badge variant={challenge.difficulty > 1 ? "secondary" : "outline"}>
                                 Level {challenge.difficulty}
                               </Badge>
-                              <Badge variant={challenge.is_active ? "success" : "destructive"}>
+                              <Badge variant={challenge.is_active ? "outline" : "destructive"}>
                                 {challenge.is_active ? "Active" : "Disabled"}
                               </Badge>
                             </div>

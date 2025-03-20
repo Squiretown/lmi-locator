@@ -15,7 +15,23 @@ const Dashboard: React.FC = () => {
       try {
         setLoading(true);
         const data = await getDashboardStats();
-        setStats(data);
+        // Transform the data to match DashboardStats type
+        const statsData: DashboardStats = {
+          totalSearches: data.searchHistory?.length || 0,
+          lmiProperties: data.searchHistory?.filter(item => item.is_eligible).length || 0,
+          lmiPercentage: data.searchHistory?.length 
+            ? (data.searchHistory.filter(item => item.is_eligible).length / data.searchHistory.length) * 100 
+            : 0,
+          recentSearches: data.searchHistory?.map(item => ({
+            ...item,
+            income_category: item.income_category || '',
+            is_eligible: !!item.is_eligible,
+          })) || [],
+          totalUsers: data.userCount || 0,
+          totalProperties: data.propertyCount || 0,
+          totalRealtors: data.realtorCount || 0
+        };
+        setStats(statsData);
       } catch (error) {
         console.error('Error loading dashboard stats:', error);
       } finally {
