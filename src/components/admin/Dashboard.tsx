@@ -62,10 +62,12 @@ const Dashboard: React.FC = () => {
         // Calculate popular zip codes
         const zipCodes: Record<string, number> = {};
         searchHistoryData?.forEach(search => {
-          if (search.result && typeof search.result === 'object') {
-            // Handle case where zip_code might be in the result object
-            const zipCode = search.result.zip_code as string;
-            if (zipCode) {
+          if (search.result && typeof search.result === 'object' && !Array.isArray(search.result)) {
+            // Make sure result is an object, not an array
+            const resultObj = search.result as Record<string, any>;
+            // Check if zip_code exists in the result object
+            if (resultObj.zip_code && typeof resultObj.zip_code === 'string') {
+              const zipCode = resultObj.zip_code;
               zipCodes[zipCode] = (zipCodes[zipCode] || 0) + 1;
             }
           }
