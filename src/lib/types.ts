@@ -1,4 +1,3 @@
-
 // API Response Types
 export interface CheckLmiStatusResponse {
   is_approved: boolean;
@@ -162,19 +161,19 @@ export interface SavedProperty {
 
 export interface SearchHistory {
   id: string;
-  user_id?: string | null;
+  user_id: string | null;
   address: string;
-  search_query?: string;
-  search_params?: Record<string, any>;
-  result_count?: number | null;
-  lmi_result_count?: number | null;
-  tract_id?: string;
-  result: Record<string, any>;
-  is_eligible?: boolean;
-  income_category?: string;
+  ip_address: string | null;
+  search_params: JsonRecord;
+  result: JsonRecord;
+  result_count: number | null;
+  lmi_result_count: number | null;
   searched_at: string;
-  ip_address?: string | null;
-  user_agent?: string | null;
+  income_category: string | null;
+  is_eligible: boolean | null;
+  tract_id: string | null;
+  search_query: string | null;
+  user_agent: string | null;
 }
 
 export interface ApiUsage {
@@ -416,9 +415,9 @@ export interface EligibilityScreenerFormData {
 
 // Program Results Props
 export interface ProgramResultsProps {
-  programs: AssistanceProgram[];
+  programs: any[];
   address: string;
-  onConnectSpecialist?: () => void;
+  onConnectSpecialist: () => void;
 }
 
 // Dashboard Statistics Interface
@@ -427,8 +426,10 @@ export interface DashboardStats {
   lmiProperties: number;
   lmiPercentage: number;
   recentSearches: SearchHistory[];
-  totalUsers?: number;
-  totalProperties?: number;
-  totalRealtors?: number;
-  popularZipCodes?: Array<{zipCode: string, count: number}>;
 }
+
+import type { Json } from '@supabase/supabase-js';
+
+// Type utility to convert Supabase Json to Record
+export type JsonRecord = Record<string, any>;
+export type JsonToRecord<T> = T extends Json ? JsonRecord : T;

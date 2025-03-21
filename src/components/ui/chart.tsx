@@ -17,7 +17,10 @@ import {
   CartesianGrid, 
   Tooltip, 
   Legend, 
-  ResponsiveContainer
+  ResponsiveContainer,
+  PolarGrid,
+  PolarAngleAxis,
+  PolarRadiusAxis
 } from 'recharts';
 
 interface ChartProps {
@@ -87,7 +90,7 @@ export function Chart({
               label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
               outerRadius={80}
               fill="#8884d8"
-              dataKey="data"
+              dataKey="value"
             />
             <Tooltip />
           </PieChart>

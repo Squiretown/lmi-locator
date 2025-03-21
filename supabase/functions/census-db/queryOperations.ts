@@ -44,15 +44,19 @@ export async function getPopularSearches(supabase: any, limit: number = 5) {
 export async function getDashboardStats(supabase: any) {
   try {
     // Get total searches
-    const { data: totalSearches, error: searchError } = await supabase
+    const { count: totalSearches, error: searchError } = await supabase
       .from("search_history")
-      .select("id", { count: "exact" });
+      .select("*", { count: "exact", head: true });
+    
+    if (searchError) throw searchError;
     
     // Get LMI eligible properties
-    const { data: lmiProperties, error: lmiError } = await supabase
+    const { count: lmiProperties, error: lmiError } = await supabase
       .from("search_history")
-      .select("id", { count: "exact" })
+      .select("*", { count: "exact", head: true })
       .eq("is_eligible", true);
+    
+    if (lmiError) throw lmiError;
     
     // Get recent searches
     const { data: recentSearches, error: recentError } = await supabase
@@ -61,18 +65,17 @@ export async function getDashboardStats(supabase: any) {
       .order("searched_at", { ascending: false })
       .limit(5);
     
-    if (searchError || lmiError || recentError) {
-      throw searchError || lmiError || recentError;
-    }
+    if (recentError) throw recentError;
+    
+    const lmiPercentage = totalSearches ? Math.round((lmiProperties / totalSearches) * 100) : 0;
     
     return { 
       success: true, 
       data: {
-        totalSearches: totalSearches?.length || 0,
-        lmiProperties: lmiProperties?.length || 0,
-        lmiPercentage: totalSearches?.length ? 
-          Math.round((lmiProperties?.length / totalSearches?.length) * 100) : 0,
-        recentSearches: recentSearches || []
+        totalSearches,
+        lmiProperties,
+        lmiPercentage,
+        recentSearches
       }
     };
   } catch (error) {
