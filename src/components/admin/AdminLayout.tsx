@@ -23,6 +23,7 @@ import {
   HelpCircle,
   Activity
 } from "lucide-react";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface AdminLayoutProps {
   children: React.ReactNode;
@@ -31,7 +32,7 @@ interface AdminLayoutProps {
 const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   return (
     <SidebarProvider defaultOpen={true}>
-      <div className="flex h-screen">
+      <div className="flex h-screen overflow-hidden">
         <Sidebar>
           <SidebarHeader>
             <div className="flex items-center gap-2 px-2">
@@ -129,7 +130,9 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
         </Sidebar>
         
         <main className="flex-1 overflow-auto bg-background">
-          {children}
+          <ScrollArea className="h-full w-full">
+            {children}
+          </ScrollArea>
         </main>
       </div>
     </SidebarProvider>

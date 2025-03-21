@@ -39,7 +39,7 @@ const SidebarProvider = ({ children, className, ...props }: React.ComponentProps
   return (
     <TooltipProvider delayDuration={0}>
       <OriginalSidebarProvider 
-        className={cn("group/sidebar-wrapper flex min-h-svh w-full has-[[data-variant=inset]]:bg-sidebar", className)}
+        className={cn("group/sidebar-wrapper flex min-h-svh w-full has-[[data-variant=inset]]:bg-sidebar overflow-hidden", className)}
         {...props}
       >
         {children}
