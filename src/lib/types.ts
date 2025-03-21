@@ -161,19 +161,19 @@ export interface SavedProperty {
 
 export interface SearchHistory {
   id: string;
-  user_id: string | null;
+  user_id?: string | null;
   address: string;
-  ip_address: string | null;
+  ip_address?: string | null;
   search_params: JsonRecord;
   result: JsonRecord;
-  result_count: number | null;
-  lmi_result_count: number | null;
-  searched_at: string;
-  income_category: string | null;
-  is_eligible: boolean | null;
-  tract_id: string | null;
-  search_query: string | null;
-  user_agent: string | null;
+  result_count?: number | null;
+  lmi_result_count?: number | null;
+  searched_at?: string;
+  income_category?: string | null;
+  is_eligible?: boolean | null;
+  tract_id?: string | null;
+  search_query?: string | null;
+  user_agent?: string | null;
 }
 
 export interface ApiUsage {
@@ -428,8 +428,10 @@ export interface DashboardStats {
   recentSearches: SearchHistory[];
 }
 
+// Add JsonRecord type at the appropriate location in the file
+export type JsonRecord = Record<string, any>;
+
 import type { Json } from '@supabase/supabase-js';
 
 // Type utility to convert Supabase Json to Record
-export type JsonRecord = Record<string, any>;
 export type JsonToRecord<T> = T extends Json ? JsonRecord : T;

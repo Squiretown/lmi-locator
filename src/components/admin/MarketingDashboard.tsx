@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Chart } from "@/components/ui/chart";
@@ -10,9 +9,9 @@ export const MarketingDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [userTypeCounts, setUserTypeCounts] = useState<Record<string, number>>({});
   const [marketingStats, setMarketingStats] = useState({
-    pending: 0,
-    processing: 0,
-    completed: 0,
+    pendingJobs: 0,
+    processingJobs: 0,
+    completedJobs: 0,
     totalJobs: 0,
     totalAddresses: 0,
     eligibleAddresses: 0
@@ -51,9 +50,9 @@ export const MarketingDashboard = () => {
           
         if (marketingData) {
           const stats = {
-            pending: marketingData.filter(job => job.status === 'pending').length,
-            processing: marketingData.filter(job => job.status === 'processing').length,
-            completed: marketingData.filter(job => job.status === 'completed').length,
+            pendingJobs: marketingData.filter(job => job.status === 'pending').length,
+            processingJobs: marketingData.filter(job => job.status === 'processing').length,
+            completedJobs: marketingData.filter(job => job.status === 'completed').length,
             totalJobs: marketingData.length,
             totalAddresses: marketingData.reduce((sum, job) => sum + (job.total_addresses || 0), 0),
             eligibleAddresses: marketingData.reduce((sum, job) => sum + (job.eligible_addresses || 0), 0)
@@ -122,9 +121,9 @@ export const MarketingDashboard = () => {
   }));
 
   const marketingStatusChartData = [
-    { name: 'Pending', data: marketingStats.pending },
-    { name: 'Processing', data: marketingStats.processing },
-    { name: 'Completed', data: marketingStats.completed }
+    { name: 'Pending', data: marketingStats.pendingJobs },
+    { name: 'Processing', data: marketingStats.processingJobs },
+    { name: 'Completed', data: marketingStats.completedJobs }
   ];
 
   const notificationTypeChartData = Object.keys(notifications.byType).map(key => ({
@@ -172,7 +171,7 @@ export const MarketingDashboard = () => {
               </div>
             </div>
             <div className="h-40">
-              <Chart type="doughnut" data={notificationTypeChartData} />
+              <Chart type="pie" data={notificationTypeChartData} />
             </div>
           </CardContent>
         </Card>

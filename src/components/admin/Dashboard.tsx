@@ -2,9 +2,19 @@
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { getDashboardStats } from "@/lib/supabase-api";
-import { DashboardStats, SearchHistory } from '@/lib/types';
+import { SearchHistory } from '@/lib/types';
 import { Chart } from "@/components/ui/chart";
 import LoadingSpinner from "@/components/LoadingSpinner";
+import { parseJsonData, parseSearchHistory } from '@/lib/supabase-utils';
+
+// Define the interface for dashboard statistics
+interface DashboardStats {
+  totalSearches: number;
+  lmiProperties: number;
+  lmiPercentage: number;
+  recentSearches: SearchHistory[];
+  popularZipCodes: Array<{zipCode: string, count: number}>;
+}
 
 export const Dashboard: React.FC = () => {
   const [loading, setLoading] = useState(true);
@@ -13,9 +23,6 @@ export const Dashboard: React.FC = () => {
     lmiProperties: 0,
     lmiPercentage: 0,
     recentSearches: [],
-    totalUsers: 0,
-    totalProperties: 0,
-    totalRealtors: 0,
     popularZipCodes: []
   });
 
@@ -37,9 +44,7 @@ export const Dashboard: React.FC = () => {
               let zipCode = '';
               
               // Try to parse result if it's a string
-              const result = typeof search.result === 'string' 
-                ? JSON.parse(search.result) 
-                : search.result;
+              const result = parseJsonData(search.result);
               
               if (result && result.address) {
                 const addressParts = result.address.split(',');
@@ -66,14 +71,16 @@ export const Dashboard: React.FC = () => {
             .sort((a, b) => b.count - a.count)
             .slice(0, 5);
           
+          // Process search history data
+          const parsedSearchHistory = data.searchHistory.map(search => 
+            parseSearchHistory(search)
+          ) as SearchHistory[];
+          
           setStats({
             totalSearches,
             lmiProperties,
             lmiPercentage,
-            recentSearches: data.searchHistory.slice(0, 10),
-            totalUsers: data.userCount || 0,
-            totalProperties: data.propertyCount || 0,
-            totalRealtors: data.realtorCount || 0,
+            recentSearches: parsedSearchHistory.slice(0, 10),
             popularZipCodes
           });
         }
@@ -107,7 +114,7 @@ export const Dashboard: React.FC = () => {
       <h1 className="text-2xl font-bold">Admin Dashboard</h1>
       
       {/* Overview Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium">Total Searches</CardTitle>
@@ -126,24 +133,6 @@ export const Dashboard: React.FC = () => {
             <div className="text-xs text-muted-foreground">
               {stats.lmiPercentage.toFixed(1)}% of total
             </div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Users</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.totalUsers}</div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Realtors</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.totalRealtors}</div>
           </CardContent>
         </Card>
       </div>

@@ -1,5 +1,4 @@
 
-import type { Json } from '@supabase/supabase-js';
 import { JsonRecord } from './types';
 
 /**
@@ -7,7 +6,7 @@ import { JsonRecord } from './types';
  * @param jsonData The JSON data from Supabase
  * @returns A properly typed JavaScript object
  */
-export function parseJsonData<T = JsonRecord>(jsonData: Json | null): T {
+export function parseJsonData<T = JsonRecord>(jsonData: any): T {
   if (jsonData === null) return {} as T;
   
   if (typeof jsonData === 'object') {
