@@ -1,3 +1,4 @@
+
 // API Response Types
 export interface CheckLmiStatusResponse {
   is_approved: boolean;
@@ -431,7 +432,6 @@ export interface DashboardStats {
 // Add JsonRecord type at the appropriate location in the file
 export type JsonRecord = Record<string, any>;
 
-import type { Json } from '@supabase/supabase-js';
-
-// Type utility to convert Supabase Json to Record
-export type JsonToRecord<T> = T extends Json ? JsonRecord : T;
+// Remove the problematic import of Json from @supabase/supabase-js
+// Replace with a simpler approach for JSON type conversion
+export type JsonToRecord<T> = T extends object ? T : JsonRecord;
