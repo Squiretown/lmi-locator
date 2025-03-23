@@ -24,8 +24,7 @@ export function usePropertyWorkflow() {
     
     // Show thank you message
     toast({
-      title: "Thank You!",
-      description: "We appreciate your interest in down payment assistance programs.",
+      description: "We appreciate your interest in down payment assistance programs."
     });
   };
 
