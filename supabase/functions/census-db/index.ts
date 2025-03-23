@@ -1,6 +1,8 @@
 
+// Use stable versions of imports
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.22.0";
+// Use native fetch instead of node-fetch
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.21.0";
 import { handleApiRequest } from "./handlers.ts";
 
 // Configure CORS headers
@@ -32,8 +34,7 @@ const supabaseClient = (req: Request) => {
         Authorization: req.headers.get("Authorization") || "",
       },
     },
-    // Use Deno's native fetch instead of node-fetch
-    fetch: fetch,
+    // No need to specify fetch, Deno will use its native fetch
   });
 };
 
