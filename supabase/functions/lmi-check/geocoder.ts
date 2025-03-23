@@ -55,7 +55,8 @@ export async function geocodeAddress(address: string): Promise<{
     }
     
     // Second attempt: ESRI Geocoder
-    const esriApiKey = Deno.env.get("ESRI_API_KEY");
+    // Use your ESRI API key directly instead of getting it from env
+    const esriApiKey = "YOUR_ESRI_API_KEY_HERE"; // Replace this with your actual ESRI API key
     
     if (!esriApiKey) {
       console.warn('ESRI API key not found, skipping ESRI geocoding');

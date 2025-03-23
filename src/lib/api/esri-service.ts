@@ -49,6 +49,9 @@ interface EsriReverseGeocodeResponse {
   };
 }
 
+// Your ESRI API key
+const ESRI_API_KEY = "YOUR_ESRI_API_KEY_HERE"; // Replace with your actual ESRI API key
+
 /**
  * Geocode an address using the ESRI geocoding API
  * @param address Full address string to geocode
@@ -61,17 +64,15 @@ export const geocodeAddressWithEsri = async (address: string): Promise<{
   score?: number;
 }> => {
   try {
-    const esriApiKey = import.meta.env.VITE_ESRI_API_KEY;
-    
-    if (!esriApiKey) {
-      throw new Error('ESRI API key not found in environment variables');
+    if (!ESRI_API_KEY) {
+      throw new Error('ESRI API key not found');
     }
     
     const params = new URLSearchParams({
       address: address,
       outFields: 'Addr_type,StAddr,City,Region,Postal',
       f: 'json',
-      token: esriApiKey,
+      token: ESRI_API_KEY,
       maxLocations: '1'
     });
     
@@ -117,16 +118,14 @@ export const reverseGeocodeWithEsri = async (lat: number, lon: number): Promise<
   zip?: string;
 }> => {
   try {
-    const esriApiKey = import.meta.env.VITE_ESRI_API_KEY;
-    
-    if (!esriApiKey) {
-      throw new Error('ESRI API key not found in environment variables');
+    if (!ESRI_API_KEY) {
+      throw new Error('ESRI API key not found');
     }
     
     const params = new URLSearchParams({
       location: `${lon},${lat}`,
       f: 'json',
-      token: esriApiKey,
+      token: ESRI_API_KEY,
       outFields: '*'
     });
     
