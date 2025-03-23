@@ -1,8 +1,6 @@
-
 // LMI status checking functionality
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { FunctionsResponse } from "@supabase/supabase-js";
 
 // Define the type for our LMI check result
 interface LmiResult {
@@ -45,7 +43,7 @@ export const checkLmiStatus = async (address: string): Promise<any> => {
       });
       
       // Create the edge function call promise
-      const edgeFunctionPromise = supabase.functions.invoke<LmiResult>('lmi-check', {
+      const edgeFunctionPromise = supabase.functions.invoke('lmi-check', {
         body: { address }
       });
       
@@ -53,7 +51,7 @@ export const checkLmiStatus = async (address: string): Promise<any> => {
       const response = await Promise.race([
         edgeFunctionPromise,
         timeoutPromise
-      ]) as FunctionsResponse<LmiResult>;
+      ]);
       
       // Now access data and error from the response
       const { data, error } = response;
