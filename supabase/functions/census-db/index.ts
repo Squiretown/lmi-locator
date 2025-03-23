@@ -1,7 +1,7 @@
 
-// Use stable versions of imports
+// Use stable versions of imports with exact version numbers
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
-// Use native fetch instead of node-fetch
+// Import a specific version without any semver ranges
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.21.0";
 import { handleApiRequest } from "./handlers.ts";
 
