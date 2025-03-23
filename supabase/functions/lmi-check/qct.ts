@@ -66,25 +66,35 @@ interface QctResponse {
 
 // Get QCT (Qualified Census Tract) status for a given census tract
 export async function getQctStatus(geoid: string): Promise<QctResponse> {
+  console.log('========== QCT CHECK START ==========');
   console.log('Checking QCT status for tract:', geoid);
   
   try {
     // Parse the geoid to get state, county, and tract
+    console.log('Parsing GeoID into components...');
     const { state, county, tract } = parseGeoId(geoid);
+    console.log('Parsed GeoID components:', { state, county, tract });
     
     // In a real implementation, you would call the HUD QCT API or database
     // For now, we'll simulate with mock data
+    console.log('Preparing to fetch QCT data from HUD API (mock)');
     
     // Create HUD API URL (placeholder - you would need to implement the actual API call)
     // const hudApiUrl = `https://www.huduser.gov/portal/datasets/qct/qualified-census-tracts-api.html?tract=${tract}&county=${county}&state=${state}`;
+    console.log('Would call HUD API with parameters:', { state, county, tract });
     
     // For development, we'll use mock data
     // In the real implementation, you would make an API call to HUD
+    console.log('Using mock QCT data for development');
     const mockQctData = getMockQctData(geoid);
     
+    console.log('QCT check result:', JSON.stringify(mockQctData, null, 2));
+    console.log('========== QCT CHECK END ==========');
     return mockQctData;
   } catch (error) {
     console.error('Error checking QCT status:', error);
+    console.log('Stack trace:', error.stack);
+    console.log('========== QCT CHECK ERROR END ==========');
     
     // Default response if error
     return {
@@ -95,6 +105,8 @@ export async function getQctStatus(geoid: string): Promise<QctResponse> {
 
 // Mock data function - replace with actual API call in production
 function getMockQctData(geoid: string): QctResponse {
+  console.log('Getting mock QCT data for tract:', geoid);
+  
   // Tracts that we'll consider as QCT for testing
   const qctTracts = [
     '06075010200', // Sample low income tract in San Francisco
@@ -107,6 +119,7 @@ function getMockQctData(geoid: string): QctResponse {
   ];
   
   const isQct = qctTracts.includes(geoid);
+  console.log('Is this tract a QCT?', isQct);
   
   if (isQct) {
     return {
