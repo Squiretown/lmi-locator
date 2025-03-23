@@ -55,11 +55,11 @@ export async function geocodeAddress(address: string): Promise<{
     }
     
     // Second attempt: ESRI Geocoder
-    // Use direct ESRI API key
-    const esriApiKey = "AAPKa240e26a09ac4ea4bef6a0c6cb25a81aK1fJt6b3QlT0_J3aCAZLBTEE5fZ5CaNoMGWCdp1qeRCjcl9U1uFi7-H8rOgTVPMd";
+    // Use ESRI API key from environment variables
+    const esriApiKey = Deno.env.get("ESRI_API_KEY");
     
     if (!esriApiKey) {
-      console.warn('ESRI API key not found, skipping ESRI geocoding');
+      console.warn('ESRI API key not found in environment variables, skipping ESRI geocoding');
       throw new Error('No geocoding services available');
     }
     
