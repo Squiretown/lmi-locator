@@ -34,6 +34,44 @@ const EdgeFunctionResults: React.FC<EdgeFunctionResultsProps> = ({
     );
   }
 
+  // Safe display of JSON data
+  const renderSafeJson = () => {
+    try {
+      // Only show data if it exists
+      if (!edgeFunctionResponse.data) {
+        return <p className="text-sm">Response contains no data</p>;
+      }
+      
+      // Safely stringify the JSON
+      const jsonString = JSON.stringify(edgeFunctionResponse.data, (key, value) => {
+        // Handle circular references
+        if (typeof value === 'object' && value !== null) {
+          if (seen.has(value)) {
+            return '[Circular Reference]';
+          }
+          seen.add(value);
+        }
+        return value;
+      }, 2);
+      
+      return (
+        <pre className="bg-muted p-2 rounded text-xs overflow-auto max-h-40">
+          {jsonString}
+        </pre>
+      );
+    } catch (error) {
+      console.error("Error rendering JSON:", error);
+      return (
+        <p className="text-sm text-red-500">
+          Error rendering JSON data. Response may contain circular references or invalid JSON.
+        </p>
+      );
+    }
+  };
+  
+  // Set for tracking circular references
+  const seen = new Set();
+
   return (
     <div className="bg-muted p-3 rounded">
       <div className="flex items-center gap-2 mb-2">
@@ -42,9 +80,7 @@ const EdgeFunctionResults: React.FC<EdgeFunctionResultsProps> = ({
           Response time: {edgeFunctionResponse.responseTime}ms
         </p>
       </div>
-      <pre className="bg-muted p-2 rounded text-xs overflow-auto max-h-40">
-        {JSON.stringify(edgeFunctionResponse.data, null, 2)}
-      </pre>
+      {renderSafeJson()}
     </div>
   );
 };

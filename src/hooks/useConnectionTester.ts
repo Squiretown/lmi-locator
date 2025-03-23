@@ -29,12 +29,18 @@ export function useConnectionTester() {
       setLastTestedAt(new Date());
       
       // Check authentication status
-      const { data } = await supabase.auth.getSession();
-      setAuthStatus(data.session ? 'signed-in' : 'signed-out');
+      try {
+        const { data } = await supabase.auth.getSession();
+        setAuthStatus(data?.session ? 'signed-in' : 'signed-out');
+      } catch (authError) {
+        console.error("Auth check error:", authError);
+        setAuthStatus('unknown');
+      }
       
     } catch (error) {
       console.error("Connection test error:", error);
       setStatus('error');
+      setPingTime(null);
       toast.error("Connection test failed");
     }
   };
@@ -59,6 +65,15 @@ export function useConnectionTester() {
         console.error("Edge function test failed:", error);
         toast.error(`Edge function test failed: ${error.message}`);
         setEdgeFunctionResponse({ error: error.message, details: error });
+        setEdgeFunctionStatus('error');
+        return;
+      }
+      
+      if (!data) {
+        setConsecutiveErrors(prev => prev + 1);
+        console.error("Edge function returned empty response");
+        toast.error("Edge function returned empty response");
+        setEdgeFunctionResponse({ error: "Empty response from edge function" });
         setEdgeFunctionStatus('error');
         return;
       }

@@ -1,5 +1,6 @@
 
 import React from 'react';
+import { AlertTriangleIcon } from 'lucide-react';
 
 interface TroubleshootingTipsProps {
   edgeFunctionStatus: 'idle' | 'testing' | 'success' | 'error';
@@ -10,11 +11,15 @@ const TroubleshootingTips: React.FC<TroubleshootingTipsProps> = ({
   edgeFunctionStatus, 
   consecutiveErrors 
 }) => {
-  if (edgeFunctionStatus !== 'error') return null;
+  // Only show for error status or when there are multiple errors
+  if (edgeFunctionStatus !== 'error' && consecutiveErrors === 0) return null;
   
   return (
     <div className="mt-4 p-3 bg-muted rounded-md text-sm">
-      <h4 className="font-semibold mb-2">Troubleshooting Tips:</h4>
+      <h4 className="font-semibold mb-2 flex items-center">
+        <AlertTriangleIcon className="h-4 w-4 mr-1 text-amber-500" />
+        Troubleshooting Tips:
+      </h4>
       <ul className="list-disc list-inside space-y-1">
         <li>Verify the edge function is deployed in your Supabase project</li>
         <li>Check the Supabase Edge Function Logs for errors</li>
@@ -29,6 +34,13 @@ const TroubleshootingTips: React.FC<TroubleshootingTipsProps> = ({
           </li>
         )}
       </ul>
+      <p className="mt-2 text-xs text-muted-foreground">
+        Tip: You can test this function directly in the Supabase dashboard or using the CLI:
+        <br />
+        <code className="bg-gray-800 text-green-400 px-1 rounded mt-1 inline-block">
+          supabase functions serve lmi-check
+        </code>
+      </p>
     </div>
   );
 };
