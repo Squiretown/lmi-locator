@@ -39,3 +39,57 @@ export interface CensusGeocoderResult {
     };
   };
 }
+
+/**
+ * Geocoded address result
+ */
+export interface GeocodedAddress {
+  coordinates: { 
+    lat: number; 
+    lon: number 
+  } | null;
+  tractId: string | null;
+  address?: {
+    street?: string;
+    city?: string;
+    state?: string;
+    zip?: string;
+  };
+  matchScore?: number;
+  source?: 'census' | 'arcgis' | 'fallback';
+}
+
+/**
+ * Geographic region IDs
+ */
+export interface GeographicIds {
+  state: string;
+  county: string;
+  tract: string;
+  block?: string;
+  blockGroup?: string;
+}
+
+/**
+ * Format for parsed GeoID
+ */
+export interface ParsedGeoId {
+  state: string;
+  county: string;
+  tract: string;
+}
+
+/**
+ * Error related to geocoding
+ */
+export class GeocodingError extends Error {
+  public statusCode?: number;
+  public source?: string;
+  
+  constructor(message: string, statusCode?: number, source?: string) {
+    super(message);
+    this.name = 'GeocodingError';
+    this.statusCode = statusCode;
+    this.source = source;
+  }
+}
