@@ -1,4 +1,3 @@
-
 // Configuration constants for Census API
 
 // Census API URL constants
@@ -12,12 +11,21 @@ export const ESRI_GEOCODING_URL = "https://geocode.arcgis.com/arcgis/rest/servic
 export const ESRI_REVERSE_GEOCODING_URL = "https://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer/reverseGeocode";
 
 /**
- * Parses a Census Geographic Identifier (GeoID) into its component parts
+ * Determines income category based on percentage of AMI
  * 
- * GeoIDs for census tracts typically follow this format:
- * - First 2 digits: State FIPS code
- * - Next 3 digits: County FIPS code
- * - Remaining digits: Tract code (usually 6 digits, may include decimal)
+ * @param percentage Percentage of Area Median Income
+ * @returns Income category label
+ */
+export function getIncomeCategory(percentage: number): string {
+  if (percentage <= 30) return "Extremely Low Income";
+  if (percentage <= 50) return "Very Low Income";
+  if (percentage <= 80) return "Low Income";
+  if (percentage <= 120) return "Moderate Income";
+  return "Above Moderate Income";
+}
+
+/**
+ * Parses a Census Geographic Identifier (GeoID) into its component parts
  * 
  * @param geoId The geographic identifier string to parse
  * @returns Object containing state, county, and tract components
@@ -30,9 +38,8 @@ export function parseGeoId(geoId: string): { state: string; county: string; trac
   // Clean up the GeoID - remove any non-alphanumeric characters except decimal points
   const cleanGeoId = geoId.replace(/[^\w\.]/g, '');
   
-  // Different formats handling
+  // Standard format handling (SSCCCTTTTTT)
   if (cleanGeoId.length >= 11) {
-    // Standard 11+ character format (SSCCCTTTTTT)
     return {
       state: cleanGeoId.substring(0, 2),
       county: cleanGeoId.substring(2, 5),
@@ -43,14 +50,12 @@ export function parseGeoId(geoId: string): { state: string; county: string; trac
     const parts = cleanGeoId.split('.');
     
     if (parts[0].length >= 5) {
-      // If first part has state+county
       return {
         state: parts[0].substring(0, 2),
         county: parts[0].substring(2, 5),
         tract: parts[0].substring(5) + '.' + parts[1]
       };
     } else {
-      // Format might be different, do our best
       return {
         state: parts[0].substring(0, 2),
         county: parts[0].substring(2),
@@ -58,7 +63,7 @@ export function parseGeoId(geoId: string): { state: string; county: string; trac
       };
     }
   } else {
-    // Attempt to parse shorter formats
+    // Handle shorter formats
     if (cleanGeoId.length >= 5) {
       return {
         state: cleanGeoId.substring(0, 2),
@@ -97,12 +102,3 @@ export function formatGeoId(state: string, county: string, tract: string): strin
   
   return `${paddedState}${paddedCounty}${formattedTract}`;
 }
-
-// Determine income category based on percentage of AMI
-export const getIncomeCategory = (percentageOfAmi: number): string => {
-  if (percentageOfAmi <= 30) return "Extremely Low Income";
-  if (percentageOfAmi <= 50) return "Very Low Income";
-  if (percentageOfAmi <= 80) return "Low Income";
-  if (percentageOfAmi <= 120) return "Moderate Income";
-  return "Above Moderate Income";
-};

@@ -34,9 +34,10 @@ serve(async (req) => {
     console.log("Processing LMI check for address:", address);
     
     // Step 1: Geocode the address
-    console.log('Step 1: Geocoding address...');
+    console.log('========== STEP 1: GEOCODING ADDRESS ==========');
     const geocodeResult = await geocodeAddress(address);
     console.log('Geocode result:', JSON.stringify(geocodeResult, null, 2));
+    console.log('========== GEOCODING COMPLETE ==========');
     
     if (!geocodeResult.geoid) {
       console.error('Unable to determine census tract for address');
@@ -44,12 +45,13 @@ serve(async (req) => {
     }
     
     // Step 2: Get median income for the tract
-    console.log('Step 2: Getting median income for tract...');
+    console.log('========== STEP 2: GETTING MEDIAN INCOME ==========');
     const medianIncome = await getMedianIncome(geocodeResult.geoid);
     console.log('Median income result:', medianIncome);
+    console.log('========== MEDIAN INCOME COMPLETE ==========');
     
     // Step 3: Calculate eligibility based on AMI
-    console.log('Step 3: Calculating eligibility...');
+    console.log('========== STEP 3: CALCULATING ELIGIBILITY ==========');
     const ami = 100000; // Area Median Income
     const percentageOfAmi = (medianIncome / ami) * 100;
     const incomeCategory = getIncomeCategory(percentageOfAmi);
@@ -61,11 +63,13 @@ serve(async (req) => {
       incomeCategory,
       isEligible
     });
+    console.log('========== ELIGIBILITY CALCULATION COMPLETE ==========');
     
     // Step 4: Get QCT status (Qualified Census Tract)
-    console.log('Step 4: Getting QCT status...');
+    console.log('========== STEP 4: GETTING QCT STATUS ==========');
     const qctStatus = await getQctStatus(geocodeResult.geoid);
     console.log('QCT status result:', JSON.stringify(qctStatus, null, 2));
+    console.log('========== QCT STATUS COMPLETE ==========');
     
     // Build response
     console.log('Building response...');

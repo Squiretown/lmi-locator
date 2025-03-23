@@ -1,5 +1,5 @@
-
 import { CENSUS_GEOCODER_URL, ESRI_GEOCODING_URL } from "./constants.ts";
+import { geocodeAddress as censusGeocode, determineCensusTract } from "./tractLookup.ts";
 
 // Geocode an address using Census Geocoder API with ESRI as backup
 export async function geocodeAddress(address: string): Promise<{
@@ -12,7 +12,63 @@ export async function geocodeAddress(address: string): Promise<{
   console.log('Geocoding address:', address);
   
   try {
-    // First attempt: Census Geocoder
+    // First attempt: Improved Census Geocoder implementation
+    try {
+      console.log('Attempting to geocode with improved Census Geocoder implementation');
+      
+      const result = await censusGeocode(address);
+      
+      if (result.coordinates && result.tractId) {
+        console.log('Successfully geocoded address with improved Census implementation:', {
+          lat: result.coordinates.lat,
+          lon: result.coordinates.lon,
+          geoid: result.tractId
+        });
+        
+        return {
+          lat: result.coordinates.lat,
+          lon: result.coordinates.lon,
+          geoid: result.tractId,
+          geocoding_service: 'Census'
+        };
+      } else if (result.coordinates) {
+        // Got coordinates but no tract, try tract lookup separately
+        console.log('Got coordinates but no tract ID, attempting separate tract lookup');
+        
+        const tractId = await determineCensusTract(
+          result.coordinates.lat,
+          result.coordinates.lon
+        );
+        
+        if (tractId) {
+          console.log('Successfully determined census tract in second step:', tractId);
+          
+          return {
+            lat: result.coordinates.lat,
+            lon: result.coordinates.lon,
+            geoid: tractId,
+            geocoding_service: 'Census'
+          };
+        } else {
+          console.log('Failed to determine census tract in second step');
+          
+          // Return coordinates without tract ID
+          return {
+            lat: result.coordinates.lat,
+            lon: result.coordinates.lon,
+            geocoding_service: 'Census (partial)'
+          };
+        }
+      }
+      
+      console.log('Improved Census geocoder returned no results, falling back to legacy method');
+    } catch (error) {
+      console.error('Error with improved Census geocoding:', error);
+      console.error('Improved Census geocoding error stack:', error.stack);
+      console.log('Falling back to legacy geocoding method');
+    }
+    
+    // Legacy geocoding implementation as fallback
     try {
       console.log('Attempting to geocode with Census Geocoder API');
       // Build the URL for Census Geocoder API
@@ -194,12 +250,25 @@ export async function geocodeAddress(address: string): Promise<{
   }
 }
 
-// Get census tract from coordinates
+// Get census tract from coordinates - keeping this as a fallback for compatibility
 async function getCensusTractFromCoordinates(lat: number, lon: number): Promise<string | null> {
   console.log('========== CENSUS TRACT LOOKUP START ==========');
-  console.log(`Getting census tract from coordinates: ${lat}, ${lon}`);
+  console.log(`Getting census tract from coordinates using legacy method: ${lat}, ${lon}`);
   
   try {
+    // First try the improved implementation
+    console.log('Attempting to use improved census tract lookup');
+    const tractId = await determineCensusTract(lat, lon);
+    
+    if (tractId) {
+      console.log(`Found census tract using improved method: ${tractId}`);
+      console.log('========== CENSUS TRACT LOOKUP END (SUCCESS) ==========');
+      return tractId;
+    }
+    
+    console.log('Improved method failed, falling back to legacy implementation');
+    
+    // Legacy census tract lookup implementation
     const url = `${CENSUS_GEOCODER_URL}/geographies/coordinates?x=${lon}&y=${lat}&benchmark=2020&vintage=2020&layers=Census%20Tracts&format=json`;
     
     console.log(`Making request to Census Geocoder for coordinates: ${url}`);
