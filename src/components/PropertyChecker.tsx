@@ -24,6 +24,7 @@ const PropertyChecker: React.FC = () => {
     if (result) {
       showResults(result);
     }
+    return result;
   };
 
   return (

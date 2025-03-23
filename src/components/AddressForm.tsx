@@ -5,10 +5,11 @@ import { SearchIcon, XCircleIcon, BookmarkIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
-import { checkLmiStatus } from '@/lib/api';
 import { saveSearch } from '@/lib/supabase-api';
 import LoadingSpinner from './LoadingSpinner';
 import { toast } from 'sonner';
+import { z } from 'zod';
+import { formSchema } from '@/hooks/usePropertySearch';
 
 interface AddressFormProps {
   onResultReceived: (result: any) => void;
@@ -22,6 +23,9 @@ const AddressForm: React.FC<AddressFormProps> = ({
   isLoading 
 }) => {
   const [address, setAddress] = useState('');
+  const [city, setCity] = useState('');
+  const [state, setState] = useState('');
+  const [zipCode, setZipCode] = useState('');
   const [savedAddresses, setSavedAddresses] = useState<string[]>(() => {
     // Initialize from localStorage
     const saved = localStorage.getItem('savedAddresses');
@@ -31,33 +35,42 @@ const AddressForm: React.FC<AddressFormProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!address.trim()) {
-      toast.error('Please enter an address');
-      return;
-    }
-    
-    setIsLoading(true);
-    
     try {
-      const result = await checkLmiStatus(address);
+      // Validate form data
+      const formData = {
+        address,
+        city,
+        state,
+        zipCode
+      };
       
-      // Save the search to Supabase
-      try {
-        await saveSearch(address, result);
-        // Show toast notification for search saving
-        if (result.status === 'success') {
+      // Validate using the zod schema
+      formSchema.parse(formData);
+      
+      setIsLoading(true);
+      
+      // Pass the form values to parent component for processing
+      const result = await onResultReceived(formData);
+      
+      // Save the search to Supabase if successful
+      if (result) {
+        try {
+          const fullAddress = `${address}, ${city}, ${state} ${zipCode}`;
+          await saveSearch(fullAddress, result);
           toast.success('Search saved to history');
+        } catch (error) {
+          console.warn('Error saving search to Supabase:', error);
         }
-      } catch (error) {
-        console.warn('Error saving search to Supabase:', error);
-        // Continue with the response even if saving fails
       }
-      
-      onResultReceived(result);
-      setIsLoading(false);
     } catch (error) {
-      console.error('Error checking LMI status:', error);
-      toast.error('Error checking address. Please try again.');
+      if (error instanceof z.ZodError) {
+        const fieldErrors = error.flatten().fieldErrors;
+        const errorMessages = Object.values(fieldErrors).flat();
+        errorMessages.forEach(msg => toast.error(msg));
+      } else {
+        toast.error('Please fill in all required fields');
+      }
+    } finally {
       setIsLoading(false);
     }
   };
@@ -76,11 +89,15 @@ const AddressForm: React.FC<AddressFormProps> = ({
     toast.success('Property saved to your collection');
   };
 
-  const clearAddress = () => {
+  const clearForm = () => {
     setAddress('');
+    setCity('');
+    setState('');
+    setZipCode('');
   };
 
   const isAddressSaved = savedAddresses.includes(address);
+  const isFormComplete = address.trim() && city.trim() && state.trim() && zipCode.trim();
 
   return (
     <motion.div
@@ -91,41 +108,97 @@ const AddressForm: React.FC<AddressFormProps> = ({
     >
       <Card className="glass p-5 shadow-lg">
         <form onSubmit={handleSubmit} className="space-y-4">
-          <label 
-            htmlFor="address" 
-            className="block text-sm font-medium text-foreground/80 mb-1"
-          >
-            Enter an address to check LMI eligibility
-          </label>
-          <div className="relative">
-            <Input
-              id="address"
-              type="text"
-              placeholder="123 Main St, Anytown, ST 12345"
-              value={address}
-              onChange={(e) => setAddress(e.target.value)}
-              className="w-full pl-10 pr-10 py-2 focus-visible:ring-primary focus-visible:ring-offset-0"
-              disabled={isLoading}
-            />
-            <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            {address && (
-              <button
-                type="button"
-                onClick={clearAddress}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2"
-              >
-                <XCircleIcon className="h-4 w-4 text-muted-foreground hover:text-foreground transition-colors" />
-              </button>
-            )}
+          <h3 className="text-lg font-medium">Enter an address to check LMI eligibility</h3>
+          
+          <div className="space-y-3">
+            <div>
+              <label htmlFor="address" className="block text-sm font-medium text-foreground/80 mb-1">
+                Street Address
+              </label>
+              <Input
+                id="address"
+                type="text"
+                placeholder="123 Main St"
+                value={address}
+                onChange={(e) => setAddress(e.target.value)}
+                className="w-full"
+                disabled={isLoading}
+              />
+            </div>
+            
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label htmlFor="city" className="block text-sm font-medium text-foreground/80 mb-1">
+                  City
+                </label>
+                <Input
+                  id="city"
+                  type="text"
+                  placeholder="Anytown"
+                  value={city}
+                  onChange={(e) => setCity(e.target.value)}
+                  className="w-full"
+                  disabled={isLoading}
+                />
+              </div>
+              
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label htmlFor="state" className="block text-sm font-medium text-foreground/80 mb-1">
+                    State
+                  </label>
+                  <Input
+                    id="state"
+                    type="text"
+                    placeholder="NY"
+                    value={state}
+                    onChange={(e) => setState(e.target.value)}
+                    maxLength={2}
+                    className="w-full"
+                    disabled={isLoading}
+                  />
+                </div>
+                
+                <div>
+                  <label htmlFor="zipCode" className="block text-sm font-medium text-foreground/80 mb-1">
+                    ZIP
+                  </label>
+                  <Input
+                    id="zipCode"
+                    type="text"
+                    placeholder="12345"
+                    value={zipCode}
+                    onChange={(e) => setZipCode(e.target.value.replace(/[^0-9-]/g, ''))}
+                    maxLength={10}
+                    className="w-full"
+                    disabled={isLoading}
+                  />
+                </div>
+              </div>
+            </div>
           </div>
+          
           <div className="flex gap-2">
             <Button 
               type="submit" 
               className="flex-1 transition-all"
-              disabled={isLoading || !address.trim()}
+              disabled={isLoading || !isFormComplete}
             >
               {isLoading ? <LoadingSpinner /> : 'Check LMI Status'}
             </Button>
+            
+            {address.trim() && (
+              <Button
+                type="button"
+                variant="secondary"
+                className="px-3 transition-all"
+                onClick={clearForm}
+                disabled={isLoading}
+                title="Clear form"
+              >
+                <XCircleIcon className="h-4 w-4" />
+              </Button>
+            )}
             
             {address.trim() && (
               <Button

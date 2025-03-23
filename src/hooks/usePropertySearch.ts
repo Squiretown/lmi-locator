@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import { CheckLmiStatusResponse } from '@/lib/types';
 import { z } from 'zod';
+import { checkLmiStatus } from '@/lib/api/lmi';
 
 // Define the form schema for address search
 export const formSchema = z.object({
@@ -14,26 +15,6 @@ export const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
-// Mock API call - replace with actual implementation
-const checkLmiStatus = async (values: FormValues): Promise<CheckLmiStatusResponse | null> => {
-  // This would be replaced by an actual API call
-  console.log("Checking LMI status for:", values);
-  
-  // Mock a successful response
-  return {
-    is_approved: Math.random() > 0.5,
-    address: `${values.address}, ${values.city}, ${values.state} ${values.zipCode}`,
-    approval_message: "Property is in an LMI census tract",
-    tract_id: "42003020100",
-    median_income: 45000,
-    ami: 80000,
-    income_category: "low",
-    percentage_of_ami: 56.25,
-    eligibility: "eligible",
-    lmi_status: "qualified"
-  };
-};
-
 export function usePropertySearch() {
   const [lmiStatus, setLmiStatus] = useState<CheckLmiStatusResponse | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -41,16 +22,36 @@ export function usePropertySearch() {
   const submitPropertySearch = async (values: FormValues) => {
     setIsLoading(true);
     try {
-      const result = await checkLmiStatus(values);
-      setLmiStatus(result);
+      // Format the address for the API call
+      const formattedAddress = `${values.address}, ${values.city}, ${values.state} ${values.zipCode}`;
+      
+      // Use the actual API implementation from src/lib/api/lmi.ts
+      const result = await checkLmiStatus(formattedAddress);
+      
+      // Since checkLmiStatus returns a different format, we need to transform it
+      // to match the CheckLmiStatusResponse type
+      const lmiResponse: CheckLmiStatusResponse = {
+        is_approved: result.is_approved,
+        address: result.address,
+        approval_message: result.approval_message,
+        tract_id: result.tract_id,
+        median_income: result.median_income,
+        ami: result.ami,
+        income_category: result.income_category,
+        percentage_of_ami: result.percentage_of_ami,
+        eligibility: result.eligibility || result.status,
+        lmi_status: result.lmi_status
+      };
+      
+      setLmiStatus(lmiResponse);
       
       toast(`Search completed for ${values.address}`);
       
-      return result;
+      return lmiResponse;
     } catch (error) {
       console.error("Error checking property status:", error);
       
-      toast("Failed to check property status. Please try again.");
+      toast.error("Failed to check property status. Please try again.");
       
       return null;
     } finally {
