@@ -24,13 +24,14 @@ export const checkLmiStatus = async (address: string): Promise<any> => {
         body: { address }
       });
       
-      // Race the promises
-      const result = await Promise.race([
+      // Race the promises - properly awaiting the result
+      const response = await Promise.race([
         edgeFunctionPromise,
         timeoutPromise
-      ]) as typeof edgeFunctionPromise;
+      ]);
       
-      const { data, error } = result;
+      // Now access data and error from the response
+      const { data, error } = response;
       
       if (error) {
         console.error('Error calling LMI check function:', error);
