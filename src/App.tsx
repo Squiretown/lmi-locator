@@ -1,5 +1,5 @@
 
-import React, { useEffect } from 'react';
+import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import './App.css';
 import Header from '@/components/Header';
@@ -8,9 +8,9 @@ import Index from '@/pages/Index';
 import ApiDocs from '@/pages/ApiDocs';
 import ApiTest from '@/pages/ApiTest';
 import NotFound from '@/pages/NotFound';
-import { AdminLayout } from '@/components/admin/AdminLayout';
+import AdminLayout from '@/components/admin/AdminLayout';
 import AdminDashboard from '@/components/admin/AdminDashboard';
-import MarketingDashboard from '@/components/admin/MarketingDashboard';
+import { MarketingDashboard } from '@/components/admin/MarketingDashboard';
 import { Toaster } from '@/components/ui/sonner';
 
 function App() {

@@ -24,12 +24,9 @@ import {
   Activity
 } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Outlet } from "react-router-dom";
 
-interface AdminLayoutProps {
-  children: React.ReactNode;
-}
-
-const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
+const AdminLayout: React.FC = () => {
   return (
     <SidebarProvider defaultOpen={true}>
       <div className="flex h-screen overflow-hidden">
@@ -131,7 +128,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
         
         <main className="flex-1 overflow-auto bg-background">
           <ScrollArea className="h-full w-full">
-            {children}
+            <Outlet />
           </ScrollArea>
         </main>
       </div>
