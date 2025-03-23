@@ -25,6 +25,9 @@ export function usePropertySearch() {
       // Format the address for the API call
       const formattedAddress = `${values.address}, ${values.city}, ${values.state} ${values.zipCode}`;
       
+      // Show toast to indicate search is in progress
+      toast.info(`Checking status for ${values.address}...`);
+      
       // Use the checkLmiStatus function from src/lib/api/lmi.ts
       const result = await checkLmiStatus(formattedAddress);
       
@@ -49,7 +52,12 @@ export function usePropertySearch() {
       
       setLmiStatus(lmiResponse);
       
-      toast.success(`Search completed for ${values.address}`);
+      // Show appropriate toast based on result
+      if (result.is_approved) {
+        toast.success(`This property is LMI eligible`);
+      } else {
+        toast.info(`This property is not in an LMI area`);
+      }
       
       return lmiResponse;
     } catch (error) {
