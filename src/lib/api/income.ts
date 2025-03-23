@@ -4,6 +4,7 @@ import { CENSUS_API_BASE_URL, ACS_DATASET, MEDIAN_INCOME_VARIABLE } from './cons
 import { parseGeoId } from './census-helpers';
 import { getCachedCensusResult, cacheCensusResult } from '../supabase-api';
 import { cachedFetch } from './cache';
+import { supabase } from '@/integrations/supabase/client';
 
 // Get median income for a census tract
 export const getMedianIncome = async (geoid: string): Promise<number> => {
