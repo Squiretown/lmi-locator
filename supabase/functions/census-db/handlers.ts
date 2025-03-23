@@ -2,9 +2,9 @@
 // Handler functions for different API actions
 
 // Database operations
-import { saveSearch } from './searchOperations';
-import { cacheCensusResult, getCachedCensusResult } from './cacheOperations';
-import { getSearchHistory, getPopularSearches, getDashboardStats } from './queryOperations';
+import { saveSearch } from './searchOperations.ts';
+import { cacheCensusResult, getCachedCensusResult } from './cacheOperations.ts';
+import { getSearchHistory, getPopularSearches, getDashboardStats } from './queryOperations.ts';
 
 // Process different types of API requests
 export async function handleApiRequest(supabase: any, action: string, params: any) {
