@@ -1,8 +1,6 @@
 
 // LMI status checking functionality
-import { geocodeAddress } from './geocode';
-import { getMedianIncome } from './income';
-import { formatTractId, getIncomeCategory } from './census-helpers';
+import { supabase } from "@/integrations/supabase/client";
 
 // Check if a location is in an LMI eligible census tract
 export const checkLmiStatus = async (address: string): Promise<any> => {
@@ -13,53 +11,23 @@ export const checkLmiStatus = async (address: string): Promise<any> => {
       throw new Error('Address is required');
     }
     
-    // Step 1: Geocode the address to get coordinates and census tract
-    const geocodeResult = await geocodeAddress(address);
-    const { lat, lon, geoid } = geocodeResult;
+    // Call the Supabase Edge Function
+    const { data, error } = await supabase.functions.invoke('lmi-check', {
+      body: { address },
+    });
     
-    if (!geoid) {
-      throw new Error('Unable to determine census tract for address');
+    if (error) {
+      console.error('Error calling LMI check function:', error);
+      throw new Error(error.message || 'Failed to check LMI status');
     }
     
-    // Step 2: Get median income for the census tract
-    const medianIncome = await getMedianIncome(geoid);
-    
-    if (medianIncome === null || medianIncome === undefined) {
-      throw new Error('Unable to retrieve median income data for the census tract');
+    if (!data) {
+      throw new Error('No data returned from LMI check');
     }
     
-    // Step 3: Calculate percentage of Area Median Income (AMI)
-    // For demonstration, we're using a fixed AMI value
-    const ami = 100000; // Area Median Income (normally would be retrieved from HUD or calculated)
-    const percentageOfAmi = (medianIncome / ami) * 100;
+    console.log('LMI check result:', data);
     
-    // Step 4: Determine income category and eligibility
-    const incomeCategory = getIncomeCategory(percentageOfAmi);
-    const isEligible = percentageOfAmi <= 80; // LMI eligible if <= 80% of AMI
-    
-    // Create the response based on eligibility
-    const result = {
-      status: "success",
-      address: address.toUpperCase(),
-      lat,
-      lon,
-      tract_id: formatTractId(geoid),
-      median_income: medianIncome,
-      ami,
-      income_category: incomeCategory,
-      percentage_of_ami: parseFloat(percentageOfAmi.toFixed(1)),
-      eligibility: isEligible ? "Eligible" : "Ineligible",
-      color_code: isEligible ? "success" : "danger",
-      is_approved: isEligible,
-      approval_message: isEligible 
-        ? `APPROVED - This location is in a ${incomeCategory} Census Tract`
-        : "NOT APPROVED - This location is not in an LMI Census Tract",
-      lmi_status: isEligible ? "LMI Eligible" : "Not LMI Eligible",
-      timestamp: new Date().toISOString(),
-      data_source: "U.S. Census Bureau American Community Survey 5-Year Estimates"
-    };
-    
-    return result;
+    return data;
   } catch (error) {
     console.error('Error in checkLmiStatus:', error);
     

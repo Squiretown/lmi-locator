@@ -25,8 +25,12 @@ export function usePropertySearch() {
       // Format the address for the API call
       const formattedAddress = `${values.address}, ${values.city}, ${values.state} ${values.zipCode}`;
       
-      // Use the actual API implementation from src/lib/api/lmi.ts
+      // Use the checkLmiStatus function from src/lib/api/lmi.ts
       const result = await checkLmiStatus(formattedAddress);
+      
+      if (result.status === "error") {
+        throw new Error(result.message || "Failed to check property status");
+      }
       
       // Since checkLmiStatus returns a different format, we need to transform it
       // to match the CheckLmiStatusResponse type
@@ -45,13 +49,13 @@ export function usePropertySearch() {
       
       setLmiStatus(lmiResponse);
       
-      toast(`Search completed for ${values.address}`);
+      toast.success(`Search completed for ${values.address}`);
       
       return lmiResponse;
     } catch (error) {
       console.error("Error checking property status:", error);
       
-      toast.error("Failed to check property status. Please try again.");
+      toast.error(error instanceof Error ? error.message : "Failed to check property status. Please try again.");
       
       return null;
     } finally {
