@@ -30,3 +30,6 @@ enabled = true
 [functions]
 [functions.lmi-check]
 verify_jwt = false
+
+[functions.census-db]
+verify_jwt = false

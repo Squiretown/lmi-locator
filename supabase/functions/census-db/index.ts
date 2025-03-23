@@ -21,7 +21,7 @@ const handleCors = (req: Request) => {
   return null;
 };
 
-// Supabase client setup
+// Supabase client setup - using the direct createClient approach
 const supabaseClient = (req: Request) => {
   const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
   const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
@@ -32,6 +32,8 @@ const supabaseClient = (req: Request) => {
         Authorization: req.headers.get("Authorization") || "",
       },
     },
+    // Use Deno's native fetch instead of node-fetch
+    fetch: fetch,
   });
 };
 
