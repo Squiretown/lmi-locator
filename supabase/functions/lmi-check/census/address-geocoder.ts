@@ -1,5 +1,5 @@
 
-import { CENSUS_CONFIG, CensusGeocoderResult } from "./geocoder-config.ts";
+import { CENSUS_CONFIG, CensusGeocoderResult, GeocodedAddress, GeocodingError } from "./geocoder-config.ts";
 import { formatGeoId } from "../constants.ts";
 
 /**
@@ -8,11 +8,7 @@ import { formatGeoId } from "../constants.ts";
  * @param address The address to geocode
  * @returns Promise with geocoded result or null if not found
  */
-export async function geocodeAddress(address: string): Promise<{ 
-  coordinates: { lat: number; lon: number } | null;
-  tractId: string | null;
-  formattedAddress?: string;
-}> {
+export async function geocodeAddress(address: string): Promise<GeocodedAddress> {
   try {
     if (!address) {
       console.error("No address provided for geocoding");
@@ -46,8 +42,11 @@ export async function geocodeAddress(address: string): Promise<{
       clearTimeout(timeoutId);
       
       if (!response.ok) {
-        console.error(`Census geocoding API error: ${response.status} - ${response.statusText}`);
-        return { coordinates: null, tractId: null };
+        throw new GeocodingError(
+          `Census geocoding API error: ${response.status} - ${response.statusText}`,
+          response.status,
+          'census'
+        );
       }
       
       const data = await response.json() as CensusGeocoderResult;
@@ -58,7 +57,11 @@ export async function geocodeAddress(address: string): Promise<{
       throw error;
     }
   } catch (error) {
-    console.error("Error geocoding address with Census API:", error);
+    if (error instanceof GeocodingError) {
+      console.error(`Census geocoding error: ${error.message} (${error.source}, status: ${error.statusCode})`);
+    } else {
+      console.error("Error geocoding address with Census API:", error);
+    }
     return { coordinates: null, tractId: null };
   }
 }
@@ -69,11 +72,7 @@ export async function geocodeAddress(address: string): Promise<{
  * @param data The Census geocoder API response
  * @returns Processed geocoding result with coordinates and tract ID
  */
-function processGeocodeResponse(data: CensusGeocoderResult): { 
-  coordinates: { lat: number; lon: number } | null;
-  tractId: string | null;
-  formattedAddress?: string;
-} {
+function processGeocodeResponse(data: CensusGeocoderResult): GeocodedAddress {
   // Check if we got a match
   if (data.result && 
       data.result.addressMatches && 
@@ -105,10 +104,11 @@ function processGeocodeResponse(data: CensusGeocoderResult): {
     return { 
       coordinates, 
       tractId,
-      formattedAddress: match.matchedAddress 
+      formattedAddress: match.matchedAddress,
+      source: 'census'
     };
   }
   
   console.warn("No address matches found in Census geocoding response");
-  return { coordinates: null, tractId: null };
+  return { coordinates: null, tractId: null, source: 'census' };
 }

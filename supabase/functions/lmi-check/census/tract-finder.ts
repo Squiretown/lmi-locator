@@ -1,5 +1,5 @@
 
-import { CENSUS_CONFIG, CensusGeocoderResult } from "./geocoder-config.ts";
+import { CENSUS_CONFIG, CensusGeocoderResult, GeocodingError } from "./geocoder-config.ts";
 import { formatGeoId } from "../constants.ts";
 
 /**
@@ -36,8 +36,11 @@ export async function fetchCensusTractFromCoordinates(lat: number, lon: number):
     clearTimeout(timeoutId);
     
     if (!response.ok) {
-      console.error(`Census API error: ${response.status} - ${response.statusText}`);
-      return null;
+      throw new GeocodingError(
+        `Census API error: ${response.status} - ${response.statusText}`,
+        response.status,
+        'census'
+      );
     }
     
     const data = await response.json() as CensusGeocoderResult;
@@ -91,7 +94,11 @@ export async function determineCensusTract(lat: number, lon: number): Promise<st
     console.warn("No Census tract information found in response");
     return null;
   } catch (error) {
-    console.error("Error determining Census tract:", error);
+    if (error instanceof GeocodingError) {
+      console.error(`Census geocoding error: ${error.message} (${error.source}, status: ${error.statusCode})`);
+    } else {
+      console.error("Error determining Census tract:", error);
+    }
     return null;
   }
 }

@@ -1,5 +1,5 @@
 
-import { determineCensusTract, geocodeAddress as censusGeocode } from "../census/index.ts";
+import { determineCensusTract, geocodeAddress as censusGeocode, GeocodedAddress, GeocodingError } from "../census/index.ts";
 
 /**
  * Geocode an address using Census Geocoder API
@@ -17,7 +17,7 @@ export async function geocodeWithCensus(address: string): Promise<{
   
   try {
     // Use the improved Census geocoding implementation
-    const result = await censusGeocode(address);
+    const result: GeocodedAddress = await censusGeocode(address);
     
     if (!result.coordinates) {
       console.log('Census geocoder returned no coordinates');
@@ -59,8 +59,12 @@ export async function geocodeWithCensus(address: string): Promise<{
     console.log('Failed to determine census tract from coordinates');
     return response;
   } catch (error) {
-    console.error('Error with Census geocoding:', error);
-    console.error('Census geocoding error stack:', error.stack);
+    if (error instanceof GeocodingError) {
+      console.error(`Census geocoding error: ${error.message} (${error.source}, status: ${error.statusCode})`);
+    } else {
+      console.error('Error with Census geocoding:', error);
+      console.error('Census geocoding error stack:', error.stack);
+    }
     throw error;
   }
 }
@@ -79,8 +83,12 @@ export async function getCensusTractFromCoordinates(lat: number, lon: number): P
     // Use the determineCensusTract function from census module
     return await determineCensusTract(lat, lon);
   } catch (error) {
-    console.error('Error getting census tract from coordinates:', error);
-    console.error('Census tract lookup error stack:', error.stack);
+    if (error instanceof GeocodingError) {
+      console.error(`Census tract lookup error: ${error.message} (${error.source}, status: ${error.statusCode})`);
+    } else {
+      console.error('Error getting census tract from coordinates:', error);
+      console.error('Census tract lookup error stack:', error.stack);
+    }
     return null;
   }
 }
