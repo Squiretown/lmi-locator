@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { SearchIcon, XCircleIcon, BookmarkIcon } from 'lucide-react';
@@ -50,17 +49,15 @@ const AddressForm: React.FC<AddressFormProps> = ({
       setIsLoading(true);
       
       // Pass the form values to parent component for processing
-      const result = await onResultReceived(formData);
+      onResultReceived(formData);
       
       // Save the search to Supabase if successful
-      if (result) {
-        try {
-          const fullAddress = `${address}, ${city}, ${state} ${zipCode}`;
-          await saveSearch(fullAddress, result);
-          toast.success('Search saved to history');
-        } catch (error) {
-          console.warn('Error saving search to Supabase:', error);
-        }
+      try {
+        const fullAddress = `${address}, ${city}, ${state} ${zipCode}`;
+        await saveSearch(fullAddress, null); // Pass null as result as we don't have it yet
+        toast.success('Search saved to history');
+      } catch (error) {
+        console.warn('Error saving search to Supabase:', error);
       }
     } catch (error) {
       if (error instanceof z.ZodError) {
