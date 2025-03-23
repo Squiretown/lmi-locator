@@ -1,4 +1,5 @@
-// Configuration constants for Census API
+
+// Constants and utilities for LMI check functionality
 
 // Census API URL constants
 export const CENSUS_GEOCODER_URL = "https://geocoding.geo.census.gov/geocoder";
@@ -27,6 +28,11 @@ export function getIncomeCategory(percentage: number): string {
 /**
  * Parses a Census Geographic Identifier (GeoID) into its component parts
  * 
+ * Census Tract GeoIDs typically follow this format:
+ * - First 2 digits: State FIPS code
+ * - Next 3 digits: County FIPS code
+ * - Remaining digits: Tract code (usually 6 digits, may include decimal)
+ * 
  * @param geoId The geographic identifier string to parse
  * @returns Object containing state, county, and tract components
  */
@@ -38,8 +44,9 @@ export function parseGeoId(geoId: string): { state: string; county: string; trac
   // Clean up the GeoID - remove any non-alphanumeric characters except decimal points
   const cleanGeoId = geoId.replace(/[^\w\.]/g, '');
   
-  // Standard format handling (SSCCCTTTTTT)
+  // Handle different potential formats
   if (cleanGeoId.length >= 11) {
+    // Standard full GeoID format (SSCCCTTTTTT)
     return {
       state: cleanGeoId.substring(0, 2),
       county: cleanGeoId.substring(2, 5),
@@ -50,12 +57,14 @@ export function parseGeoId(geoId: string): { state: string; county: string; trac
     const parts = cleanGeoId.split('.');
     
     if (parts[0].length >= 5) {
+      // If first part has state+county
       return {
         state: parts[0].substring(0, 2),
         county: parts[0].substring(2, 5),
         tract: parts[0].substring(5) + '.' + parts[1]
       };
     } else {
+      // Format might be different, do our best
       return {
         state: parts[0].substring(0, 2),
         county: parts[0].substring(2),
@@ -63,7 +72,7 @@ export function parseGeoId(geoId: string): { state: string; county: string; trac
       };
     }
   } else {
-    // Handle shorter formats
+    // Attempt to parse shorter formats
     if (cleanGeoId.length >= 5) {
       return {
         state: cleanGeoId.substring(0, 2),
@@ -77,7 +86,7 @@ export function parseGeoId(geoId: string): { state: string; county: string; trac
 }
 
 /**
- * Creates a standard format GeoID from components
+ * Formats components into a standard Census GeoID
  * 
  * @param state State FIPS code (2 digits)
  * @param county County FIPS code (3 digits)
@@ -92,7 +101,6 @@ export function formatGeoId(state: string, county: string, tract: string): strin
   const paddedCounty = county.padStart(3, '0');
   
   // Format tract according to Census standards
-  // Census tracts typically use a decimal format (e.g., 1234.56)
   let formattedTract = tract;
   
   // If tract doesn't have a decimal but is 6 digits, add one after the 4th digit
@@ -102,3 +110,29 @@ export function formatGeoId(state: string, county: string, tract: string): strin
   
   return `${paddedState}${paddedCounty}${formattedTract}`;
 }
+
+/**
+ * Application-wide constants
+ */
+export const APP_CONSTANTS = {
+  // Default value for Area Median Income, can be overridden by environment variable
+  DEFAULT_AMI: 100000,
+  
+  // Default LMI threshold (80% of AMI)
+  DEFAULT_LMI_THRESHOLD: 80000,
+  
+  // Income category thresholds (as percentage of AMI)
+  INCOME_CATEGORIES: {
+    LOW: 50,      // 0-50%
+    MODERATE: 80, // 51-80%
+    MIDDLE: 120,  // 81-120%
+    UPPER: 120    // >120%
+  },
+  
+  // Response status codes
+  STATUS: {
+    SUCCESS: 'success',
+    ERROR: 'error',
+    WARNING: 'warning'
+  }
+};
