@@ -11,6 +11,7 @@ export function getMockGeocodeData(address: string): {
   geoid: string;
   geocoding_service: string;
 } {
+  console.log('========== MOCK GEOCODING ==========');
   console.log('Using mock geocode data for address:', address);
   
   // For testing purposes, determine mock data based on address content

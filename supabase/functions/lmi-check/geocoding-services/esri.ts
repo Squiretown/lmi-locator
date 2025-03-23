@@ -67,17 +67,22 @@ export async function geocodeWithEsri(address: string): Promise<{
     // Try to get census tract from coordinates
     console.log('Attempting to get census tract from coordinates...');
     
-    const tractGeoid = await getCensusTractFromCoordinates(
-      bestMatch.location.y, 
-      bestMatch.location.x
-    );
-    
-    if (tractGeoid) {
-      console.log('Successfully obtained census tract from coordinates:', tractGeoid);
-      return {
-        ...response,
-        geoid: tractGeoid
-      };
+    try {
+      const tractGeoid = await getCensusTractFromCoordinates(
+        bestMatch.location.y, 
+        bestMatch.location.x
+      );
+      
+      if (tractGeoid) {
+        console.log('Successfully obtained census tract from coordinates:', tractGeoid);
+        return {
+          ...response,
+          geoid: tractGeoid
+        };
+      }
+    } catch (tractError) {
+      console.error('Error getting census tract for ESRI coordinates:', tractError);
+      // Continue without tract ID if we can't get it
     }
     
     console.warn('No census tract found for these coordinates');
@@ -85,6 +90,7 @@ export async function geocodeWithEsri(address: string): Promise<{
   } catch (error) {
     console.error('Error with ESRI geocoding:', error);
     console.error('ESRI geocoding error stack:', error.stack);
-    throw error;
+    // Return empty object instead of throwing
+    return {};
   }
 }
