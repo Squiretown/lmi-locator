@@ -26,7 +26,6 @@ const AddressForm: React.FC<AddressFormProps> = ({
   const [state, setState] = useState('');
   const [zipCode, setZipCode] = useState('');
   const [savedAddresses, setSavedAddresses] = useState<string[]>(() => {
-    // Initialize from localStorage
     const saved = localStorage.getItem('savedAddresses');
     return saved ? JSON.parse(saved) : [];
   });
@@ -35,7 +34,6 @@ const AddressForm: React.FC<AddressFormProps> = ({
     e.preventDefault();
     
     try {
-      // Validate form data
       const formData = {
         address,
         city,
@@ -43,19 +41,21 @@ const AddressForm: React.FC<AddressFormProps> = ({
         zipCode
       };
       
-      // Validate using the zod schema
       formSchema.parse(formData);
       
       setIsLoading(true);
       
-      // Pass the form values to parent component for processing
       onResultReceived(formData);
       
-      // Save the search to Supabase if successful
       try {
         const fullAddress = `${address}, ${city}, ${state} ${zipCode}`;
-        await saveSearch(fullAddress, null); // Pass null as result as we don't have it yet
-        toast.success('Search saved to history');
+        const result = await saveSearch(fullAddress, null);
+        
+        if (!result.success) {
+          console.warn('Error saving search:', result.error);
+        } else {
+          toast.success('Search saved to history');
+        }
       } catch (error) {
         console.warn('Error saving search to Supabase:', error);
       }
@@ -80,7 +80,6 @@ const AddressForm: React.FC<AddressFormProps> = ({
     const updatedAddresses = [...savedAddresses, address];
     setSavedAddresses(updatedAddresses);
     
-    // Save to localStorage
     localStorage.setItem('savedAddresses', JSON.stringify(updatedAddresses));
     
     toast.success('Property saved to your collection');

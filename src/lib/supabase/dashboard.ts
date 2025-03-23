@@ -2,7 +2,15 @@
 import { supabase } from "@/integrations/supabase/client";
 
 /**
- * Get dashboard statistics
+ * Retrieves dashboard statistics from the database using an edge function
+ * 
+ * @returns {Promise<Object>} Object containing:
+ *   - searchHistory: Recent property searches
+ *   - userCount: Total number of registered users
+ *   - propertyCount: Total number of properties in database
+ *   - realtorCount: Total number of realtors in database
+ *   - success: false if there was an error
+ *   - error: Error message if there was an error
  */
 export const getDashboardStats = async () => {
   try {
