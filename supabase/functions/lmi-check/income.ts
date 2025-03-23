@@ -14,8 +14,8 @@ export async function getMedianIncome(geoid: string): Promise<number> {
     const CENSUS_API_KEY = Deno.env.get("CENSUS_API_KEY");
     
     if (!CENSUS_API_KEY) {
-      console.warn('Census API key not found in environment variables');
-      throw new Error('Census API key not configured');
+      console.warn('Census API key not found in environment variables, using mock data');
+      return getMockMedianIncome(geoid);
     }
     
     const apiUrl = `${CENSUS_API_BASE_URL}/${ACS_DATASET}?get=${MEDIAN_INCOME_VARIABLE}&for=tract:${tract}&in=state:${state}%20county:${county}&key=${CENSUS_API_KEY}`;
@@ -23,37 +23,42 @@ export async function getMedianIncome(geoid: string): Promise<number> {
     console.log(`Making request to Census ACS API`);
     
     // Make the API request
-    const response = await fetch(apiUrl);
+    const response = await fetch(apiUrl, {
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      }
+    });
     
     if (!response.ok) {
-      throw new Error(`Census API request failed: ${response.status} ${response.statusText}`);
+      console.error(`Census API request failed: ${response.status} ${response.statusText}`);
+      console.warn('Falling back to mock income data');
+      return getMockMedianIncome(geoid);
     }
     
     const data = await response.json();
     
     // Census API returns a 2D array with headers in the first row and data in subsequent rows
-    if (data.length < 2) {
-      throw new Error('Invalid response from Census API');
+    if (!data || data.length < 2) {
+      console.error('Invalid response from Census API');
+      console.warn('Falling back to mock income data');
+      return getMockMedianIncome(geoid);
     }
     
     // Extract the median income value from the response
     const medianIncome = parseInt(data[1][0]);
+    
+    if (isNaN(medianIncome)) {
+      console.error('Census API returned non-numeric income value');
+      console.warn('Falling back to mock income data');
+      return getMockMedianIncome(geoid);
+    }
+    
     return medianIncome;
   } catch (error) {
     console.error('Error fetching median income from Census API:', error);
     console.warn('Falling back to mock income data');
-    
-    // Return mock median income based on geoid as a fallback
-    let medianIncome: number;
-    if (geoid === '06037701000') { // Beverly Hills - high income
-      medianIncome = 150000;
-    } else if (geoid === '06075010200') { // Low income tract
-      medianIncome = 30000;
-    } else {
-      medianIncome = 62500; // Moderate income tract
-    }
-    
-    return medianIncome;
+    return getMockMedianIncome(geoid);
   }
 }
 
@@ -65,4 +70,19 @@ function parseGeoId(geoid: string): { state: string, county: string, tract: stri
   const tract = geoid.substring(5);
   
   return { state, county, tract };
+}
+
+// Get mock median income when API fails
+function getMockMedianIncome(geoid: string): number {
+  let medianIncome: number;
+  
+  if (geoid === '06037701000') { // Beverly Hills - high income
+    medianIncome = 150000;
+  } else if (geoid === '06075010200') { // Low income tract
+    medianIncome = 30000;
+  } else {
+    medianIncome = 62500; // Moderate income tract
+  }
+  
+  return medianIncome;
 }

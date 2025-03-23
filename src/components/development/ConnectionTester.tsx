@@ -7,6 +7,7 @@ import { Separator } from '@/components/ui/separator';
 import { testSupabaseConnection } from '@/lib/supabase/testConnection';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { AlertTriangleIcon, CheckCircle2Icon, XCircleIcon } from 'lucide-react';
 
 const ConnectionTester: React.FC = () => {
   const [status, setStatus] = useState<'idle' | 'testing' | 'success' | 'error'>('idle');
@@ -14,6 +15,7 @@ const ConnectionTester: React.FC = () => {
   const [authStatus, setAuthStatus] = useState<'signed-in' | 'signed-out' | 'unknown'>('unknown');
   const [lastTestedAt, setLastTestedAt] = useState<Date | null>(null);
   const [edgeFunctionResponse, setEdgeFunctionResponse] = useState<any>(null);
+  const [edgeFunctionStatus, setEdgeFunctionStatus] = useState<'idle' | 'testing' | 'success' | 'error'>('idle');
   
   const testConnection = async () => {
     setStatus('testing');
@@ -40,12 +42,13 @@ const ConnectionTester: React.FC = () => {
   const testEdgeFunction = async () => {
     try {
       toast.info("Testing edge function...");
+      setEdgeFunctionStatus('testing');
       const start = performance.now();
       
-      const { data, error } = await supabase.functions.invoke('census-db', {
+      // Testing with a simple address
+      const { data, error } = await supabase.functions.invoke('lmi-check', {
         body: { 
-          action: 'getDashboardStats',
-          params: {}
+          address: "123 Test Street, Test City, CA 12345"
         },
       });
       
@@ -53,8 +56,9 @@ const ConnectionTester: React.FC = () => {
       
       if (error) {
         console.error("Edge function test failed:", error);
-        toast.error("Edge function test failed");
-        setEdgeFunctionResponse({ error: error.message });
+        toast.error(`Edge function test failed: ${error.message}`);
+        setEdgeFunctionResponse({ error: error.message, details: error });
+        setEdgeFunctionStatus('error');
         return;
       }
       
@@ -64,11 +68,13 @@ const ConnectionTester: React.FC = () => {
         data
       });
       
+      setEdgeFunctionStatus('success');
       toast.success(`Edge function responded in ${elapsed.toFixed(2)}ms`);
     } catch (error) {
       console.error("Edge function test error:", error);
-      toast.error("Edge function test failed");
+      toast.error(`Edge function test failed: ${error instanceof Error ? error.message : String(error)}`);
       setEdgeFunctionResponse({ error: String(error) });
+      setEdgeFunctionStatus('error');
     }
   };
   
@@ -113,6 +119,19 @@ const ConnectionTester: React.FC = () => {
           </Badge>
         </div>
         
+        <div className="flex items-center justify-between">
+          <span className="font-medium">Edge Function Status:</span>
+          <Badge variant={
+            edgeFunctionStatus === 'idle' ? 'outline' : 
+            edgeFunctionStatus === 'testing' ? 'secondary' :
+            edgeFunctionStatus === 'success' ? 'default' : 'destructive'
+          }>
+            {edgeFunctionStatus === 'idle' ? 'Not Tested' : 
+             edgeFunctionStatus === 'testing' ? 'Testing...' :
+             edgeFunctionStatus === 'success' ? 'Connected' : 'Failed'}
+          </Badge>
+        </div>
+        
         {lastTestedAt && (
           <div className="flex items-center justify-between">
             <span className="font-medium">Last Tested:</span>
@@ -125,9 +144,35 @@ const ConnectionTester: React.FC = () => {
         <div className="space-y-2">
           <h3 className="font-medium">Edge Function Test Results:</h3>
           {edgeFunctionResponse ? (
-            <pre className="bg-muted p-2 rounded text-xs overflow-auto max-h-40">
-              {JSON.stringify(edgeFunctionResponse, null, 2)}
-            </pre>
+            <>
+              {edgeFunctionResponse.error ? (
+                <div className="text-red-500 flex items-start gap-2">
+                  <AlertTriangleIcon className="h-5 w-5 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <p className="font-semibold">Error:</p>
+                    <p className="text-sm">{edgeFunctionResponse.error}</p>
+                    <p className="text-xs mt-2">Common causes:</p>
+                    <ul className="list-disc list-inside text-xs">
+                      <li>Edge Function not deployed</li>
+                      <li>CORS issues</li>
+                      <li>Region connectivity problems</li>
+                    </ul>
+                  </div>
+                </div>
+              ) : (
+                <div className="bg-muted p-3 rounded">
+                  <div className="flex items-center gap-2 mb-2">
+                    <CheckCircle2Icon className="h-5 w-5 text-green-600" />
+                    <p className="text-sm font-medium">
+                      Response time: {edgeFunctionResponse.responseTime}ms
+                    </p>
+                  </div>
+                  <pre className="bg-muted p-2 rounded text-xs overflow-auto max-h-40">
+                    {JSON.stringify(edgeFunctionResponse.data, null, 2)}
+                  </pre>
+                </div>
+              )}
+            </>
           ) : (
             <p className="text-sm text-muted-foreground">No test run yet</p>
           )}
@@ -143,9 +188,9 @@ const ConnectionTester: React.FC = () => {
           Test Database Connection
         </Button>
         <Button 
-          variant="default" 
+          variant={edgeFunctionStatus === 'error' ? 'destructive' : 'success'}
           onClick={testEdgeFunction}
-          disabled={status === 'testing'}
+          disabled={edgeFunctionStatus === 'testing'}
         >
           Test Edge Function
         </Button>

@@ -12,37 +12,47 @@ export const checkLmiStatus = async (address: string): Promise<any> => {
       throw new Error('Address is required');
     }
     
-    // Call the Supabase Edge Function
-    const { data, error } = await supabase.functions.invoke('lmi-check', {
-      body: { address },
-    });
-    
-    if (error) {
-      console.error('Error calling LMI check function:', error);
-      // Only use mock data when in development if the edge function fails
+    // First, try using the direct edge function
+    try {
+      // Call the Supabase Edge Function
+      const { data, error } = await supabase.functions.invoke('lmi-check', {
+        body: { address },
+      });
+      
+      if (error) {
+        console.error('Error calling LMI check function:', error);
+        throw error;
+      }
+      
+      if (!data) {
+        throw new Error('No data returned from LMI check');
+      }
+      
+      // Check if the returned data is actually using mock data
+      if (data.geocoding_service === "Mock Data") {
+        toast.info("Edge function returned mock data");
+      } else {
+        toast.success("Using real geocoding data");
+      }
+      
+      console.log('LMI check result:', data);
+      
+      return data;
+    } catch (edgeFunctionError) {
+      console.error('Edge function failed, attempting alternative approach:', edgeFunctionError);
+      
+      // Try our fallback geocoding + income approach
+      // This would be implemented here, but for now we'll fall back to mock data in development
       if (import.meta.env.DEV) {
         console.warn('Using mock data in development mode due to edge function error');
         const mockResponse = getMockResponse(address);
         toast.info("Using mock data (development fallback)");
         return mockResponse;
+      } else {
+        // In production, we should retry or use alternative methods
+        throw edgeFunctionError;
       }
-      throw new Error(error.message || 'Failed to check LMI status');
     }
-    
-    if (!data) {
-      throw new Error('No data returned from LMI check');
-    }
-    
-    // Check if the returned data is actually using mock data
-    if (data.geocoding_service === "Mock Data") {
-      toast.info("Edge function returned mock data");
-    } else {
-      toast.success("Using real geocoding data");
-    }
-    
-    console.log('LMI check result:', data);
-    
-    return data;
   } catch (error) {
     console.error('Error in checkLmiStatus:', error);
     
