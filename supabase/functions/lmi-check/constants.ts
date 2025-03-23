@@ -11,6 +11,16 @@ export const MEDIAN_INCOME_VARIABLE = "B19013_001E"; // Median household income 
 export const ESRI_GEOCODING_URL = "https://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer/findAddressCandidates";
 export const ESRI_REVERSE_GEOCODING_URL = "https://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer/reverseGeocode";
 
+// Parse GEOID into components
+export const parseGeoId = (geoid: string): { state: string, county: string, tract: string } => {
+  // GEOID format: SSCCCTTTTTT (2-digit state, 3-digit county, 6-digit tract)
+  const state = geoid.substring(0, 2);
+  const county = geoid.substring(2, 5);
+  const tract = geoid.substring(5);
+  
+  return { state, county, tract };
+};
+
 // Determine income category based on percentage of AMI
 export const getIncomeCategory = (percentageOfAmi: number): string => {
   if (percentageOfAmi <= 30) return "Extremely Low Income";
