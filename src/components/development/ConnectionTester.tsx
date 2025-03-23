@@ -87,7 +87,7 @@ const ConnectionTester: React.FC = () => {
           <Badge variant={
             status === 'idle' ? 'outline' : 
             status === 'testing' ? 'secondary' :
-            status === 'success' ? 'success' : 'destructive'
+            status === 'success' ? 'default' : 'destructive'
           }>
             {status === 'idle' ? 'Not Tested' : 
              status === 'testing' ? 'Testing...' :
@@ -106,7 +106,7 @@ const ConnectionTester: React.FC = () => {
           <span className="font-medium">Auth Status:</span>
           <Badge variant={
             authStatus === 'unknown' ? 'outline' :
-            authStatus === 'signed-in' ? 'success' : 'secondary'
+            authStatus === 'signed-in' ? 'default' : 'secondary'
           }>
             {authStatus === 'unknown' ? 'Unknown' :
              authStatus === 'signed-in' ? 'Signed In' : 'Signed Out'}
