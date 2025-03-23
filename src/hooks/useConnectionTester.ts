@@ -51,10 +51,11 @@ export function useConnectionTester() {
       setEdgeFunctionStatus('testing');
       const start = performance.now();
       
-      // Testing with a simple address
+      // Testing with a simple address that should work without special keywords
+      // This avoids triggering mock data intentionally
       const { data, error } = await supabase.functions.invoke('lmi-check', {
         body: { 
-          address: "123 Test Street, Test City, CA 12345"
+          address: "1600 Pennsylvania Avenue, Washington, DC 20500"
         },
       });
       
@@ -64,7 +65,11 @@ export function useConnectionTester() {
         setConsecutiveErrors(prev => prev + 1);
         console.error("Edge function test failed:", error);
         toast.error(`Edge function test failed: ${error.message}`);
-        setEdgeFunctionResponse({ error: error.message, details: error });
+        setEdgeFunctionResponse({ 
+          error: error.message,
+          details: error,
+          errorObject: error 
+        });
         setEdgeFunctionStatus('error');
         return;
       }
@@ -76,6 +81,11 @@ export function useConnectionTester() {
         setEdgeFunctionResponse({ error: "Empty response from edge function" });
         setEdgeFunctionStatus('error');
         return;
+      }
+      
+      // Check if data contains mock indicator
+      if (data.geocoding_service === "Mock Data") {
+        toast.warning("Function returned mock data - real services unavailable");
       }
       
       setConsecutiveErrors(0);

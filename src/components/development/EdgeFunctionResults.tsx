@@ -18,16 +18,21 @@ const EdgeFunctionResults: React.FC<EdgeFunctionResultsProps> = ({
     return <p className="text-sm text-muted-foreground">No test run yet</p>;
   }
 
+  const errorMessage = edgeFunctionResponse.error || 
+                       edgeFunctionResponse.errorObject?.message || 
+                       '';
+
   if (edgeFunctionResponse.error) {
     return (
       <div className="text-red-500 flex items-start gap-2">
         <AlertTriangleIcon className="h-5 w-5 flex-shrink-0 mt-0.5" />
         <div>
           <p className="font-semibold">Error:</p>
-          <p className="text-sm">{edgeFunctionResponse.error}</p>
+          <p className="text-sm">{errorMessage}</p>
           <TroubleshootingTips 
             edgeFunctionStatus={edgeFunctionStatus} 
-            consecutiveErrors={consecutiveErrors} 
+            consecutiveErrors={consecutiveErrors}
+            errorMessage={errorMessage}
           />
         </div>
       </div>
@@ -43,6 +48,7 @@ const EdgeFunctionResults: React.FC<EdgeFunctionResultsProps> = ({
       }
       
       // Safely stringify the JSON
+      const seen = new Set();
       const jsonString = JSON.stringify(edgeFunctionResponse.data, (key, value) => {
         // Handle circular references
         if (typeof value === 'object' && value !== null) {
@@ -68,9 +74,6 @@ const EdgeFunctionResults: React.FC<EdgeFunctionResultsProps> = ({
       );
     }
   };
-  
-  // Set for tracking circular references
-  const seen = new Set();
 
   return (
     <div className="bg-muted p-3 rounded">
