@@ -1,5 +1,5 @@
 
-import { determineCensusTract, geocodeAddress as censusGeocode } from "../tractLookup.ts";
+import { determineCensusTract, geocodeAddress as censusGeocode } from "../census/index.ts";
 
 /**
  * Geocode an address using Census Geocoder API
@@ -76,7 +76,7 @@ export async function getCensusTractFromCoordinates(lat: number, lon: number): P
   console.log(`Getting census tract from coordinates: ${lat}, ${lon}`);
   
   try {
-    // Use the determineCensusTract function from tractLookup
+    // Use the determineCensusTract function from census module
     return await determineCensusTract(lat, lon);
   } catch (error) {
     console.error('Error getting census tract from coordinates:', error);
