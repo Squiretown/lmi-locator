@@ -7,7 +7,7 @@
  * Census Geocoder API response structure
  */
 export interface CensusGeocoderResult {
-  result: {
+  result?: {
     addressMatches?: Array<{
       coordinates: {
         x: number; // longitude
