@@ -44,18 +44,13 @@ export function usePropertySearch() {
       const result = await checkLmiStatus(values);
       setLmiStatus(result);
       
-      toast({
-        description: `Search completed for ${values.address}`,
-      });
+      toast(`Search completed for ${values.address}`);
       
       return result;
     } catch (error) {
       console.error("Error checking property status:", error);
       
-      toast({
-        description: "Failed to check property status. Please try again.",
-        variant: "destructive"
-      });
+      toast("Failed to check property status. Please try again.");
       
       return null;
     } finally {

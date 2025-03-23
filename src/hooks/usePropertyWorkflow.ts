@@ -23,9 +23,7 @@ export function usePropertyWorkflow() {
     setDisplayMode('form');
     
     // Show thank you message
-    toast({
-      description: "We appreciate your interest in down payment assistance programs."
-    });
+    toast("We appreciate your interest in down payment assistance programs.");
   };
 
   const resetProcess = () => {
