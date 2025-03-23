@@ -73,13 +73,19 @@ export async function geocodeAddress(address: string): Promise<{
     
     console.log(`Making request to ESRI Geocoder`);
     
-    const esriResponse = await fetch(`${ESRI_GEOCODING_URL}?${esriParams.toString()}`);
+    const esriResponse = await fetch(`${ESRI_GEOCODING_URL}?${esriParams.toString()}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
     
     if (!esriResponse.ok) {
       throw new Error(`ESRI API request failed: ${esriResponse.status} ${esriResponse.statusText}`);
     }
     
     const esriData = await esriResponse.json();
+    console.log('ESRI API response:', JSON.stringify(esriData, null, 2));
     
     if (esriData.candidates && esriData.candidates.length > 0) {
       const bestMatch = esriData.candidates[0];
@@ -118,7 +124,7 @@ export async function geocodeAddress(address: string): Promise<{
   } catch (error) {
     console.error('Error geocoding address with all services:', error);
     
-    // Fall back to mock data if API requests fail
+    // Only use mock data as a last resort
     console.warn('Falling back to mock geocode data');
     
     // For testing purposes, determine mock data based on address content
@@ -167,6 +173,7 @@ async function getCensusTractFromCoordinates(lat: number, lon: number): Promise<
     }
     
     const data = await response.json();
+    console.log('Census tract lookup response:', JSON.stringify(data, null, 2));
     
     if (data.result?.geographies?.['Census Tracts']?.length > 0) {
       const geoid = data.result.geographies['Census Tracts'][0].GEOID;

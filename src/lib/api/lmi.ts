@@ -19,9 +19,9 @@ export const checkLmiStatus = async (address: string): Promise<any> => {
     
     if (error) {
       console.error('Error calling LMI check function:', error);
-      // Use mock data when in development if the edge function fails
+      // Only use mock data when in development if the edge function fails
       if (import.meta.env.DEV) {
-        console.warn('Using mock data in development mode');
+        console.warn('Using mock data in development mode due to edge function error');
         const mockResponse = getMockResponse(address);
         toast.info("Using mock data (development fallback)");
         return mockResponse;
@@ -33,17 +33,24 @@ export const checkLmiStatus = async (address: string): Promise<any> => {
       throw new Error('No data returned from LMI check');
     }
     
+    // Check if the returned data is actually using mock data
+    if (data.geocoding_service === "Mock Data") {
+      toast.info("Edge function returned mock data");
+    } else {
+      toast.success("Using real geocoding data");
+    }
+    
     console.log('LMI check result:', data);
     
     return data;
   } catch (error) {
     console.error('Error in checkLmiStatus:', error);
     
-    // Fall back to mock data in development mode
+    // Only fall back to mock data in development mode if there's a serious error
     if (import.meta.env.DEV) {
       console.warn('Using mock data due to error');
       const mockResponse = getMockResponse(address);
-      toast.info("Using mock data (error fallback)");
+      toast.error("Using mock data (error fallback)");
       return mockResponse;
     }
     
