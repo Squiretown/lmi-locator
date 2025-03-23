@@ -2,12 +2,13 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { testSupabaseConnection } from '@/lib/supabase/testConnection';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { AlertTriangleIcon, CheckCircle2Icon, XCircleIcon, RefreshCcwIcon } from 'lucide-react';
+import { RefreshCcwIcon } from 'lucide-react';
+import ConnectionStatus from './ConnectionStatus';
+import EdgeFunctionResults from './EdgeFunctionResults';
 
 const ConnectionTester: React.FC = () => {
   const [status, setStatus] = useState<'idle' | 'testing' | 'success' | 'error'>('idle');
@@ -96,30 +97,6 @@ const ConnectionTester: React.FC = () => {
     }
   };
   
-  const getTroubleshootingTips = () => {
-    if (edgeFunctionStatus !== 'error') return null;
-    
-    return (
-      <div className="mt-4 p-3 bg-muted rounded-md text-sm">
-        <h4 className="font-semibold mb-2">Troubleshooting Tips:</h4>
-        <ul className="list-disc list-inside space-y-1">
-          <li>Verify the edge function is deployed in your Supabase project</li>
-          <li>Check the Supabase Edge Function Logs for errors</li>
-          <li>Ensure your Supabase URL and API key are correct</li>
-          <li>Try redeploying the function: <code>supabase functions deploy lmi-check</code></li>
-          <li>Check that CORS is properly configured in the edge function</li>
-          <li>If this is in an iframe, ensure the parent domain is allowed in CORS</li>
-          {consecutiveErrors > 2 && (
-            <li className="text-destructive font-semibold">
-              After multiple failed attempts, you may need to check your Supabase project's region 
-              and make sure there are no service disruptions
-            </li>
-          )}
-        </ul>
-      </div>
-    );
-  };
-  
   return (
     <Card className="w-full">
       <CardHeader>
@@ -130,89 +107,23 @@ const ConnectionTester: React.FC = () => {
       </CardHeader>
       
       <CardContent className="space-y-4">
-        <div className="flex items-center justify-between">
-          <span className="font-medium">Connection Status:</span>
-          <Badge variant={
-            status === 'idle' ? 'outline' : 
-            status === 'testing' ? 'secondary' :
-            status === 'success' ? 'default' : 'destructive'
-          }>
-            {status === 'idle' ? 'Not Tested' : 
-             status === 'testing' ? 'Testing...' :
-             status === 'success' ? 'Connected' : 'Failed'}
-          </Badge>
-        </div>
-        
-        {pingTime !== null && (
-          <div className="flex items-center justify-between">
-            <span className="font-medium">Response Time:</span>
-            <span>{pingTime}ms</span>
-          </div>
-        )}
-        
-        <div className="flex items-center justify-between">
-          <span className="font-medium">Auth Status:</span>
-          <Badge variant={
-            authStatus === 'unknown' ? 'outline' :
-            authStatus === 'signed-in' ? 'default' : 'secondary'
-          }>
-            {authStatus === 'unknown' ? 'Unknown' :
-             authStatus === 'signed-in' ? 'Signed In' : 'Signed Out'}
-          </Badge>
-        </div>
-        
-        <div className="flex items-center justify-between">
-          <span className="font-medium">Edge Function Status:</span>
-          <Badge variant={
-            edgeFunctionStatus === 'idle' ? 'outline' : 
-            edgeFunctionStatus === 'testing' ? 'secondary' :
-            edgeFunctionStatus === 'success' ? 'default' : 'destructive'
-          }>
-            {edgeFunctionStatus === 'idle' ? 'Not Tested' : 
-             edgeFunctionStatus === 'testing' ? 'Testing...' :
-             edgeFunctionStatus === 'success' ? 'Connected' : 'Failed'}
-          </Badge>
-        </div>
-        
-        {lastTestedAt && (
-          <div className="flex items-center justify-between">
-            <span className="font-medium">Last Tested:</span>
-            <span>{lastTestedAt.toLocaleTimeString()}</span>
-          </div>
-        )}
+        <ConnectionStatus 
+          status={status}
+          authStatus={authStatus}
+          edgeFunctionStatus={edgeFunctionStatus}
+          pingTime={pingTime}
+          lastTestedAt={lastTestedAt}
+        />
         
         <Separator />
         
         <div className="space-y-2">
           <h3 className="font-medium">Edge Function Test Results:</h3>
-          {edgeFunctionResponse ? (
-            <>
-              {edgeFunctionResponse.error ? (
-                <div className="text-red-500 flex items-start gap-2">
-                  <AlertTriangleIcon className="h-5 w-5 flex-shrink-0 mt-0.5" />
-                  <div>
-                    <p className="font-semibold">Error:</p>
-                    <p className="text-sm">{edgeFunctionResponse.error}</p>
-                    {getTroubleshootingTips()}
-                  </div>
-                </div>
-              ) : (
-                <div className="bg-muted p-3 rounded">
-                  <div className="flex items-center gap-2 mb-2">
-                    <CheckCircle2Icon className="h-5 w-5 text-green-600" />
-                    <p className="text-sm font-medium">
-                      Response time: {edgeFunctionResponse.responseTime}ms
-                    </p>
-                  </div>
-                  <pre className="bg-muted p-2 rounded text-xs overflow-auto max-h-40">
-                    {JSON.stringify(edgeFunctionResponse.data, null, 2)}
-                  </pre>
-                </div>
-              )}
-            </>
-          ) : (
-            <p className="text-sm text-muted-foreground">No test run yet</p>
-          )}
+          <EdgeFunctionResults 
+            edgeFunctionResponse={edgeFunctionResponse}
+            edgeFunctionStatus={edgeFunctionStatus}
+            consecutiveErrors={consecutiveErrors}
+          />
         </div>
       </CardContent>
       
