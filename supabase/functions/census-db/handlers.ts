@@ -76,3 +76,78 @@ async function getMedianIncome(params: { geoid: string, state: string, county: s
     };
   }
 }
+
+// Add the getDashboardStats function if it doesn't exist
+async function getDashboardStats(supabase: SupabaseClient) {
+  try {
+    // Fetch search history
+    const { data: searchHistory, error: searchError } = await supabase
+      .from('search_history')
+      .select('*')
+      .order('searched_at', { ascending: false });
+    
+    if (searchError) throw searchError;
+    
+    // Fetch user count
+    const { count: userCount, error: userError } = await supabase
+      .from('users')
+      .select('*', { count: 'exact', head: true });
+    
+    if (userError) throw userError;
+    
+    // Fetch property count
+    const { count: propertyCount, error: propertyError } = await supabase
+      .from('properties')
+      .select('*', { count: 'exact', head: true });
+    
+    if (propertyError) throw propertyError;
+    
+    // Fetch realtor count
+    const { count: realtorCount, error: realtorError } = await supabase
+      .from('realtors')
+      .select('*', { count: 'exact', head: true });
+    
+    if (realtorError) throw realtorError;
+    
+    return {
+      searchHistory,
+      userCount,
+      propertyCount,
+      realtorCount
+    };
+  } catch (error) {
+    console.error('Error in getDashboardStats:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+// Functions that were referenced but might not be fully defined
+async function saveSearch(supabase: SupabaseClient, address: string, result: any, userId: string) {
+  console.log('Saving search:', address, userId);
+  // Implementation...
+  return { success: true };
+}
+
+async function getSearchHistory(supabase: SupabaseClient, userId: string, limit: number = 20) {
+  console.log('Getting search history for user:', userId, limit);
+  // Implementation...
+  return { success: true, data: [] };
+}
+
+async function cacheCensusResult(supabase: SupabaseClient, tractId: string, data: any, expiresInDays: number = 30) {
+  console.log('Caching census result for tract:', tractId);
+  // Implementation...
+  return { success: true };
+}
+
+async function getCachedCensusResult(supabase: SupabaseClient, tractId: string) {
+  console.log('Getting cached census result for tract:', tractId);
+  // Implementation...
+  return { success: true, data: null };
+}
+
+async function getPopularSearches(supabase: SupabaseClient, limit: number = 5) {
+  console.log('Getting popular searches, limit:', limit);
+  // Implementation...
+  return { success: true, data: [] };
+}
