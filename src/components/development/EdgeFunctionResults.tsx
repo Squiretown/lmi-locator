@@ -1,7 +1,8 @@
 
 import React from 'react';
-import { AlertTriangleIcon, CheckCircle2Icon } from 'lucide-react';
+import { AlertTriangleIcon, CheckCircle2Icon, ExternalLinkIcon } from 'lucide-react';
 import TroubleshootingTips from './TroubleshootingTips';
+import { Button } from '@/components/ui/button';
 
 interface EdgeFunctionResultsProps {
   edgeFunctionResponse: any;
@@ -21,14 +22,55 @@ const EdgeFunctionResults: React.FC<EdgeFunctionResultsProps> = ({
   const errorMessage = edgeFunctionResponse.error || 
                        edgeFunctionResponse.errorObject?.message || 
                        '';
+  
+  // Check if this is a deployment-related error
+  const isDeploymentError = errorMessage.includes('Failed to fetch') || 
+                          errorMessage.includes('Failed to send a request') ||
+                          errorMessage.includes('NetworkError') ||
+                          errorMessage.includes('network request failed');
+  
+  // Check if this is a function execution error vs a connection error
+  const isFunctionError = edgeFunctionResponse.error && !isDeploymentError;
 
   if (edgeFunctionResponse.error) {
     return (
       <div className="text-red-500 flex items-start gap-2">
         <AlertTriangleIcon className="h-5 w-5 flex-shrink-0 mt-0.5" />
         <div>
-          <p className="font-semibold">Error:</p>
+          <p className="font-semibold">
+            {isDeploymentError ? 'Connection Error:' : 'Function Error:'}
+          </p>
           <p className="text-sm">{errorMessage}</p>
+          {isDeploymentError && (
+            <div className="mt-2 p-2 bg-amber-50 border border-amber-200 rounded-md">
+              <p className="text-amber-700 text-xs font-medium">
+                This appears to be a deployment or connection issue, not a code error.
+                The Edge Function might not be deployed or accessible.
+              </p>
+              <div className="flex gap-2 mt-2">
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  className="h-7 text-xs"
+                  onClick={() => {
+                    window.open('https://supabase.com/dashboard/project/llhofjbijjxkfezidxyi/functions', '_blank');
+                  }}
+                >
+                  View Edge Functions <ExternalLinkIcon className="h-3 w-3 ml-1" />
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  className="h-7 text-xs"
+                  onClick={() => {
+                    window.open('https://supabase.com/dashboard/project/llhofjbijjxkfezidxyi/functions/lmi-check/logs', '_blank');
+                  }}
+                >
+                  View Logs <ExternalLinkIcon className="h-3 w-3 ml-1" />
+                </Button>
+              </div>
+            </div>
+          )}
           <TroubleshootingTips 
             edgeFunctionStatus={edgeFunctionStatus} 
             consecutiveErrors={consecutiveErrors}
