@@ -27,6 +27,6 @@ site_url = "http://localhost:3000"
 [storage]
 enabled = true
 
-[edge_functions]
-[edge_functions.lmi-check]
+[functions]
+[functions.lmi-check]
 verify_jwt = false
