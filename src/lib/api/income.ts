@@ -2,7 +2,7 @@
 // Census income data retrieval and analysis
 import { CENSUS_API_BASE_URL, ACS_DATASET, MEDIAN_INCOME_VARIABLE } from './constants';
 import { parseGeoId } from './census-helpers';
-import { getCachedCensusResult, cacheCensusResult } from '../supabase-api';
+import { getCachedCensusResult, cacheCensusResult } from '../supabase/census';
 import { cachedFetch } from './cache';
 import { supabase } from '@/integrations/supabase/client';
 
