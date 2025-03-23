@@ -58,15 +58,12 @@ export async function getCachedCensusResult(supabase: any, tractId: string) {
       .from("census_cache")
       .select("*")
       .eq("tract_id", tractId)
-      .single();
+      .maybeSingle();  // Use maybeSingle instead of single to avoid errors when no record is found
 
-    if (error) {
-      if (error.code === "PGRST116") {
-        // No data found
-        return { success: true, data: null };
-      }
-      throw error;
-    }
+    if (error) throw error;
+    
+    // Return null if no data found
+    if (!data) return { success: true, data: null };
 
     // Check if cache is expired
     if (now > data.expires_at) {

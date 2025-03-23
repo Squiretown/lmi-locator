@@ -44,8 +44,23 @@ serve(async (req) => {
     // Initialize Supabase client
     const supabase = supabaseClient(req);
     
-    // Parse request body
-    const { action, params } = await req.json();
+    // For GET requests, extract query parameters
+    let action, params;
+    if (req.method === "GET") {
+      const url = new URL(req.url);
+      action = url.searchParams.get("action");
+      const paramsStr = url.searchParams.get("params");
+      params = paramsStr ? JSON.parse(paramsStr) : {};
+    } else {
+      // Parse request body for POST requests
+      const body = await req.json();
+      action = body.action;
+      params = body.params || {};
+    }
+    
+    if (!action) {
+      throw new Error("Action parameter is required");
+    }
     
     // Process the request using the appropriate handler
     const result = await handleApiRequest(supabase, action, params);
@@ -58,7 +73,7 @@ serve(async (req) => {
     
     return new Response(JSON.stringify({
       success: false,
-      error: error.message,
+      error: error.message || "Unknown error occurred",
     }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
