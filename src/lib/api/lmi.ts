@@ -2,6 +2,31 @@
 // LMI status checking functionality
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { FunctionsResponse } from "@supabase/supabase-js";
+
+// Define the type for our LMI check result
+interface LmiResult {
+  status: string;
+  address: string;
+  lat?: number;
+  lon?: number;
+  tract_id: string;
+  median_income: number;
+  ami: number;
+  income_category: string;
+  percentage_of_ami: number;
+  eligibility: string;
+  color_code?: string;
+  is_approved: boolean;
+  approval_message: string;
+  lmi_status: string;
+  is_qct?: boolean;
+  qct_status?: string;
+  geocoding_service?: string;
+  timestamp: string;
+  data_source?: string;
+  message?: string;
+}
 
 // Check if a location is in an LMI eligible census tract
 export const checkLmiStatus = async (address: string): Promise<any> => {
@@ -15,12 +40,12 @@ export const checkLmiStatus = async (address: string): Promise<any> => {
     // First, try using the direct edge function
     try {
       // Create a timeout promise
-      const timeoutPromise = new Promise((_, reject) => {
+      const timeoutPromise = new Promise<never>((_, reject) => {
         setTimeout(() => reject(new Error('Edge function timed out after 20 seconds')), 20000);
       });
       
       // Create the edge function call promise
-      const edgeFunctionPromise = supabase.functions.invoke('lmi-check', {
+      const edgeFunctionPromise = supabase.functions.invoke<LmiResult>('lmi-check', {
         body: { address }
       });
       
@@ -28,7 +53,7 @@ export const checkLmiStatus = async (address: string): Promise<any> => {
       const response = await Promise.race([
         edgeFunctionPromise,
         timeoutPromise
-      ]);
+      ]) as FunctionsResponse<LmiResult>;
       
       // Now access data and error from the response
       const { data, error } = response;
