@@ -14,16 +14,23 @@ export const checkLmiStatus = async (address: string): Promise<any> => {
     
     // First, try using the direct edge function
     try {
-      // Call the Supabase Edge Function with configurable timeout
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 20000); // 20 second timeout
-      
-      const { data, error } = await supabase.functions.invoke('lmi-check', {
-        body: { address },
-        abortSignal: controller.signal,
+      // Create a timeout promise
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Edge function timed out after 20 seconds')), 20000);
       });
       
-      clearTimeout(timeoutId);
+      // Create the edge function call promise
+      const edgeFunctionPromise = supabase.functions.invoke('lmi-check', {
+        body: { address }
+      });
+      
+      // Race the promises
+      const result = await Promise.race([
+        edgeFunctionPromise,
+        timeoutPromise
+      ]) as typeof edgeFunctionPromise;
+      
+      const { data, error } = result;
       
       if (error) {
         console.error('Error calling LMI check function:', error);
