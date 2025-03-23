@@ -50,7 +50,7 @@ interface EsriReverseGeocodeResponse {
 }
 
 // Your ESRI API key
-const ESRI_API_KEY = "YOUR_ESRI_API_KEY_HERE"; // Replace with your actual ESRI API key
+const ESRI_API_KEY = "AAPKa240e26a09ac4ea4bef6a0c6cb25a81aK1fJt6b3QlT0_J3aCAZLBTEE5fZ5CaNoMGWCdp1qeRCjcl9U1uFi7-H8rOgTVPMd";
 
 /**
  * Geocode an address using the ESRI geocoding API

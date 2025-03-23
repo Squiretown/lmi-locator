@@ -55,8 +55,8 @@ export async function geocodeAddress(address: string): Promise<{
     }
     
     // Second attempt: ESRI Geocoder
-    // Use your ESRI API key directly instead of getting it from env
-    const esriApiKey = "YOUR_ESRI_API_KEY_HERE"; // Replace this with your actual ESRI API key
+    // Use direct ESRI API key
+    const esriApiKey = "AAPKa240e26a09ac4ea4bef6a0c6cb25a81aK1fJt6b3QlT0_J3aCAZLBTEE5fZ5CaNoMGWCdp1qeRCjcl9U1uFi7-H8rOgTVPMd";
     
     if (!esriApiKey) {
       console.warn('ESRI API key not found, skipping ESRI geocoding');
