@@ -14,10 +14,16 @@ export const checkLmiStatus = async (address: string): Promise<any> => {
     
     // First, try using the direct edge function
     try {
-      // Call the Supabase Edge Function
+      // Call the Supabase Edge Function with configurable timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 20000); // 20 second timeout
+      
       const { data, error } = await supabase.functions.invoke('lmi-check', {
         body: { address },
+        abortSignal: controller.signal,
       });
+      
+      clearTimeout(timeoutId);
       
       if (error) {
         console.error('Error calling LMI check function:', error);
@@ -50,6 +56,7 @@ export const checkLmiStatus = async (address: string): Promise<any> => {
         return mockResponse;
       } else {
         // In production, we should retry or use alternative methods
+        toast.error("Connection to LMI service failed. Please try again later.");
         throw edgeFunctionError;
       }
     }

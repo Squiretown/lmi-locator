@@ -20,14 +20,16 @@ export async function getMedianIncome(geoid: string): Promise<number> {
     
     const apiUrl = `${CENSUS_API_BASE_URL}/${ACS_DATASET}?get=${MEDIAN_INCOME_VARIABLE}&for=tract:${tract}&in=state:${state}%20county:${county}&key=${CENSUS_API_KEY}`;
     
-    console.log(`Making request to Census ACS API`);
+    console.log(`Making request to Census ACS API: ${apiUrl}`);
     
     // Make the API request
     const response = await fetch(apiUrl, {
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json'
-      }
+      },
+      // Add timeout to prevent hanging requests
+      signal: AbortSignal.timeout(15000) // 15 second timeout
     });
     
     if (!response.ok) {
