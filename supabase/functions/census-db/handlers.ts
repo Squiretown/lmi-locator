@@ -1,3 +1,4 @@
+
 // Import any dependencies
 import { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.21.0";
 import { CENSUS_API_BASE_URL, ACS_DATASET, MEDIAN_INCOME_VARIABLE } from "../lmi-check/constants.ts";
@@ -80,11 +81,14 @@ async function getMedianIncome(params: { geoid: string, state: string, county: s
 // Add the getDashboardStats function if it doesn't exist
 async function getDashboardStats(supabase: SupabaseClient) {
   try {
+    console.log('Retrieving dashboard statistics');
+    
     // Fetch search history
     const { data: searchHistory, error: searchError } = await supabase
       .from('search_history')
       .select('*')
-      .order('searched_at', { ascending: false });
+      .order('searched_at', { ascending: false })
+      .limit(10);
     
     if (searchError) throw searchError;
     
@@ -110,6 +114,7 @@ async function getDashboardStats(supabase: SupabaseClient) {
     if (realtorError) throw realtorError;
     
     return {
+      success: true,
       searchHistory,
       userCount,
       propertyCount,
@@ -121,33 +126,116 @@ async function getDashboardStats(supabase: SupabaseClient) {
   }
 }
 
+// Function to get popular searches
+async function getPopularSearches(supabase: SupabaseClient, limit: number = 5) {
+  try {
+    console.log('Getting popular searches, limit:', limit);
+    
+    // Use a raw SQL query for aggregation to avoid TypeScript issues with .group()
+    const { data, error } = await supabase.rpc('get_popular_searches', { 
+      result_limit: limit 
+    });
+    
+    if (error) throw error;
+    
+    return {
+      success: true,
+      data
+    };
+  } catch (error) {
+    console.error('Error retrieving popular searches:', error);
+    return { 
+      success: false, 
+      error: error.message,
+      // Return empty data as fallback
+      data: []
+    };
+  }
+}
+
 // Functions that were referenced but might not be fully defined
 async function saveSearch(supabase: SupabaseClient, address: string, result: any, userId: string) {
   console.log('Saving search:', address, userId);
-  // Implementation...
-  return { success: true };
+  try {
+    const { data, error } = await supabase
+      .from('search_history')
+      .insert({
+        address,
+        result,
+        user_id: userId,
+        is_eligible: result?.is_approved || false,
+      });
+      
+    if (error) throw error;
+    
+    return { success: true, data };
+  } catch (error) {
+    console.error('Error saving search:', error);
+    return { success: false, error: error.message };
+  }
 }
 
 async function getSearchHistory(supabase: SupabaseClient, userId: string, limit: number = 20) {
   console.log('Getting search history for user:', userId, limit);
-  // Implementation...
-  return { success: true, data: [] };
+  try {
+    const { data, error } = await supabase
+      .from('search_history')
+      .select('*')
+      .eq('user_id', userId)
+      .order('searched_at', { ascending: false })
+      .limit(limit);
+      
+    if (error) throw error;
+    
+    return { success: true, data };
+  } catch (error) {
+    console.error('Error retrieving search history:', error);
+    return { success: false, error: error.message };
+  }
 }
 
 async function cacheCensusResult(supabase: SupabaseClient, tractId: string, data: any, expiresInDays: number = 30) {
   console.log('Caching census result for tract:', tractId);
-  // Implementation...
-  return { success: true };
+  try {
+    // Calculate expiration date
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + expiresInDays);
+    
+    const { data: result, error } = await supabase
+      .from('census_cache')
+      .upsert({
+        tract_id: tractId,
+        data,
+        expires_at: expiresAt.toISOString()
+      });
+      
+    if (error) throw error;
+    
+    return { success: true, data: result };
+  } catch (error) {
+    console.error('Error caching census result:', error);
+    return { success: false, error: error.message };
+  }
 }
 
 async function getCachedCensusResult(supabase: SupabaseClient, tractId: string) {
   console.log('Getting cached census result for tract:', tractId);
-  // Implementation...
-  return { success: true, data: null };
-}
-
-async function getPopularSearches(supabase: SupabaseClient, limit: number = 5) {
-  console.log('Getting popular searches, limit:', limit);
-  // Implementation...
-  return { success: true, data: [] };
+  try {
+    const { data, error } = await supabase
+      .from('census_cache')
+      .select('*')
+      .eq('tract_id', tractId)
+      .gt('expires_at', new Date().toISOString())
+      .maybeSingle();
+      
+    if (error) throw error;
+    
+    // Return null if no data found
+    if (!data) return { success: true, data: null };
+    
+    return { success: true, data: data.data };
+  } catch (error) {
+    console.error('Error retrieving cached census result:', error);
+    return { success: false, error: error.message };
+  }
 }

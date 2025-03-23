@@ -96,16 +96,18 @@ export const getPopularSearches = async (limit = 5) => {
     // Validate input
     const validated = popularSearchesSchema.parse({ limit });
     
-    const { data, error } = await supabase
-      .from('search_history')
-      .select('address, count(*)')
-      .order('count', { ascending: false })
-      .group('address')
-      .limit(validated.limit);
-      
+    // Fix: Using edge function instead of direct query with group by
+    // This resolves the TypeScript error with .group() method
+    const { data, error } = await supabase.functions.invoke('census-db', {
+      body: { 
+        action: 'getPopularSearches', 
+        params: { limit: validated.limit } 
+      },
+    });
+    
     if (error) throw error;
     
-    return { success: true, data };
+    return { success: true, data: data || [] };
   } catch (error) {
     console.error('Error retrieving popular searches:', error);
     if (error.name === 'ZodError') {

@@ -15,7 +15,10 @@ export const getMedianIncome = async (geoid: string): Promise<number> => {
     const cachedResult = await getCachedCensusResult(geoid);
     if (cachedResult && cachedResult.success && cachedResult.data) {
       console.log('Using cached result from Supabase for tract:', geoid);
-      return cachedResult.data.medianIncome;
+      // Make sure we access the medianIncome from the data object safely
+      if (typeof cachedResult.data === 'object' && cachedResult.data !== null && 'medianIncome' in cachedResult.data) {
+        return cachedResult.data.medianIncome as number;
+      }
     }
   } catch (error) {
     console.warn('Error checking Supabase cache:', error);
