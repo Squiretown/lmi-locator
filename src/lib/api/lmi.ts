@@ -1,3 +1,4 @@
+
 // LMI status checking functionality
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -34,12 +35,14 @@ export const checkLmiStatus = async (address: string): Promise<any> => {
     if (!address || address.trim() === '') {
       throw new Error('Address is required');
     }
-    
+
     // First, try using the direct edge function
     try {
+      toast.info("Connecting to LMI eligibility service...");
+      
       // Create a timeout promise
       const timeoutPromise = new Promise<never>((_, reject) => {
-        setTimeout(() => reject(new Error('Edge function timed out after 20 seconds')), 20000);
+        setTimeout(() => reject(new Error('Edge function timed out after 10 seconds')), 10000);
       });
       
       // Create the edge function call promise
@@ -78,6 +81,15 @@ export const checkLmiStatus = async (address: string): Promise<any> => {
     } catch (edgeFunctionError) {
       console.error('Edge function failed, attempting alternative approach:', edgeFunctionError);
       
+      // Provide more informative error messages based on the error type
+      if (edgeFunctionError instanceof DOMException && edgeFunctionError.name === 'AbortError') {
+        toast.error("Connection to LMI service timed out. Using fallback data.");
+      } else if (edgeFunctionError instanceof TypeError && edgeFunctionError.message.includes('Failed to fetch')) {
+        toast.error("Network error connecting to LMI service. Using fallback data.");
+      } else {
+        toast.error("Error connecting to LMI service. Using fallback data.");
+      }
+      
       // Try our fallback geocoding + income approach
       // This would be implemented here, but for now we'll fall back to mock data in development
       if (import.meta.env.DEV) {
@@ -87,8 +99,11 @@ export const checkLmiStatus = async (address: string): Promise<any> => {
         return mockResponse;
       } else {
         // In production, we should retry or use alternative methods
-        toast.error("Connection to LMI service failed. Please try again later.");
-        throw edgeFunctionError;
+        // For now, fallback to mock data in production too until we have a more robust solution
+        console.warn('Using mock data in production mode due to edge function error');
+        const mockResponse = getMockResponse(address);
+        toast.info("Using mock data (temporary fallback)");
+        return mockResponse;
       }
     }
   } catch (error) {
@@ -100,15 +115,13 @@ export const checkLmiStatus = async (address: string): Promise<any> => {
       const mockResponse = getMockResponse(address);
       toast.error("Using mock data (error fallback)");
       return mockResponse;
+    } else {
+      // Fall back to mock data in production too until we have a more robust solution
+      console.warn('Using mock data in production due to error');
+      const mockResponse = getMockResponse(address);
+      toast.error("Using mock data (temporary fallback)");
+      return mockResponse;
     }
-    
-    // Return a consistent error response
-    return {
-      status: "error",
-      message: error instanceof Error ? error.message : "An unknown error occurred",
-      timestamp: new Date().toISOString(),
-      address: address ? address.toUpperCase() : null
-    };
   }
 };
 
@@ -161,6 +174,6 @@ function getMockResponse(address: string) {
     qct_status: isQct ? "Qualified Census Tract" : "Not a Qualified Census Tract",
     geocoding_service: "Mock Data",
     timestamp: new Date().toISOString(),
-    data_source: "MOCK DATA (Development Mode)"
+    data_source: "MOCK DATA (Fallback Mode)"
   };
 }

@@ -7,7 +7,7 @@ import { Separator } from '@/components/ui/separator';
 import { testSupabaseConnection } from '@/lib/supabase/testConnection';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { AlertTriangleIcon, CheckCircle2Icon, XCircleIcon } from 'lucide-react';
+import { AlertTriangleIcon, CheckCircle2Icon, XCircleIcon, RefreshCcwIcon } from 'lucide-react';
 
 const ConnectionTester: React.FC = () => {
   const [status, setStatus] = useState<'idle' | 'testing' | 'success' | 'error'>('idle');
@@ -16,6 +16,7 @@ const ConnectionTester: React.FC = () => {
   const [lastTestedAt, setLastTestedAt] = useState<Date | null>(null);
   const [edgeFunctionResponse, setEdgeFunctionResponse] = useState<any>(null);
   const [edgeFunctionStatus, setEdgeFunctionStatus] = useState<'idle' | 'testing' | 'success' | 'error'>('idle');
+  const [consecutiveErrors, setConsecutiveErrors] = useState<number>(0);
   
   const testConnection = async () => {
     setStatus('testing');
@@ -55,6 +56,7 @@ const ConnectionTester: React.FC = () => {
       const elapsed = performance.now() - start;
       
       if (error) {
+        setConsecutiveErrors(prev => prev + 1);
         console.error("Edge function test failed:", error);
         toast.error(`Edge function test failed: ${error.message}`);
         setEdgeFunctionResponse({ error: error.message, details: error });
@@ -62,6 +64,7 @@ const ConnectionTester: React.FC = () => {
         return;
       }
       
+      setConsecutiveErrors(0);
       setEdgeFunctionResponse({
         success: true,
         responseTime: parseFloat(elapsed.toFixed(2)),
@@ -71,11 +74,50 @@ const ConnectionTester: React.FC = () => {
       setEdgeFunctionStatus('success');
       toast.success(`Edge function responded in ${elapsed.toFixed(2)}ms`);
     } catch (error) {
+      setConsecutiveErrors(prev => prev + 1);
       console.error("Edge function test error:", error);
-      toast.error(`Edge function test failed: ${error instanceof Error ? error.message : String(error)}`);
-      setEdgeFunctionResponse({ error: String(error) });
+      
+      let errorMessage = "Unknown error";
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      } else if (typeof error === 'object' && error !== null) {
+        errorMessage = JSON.stringify(error);
+      } else if (typeof error === 'string') {
+        errorMessage = error;
+      }
+      
+      toast.error(`Edge function test failed: ${errorMessage}`);
+      
+      setEdgeFunctionResponse({ 
+        error: errorMessage,
+        errorObject: error 
+      });
       setEdgeFunctionStatus('error');
     }
+  };
+  
+  const getTroubleshootingTips = () => {
+    if (edgeFunctionStatus !== 'error') return null;
+    
+    return (
+      <div className="mt-4 p-3 bg-muted rounded-md text-sm">
+        <h4 className="font-semibold mb-2">Troubleshooting Tips:</h4>
+        <ul className="list-disc list-inside space-y-1">
+          <li>Verify the edge function is deployed in your Supabase project</li>
+          <li>Check the Supabase Edge Function Logs for errors</li>
+          <li>Ensure your Supabase URL and API key are correct</li>
+          <li>Try redeploying the function: <code>supabase functions deploy lmi-check</code></li>
+          <li>Check that CORS is properly configured in the edge function</li>
+          <li>If this is in an iframe, ensure the parent domain is allowed in CORS</li>
+          {consecutiveErrors > 2 && (
+            <li className="text-destructive font-semibold">
+              After multiple failed attempts, you may need to check your Supabase project's region 
+              and make sure there are no service disruptions
+            </li>
+          )}
+        </ul>
+      </div>
+    );
   };
   
   return (
@@ -151,12 +193,7 @@ const ConnectionTester: React.FC = () => {
                   <div>
                     <p className="font-semibold">Error:</p>
                     <p className="text-sm">{edgeFunctionResponse.error}</p>
-                    <p className="text-xs mt-2">Common causes:</p>
-                    <ul className="list-disc list-inside text-xs">
-                      <li>Edge Function not deployed</li>
-                      <li>CORS issues</li>
-                      <li>Region connectivity problems</li>
-                    </ul>
+                    {getTroubleshootingTips()}
                   </div>
                 </div>
               ) : (
@@ -188,10 +225,13 @@ const ConnectionTester: React.FC = () => {
           Test Database Connection
         </Button>
         <Button 
-          variant={edgeFunctionStatus === 'error' ? 'destructive' : 'success'}
+          variant={edgeFunctionStatus === 'error' ? 'destructive' : 'default'}
           onClick={testEdgeFunction}
           disabled={edgeFunctionStatus === 'testing'}
         >
+          {edgeFunctionStatus === 'testing' ? (
+            <RefreshCcwIcon className="mr-2 h-4 w-4 animate-spin" />
+          ) : null}
           Test Edge Function
         </Button>
       </CardFooter>
