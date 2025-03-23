@@ -11,6 +11,16 @@ export interface CheckLmiStatusResponse {
   percentage_of_ami: number;
   eligibility: string;
   lmi_status: string;
+  is_qct?: boolean;
+  qct_status?: string;
+  qct_info?: {
+    year?: number;
+    designation_type?: string;
+    poverty_rate?: number;
+    income_threshold?: number;
+    additional_info?: string;
+  } | null;
+  geocoding_service?: string;
 }
 
 // Form submission types

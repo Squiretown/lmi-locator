@@ -21,18 +21,33 @@ const ResultsDisplay = ({ results }: ResultsDisplayProps) => {
       <CardHeader>
         <div className="flex justify-between items-center">
           <CardTitle>API Results</CardTitle>
-          {geocodingService && (
-            <Badge variant={geocodingService === 'Census' ? 'default' : 
-                           (geocodingService === 'ESRI' ? 'secondary' : 'outline')}>
-              {geocodingService}
-            </Badge>
-          )}
+          <div className="space-x-2">
+            {/* Show QCT status if available */}
+            {results.is_qct !== undefined && (
+              <Badge variant={results.is_qct ? "secondary" : "outline"}>
+                {results.is_qct ? "QCT" : "Non-QCT"}
+              </Badge>
+            )}
+            
+            {/* Show geocoding service */}
+            {geocodingService && (
+              <Badge variant={geocodingService === 'Census' ? "default" : 
+                           (geocodingService === 'ESRI' ? "secondary" : "outline")}>
+                {geocodingService}
+              </Badge>
+            )}
+          </div>
         </div>
         {results.eligibility && (
           <CardDescription>
             LMI Status: <span className={results.is_approved ? "text-green-600 font-semibold" : "text-red-600 font-semibold"}>
               {results.lmi_status || results.eligibility}
             </span>
+            {results.percentage_of_ami && (
+              <span className="ml-2">
+                ({results.percentage_of_ami}% of AMI)
+              </span>
+            )}
           </CardDescription>
         )}
       </CardHeader>

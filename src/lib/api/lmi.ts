@@ -82,6 +82,9 @@ function getMockResponse(address: string) {
   else if (percentageOfAmi <= 120) incomeCategory = "Moderate Income";
   else incomeCategory = "Above Moderate Income";
   
+  // Determine QCT status for mock data
+  const isQct = isLowIncome || address.toLowerCase().includes('qct');
+  
   return {
     status: "success",
     address: address.toUpperCase(),
@@ -99,6 +102,9 @@ function getMockResponse(address: string) {
       ? `APPROVED - This location is in a ${incomeCategory} Census Tract`
       : "NOT APPROVED - This location is not in an LMI Census Tract",
     lmi_status: isEligible ? "LMI Eligible" : "Not LMI Eligible",
+    is_qct: isQct,
+    qct_status: isQct ? "Qualified Census Tract" : "Not a Qualified Census Tract",
+    geocoding_service: "Mock Data",
     timestamp: new Date().toISOString(),
     data_source: "MOCK DATA (Development Mode)"
   };

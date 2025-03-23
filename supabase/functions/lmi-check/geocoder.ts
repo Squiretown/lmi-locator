@@ -2,7 +2,12 @@
 import { CENSUS_GEOCODER_URL, ESRI_GEOCODING_URL } from "./constants.ts";
 
 // Geocode an address using Census Geocoder API with ESRI as backup
-export async function geocodeAddress(address: string): Promise<{lat: number, lon: number, geoid?: string}> {
+export async function geocodeAddress(address: string): Promise<{
+  lat: number; 
+  lon: number; 
+  geoid?: string;
+  geocoding_service?: string;
+}> {
   console.log('Geocoding address:', address);
   
   try {
@@ -38,7 +43,8 @@ export async function geocodeAddress(address: string): Promise<{lat: number, lon
         return {
           lat: coordinates.y, 
           lon: coordinates.x,
-          geoid
+          geoid,
+          geocoding_service: 'Census'
         };
       }
       
@@ -82,12 +88,29 @@ export async function geocodeAddress(address: string): Promise<{lat: number, lon
         lon: bestMatch.location.x
       });
       
-      // ESRI doesn't provide census tract info, so we need to get that separately
-      // For now, return coordinates without geoid
-      return {
-        lat: bestMatch.location.y,
-        lon: bestMatch.location.x
-      };
+      // Try to get census tract from coordinates
+      try {
+        const tractGeoid = await getCensusTractFromCoordinates(
+          bestMatch.location.y, 
+          bestMatch.location.x
+        );
+        
+        return {
+          lat: bestMatch.location.y,
+          lon: bestMatch.location.x,
+          geoid: tractGeoid || undefined,
+          geocoding_service: 'ESRI'
+        };
+      } catch (error) {
+        console.error('Error getting census tract from coordinates:', error);
+        
+        // Return ESRI geocoding result without tract info
+        return {
+          lat: bestMatch.location.y,
+          lon: bestMatch.location.x,
+          geocoding_service: 'ESRI'
+        };
+      }
     }
     
     throw new Error('Address could not be geocoded with any service');
@@ -104,7 +127,8 @@ export async function geocodeAddress(address: string): Promise<{lat: number, lon
       return { 
         lat: 34.0736, 
         lon: -118.4004,
-        geoid: '06037701000' // Beverly Hills tract - not LMI
+        geoid: '06037701000', // Beverly Hills tract - not LMI
+        geocoding_service: 'Mock Data'
       };
     }
     
@@ -114,14 +138,44 @@ export async function geocodeAddress(address: string): Promise<{lat: number, lon
       return { 
         lat: 37.7749, 
         lon: -122.4194,
-        geoid: '06075010200' // Low income tract
+        geoid: '06075010200', // Low income tract
+        geocoding_service: 'Mock Data'
       };
     }
     
     return { 
       lat: 37.7749, 
       lon: -122.4194,
-      geoid: '06075010800' // San Francisco tract - moderate income
+      geoid: '06075010800', // San Francisco tract - moderate income
+      geocoding_service: 'Mock Data'
     };
+  }
+}
+
+// Get census tract from coordinates
+async function getCensusTractFromCoordinates(lat: number, lon: number): Promise<string | null> {
+  try {
+    const url = `${CENSUS_GEOCODER_URL}/geographies/coordinates?x=${lon}&y=${lat}&benchmark=2020&vintage=2020&layers=Census%20Tracts&format=json`;
+    
+    console.log(`Getting census tract from coordinates: ${lat}, ${lon}`);
+    
+    const response = await fetch(url);
+    
+    if (!response.ok) {
+      throw new Error(`Census API request failed: ${response.status} ${response.statusText}`);
+    }
+    
+    const data = await response.json();
+    
+    if (data.result?.geographies?.['Census Tracts']?.length > 0) {
+      const geoid = data.result.geographies['Census Tracts'][0].GEOID;
+      console.log(`Found census tract ${geoid} for coordinates ${lat}, ${lon}`);
+      return geoid;
+    }
+    
+    return null;
+  } catch (error) {
+    console.error('Error getting census tract from coordinates:', error);
+    return null;
   }
 }

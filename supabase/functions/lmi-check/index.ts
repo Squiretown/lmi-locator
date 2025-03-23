@@ -4,6 +4,7 @@ import { getIncomeCategory } from "./constants.ts";
 import { geocodeAddress } from "./geocoder.ts";
 import { getMedianIncome } from "./income.ts";
 import { corsHeaders, handleCors } from "./cors.ts";
+import { getQctStatus } from "./qct.ts";
 
 // Main handler function
 serve(async (req) => {
@@ -37,6 +38,9 @@ serve(async (req) => {
     const incomeCategory = getIncomeCategory(percentageOfAmi);
     const isEligible = percentageOfAmi <= 80; // LMI eligible if <= 80% of AMI
     
+    // Step 4: Get QCT status (Qualified Census Tract)
+    const qctStatus = await getQctStatus(geocodeResult.geoid);
+    
     // Build response
     const result = {
       status: "success",
@@ -55,6 +59,10 @@ serve(async (req) => {
         ? `APPROVED - This location is in a ${incomeCategory} Census Tract`
         : "NOT APPROVED - This location is not in an LMI Census Tract",
       lmi_status: isEligible ? "LMI Eligible" : "Not LMI Eligible",
+      is_qct: qctStatus.isQct,
+      qct_status: qctStatus.isQct ? "Qualified Census Tract" : "Not a Qualified Census Tract",
+      qct_info: qctStatus.details || null,
+      geocoding_service: geocodeResult.geocoding_service || "Census",
       timestamp: new Date().toISOString(),
       data_source: "U.S. Census Bureau American Community Survey 5-Year Estimates"
     };
