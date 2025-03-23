@@ -46,9 +46,13 @@ export async function getQctStatus(geoid: string): Promise<QctResponse> {
 function getMockQctData(geoid: string): QctResponse {
   // Tracts that we'll consider as QCT for testing
   const qctTracts = [
-    '06075010200', // Sample low income tract
+    '06075010200', // Sample low income tract in San Francisco
     '36061002700', // Sample tract in Manhattan
-    '17031839100'  // Sample tract in Chicago
+    '17031839100', // Sample tract in Chicago
+    '12086009801', // Sample tract in Miami
+    '48201231100', // Sample tract in Houston
+    '25025081200', // Sample tract in Boston
+    '53033005700', // Sample tract in Seattle
   ];
   
   const isQct = qctTracts.includes(geoid);

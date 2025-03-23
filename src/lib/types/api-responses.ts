@@ -1,4 +1,5 @@
 
+
 // API Response Types
 export interface CheckLmiStatusResponse {
   is_approved: boolean;
