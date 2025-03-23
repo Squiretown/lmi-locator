@@ -11,7 +11,12 @@ export async function getMedianIncome(geoid: string): Promise<number> {
     
     // Create URL for ACS API request
     // Get the CENSUS_API_KEY from environment
-    const CENSUS_API_KEY = Deno.env.get("CENSUS_API_KEY") || "";
+    const CENSUS_API_KEY = Deno.env.get("CENSUS_API_KEY");
+    
+    if (!CENSUS_API_KEY) {
+      console.warn('Census API key not found in environment variables');
+      throw new Error('Census API key not configured');
+    }
     
     const apiUrl = `${CENSUS_API_BASE_URL}/${ACS_DATASET}?get=${MEDIAN_INCOME_VARIABLE}&for=tract:${tract}&in=state:${state}%20county:${county}&key=${CENSUS_API_KEY}`;
     

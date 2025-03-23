@@ -26,31 +26,28 @@ export const getMedianIncome = async (geoid: string): Promise<number> => {
   
   try {
     // Create URL for ACS API request
-    // Get the CENSUS_API_KEY from environment
-    const CENSUS_API_KEY = import.meta.env.VITE_CENSUS_API_KEY || '';
+    // For frontend, we'll use the edge function instead of direct API calls
+    // This prevents exposing the API key in client-side code
+    console.log(`Using Edge Function to fetch Census data for tract: ${geoid}`);
     
-    const apiUrl = `${CENSUS_API_BASE_URL}/${ACS_DATASET}?get=${MEDIAN_INCOME_VARIABLE}&for=tract:${tract}&in=state:${state}%20county:${county}&key=${CENSUS_API_KEY}`;
+    // Call the Supabase Edge Function for Census data
+    const { data, error } = await supabase.functions.invoke('census-db', {
+      body: { 
+        action: 'getMedianIncome', 
+        params: { geoid, state, county, tract } 
+      },
+    });
     
-    console.log(`Making request to Census ACS API: ${CENSUS_API_BASE_URL}/${ACS_DATASET}`);
-    console.log(`Variables: ${MEDIAN_INCOME_VARIABLE}`);
-    console.log(`Geography: tract:${tract}, county:${county}, state:${state}`);
-    
-    // Make the API request
-    const response = await fetch(apiUrl);
-    
-    if (!response.ok) {
-      throw new Error(`Census API request failed: ${response.status} ${response.statusText}`);
+    if (error) {
+      console.error('Error calling Census-DB edge function:', error);
+      throw error;
     }
     
-    const data = await response.json();
-    
-    // Census API returns a 2D array with headers in the first row and data in subsequent rows
-    if (data.length < 2) {
-      throw new Error('Invalid response from Census API');
+    if (!data || !data.success) {
+      throw new Error('Invalid response from Census-DB edge function');
     }
     
-    // Extract the median income value from the response
-    const medianIncome = parseInt(data[1][0]);
+    const medianIncome = data.medianIncome;
     
     // Cache the result in Supabase
     try {
