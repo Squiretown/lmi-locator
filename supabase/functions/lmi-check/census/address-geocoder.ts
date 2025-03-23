@@ -52,43 +52,7 @@ export async function geocodeAddress(address: string): Promise<{
       
       const data = await response.json() as CensusGeocoderResult;
       
-      // Check if we got a match
-      if (data.result && 
-          data.result.addressMatches && 
-          data.result.addressMatches.length > 0) {
-        
-        const match = data.result.addressMatches[0];
-        const coordinates = {
-          lat: match.coordinates.y,
-          lon: match.coordinates.x
-        };
-        
-        let tractId = null;
-        
-        // Try to extract tract ID if geography information is available
-        if (match.geographies && 
-            match.geographies["Census Tracts"] && 
-            match.geographies["Census Tracts"].length > 0) {
-          
-          const tract = match.geographies["Census Tracts"][0];
-          tractId = formatGeoId(
-            tract.STATE, 
-            tract.COUNTY, 
-            tract.TRACT
-          );
-          
-          console.log(`Found Census tract: ${tractId}`);
-        }
-        
-        return { 
-          coordinates, 
-          tractId,
-          formattedAddress: match.matchedAddress 
-        };
-      }
-      
-      console.warn("No address matches found in Census geocoding response");
-      return { coordinates: null, tractId: null };
+      return processGeocodeResponse(data);
     } catch (error) {
       clearTimeout(timeoutId);
       throw error;
@@ -97,4 +61,54 @@ export async function geocodeAddress(address: string): Promise<{
     console.error("Error geocoding address with Census API:", error);
     return { coordinates: null, tractId: null };
   }
+}
+
+/**
+ * Process the Census geocoder response to extract coordinates and tract information
+ * 
+ * @param data The Census geocoder API response
+ * @returns Processed geocoding result with coordinates and tract ID
+ */
+function processGeocodeResponse(data: CensusGeocoderResult): { 
+  coordinates: { lat: number; lon: number } | null;
+  tractId: string | null;
+  formattedAddress?: string;
+} {
+  // Check if we got a match
+  if (data.result && 
+      data.result.addressMatches && 
+      data.result.addressMatches.length > 0) {
+    
+    const match = data.result.addressMatches[0];
+    const coordinates = {
+      lat: match.coordinates.y,
+      lon: match.coordinates.x
+    };
+    
+    let tractId = null;
+    
+    // Try to extract tract ID if geography information is available
+    if (match.geographies && 
+        match.geographies["Census Tracts"] && 
+        match.geographies["Census Tracts"].length > 0) {
+      
+      const tract = match.geographies["Census Tracts"][0];
+      tractId = formatGeoId(
+        tract.STATE, 
+        tract.COUNTY, 
+        tract.TRACT
+      );
+      
+      console.log(`Found Census tract: ${tractId}`);
+    }
+    
+    return { 
+      coordinates, 
+      tractId,
+      formattedAddress: match.matchedAddress 
+    };
+  }
+  
+  console.warn("No address matches found in Census geocoding response");
+  return { coordinates: null, tractId: null };
 }
