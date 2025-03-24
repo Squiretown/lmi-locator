@@ -1,32 +1,45 @@
-// Define the interface directly in this file
+// Define smaller, focused interfaces for better readability
+interface GeoCoordinates {
+  x: number; // longitude
+  y: number; // latitude
+}
+
+interface AddressMatch {
+  coordinates: GeoCoordinates;
+  matchedAddress?: string;
+  geographies?: Record<string, any>;
+}
+
+interface CensusTract {
+  GEOID: string;
+  STATE: string;
+  COUNTY: string;
+  TRACT: string;
+  NAME: string;
+}
+
+interface Geographies {
+  "Census Tracts"?: Array<CensusTract>;
+}
+
+interface LocationInput {
+  x: number; // longitude
+  y: number; // latitude
+}
+
+interface AddressInput {
+  address: string;
+}
+
+// Main Census Geocoder Result interface composed of smaller interfaces
 interface CensusGeocoderResult {
   result?: {
-    addressMatches?: Array<{
-      coordinates: {
-        x: number; // longitude
-        y: number; // latitude
-      };
-      matchedAddress?: string;
-      geographies?: Record<string, any>;
-    }>;
-    geographies?: {
-      "Census Tracts"?: Array<{
-        GEOID: string;
-        STATE: string;
-        COUNTY: string;
-        TRACT: string;
-        NAME: string;
-      }>;
-    };
+    addressMatches?: Array<AddressMatch>;
+    geographies?: Geographies;
   };
   input?: {
-    location?: {
-      x: number;
-      y: number;
-    };
-    address?: {
-      address: string;
-    };
+    location?: LocationInput;
+    address?: AddressInput;
   };
 }
 
