@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-import { geocodeAddressWithEsri, ESRI_GEOCODING_URL } from '@/lib/api/esri-service';
+import { geocodeAddressWithEsri, ESRI_GEOCODING_URL, ESRI_GEOCODING_API_URL } from '@/lib/api/esri-service';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -30,6 +30,7 @@ const EsriTest = ({
     apiUrl?: string;
     status?: 'success' | 'error' | 'idle';
     message?: string;
+    approach?: string;
   }>({
     status: 'idle'
   });
@@ -66,7 +67,8 @@ const EsriTest = ({
         test_type: 'ESRI Geocoding',
         diagnostic: {
           duration_ms: requestDuration,
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
+          approach: result.request_info?.approach
         }
       });
       
@@ -74,9 +76,10 @@ const EsriTest = ({
         requestStartTime,
         requestEndTime,
         requestDuration,
-        apiUrl: ESRI_GEOCODING_URL,
+        apiUrl: result.request_info?.url || ESRI_GEOCODING_URL,
         status: 'success',
-        message: `API call completed successfully in ${requestDuration}ms`
+        message: `API call completed successfully in ${requestDuration}ms`,
+        approach: result.request_info?.approach
       });
       
       toast.success('ESRI geocoding successful');
@@ -163,6 +166,9 @@ const EsriTest = ({
               
               <div className="mt-2 space-y-1 text-muted-foreground">
                 <p><strong>API URL:</strong> {diagnosticInfo.apiUrl}</p>
+                {diagnosticInfo.approach && (
+                  <p><strong>Successful Approach:</strong> {diagnosticInfo.approach}</p>
+                )}
                 {diagnosticInfo.requestDuration && (
                   <p><strong>Request Duration:</strong> {diagnosticInfo.requestDuration}ms</p>
                 )}
@@ -177,3 +183,4 @@ const EsriTest = ({
 };
 
 export default EsriTest;
+
