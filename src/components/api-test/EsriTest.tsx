@@ -125,7 +125,7 @@ const EsriTest = ({
         <CardTitle className="flex items-center justify-between">
           Test ESRI Geocoding API
           {diagnosticInfo.status && diagnosticInfo.status !== 'idle' && (
-            <Badge variant={diagnosticInfo.status === 'success' ? 'success' : 'destructive'}>
+            <Badge variant={diagnosticInfo.status === 'success' ? 'default' : 'destructive'}>
               {diagnosticInfo.status === 'success' ? 'Success' : 'Error'}
             </Badge>
           )}
