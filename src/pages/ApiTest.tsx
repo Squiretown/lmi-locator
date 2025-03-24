@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import GeocodeTest from '@/components/api-test/GeocodeTest';
 import IncomeTest from '@/components/api-test/IncomeTest';
 import LmiTest from '@/components/api-test/LmiTest';
+import EsriTest from '@/components/api-test/EsriTest';
 import ResultsDisplay from '@/components/api-test/ResultsDisplay';
 
 const ApiTest = () => {
@@ -34,8 +35,9 @@ const ApiTest = () => {
       </div>
       
       <Tabs defaultValue="geocode" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="geocode">Geocoding API</TabsTrigger>
+          <TabsTrigger value="esri">ESRI API</TabsTrigger>
           <TabsTrigger value="income">Income Data API</TabsTrigger>
           <TabsTrigger value="lmi">LMI Status Check</TabsTrigger>
         </TabsList>
@@ -45,6 +47,14 @@ const ApiTest = () => {
             address={address}
             setAddress={setAddress}
             setTractId={setTractId}
+            setResults={setResults}
+            loading={loading}
+            setLoading={setLoading}
+          />
+        </TabsContent>
+        
+        <TabsContent value="esri" className="space-y-4">
+          <EsriTest 
             setResults={setResults}
             loading={loading}
             setLoading={setLoading}
