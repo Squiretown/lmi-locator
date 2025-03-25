@@ -28,26 +28,69 @@ serve(async (req) => {
     
     if (!address) {
       console.error('Address is required but was not provided');
-      throw new Error("Address is required");
+      return new Response(JSON.stringify({
+        status: "error",
+        message: "Address is required"
+      }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
     
     console.log("Processing LMI check for address:", address);
     
     // Step 1: Geocode the address
     console.log('========== STEP 1: GEOCODING ADDRESS ==========');
-    const geocodeResult = await geocodeAddress(address);
-    console.log('Geocode result:', JSON.stringify(geocodeResult, null, 2));
+    let geocodeResult;
+    try {
+      geocodeResult = await geocodeAddress(address);
+      console.log('Geocode result:', JSON.stringify(geocodeResult, null, 2));
+    } catch (error) {
+      console.error('Geocoding failed:', error);
+      return new Response(JSON.stringify({
+        status: "error",
+        message: `Geocoding failed: ${error.message || 'Unknown error'}`,
+        timestamp: new Date().toISOString()
+      }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
     console.log('========== GEOCODING COMPLETE ==========');
     
     if (!geocodeResult.geoid) {
       console.error('Unable to determine census tract for address');
-      throw new Error("Unable to determine census tract for address");
+      return new Response(JSON.stringify({
+        status: "error",
+        message: "Unable to determine census tract for address",
+        lat: geocodeResult.lat,
+        lon: geocodeResult.lon,
+        geocoding_service: geocodeResult.geocoding_service,
+        timestamp: new Date().toISOString()
+      }), {
+        status: 404,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
     
     // Step 2: Get median income for the tract
     console.log('========== STEP 2: GETTING MEDIAN INCOME ==========');
-    const medianIncome = await getMedianIncome(geocodeResult.geoid);
-    console.log('Median income result:', medianIncome);
+    let medianIncome;
+    try {
+      medianIncome = await getMedianIncome(geocodeResult.geoid);
+      console.log('Median income result:', medianIncome);
+    } catch (error) {
+      console.error('Failed to retrieve median income data:', error);
+      return new Response(JSON.stringify({
+        status: "error",
+        message: `Failed to retrieve income data: ${error.message || 'Unknown error'}`,
+        tract_id: formatTractId(geocodeResult.geoid),
+        timestamp: new Date().toISOString()
+      }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
     console.log('========== MEDIAN INCOME COMPLETE ==========');
     
     // Step 3: Calculate eligibility based on AMI
@@ -67,8 +110,15 @@ serve(async (req) => {
     
     // Step 4: Get QCT status (Qualified Census Tract)
     console.log('========== STEP 4: GETTING QCT STATUS ==========');
-    const qctStatus = await getQctStatus(geocodeResult.geoid);
-    console.log('QCT status result:', JSON.stringify(qctStatus, null, 2));
+    let qctStatus;
+    try {
+      qctStatus = await getQctStatus(geocodeResult.geoid);
+      console.log('QCT status result:', JSON.stringify(qctStatus, null, 2));
+    } catch (error) {
+      console.error('Failed to retrieve QCT status:', error);
+      // Continue with default qctStatus if there's an error
+      qctStatus = { isQct: false, details: null };
+    }
     console.log('========== QCT STATUS COMPLETE ==========');
     
     // Build response

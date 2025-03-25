@@ -24,6 +24,12 @@ export async function orchestrateGeocoding(address: string): Promise<GeocodingRe
   console.log('Starting geocoding orchestration for address:', address);
   
   try {
+    // Validate address before attempting geocoding
+    if (!validateAddress(address)) {
+      console.warn(`Invalid address format: ${address}`);
+      throw new Error("Invalid address format. Please provide a complete street address.");
+    }
+    
     // Step 1: Try Census Geocoder
     console.log('Attempting Census geocoding service...');
     const censusResult = await tryCensusGeocoding(address);
@@ -103,4 +109,31 @@ async function tryEsriGeocoding(address: string): Promise<GeocodingResult | null
     console.error('ESRI geocoding failed:', error);
     return null;
   }
+}
+
+/**
+ * Validates an address to ensure it's in a proper format before attempting geocoding
+ * 
+ * @param address The address to validate
+ * @returns boolean indicating whether the address is valid
+ */
+function validateAddress(address: string): boolean {
+  if (!address || typeof address !== 'string') {
+    return false;
+  }
+
+  // Remove extra whitespace
+  address = address.replace(/\s+/g, ' ').trim();
+
+  // Basic address validation
+  const requiredComponents = [
+    // At least one number (street number)
+    (x: string) => /\d/.test(x),
+    // Minimum length for a reasonable address
+    (x: string) => x.trim().length >= 10,
+    // Contains street identifier
+    (x: string) => /street|st|avenue|ave|road|rd|drive|dr|lane|ln|boulevard|blvd|way|place|pl|court|ct|circle|cir|terrace|ter|highway|hwy/i.test(x)
+  ];
+
+  return requiredComponents.every(check => check(address));
 }
