@@ -1,7 +1,6 @@
 
-import { ACS_DATASET, MEDIAN_INCOME_VARIABLE, CENSUS_API_BASE_URL } from "./constants.ts";
+import { CENSUS_API_BASE_URL, ACS_DATASET, MEDIAN_INCOME_VARIABLE } from "./constants.ts";
 
-// Get median income for a census tract
 export async function getMedianIncome(geoid: string): Promise<number> {
   console.log('========== INCOME DATA FETCH START ==========');
   console.log('Getting median income for tract:', geoid);
@@ -12,7 +11,6 @@ export async function getMedianIncome(geoid: string): Promise<number> {
     const { state, county, tract } = parseGeoId(geoid);
     console.log('Parsed GeoID components:', { state, county, tract });
     
-    // Create URL for ACS API request
     // Get the CENSUS_API_KEY from environment
     const CENSUS_API_KEY = Deno.env.get("CENSUS_API_KEY");
     
