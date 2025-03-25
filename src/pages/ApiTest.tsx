@@ -8,6 +8,7 @@ import GeocodeTest from '@/components/api-test/GeocodeTest';
 import IncomeTest from '@/components/api-test/IncomeTest';
 import LmiTest from '@/components/api-test/LmiTest';
 import EsriTest from '@/components/api-test/EsriTest';
+import EsriKeyTest from '@/components/api-test/EsriKeyTest';
 import ResultsDisplay from '@/components/api-test/ResultsDisplay';
 
 const ApiTest = () => {
@@ -35,9 +36,10 @@ const ApiTest = () => {
       </div>
       
       <Tabs defaultValue="geocode" className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="geocode">Geocoding API</TabsTrigger>
           <TabsTrigger value="esri">ESRI API</TabsTrigger>
+          <TabsTrigger value="esri-key">ESRI API Key</TabsTrigger>
           <TabsTrigger value="income">Income Data API</TabsTrigger>
           <TabsTrigger value="lmi">LMI Status Check</TabsTrigger>
         </TabsList>
@@ -55,6 +57,14 @@ const ApiTest = () => {
         
         <TabsContent value="esri" className="space-y-4">
           <EsriTest 
+            setResults={setResults}
+            loading={loading}
+            setLoading={setLoading}
+          />
+        </TabsContent>
+        
+        <TabsContent value="esri-key" className="space-y-4">
+          <EsriKeyTest 
             setResults={setResults}
             loading={loading}
             setLoading={setLoading}
