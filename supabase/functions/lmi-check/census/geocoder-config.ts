@@ -1,50 +1,38 @@
-// Define smaller, focused interfaces for better readability
-interface GeoCoordinates {
-  x: number; // longitude
-  y: number; // latitude
-}
 
-interface AddressMatch {
-  coordinates: GeoCoordinates;
-  matchedAddress?: string;
-  geographies?: Record<string, any>;
-}
-
-interface CensusTract {
-  GEOID: string;
-  STATE: string;
-  COUNTY: string;
-  TRACT: string;
-  NAME: string;
-}
-
-interface Geographies {
-  "Census Tracts"?: Array<CensusTract>;
-}
-
-interface LocationInput {
-  x: number; // longitude
-  y: number; // latitude
-}
-
-interface AddressInput {
-  address: string;
-}
-
-// Main Census Geocoder Result interface composed of smaller interfaces
-interface CensusGeocoderResult {
+// Define Census Geocoder Result interface
+export interface CensusGeocoderResult {
   result?: {
-    addressMatches?: Array<AddressMatch>;
-    geographies?: Geographies;
+    addressMatches?: Array<{
+      coordinates: {
+        x: number; // longitude
+        y: number; // latitude
+      };
+      matchedAddress?: string;
+      geographies?: Record<string, any>;
+    }>;
+    geographies?: {
+      "Census Tracts"?: Array<{
+        GEOID: string;
+        STATE: string;
+        COUNTY: string;
+        TRACT: string;
+        NAME: string;
+      }>;
+    };
   };
   input?: {
-    location?: LocationInput;
-    address?: AddressInput;
+    location?: {
+      x: number;
+      y: number;
+    };
+    address?: {
+      address: string;
+    };
   };
 }
 
-// Other interfaces from types.ts that we need to keep
-interface GeocodedAddress {
+// Geocoded address result 
+export interface GeocodedAddress {
   coordinates: {
     lat: number;
     lon: number;
@@ -54,7 +42,8 @@ interface GeocodedAddress {
   source?: string;
 }
 
-class GeocodingError extends Error {
+// Custom error class for geocoding errors
+export class GeocodingError extends Error {
   statusCode?: number;
   source: string;
 
@@ -65,9 +54,6 @@ class GeocodingError extends Error {
     this.source = source;
   }
 }
-
-// Export the interfaces for other files to use
-export { CensusGeocoderResult, GeocodedAddress, GeocodingError };
 
 // Census API configuration
 export const CENSUS_CONFIG = {
