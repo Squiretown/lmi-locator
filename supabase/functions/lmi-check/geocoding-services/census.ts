@@ -1,5 +1,5 @@
 
-import { determineCensusTract, geocodeAddress as censusGeocode, GeocodedAddress, GeocodingError } from "../census/index.ts";
+import { determineCensusTract, geocodeAddress as censusGeocode, GeocodedAddress, GeocodingError, geocodeWithCensus } from "../census/index.ts";
 
 /**
  * Geocode an address using Census Geocoder API
@@ -17,11 +17,43 @@ export async function geocodeWithCensus(address: string): Promise<{
   
   try {
     // Use the improved Census geocoding implementation
-    const result: GeocodedAddress = await censusGeocode(address);
+    const result = await censusGeocode(address);
     
     if (!result.coordinates) {
-      console.log('Census geocoder returned no coordinates');
-      return {};
+      // Try the alternative Census geocoding implementation if the main one failed
+      console.log('Primary Census geocoder returned no coordinates, trying alternative implementation...');
+      const altResult = await geocodeWithCensus(address);
+      
+      if (altResult.status !== 'success' || !altResult.lat || !altResult.lon) {
+        console.log('Alternative Census geocoder also failed');
+        return {};
+      }
+      
+      console.log('Successfully geocoded with alternative Census implementation');
+      
+      const response = {
+        lat: altResult.lat,
+        lon: altResult.lon,
+        geocoding_service: 'Census (Alternative)'
+      };
+      
+      // Try to get census tract from coordinates
+      console.log('Got coordinates from alternative geocoder, attempting tract lookup');
+      
+      const tractId = await determineCensusTract(
+        altResult.lat,
+        altResult.lon
+      );
+      
+      if (tractId) {
+        console.log('Successfully determined census tract:', tractId);
+        return {
+          ...response,
+          geoid: tractId
+        };
+      }
+      
+      return response;
     }
     
     const response = {
