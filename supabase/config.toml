@@ -31,5 +31,8 @@ enabled = true
 [functions.lmi-check]
 verify_jwt = false
 
+[functions.hud-lmi-check]
+verify_jwt = false
+
 [functions.census-db]
 verify_jwt = false

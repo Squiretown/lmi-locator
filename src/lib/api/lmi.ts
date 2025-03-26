@@ -1,4 +1,3 @@
-
 // LMI status checking functionality
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -10,15 +9,17 @@ interface LmiResult {
   lat?: number;
   lon?: number;
   tract_id: string;
-  median_income: number;
-  ami: number;
-  income_category: string;
-  percentage_of_ami: number;
+  median_income?: number;
+  ami?: number;
+  income_category?: string;
+  percentage_of_ami?: number;
+  hud_low_mod_percent?: number;
+  hud_low_mod_population?: number;
   eligibility: string;
   color_code?: string;
   is_approved: boolean;
   approval_message: string;
-  lmi_status: string;
+  lmi_status?: string;
   is_qct?: boolean;
   qct_status?: string;
   geocoding_service?: string;
@@ -28,7 +29,7 @@ interface LmiResult {
 }
 
 // Check if a location is in an LMI eligible census tract
-export const checkLmiStatus = async (address: string): Promise<any> => {
+export const checkLmiStatus = async (address: string, options?: { useHud?: boolean }): Promise<any> => {
   console.log('Checking LMI status for address:', address);
   
   try {
@@ -36,76 +37,48 @@ export const checkLmiStatus = async (address: string): Promise<any> => {
       throw new Error('Address is required');
     }
 
-    // First, try using the direct edge function
-    try {
-      toast.info("Connecting to LMI eligibility service...");
+    // Determine which function to call based on options
+    const functionName = options?.useHud ? 'hud-lmi-check' : 'lmi-check';
+    toast.info(`Connecting to ${options?.useHud ? 'HUD' : 'Census'} LMI eligibility service...`);
       
-      // Create a timeout promise
-      const timeoutPromise = new Promise<never>((_, reject) => {
-        setTimeout(() => reject(new Error('Edge function timed out after 10 seconds')), 10000);
-      });
-      
-      // Create the edge function call promise
-      const edgeFunctionPromise = supabase.functions.invoke('lmi-check', {
-        body: { address }
-      });
-      
-      // Race the promises - properly awaiting the result
-      const response = await Promise.race([
-        edgeFunctionPromise,
-        timeoutPromise
-      ]);
-      
-      // Now access data and error from the response
-      const { data, error } = response;
-      
-      if (error) {
-        console.error('Error calling LMI check function:', error);
-        throw error;
-      }
-      
-      if (!data) {
-        throw new Error('No data returned from LMI check');
-      }
-      
-      // Check if the returned data is actually using mock data
-      if (data.geocoding_service === "Mock Data") {
-        toast.info("Edge function returned mock data");
-      } else {
-        toast.success("Using real geocoding data");
-      }
-      
-      console.log('LMI check result:', data);
-      
-      return data;
-    } catch (edgeFunctionError) {
-      console.error('Edge function failed, attempting alternative approach:', edgeFunctionError);
-      
-      // Provide more informative error messages based on the error type
-      if (edgeFunctionError instanceof DOMException && edgeFunctionError.name === 'AbortError') {
-        toast.error("Connection to LMI service timed out. Using fallback data.");
-      } else if (edgeFunctionError instanceof TypeError && edgeFunctionError.message.includes('Failed to fetch')) {
-        toast.error("Network error connecting to LMI service. Using fallback data.");
-      } else {
-        toast.error("Error connecting to LMI service. Using fallback data.");
-      }
-      
-      // Try our fallback geocoding + income approach
-      // This would be implemented here, but for now we'll fall back to mock data in development
-      if (import.meta.env.DEV) {
-        console.warn('Using mock data in development mode due to edge function error');
-        const mockResponse = getMockResponse(address);
-        toast.info("Using mock data (development fallback)");
-        return mockResponse;
-      } else {
-        // In production, we should retry or use alternative methods
-        // For now, fallback to mock data in production too until we have a more robust solution
-        console.warn('Using mock data in production mode due to edge function error');
-        const mockResponse = getMockResponse(address);
-        toast.info("Using mock data (temporary fallback)");
-        return mockResponse;
-      }
+    // Create a timeout promise
+    const timeoutPromise = new Promise<never>((_, reject) => {
+      setTimeout(() => reject(new Error('Edge function timed out after 10 seconds')), 10000);
+    });
+    
+    // Create the edge function call promise
+    const edgeFunctionPromise = supabase.functions.invoke(functionName, {
+      body: { address }
+    });
+    
+    // Race the promises - properly awaiting the result
+    const response = await Promise.race([
+      edgeFunctionPromise,
+      timeoutPromise
+    ]);
+    
+    // Now access data and error from the response
+    const { data, error } = response;
+    
+    if (error) {
+      console.error(`Error calling ${functionName} function:`, error);
+      throw error;
     }
+    
+    if (!data) {
+      throw new Error('No data returned from LMI check');
+    }
+    
+    // Check if the returned data is actually using mock data
+    if (data.geocoding_service === "Mock Data") {
+      toast.info("Edge function returned mock data");
+    } else {
+      toast.success("Using real geocoding data");
+    }
+    
+    console.log('LMI check result:', data);
+    
+    return data;
   } catch (error) {
     console.error('Error in checkLmiStatus:', error);
     
@@ -123,6 +96,11 @@ export const checkLmiStatus = async (address: string): Promise<any> => {
       return mockResponse;
     }
   }
+};
+
+// Check LMI status using HUD data (convenience method)
+export const checkHudLmiStatus = async (address: string): Promise<any> => {
+  return checkLmiStatus(address, { useHud: true });
 };
 
 // Helper function to provide mock responses for testing
