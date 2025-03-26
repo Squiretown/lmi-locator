@@ -9,7 +9,8 @@ export type { LmiResult, LmiCheckOptions } from './types';
 export { 
   checkLmiStatus,
   checkHudLmiStatus,
-  checkHudLmiStatusByPlace
+  checkHudLmiStatusByPlace,
+  checkEnhancedLmiStatus
 } from './api-functions';
 
 // Re-export mock data function for testing

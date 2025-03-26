@@ -70,9 +70,11 @@ export async function checkEnhancedLmiEligibility(address: string): Promise<LmiR
     // Return an error result
     return {
       status: 'error',
+      tract_id: 'Unknown', // Adding required properties that were missing before
       address: address,
       message: error instanceof Error ? error.message : 'Unknown error checking LMI eligibility',
       is_approved: false,
+      approval_message: 'Error occurred during LMI eligibility check',
       timestamp: new Date().toISOString(),
       eligibility: 'Error'
     };
