@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { searchLMIByAddress, searchLMIByPlaceName, processLMIData } from "./lmi-data-service.ts";
 import { validateAddress } from "../lmi-check/census-service.ts"; // Reuse validation from existing function
