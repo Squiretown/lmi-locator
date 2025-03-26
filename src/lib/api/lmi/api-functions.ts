@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { LmiResult, LmiCheckOptions } from './types';
@@ -158,7 +159,7 @@ export async function checkDirectLmiStatus(
     // First get lat/lon for the address using the ESRI geocoding service
     const geocodeResult = await geocodeAddressWithEsri(address);
     
-    if (!geocodeResult || !geocodeResult.location) {
+    if (!geocodeResult) {
       console.error('[LMI] Could not geocode address:', address);
       return {
         status: 'error',
@@ -172,7 +173,7 @@ export async function checkDirectLmiStatus(
       };
     }
     
-    const { x: longitude, y: latitude } = geocodeResult.location;
+    const { lat: latitude, lon: longitude } = geocodeResult;
     console.log('[LMI] Successfully geocoded address to:', latitude, longitude);
     
     // Query the ArcGIS Feature Service directly using point geometry
