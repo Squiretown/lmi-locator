@@ -1,5 +1,6 @@
 
-import { ESRI_API_KEY, ESRI_REVERSE_GEOCODING_URL } from './config';
+import { ESRI_API_KEY } from './config';
+import { ESRI_REVERSE_GEOCODING_URL } from './constants';
 import { EsriReverseGeocodeResponse } from './types';
 
 /**

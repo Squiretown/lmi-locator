@@ -1,5 +1,6 @@
 
-import { ESRI_API_KEY, ESRI_GEOCODING_URL } from '../config';
+import { ESRI_API_KEY } from '../config';
+import { ESRI_GEOCODING_URL } from '../constants';
 import { EsriGeocodeResponse } from '../types';
 import { GeocodeApproachResult } from './types';
 

@@ -1,6 +1,7 @@
 
 // Utility to validate ESRI API keys
-import { ESRI_API_KEY, ESRI_GEOCODE_URL } from './config';
+import { ESRI_API_KEY } from './config';
+import { ESRI_GEOCODE_URL } from './constants';
 
 /**
  * Validates an ESRI API key by making a test request
