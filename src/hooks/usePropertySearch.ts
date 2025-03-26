@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import { CheckLmiStatusResponse } from '@/lib/types';
 import { z } from 'zod';
-import { checkLmiStatus } from '@/lib/api/lmi';
+import { checkDirectLmiStatus } from '@/lib/api/lmi';
 
 // Define the form schema for address search
 export const formSchema = z.object({
@@ -28,15 +28,14 @@ export function usePropertySearch() {
       // Show toast to indicate search is in progress
       toast.info(`Checking status for ${values.address}...`);
       
-      // Use the checkLmiStatus function from src/lib/api/lmi.ts
-      const result = await checkLmiStatus(formattedAddress);
+      // Use the direct ArcGIS service which is working correctly
+      const result = await checkDirectLmiStatus(formattedAddress);
       
       if (result.status === "error") {
         throw new Error(result.message || "Failed to check property status");
       }
       
-      // Since checkLmiStatus returns a different format, we need to transform it
-      // to match the CheckLmiStatusResponse type
+      // Transform the result to match the CheckLmiStatusResponse type
       const lmiResponse: CheckLmiStatusResponse = {
         is_approved: result.is_approved,
         address: result.address,
