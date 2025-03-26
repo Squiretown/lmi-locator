@@ -1,6 +1,7 @@
 
 import React from 'react';
 import LmiTestContainer from './lmi-test/LmiTestContainer';
+import { Toaster } from '@/components/ui/sonner';
 
 interface LmiTestProps {
   address: string;
@@ -18,13 +19,16 @@ const LmiTest = ({
   setLoading
 }: LmiTestProps) => {
   return (
-    <LmiTestContainer
-      address={address}
-      setAddress={setAddress}
-      setResults={setResults}
-      loading={loading}
-      setLoading={setLoading}
-    />
+    <>
+      <Toaster position="top-center" />
+      <LmiTestContainer
+        address={address}
+        setAddress={setAddress}
+        setResults={setResults}
+        loading={loading}
+        setLoading={setLoading}
+      />
+    </>
   );
 };
 

@@ -120,7 +120,7 @@ export async function checkDirectLmiStatus(
       // No features found at this location
       console.warn('[LMI] No LMI data found for location:', latitude, longitude);
       return {
-        status: 'error', // Changed from 'warning' to 'error' to match allowed types
+        status: 'error', // Changed from 'warning' to match allowed types
         address: address.toUpperCase(),
         tract_id: 'Unknown',
         message: 'Address geocoded successfully, but no LMI data found for this location',

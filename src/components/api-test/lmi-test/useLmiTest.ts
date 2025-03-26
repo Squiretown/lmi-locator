@@ -1,95 +1,90 @@
 
 import { useState } from 'react';
+import { checkLmiStatus } from '@/lib/api/lmi';
 import { toast } from 'sonner';
-import { 
-  checkLmiStatus, 
-  checkHudLmiStatus, 
-  checkHudLmiStatusByPlace,
-  checkEnhancedLmiStatus,
-  checkDirectLmiStatus
-} from '@/lib/api/lmi';
-import { LmiResult } from '@/lib/api/lmi/types';
+import { CheckCircle, XCircle } from 'lucide-react';
 
-interface UseLmiTestProps {
-  address: string;
-  setResults: (results: any) => void;
-  setLoading: (loading: boolean) => void;
-}
-
-export function useLmiTest({
-  address,
-  setResults,
-  setLoading
-}: UseLmiTestProps) {
-  const [searchType, setSearchType] = useState<'address' | 'place'>('address');
-  const [level, setLevel] = useState<'tract' | 'blockGroup'>('tract');
-  const [useHudData, setUseHudData] = useState(false);
+export function useLmiTest() {
+  const [loading, setLoading] = useState(false);
+  const [useHud, setUseHud] = useState(false);
   const [useEnhanced, setUseEnhanced] = useState(false);
-  const [useDirect, setUseDirect] = useState(false);
+  const [useDirect, setUseDirect] = useState(true);
   const [useMock, setUseMock] = useState(false);
 
-  const handleLmiTest = async () => {
-    if (!address) {
-      toast.error(`Please enter ${searchType === 'place' ? 'a place name' : 'an address'}`);
+  const checkLmi = async (
+    address: string,
+    setResults: (data: any) => void,
+    setLoading: (loading: boolean) => void
+  ) => {
+    if (!address || address.trim() === '') {
+      toast.error('Please enter an address to check');
       return;
     }
-    
+
     setLoading(true);
-    setResults(null);
-    
+
     try {
-      let result: LmiResult;
+      console.log('Using options:', { useHud, useEnhanced, useDirect, useMock });
       
-      if (useMock) {
-        // Use mock data for testing
-        result = await checkLmiStatus(address, { 
-          useMock: true, 
-          searchType 
-        });
-        toast.info("Using mock data for testing purposes");
-      } else if (useDirect) {
-        // Use direct ArcGIS service implementation
-        result = await checkDirectLmiStatus(address);
-      } else if (useEnhanced) {
-        // Use enhanced implementation
-        result = await checkEnhancedLmiStatus(address);
-      } else if (useHudData) {
-        if (searchType === 'place') {
-          result = await checkHudLmiStatusByPlace(address, { level });
-        } else {
-          result = await checkHudLmiStatus(address, { level });
-        }
-      } else {
-        result = await checkLmiStatus(address, { 
-          searchType, 
-          level,
-          useHud: false
-        });
-      }
+      const result = await checkLmiStatus(address, {
+        useHud,
+        useEnhanced,
+        useDirect,
+        useMock,
+      });
       
       setResults(result);
-      toast.success('LMI check completed');
+      
+      // Show the status toast notification
+      if (result.is_approved) {
+        toast.success(
+          <div className="flex items-center gap-2">
+            <CheckCircle className="h-5 w-5" />
+            <span>This property is LMI eligible</span>
+          </div>,
+          {
+            duration: 4000
+          }
+        );
+      } else {
+        toast.info(
+          <div className="flex items-center gap-2">
+            <XCircle className="h-5 w-5" />
+            <span>This property is not LMI eligible</span>
+          </div>,
+          {
+            duration: 4000
+          }
+        );
+      }
     } catch (error) {
-      console.error('LMI check error:', error);
-      toast.error('LMI check failed');
+      console.error('Error checking LMI status:', error);
+      setResults({
+        status: 'error',
+        message: error instanceof Error ? error.message : 'Unknown error occurred',
+      });
+      
+      toast.error(
+        <div className="flex items-center gap-2">
+          <XCircle className="h-5 w-5" />
+          <span>Error checking LMI status</span>
+        </div>
+      );
     } finally {
       setLoading(false);
     }
   };
 
   return {
-    searchType,
-    setSearchType,
-    level,
-    setLevel,
-    useHudData,
-    setUseHudData,
+    loading,
+    useHud,
+    setUseHud,
     useEnhanced,
     setUseEnhanced,
     useDirect,
     setUseDirect,
     useMock,
     setUseMock,
-    handleLmiTest
+    checkLmi,
   };
 }
