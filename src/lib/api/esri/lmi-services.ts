@@ -2,8 +2,9 @@
 // LMI data services using ESRI APIs
 
 import { LMICoordinates, AddressComponents, LMIResult, AreaType } from './interfaces';
-import { LMI_TRACT_URL, LMI_BLOCK_GROUP_URL } from './constants';
+import { LMI_TRACT_URL, LMI_BLOCK_GROUP_URL, LMI_THRESHOLD } from './constants';
 import { geocodeWithEsri, geocodeArea } from './geocoding';
+import { ESRI_GEOCODE_URL } from './config';
 
 /**
  * Search for LMI areas by location (latitude/longitude) using direct ESRI API
@@ -140,6 +141,48 @@ export async function searchLMIByAddress(
 }
 
 /**
+ * Process the LMI data to extract useful information
+ * @param lmiData - The raw LMI data from the API
+ * @returns Processed LMI information
+ */
+export function processLMIData(lmiData: any): LMIResult {
+  if (!lmiData.features || lmiData.features.length === 0) {
+    return { 
+      isLMI: false, 
+      message: 'No LMI data available for this location',
+      lowModPercent: 0,
+      lowModPopulation: 0,
+      geographyType: 'Unknown',
+      geographyId: 'Unknown',
+      state: 'Unknown',
+      county: 'Unknown'
+    };
+  }
+  
+  const feature = lmiData.features[0];
+  const attributes = feature.attributes;
+  
+  // Extract key information
+  const result: LMIResult = {
+    isLMI: attributes.LOWMODPCT >= LMI_THRESHOLD, // 51% threshold for LMI qualification
+    lowModPercent: attributes.LOWMODPCT,
+    lowModPopulation: attributes.LOWMODUNIV,
+    geographyType: attributes.GEOID ? (attributes.GEOID.length === 11 ? 'Census Tract' : 'Block Group') : 'Unknown',
+    geographyId: attributes.GEOID || 'Unknown',
+    state: attributes.STATE || 'Unknown',
+    county: attributes.COUNTY || 'Unknown',
+    geometry: feature.geometry
+  };
+  
+  // If we have address info, include it in the result
+  if (lmiData.addressInfo) {
+    result.addressInfo = lmiData.addressInfo;
+  }
+  
+  return result;
+}
+
+/**
  * Search for multiple LMI areas within a geographic boundary
  * @param areaType - Type of area ('city', 'county', 'zip')
  * @param areaName - Name of the area
@@ -242,7 +285,7 @@ export async function bulkLMISearch(
     
     // Filter for areas that meet LMI threshold (51% or more)
     const qualifiedLmiAreas = lmiAreas.features.filter((feature: any) => 
-      feature.attributes.LOWMODPCT >= 51);
+      feature.attributes.LOWMODPCT >= LMI_THRESHOLD);
     
     if (qualifiedLmiAreas.length === 0) {
       return {
@@ -288,4 +331,80 @@ export async function bulkLMISearch(
     console.error('Error in bulk LMI search:', error);
     throw error;
   }
+}
+
+/**
+ * Get information about available assistance programs for an LMI-qualified property
+ * @param state - State code (e.g., 'FL')
+ * @param isLMI - Whether the property is in an LMI area
+ * @returns Programs and resources information
+ */
+export function getAssistancePrograms(state: string, isLMI: boolean): any {
+  // Base programs available everywhere
+  const programs = [
+    {
+      name: "FHA Home Loans",
+      description: "Lower down payment requirements and flexible credit qualification.",
+      eligibilityNotes: "Not restricted to LMI areas but beneficial for LMI homebuyers.",
+      link: "https://www.hud.gov/buying/loans"
+    },
+    {
+      name: "VA Home Loans",
+      description: "For veterans, service members, and eligible surviving spouses.",
+      eligibilityNotes: "Based on military service, not income or area.",
+      link: "https://www.va.gov/housing-assistance/home-loans/"
+    }
+  ];
+  
+  // Add LMI-specific programs
+  if (isLMI) {
+    programs.push(
+      {
+        name: "Community Development Block Grant (CDBG)",
+        description: "Local home buyer assistance programs funded by HUD.",
+        eligibilityNotes: "Available in LMI areas. Contact local housing authority.",
+        link: "https://www.hud.gov/program_offices/comm_planning/cdbg"
+      },
+      {
+        name: "HOME Investment Partnerships Program",
+        description: "Down payment assistance for low-income homebuyers.",
+        eligibilityNotes: "For households below 80% of area median income.",
+        link: "https://www.hudexchange.info/programs/home/"
+      }
+    );
+  }
+  
+  // Add state-specific programs (would come from a database in real implementation)
+  if (state === 'FL') {
+    programs.push({
+      name: "Florida Housing Finance Corporation Programs",
+      description: "First-time homebuyer programs, lower interest loans and purchase assistance.",
+      eligibilityNotes: "Various programs with different eligibility requirements.",
+      link: "https://www.floridahousing.org/"
+    });
+  }
+  
+  return {
+    isLMI,
+    state,
+    programCount: programs.length,
+    programs
+  };
+}
+
+/**
+ * Generate a map URL for a location to show LMI status
+ * @param coordinates - Latitude/longitude coordinates
+ * @param isLMI - Whether the location is in an LMI area
+ * @returns Static map URL
+ */
+export function generateMapUrl(coordinates: LMICoordinates, isLMI: boolean): string {
+  // This is a simple implementation using OpenStreetMap's static map API
+  // In a real implementation, you might use ArcGIS Online, Mapbox, or Google Maps
+  
+  const { latitude, longitude } = coordinates;
+  const zoom = 14;
+  const markerColor = isLMI ? 'green' : 'red';
+  
+  return `https://staticmap.openstreetmap.de/staticmap.php?center=${latitude},${longitude}&zoom=${zoom}&size=600x400&markers=${latitude},${longitude},${markerColor}`;
 }
