@@ -10,10 +10,10 @@ interface ResultProps {
   data: {
     address: string;
     tract_id: string;
-    median_income: number;
-    ami: number;
+    median_income: number | null | undefined;
+    ami: number | null | undefined;
     income_category: string;
-    percentage_of_ami: number;
+    percentage_of_ami: number | null | undefined;
     eligibility: string;
     approval_message: string;
     is_approved: boolean;
@@ -23,6 +23,11 @@ interface ResultProps {
 
 const ResultCard: React.FC<ResultProps> = ({ data }) => {
   const isEligible = data.is_approved;
+  
+  // Guard against undefined/null values for numeric fields
+  const medianIncome = data.median_income ?? 0;
+  const ami = data.ami ?? 0;
+  const percentageOfAmi = data.percentage_of_ami ?? 0;
   
   return (
     <motion.div
@@ -80,7 +85,7 @@ const ResultCard: React.FC<ResultProps> = ({ data }) => {
               <DollarSignIcon className="h-3.5 w-3.5" />
               <p>Median Income</p>
             </div>
-            <p className="font-medium">${data.median_income.toLocaleString()}</p>
+            <p className="font-medium">${medianIncome.toLocaleString()}</p>
           </div>
           
           <div className="space-y-1">
@@ -89,9 +94,9 @@ const ResultCard: React.FC<ResultProps> = ({ data }) => {
               <p>Percentage of AMI</p>
             </div>
             <div className="flex items-center gap-2">
-              <p className="font-medium">{data.percentage_of_ami}%</p>
+              <p className="font-medium">{percentageOfAmi}%</p>
               <span className="text-xs text-muted-foreground">
-                (AMI: ${data.ami.toLocaleString()})
+                (AMI: ${ami.toLocaleString()})
               </span>
             </div>
           </div>

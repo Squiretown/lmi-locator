@@ -36,17 +36,18 @@ export function usePropertySearch() {
       }
       
       // Transform the result to match the CheckLmiStatusResponse type
+      // Ensure all numeric values have fallbacks to prevent undefined errors
       const lmiResponse: CheckLmiStatusResponse = {
         is_approved: result.is_approved,
-        address: result.address,
-        approval_message: result.approval_message,
-        tract_id: result.tract_id,
-        median_income: result.median_income,
-        ami: result.ami,
-        income_category: result.income_category,
-        percentage_of_ami: result.percentage_of_ami,
-        eligibility: result.eligibility || result.status,
-        lmi_status: result.lmi_status
+        address: result.address || formattedAddress,
+        approval_message: result.approval_message || '',
+        tract_id: result.tract_id || 'Unknown',
+        median_income: result.median_income || 0,
+        ami: result.ami || 0,
+        income_category: result.income_category || 'Unknown',
+        percentage_of_ami: result.percentage_of_ami || 0,
+        eligibility: result.eligibility || result.status || 'Unknown',
+        lmi_status: result.lmi_status || (result.is_approved ? 'LMI Eligible' : 'Not Eligible')
       };
       
       setLmiStatus(lmiResponse);
