@@ -5,7 +5,7 @@
  * Result object returned from LMI eligibility check
  */
 export interface LmiResult {
-  status: 'success' | 'error';
+  status: 'success' | 'error' | 'warning';
   message?: string;
   address?: string;
   place_name?: string;
@@ -28,6 +28,10 @@ export interface LmiResult {
   timestamp?: string;
   data_source?: string;
   search_type?: 'address' | 'place';
+  // New properties for HUD low-mod data
+  hud_low_mod_percent?: number;
+  hud_low_mod_population?: number;
+  need_manual_verification?: boolean;
 }
 
 /**
