@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { LmiResult, LmiCheckOptions } from './types';
 import { getMockResponse } from './mock-data';
+import { checkEnhancedLmiEligibility } from '../esri/lmi-eligibility';
 
 /**
  * Check if a location is in an LMI eligible census tract
@@ -20,6 +21,12 @@ export const checkLmiStatus = async (
   try {
     if (!address || address.trim() === '') {
       throw new Error('Address or place name is required');
+    }
+
+    // Use the enhanced check if requested
+    if (options?.useEnhanced) {
+      toast.info('Using enhanced LMI eligibility service...');
+      return await checkEnhancedLmiEligibility(address);
     }
 
     // Determine which function to call based on options
@@ -122,4 +129,14 @@ export const checkHudLmiStatusByPlace = async (
     searchType: 'place',
     level: options?.level || 'tract'
   });
+};
+
+/**
+ * Check LMI status using enhanced client-side implementation
+ * This avoids the edge function call by using direct API calls
+ * @param address The address to check
+ * @returns Promise with the LMI status result
+ */
+export const checkEnhancedLmiStatus = async (address: string): Promise<LmiResult> => {
+  return checkLmiStatus(address, { useEnhanced: true });
 };

@@ -8,7 +8,8 @@ import { toast } from 'sonner';
 import { 
   checkLmiStatus, 
   checkHudLmiStatus, 
-  checkHudLmiStatusByPlace 
+  checkHudLmiStatusByPlace,
+  checkEnhancedLmiStatus
 } from '@/lib/api/lmi';
 import { Switch } from '@/components/ui/switch';
 import { 
@@ -35,6 +36,7 @@ const LmiTest = ({
   setLoading
 }: LmiTestProps) => {
   const [useHudData, setUseHudData] = useState(false);
+  const [useEnhanced, setUseEnhanced] = useState(false);
   const [searchType, setSearchType] = useState<'address' | 'place'>('address');
   const [level, setLevel] = useState<'tract' | 'blockGroup'>('tract');
 
@@ -50,7 +52,10 @@ const LmiTest = ({
     try {
       let result;
       
-      if (useHudData) {
+      if (useEnhanced) {
+        // Use enhanced implementation
+        result = await checkEnhancedLmiStatus(address);
+      } else if (useHudData) {
         if (searchType === 'place') {
           result = await checkHudLmiStatusByPlace(address, { level });
         } else {
@@ -89,6 +94,7 @@ const LmiTest = ({
           <Select 
             value={searchType} 
             onValueChange={(value: 'address' | 'place') => setSearchType(value)}
+            disabled={useEnhanced}
           >
             <SelectTrigger id="search-type">
               <SelectValue placeholder="Select search type" />
@@ -105,6 +111,7 @@ const LmiTest = ({
           <Select 
             value={level} 
             onValueChange={(value: 'tract' | 'blockGroup') => setLevel(value)}
+            disabled={useEnhanced}
           >
             <SelectTrigger id="geography-level">
               <SelectValue placeholder="Select geography level" />
@@ -132,17 +139,37 @@ const LmiTest = ({
           <Switch 
             id="use-hud" 
             checked={useHudData} 
-            onCheckedChange={setUseHudData} 
+            onCheckedChange={(checked) => {
+              setUseHudData(checked);
+              if (checked) setUseEnhanced(false);
+            }} 
+            disabled={useEnhanced}
           />
           <Label htmlFor="use-hud">
             Use HUD LMI data ({useHudData ? 'Enabled' : 'Disabled'})
           </Label>
         </div>
+        
+        <div className="flex items-center space-x-2">
+          <Switch 
+            id="use-enhanced" 
+            checked={useEnhanced} 
+            onCheckedChange={(checked) => {
+              setUseEnhanced(checked);
+              if (checked) setUseHudData(false);
+            }}
+          />
+          <Label htmlFor="use-enhanced">
+            Use Enhanced Implementation ({useEnhanced ? 'Enabled' : 'Disabled'})
+          </Label>
+        </div>
 
         <div className="text-xs text-muted-foreground">
-          {useHudData 
-            ? "Using HUD's Low-to-Moderate Income Summary Data (LMISD)" 
-            : "Using Census American Community Survey (ACS) data"}
+          {useEnhanced 
+            ? "Using enhanced client-side implementation with direct API calls"
+            : (useHudData 
+              ? "Using HUD's Low-to-Moderate Income Summary Data (LMISD)" 
+              : "Using Census American Community Survey (ACS) data")}
         </div>
         
         <Button 

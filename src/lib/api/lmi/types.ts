@@ -35,6 +35,7 @@ export interface LmiResult {
  */
 export interface LmiCheckOptions {
   useHud?: boolean;
+  useEnhanced?: boolean;
   searchType?: 'address' | 'place';
   level?: 'tract' | 'blockGroup';
 }
