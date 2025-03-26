@@ -11,8 +11,19 @@ export * from './constants';
 // Re-export geocoding functionality
 export * from './geocoding';
 
-// Re-export LMI services
-export * from './lmi-services';
+// Re-export LMI services without directly using '*'
+// This avoids the conflict with functions that might be exported from multiple files
+import * as lmiServices from './lmi-services';
+export {
+  searchLMIByLocation,
+  searchLMIByFIPS,
+  searchLMIByAddress,
+  searchLMIByArea,
+  bulkLMISearch,
+  processLMIData,
+  getAssistancePrograms,
+  generateMapUrl
+} from './lmi-services';
 
 // Re-export utility functions
 export * from './utils';
@@ -25,7 +36,6 @@ export * from './geocoding/index';
 
 // Export a default object with all the functions for backward compatibility
 import * as geocoding from './geocoding';
-import * as lmiServices from './lmi-services';
 import * as utils from './utils';
 
 export default {
