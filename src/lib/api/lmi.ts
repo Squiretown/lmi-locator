@@ -1,3 +1,4 @@
+
 // LMI status checking functionality
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -5,7 +6,9 @@ import { toast } from "sonner";
 // Define the type for our LMI check result
 interface LmiResult {
   status: string;
-  address: string;
+  address?: string;
+  place_name?: string;
+  matched_location?: string;
   lat?: number;
   lon?: number;
   tract_id: string;
@@ -26,20 +29,29 @@ interface LmiResult {
   timestamp: string;
   data_source?: string;
   message?: string;
+  search_type?: string;
 }
 
 // Check if a location is in an LMI eligible census tract
-export const checkLmiStatus = async (address: string, options?: { useHud?: boolean }): Promise<any> => {
-  console.log('Checking LMI status for address:', address);
+export const checkLmiStatus = async (address: string, options?: { 
+  useHud?: boolean, 
+  searchType?: 'address' | 'place',
+  level?: 'tract' | 'blockGroup'
+}): Promise<any> => {
+  console.log('Checking LMI status for:', address);
+  console.log('Options:', options);
   
   try {
     if (!address || address.trim() === '') {
-      throw new Error('Address is required');
+      throw new Error('Address or place name is required');
     }
 
     // Determine which function to call based on options
     const functionName = options?.useHud ? 'hud-lmi-check' : 'lmi-check';
-    toast.info(`Connecting to ${options?.useHud ? 'HUD' : 'Census'} LMI eligibility service...`);
+    const searchType = options?.searchType || 'address';
+    const dataSource = options?.useHud ? 'HUD' : 'Census';
+    
+    toast.info(`Connecting to ${dataSource} LMI eligibility service...`);
       
     // Create a timeout promise
     const timeoutPromise = new Promise<never>((_, reject) => {
@@ -48,7 +60,11 @@ export const checkLmiStatus = async (address: string, options?: { useHud?: boole
     
     // Create the edge function call promise
     const edgeFunctionPromise = supabase.functions.invoke(functionName, {
-      body: { address }
+      body: { 
+        address,
+        searchType,
+        level: options?.level || 'tract'
+      }
     });
     
     // Race the promises - properly awaiting the result
@@ -73,7 +89,7 @@ export const checkLmiStatus = async (address: string, options?: { useHud?: boole
     if (data.geocoding_service === "Mock Data") {
       toast.info("Edge function returned mock data");
     } else {
-      toast.success("Using real geocoding data");
+      toast.success(`Using real ${dataSource} geocoding data`);
     }
     
     console.log('LMI check result:', data);
@@ -85,13 +101,13 @@ export const checkLmiStatus = async (address: string, options?: { useHud?: boole
     // Only fall back to mock data in development mode if there's a serious error
     if (import.meta.env.DEV) {
       console.warn('Using mock data due to error');
-      const mockResponse = getMockResponse(address);
+      const mockResponse = getMockResponse(address, options?.searchType || 'address');
       toast.error("Using mock data (error fallback)");
       return mockResponse;
     } else {
       // Fall back to mock data in production too until we have a more robust solution
       console.warn('Using mock data in production due to error');
-      const mockResponse = getMockResponse(address);
+      const mockResponse = getMockResponse(address, options?.searchType || 'address');
       toast.error("Using mock data (temporary fallback)");
       return mockResponse;
     }
@@ -99,20 +115,38 @@ export const checkLmiStatus = async (address: string, options?: { useHud?: boole
 };
 
 // Check LMI status using HUD data (convenience method)
-export const checkHudLmiStatus = async (address: string): Promise<any> => {
-  return checkLmiStatus(address, { useHud: true });
+export const checkHudLmiStatus = async (address: string, options?: { 
+  searchType?: 'address' | 'place',
+  level?: 'tract' | 'blockGroup'
+}): Promise<any> => {
+  return checkLmiStatus(address, { 
+    useHud: true,
+    searchType: options?.searchType || 'address',
+    level: options?.level || 'tract'
+  });
+};
+
+// Check LMI status by place name using HUD data
+export const checkHudLmiStatusByPlace = async (placeName: string, options?: {
+  level?: 'tract' | 'blockGroup'
+}): Promise<any> => {
+  return checkLmiStatus(placeName, {
+    useHud: true,
+    searchType: 'place',
+    level: options?.level || 'tract'
+  });
 };
 
 // Helper function to provide mock responses for testing
-function getMockResponse(address: string) {
+function getMockResponse(query: string, searchType: 'address' | 'place' = 'address') {
   // For testing purposes - addresses containing "low" or "poor" will be LMI eligible
-  const isLowIncome = address.toLowerCase().includes('low') || 
-                      address.toLowerCase().includes('poor');
+  const isLowIncome = query.toLowerCase().includes('low') || 
+                      query.toLowerCase().includes('poor');
   
   // Addresses containing "rich" or "wealth" or "90210" will not be LMI eligible
-  const isHighIncome = address.toLowerCase().includes('rich') || 
-                       address.toLowerCase().includes('wealth') ||
-                       address.toLowerCase().includes('90210');
+  const isHighIncome = query.toLowerCase().includes('rich') || 
+                       query.toLowerCase().includes('wealth') ||
+                       query.toLowerCase().includes('90210');
   
   // Default to moderate income (eligible) if no keywords are present
   const isEligible = isLowIncome || (!isHighIncome);
@@ -129,13 +163,10 @@ function getMockResponse(address: string) {
   else incomeCategory = "Above Moderate Income";
   
   // Determine QCT status for mock data
-  const isQct = isLowIncome || address.toLowerCase().includes('qct');
+  const isQct = isLowIncome || query.toLowerCase().includes('qct');
   
-  return {
+  const result: LmiResult = {
     status: "success",
-    address: address.toUpperCase(),
-    lat: 37.7749,
-    lon: -122.4194,
     tract_id: isLowIncome ? "06075010200" : (isHighIncome ? "06037701000" : "06075010800"),
     median_income: medianIncome,
     ami,
@@ -152,6 +183,20 @@ function getMockResponse(address: string) {
     qct_status: isQct ? "Qualified Census Tract" : "Not a Qualified Census Tract",
     geocoding_service: "Mock Data",
     timestamp: new Date().toISOString(),
-    data_source: "MOCK DATA (Fallback Mode)"
+    data_source: "MOCK DATA (Fallback Mode)",
+    search_type: searchType
   };
+  
+  if (searchType === 'address') {
+    result.address = query.toUpperCase();
+  } else {
+    result.place_name = query;
+    result.matched_location = `Matched ${query}`;
+  }
+  
+  // Add coordinates based on income type (just for variety in mock data)
+  result.lat = isLowIncome ? 37.7749 : (isHighIncome ? 34.0736 : 38.5816);
+  result.lon = isLowIncome ? -122.4194 : (isHighIncome ? -118.4004 : -121.4944);
+  
+  return result;
 }

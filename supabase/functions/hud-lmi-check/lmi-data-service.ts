@@ -1,4 +1,3 @@
-
 // Service for querying HUD's Low to Moderate Income data through ArcGIS
 
 // Define TypeScript interfaces for the data structures
@@ -50,6 +49,7 @@ export interface LMIResult {
 const LMI_TRACT_ENDPOINT = 'https://services.arcgis.com/VTyQ9soqVukalItT/arcgis/rest/services/Low_to_Moderate_Income_Population_by_Tract/FeatureServer/0/query';
 const LMI_BLOCK_GROUP_ENDPOINT = 'https://services.arcgis.com/VTyQ9soqVukalItT/arcgis/rest/services/Low_to_Moderate_Income_Population_by_Block_Group/FeatureServer/0/query';
 const CENSUS_GEOCODER_ENDPOINT = 'https://geocoding.geo.census.gov/geocoder/locations/address';
+const CENSUS_PLACES_ENDPOINT = 'https://geocoding.geo.census.gov/geocoder/locations/onelineaddress';
 
 /**
  * Search for LMI areas by location (latitude/longitude)
@@ -135,6 +135,72 @@ export async function searchLMIByFIPS(
     return data;
   } catch (error) {
     console.error('Error fetching LMI data:', error);
+    throw error;
+  }
+}
+
+/**
+ * Search for LMI areas by place name (city, county, etc.)
+ * @param placeName - The name of the place to search
+ * @param level - Either 'tract' or 'blockGroup'
+ * @returns Promise that resolves to LMI data with place information
+ */
+export async function searchLMIByPlaceName(
+  placeName: string,
+  level: 'tract' | 'blockGroup' = 'tract'
+): Promise<any> {
+  const geocodeParams = new URLSearchParams({
+    address: placeName,
+    benchmark: 'Public_AR_Current',
+    format: 'json'
+  });
+  
+  try {
+    // Step 1: Geocode the place name
+    console.log(`Geocoding place name: ${placeName}`);
+    const geocodeResponse = await fetch(`${CENSUS_PLACES_ENDPOINT}?${geocodeParams}`);
+    if (!geocodeResponse.ok) {
+      throw new Error(`HTTP error! Status: ${geocodeResponse.status}`);
+    }
+    
+    const geocodeData = await geocodeResponse.json();
+    
+    // Check if we got valid coordinates
+    if (!geocodeData.result || !geocodeData.result.addressMatches || geocodeData.result.addressMatches.length === 0) {
+      throw new Error('Location not found');
+    }
+    
+    // Extract coordinates
+    const match = geocodeData.result.addressMatches[0];
+    const { x: longitude, y: latitude } = match.coordinates;
+    
+    // Step 2: Use the coordinates to search for LMI data
+    const lmiData = await searchLMIByLocation({ latitude, longitude }, level);
+    
+    // Attach the geocoded address info to the response
+    const addressInfo: AddressInfo = {
+      matchedAddress: match.matchedAddress,
+      coordinates: { latitude, longitude },
+      censusInfo: {
+        tract: '',
+        blockGroup: '',
+        state: {
+          fips: '',
+          name: match.addressComponents ? match.addressComponents.state || '' : ''
+        },
+        county: {
+          fips: '',
+          name: match.addressComponents ? match.addressComponents.county || '' : ''
+        }
+      }
+    };
+    
+    lmiData.addressInfo = addressInfo;
+    lmiData.placeQuery = placeName;
+    
+    return lmiData;
+  } catch (error) {
+    console.error('Error in geocoding place name or fetching LMI data:', error);
     throw error;
   }
 }

@@ -5,8 +5,19 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-import { checkLmiStatus, checkHudLmiStatus } from '@/lib/api/lmi';
+import { 
+  checkLmiStatus, 
+  checkHudLmiStatus, 
+  checkHudLmiStatusByPlace 
+} from '@/lib/api/lmi';
 import { Switch } from '@/components/ui/switch';
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from '@/components/ui/select';
 
 interface LmiTestProps {
   address: string;
@@ -24,10 +35,12 @@ const LmiTest = ({
   setLoading
 }: LmiTestProps) => {
   const [useHudData, setUseHudData] = useState(false);
+  const [searchType, setSearchType] = useState<'address' | 'place'>('address');
+  const [level, setLevel] = useState<'tract' | 'blockGroup'>('tract');
 
   const handleLmiTest = async () => {
     if (!address) {
-      toast.error('Please enter an address');
+      toast.error(`Please enter ${searchType === 'place' ? 'a place name' : 'an address'}`);
       return;
     }
     
@@ -35,11 +48,22 @@ const LmiTest = ({
     setResults(null);
     
     try {
-      // Use the appropriate function based on the selected data source
-      const result = useHudData 
-        ? await checkHudLmiStatus(address)
-        : await checkLmiStatus(address);
-        
+      let result;
+      
+      if (useHudData) {
+        if (searchType === 'place') {
+          result = await checkHudLmiStatusByPlace(address, { level });
+        } else {
+          result = await checkHudLmiStatus(address, { level });
+        }
+      } else {
+        result = await checkLmiStatus(address, { 
+          searchType, 
+          level,
+          useHud: false
+        });
+      }
+      
       setResults(result);
       toast.success('LMI check completed');
     } catch (error) {
@@ -50,17 +74,55 @@ const LmiTest = ({
     }
   };
   
+  const placeholderText = searchType === 'place' 
+    ? 'Enter a place name (e.g., Boston, MA)' 
+    : 'Enter an address to check LMI status';
+  
   return (
     <Card>
       <CardHeader>
         <CardTitle>Test LMI Status Check</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="search-type">Search Type</Label>
+          <Select 
+            value={searchType} 
+            onValueChange={(value: 'address' | 'place') => setSearchType(value)}
+          >
+            <SelectTrigger id="search-type">
+              <SelectValue placeholder="Select search type" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="address">Search by Address</SelectItem>
+              <SelectItem value="place">Search by Place Name</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        
+        <div className="space-y-2">
+          <Label htmlFor="geography-level">Geography Level</Label>
+          <Select 
+            value={level} 
+            onValueChange={(value: 'tract' | 'blockGroup') => setLevel(value)}
+          >
+            <SelectTrigger id="geography-level">
+              <SelectValue placeholder="Select geography level" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="tract">Census Tract</SelectItem>
+              <SelectItem value="blockGroup">Block Group</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        
         <div>
-          <Label htmlFor="lmi-address">Address</Label>
+          <Label htmlFor="lmi-query">
+            {searchType === 'place' ? 'Place Name' : 'Address'}
+          </Label>
           <Input
-            id="lmi-address"
-            placeholder="Enter an address to check LMI status"
+            id="lmi-query"
+            placeholder={placeholderText}
             value={address}
             onChange={(e) => setAddress(e.target.value)}
           />

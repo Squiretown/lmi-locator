@@ -1,6 +1,6 @@
 
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
-import { searchLMIByAddress, processLMIData } from "./lmi-data-service.ts";
+import { searchLMIByAddress, searchLMIByPlaceName, processLMIData } from "./lmi-data-service.ts";
 import { validateAddress } from "../lmi-check/census-service.ts"; // Reuse validation from existing function
 import { corsHeaders } from "../lmi-check/cors.ts"; // Reuse CORS helpers
 
@@ -31,84 +31,143 @@ serve(async (req) => {
     // Parse request body
     console.log('Parsing request body...');
     const body = await req.json();
-    const { address, level } = body;
+    const { address, level, searchType } = body;
     
     console.log('Request body:', JSON.stringify(body, null, 2));
     
-    if (!address) {
-      console.error('Address is required but was not provided');
-      return new Response(JSON.stringify({
-        status: "error",
-        message: "Address is required"
-      }), {
-        status: 400,
+    // Determine which search method to use based on searchType
+    if (searchType === 'place') {
+      // Handle place name search
+      if (!address) {
+        console.error('Place name is required but was not provided');
+        return new Response(JSON.stringify({
+          status: "error",
+          message: "Place name is required"
+        }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      
+      console.log("Processing HUD LMI check for place name:", address);
+      
+      // Search LMI by place name
+      const searchLevel = level === 'blockGroup' ? 'blockGroup' : 'tract';
+      const lmiData = await searchLMIByPlaceName(address, searchLevel);
+      
+      // Process the results
+      const result = processLMIData(lmiData);
+      
+      // Format the response
+      const response = {
+        status: "success",
+        place_name: address,
+        matched_location: lmiData.addressInfo?.matchedAddress,
+        lat: result.addressInfo?.coordinates.latitude,
+        lon: result.addressInfo?.coordinates.longitude,
+        tract_id: result.geographyId,
+        hud_low_mod_percent: result.lowModPercent,
+        hud_low_mod_population: result.lowModPopulation,
+        is_lmi_qualified: result.isLMI,
+        state: result.state,
+        county: result.county,
+        geography_type: result.geographyType,
+        data_source: "HUD Low-to-Moderate Income (LMI) Summary Data",
+        eligibility: result.isLMI ? "Eligible" : "Ineligible",
+        color_code: result.isLMI ? "success" : "danger",
+        is_approved: result.isLMI,
+        approval_message: result.isLMI 
+          ? `APPROVED - This location qualifies as LMI area (${result.lowModPercent}% LMI population)`
+          : `NOT APPROVED - This location does not qualify as LMI area (${result.lowModPercent}% LMI population)`,
+        search_type: "place_name",
+        timestamp: new Date().toISOString()
+      };
+      
+      console.log('Final result for place name search:', JSON.stringify(response, null, 2));
+      console.log('========== HUD LMI CHECK FUNCTION END (SUCCESS) ==========');
+      
+      return new Response(JSON.stringify(response), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    } else {
+      // Default address search (existing functionality)
+      if (!address) {
+        console.error('Address is required but was not provided');
+        return new Response(JSON.stringify({
+          status: "error",
+          message: "Address is required"
+        }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      
+      // Validate address format
+      if (!validateAddress(address)) {
+        console.warn(`Invalid address format: ${address}`);
+        return new Response(JSON.stringify({
+          status: "error",
+          message: "Invalid address format. Please provide a complete street address."
+        }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      
+      console.log("Processing HUD LMI check for address:", address);
+      
+      // Parse the address into components
+      const addressParts = parseAddressString(address);
+      if (!addressParts) {
+        return new Response(JSON.stringify({
+          status: "error",
+          message: "Could not parse address components"
+        }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      
+      // Search LMI by address
+      const searchLevel = level === 'blockGroup' ? 'blockGroup' : 'tract';
+      const lmiData = await searchLMIByAddress(addressParts, searchLevel);
+      
+      // Process the results
+      const result = processLMIData(lmiData);
+      
+      // Format the response
+      const response = {
+        status: "success",
+        address: address.toUpperCase(),
+        lat: result.addressInfo?.coordinates.latitude,
+        lon: result.addressInfo?.coordinates.longitude,
+        tract_id: result.geographyId,
+        hud_low_mod_percent: result.lowModPercent,
+        hud_low_mod_population: result.lowModPopulation,
+        is_lmi_qualified: result.isLMI,
+        state: result.state,
+        county: result.county,
+        geography_type: result.geographyType,
+        data_source: "HUD Low-to-Moderate Income (LMI) Summary Data",
+        eligibility: result.isLMI ? "Eligible" : "Ineligible",
+        color_code: result.isLMI ? "success" : "danger",
+        is_approved: result.isLMI,
+        approval_message: result.isLMI 
+          ? `APPROVED - This location qualifies as LMI area (${result.lowModPercent}% LMI population)`
+          : `NOT APPROVED - This location does not qualify as LMI area (${result.lowModPercent}% LMI population)`,
+        search_type: "address",
+        timestamp: new Date().toISOString()
+      };
+      
+      console.log('Final result:', JSON.stringify(response, null, 2));
+      console.log('========== HUD LMI CHECK FUNCTION END (SUCCESS) ==========');
+      
+      return new Response(JSON.stringify(response), {
+        status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-    
-    // Validate address format
-    if (!validateAddress(address)) {
-      console.warn(`Invalid address format: ${address}`);
-      return new Response(JSON.stringify({
-        status: "error",
-        message: "Invalid address format. Please provide a complete street address."
-      }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-    
-    console.log("Processing HUD LMI check for address:", address);
-    
-    // Parse the address into components
-    const addressParts = parseAddressString(address);
-    if (!addressParts) {
-      return new Response(JSON.stringify({
-        status: "error",
-        message: "Could not parse address components"
-      }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-    
-    // Search LMI by address
-    const searchLevel = level === 'blockGroup' ? 'blockGroup' : 'tract';
-    const lmiData = await searchLMIByAddress(addressParts, searchLevel);
-    
-    // Process the results
-    const result = processLMIData(lmiData);
-    
-    // Format the response
-    const response = {
-      status: "success",
-      address: address.toUpperCase(),
-      lat: result.addressInfo?.coordinates.latitude,
-      lon: result.addressInfo?.coordinates.longitude,
-      tract_id: result.geographyId,
-      hud_low_mod_percent: result.lowModPercent,
-      hud_low_mod_population: result.lowModPopulation,
-      is_lmi_qualified: result.isLMI,
-      state: result.state,
-      county: result.county,
-      geography_type: result.geographyType,
-      data_source: "HUD Low-to-Moderate Income (LMI) Summary Data",
-      eligibility: result.isLMI ? "Eligible" : "Ineligible",
-      color_code: result.isLMI ? "success" : "danger",
-      is_approved: result.isLMI,
-      approval_message: result.isLMI 
-        ? `APPROVED - This location qualifies as LMI area (${result.lowModPercent}% LMI population)`
-        : `NOT APPROVED - This location does not qualify as LMI area (${result.lowModPercent}% LMI population)`,
-      timestamp: new Date().toISOString()
-    };
-    
-    console.log('Final result:', JSON.stringify(response, null, 2));
-    console.log('========== HUD LMI CHECK FUNCTION END (SUCCESS) ==========');
-    
-    return new Response(JSON.stringify(response), {
-      status: 200,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
   } catch (error) {
     console.error("Error in HUD LMI check:", error);
     console.error("Error stack:", error.stack);
