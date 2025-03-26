@@ -32,6 +32,8 @@ const LmiTestContainer: React.FC<LmiTestContainerProps> = ({
     setUseEnhanced,
     useDirect,
     setUseDirect,
+    useMock,
+    setUseMock,
     handleLmiTest
   } = useLmiTest({
     address,
@@ -56,6 +58,8 @@ const LmiTestContainer: React.FC<LmiTestContainerProps> = ({
           setUseEnhanced={setUseEnhanced}
           useDirect={useDirect}
           setUseDirect={setUseDirect}
+          useMock={useMock}
+          setUseMock={setUseMock}
         />
         
         <AddressInput 

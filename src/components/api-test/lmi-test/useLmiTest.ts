@@ -26,6 +26,7 @@ export function useLmiTest({
   const [useHudData, setUseHudData] = useState(false);
   const [useEnhanced, setUseEnhanced] = useState(false);
   const [useDirect, setUseDirect] = useState(false);
+  const [useMock, setUseMock] = useState(false);
 
   const handleLmiTest = async () => {
     if (!address) {
@@ -39,7 +40,14 @@ export function useLmiTest({
     try {
       let result: LmiResult;
       
-      if (useDirect) {
+      if (useMock) {
+        // Use mock data for testing
+        result = await checkLmiStatus(address, { 
+          useMock: true, 
+          searchType 
+        });
+        toast.info("Using mock data for testing purposes");
+      } else if (useDirect) {
         // Use direct ArcGIS service implementation
         result = await checkDirectLmiStatus(address);
       } else if (useEnhanced) {
@@ -80,6 +88,8 @@ export function useLmiTest({
     setUseEnhanced,
     useDirect,
     setUseDirect,
+    useMock,
+    setUseMock,
     handleLmiTest
   };
 }

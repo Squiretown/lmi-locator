@@ -1,4 +1,3 @@
-
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { LmiResult, LmiCheckOptions } from '../types';
@@ -25,7 +24,7 @@ export const checkLmiStatus = async (
 
     // Use direct ArcGIS service by default since it's working
     // Only use other services if explicitly requested
-    if (options?.useDirect || (!options?.useHud && !options?.useEnhanced)) {
+    if (options?.useDirect || (!options?.useHud && !options?.useEnhanced && !options?.useMock)) {
       toast.info('Using direct ArcGIS LMI service...');
       return await checkDirectLmiStatus(address);
     }
@@ -88,6 +87,12 @@ export const checkLmiStatus = async (
       return data;
     }
 
+    // Use mock data if explicitly requested for testing
+    if (options?.useMock) {
+      toast.info("Using mock data for testing");
+      return getMockResponse(address, options?.searchType || 'address');
+    }
+
     // If we got here, fall back to using the lmi-check edge function
     const functionName = 'lmi-check';
     toast.info(`Connecting to Census LMI eligibility service...`);
@@ -146,11 +151,16 @@ export const checkLmiStatus = async (
     } catch (directError) {
       console.error('Direct service fallback failed:', directError);
       
-      // Only as last resort, use mock data
-      console.warn('Using mock data due to error');
-      const mockResponse = getMockResponse(address, options?.searchType || 'address');
-      toast.error("Using mock data (only as last resort)");
-      return mockResponse;
+      // Only use mock data if explicitly requested or in test environment
+      if (options?.useMock) {
+        console.warn('Using mock data for testing');
+        const mockResponse = getMockResponse(address, options?.searchType || 'address');
+        toast.info("Using mock data for testing purposes");
+        return mockResponse;
+      }
+      
+      // Otherwise, throw the error
+      throw new Error("All LMI check services failed. Please try again later or contact support.");
     }
   }
 };

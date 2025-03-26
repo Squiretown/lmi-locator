@@ -21,6 +21,8 @@ interface LmiTestOptionsProps {
   setUseEnhanced: (value: boolean) => void;
   useDirect: boolean;
   setUseDirect: (value: boolean) => void;
+  useMock: boolean;
+  setUseMock: (value: boolean) => void;
 }
 
 const LmiTestOptions: React.FC<LmiTestOptionsProps> = ({
@@ -33,7 +35,9 @@ const LmiTestOptions: React.FC<LmiTestOptionsProps> = ({
   useEnhanced,
   setUseEnhanced,
   useDirect,
-  setUseDirect
+  setUseDirect,
+  useMock,
+  setUseMock
 }) => {
   return (
     <div className="space-y-4">
@@ -80,9 +84,10 @@ const LmiTestOptions: React.FC<LmiTestOptionsProps> = ({
           if (checked) {
             setUseEnhanced(false);
             setUseDirect(false);
+            setUseMock(false);
           }
         }}
-        disabled={useEnhanced || useDirect}
+        disabled={useEnhanced || useDirect || useMock}
       />
       
       <OptionSwitch 
@@ -94,9 +99,10 @@ const LmiTestOptions: React.FC<LmiTestOptionsProps> = ({
           if (checked) {
             setUseHudData(false);
             setUseDirect(false);
+            setUseMock(false);
           }
         }}
-        disabled={useHudData || useDirect}
+        disabled={useHudData || useDirect || useMock}
       />
       
       <OptionSwitch 
@@ -108,19 +114,37 @@ const LmiTestOptions: React.FC<LmiTestOptionsProps> = ({
           if (checked) {
             setUseHudData(false);
             setUseEnhanced(false);
+            setUseMock(false);
           }
         }}
-        disabled={useHudData || useEnhanced}
+        disabled={useHudData || useEnhanced || useMock}
+      />
+      
+      <OptionSwitch 
+        id="use-mock"
+        label={`Use Mock Data (${useMock ? 'Enabled' : 'Disabled'}) - Testing Only`}
+        checked={useMock}
+        onCheckedChange={(checked) => {
+          setUseMock(checked);
+          if (checked) {
+            setUseHudData(false);
+            setUseEnhanced(false);
+            setUseDirect(false);
+          }
+        }}
+        disabled={useHudData || useEnhanced || useDirect}
       />
 
       <div className="text-xs text-muted-foreground">
-        {useDirect 
-          ? "Using direct ArcGIS Feature Service implementation"
-          : (useEnhanced 
-              ? "Using enhanced client-side implementation with direct API calls"
-              : (useHudData 
-                  ? "Using HUD's Low-to-Moderate Income Summary Data (LMISD)" 
-                  : "Using Census American Community Survey (ACS) data"))}
+        {useMock 
+          ? "Using mock data for testing purposes only"
+          : (useDirect 
+              ? "Using direct ArcGIS Feature Service implementation"
+              : (useEnhanced 
+                  ? "Using enhanced client-side implementation with direct API calls"
+                  : (useHudData 
+                      ? "Using HUD's Low-to-Moderate Income Summary Data (LMISD)" 
+                      : "Using Census American Community Survey (ACS) data")))}
       </div>
     </div>
   );
