@@ -37,25 +37,15 @@ export function useLmiTest() {
       
       // Show the status toast notification
       if (result.is_approved) {
-        toast.success(
-          <div className="flex items-center gap-2">
-            <CheckCircle className="h-5 w-5" />
-            <span>This property is LMI eligible</span>
-          </div>,
-          {
-            duration: 4000
-          }
-        );
+        toast.success('This property is LMI eligible', {
+          icon: <CheckCircle className="h-5 w-5" />,
+          duration: 4000
+        });
       } else {
-        toast.info(
-          <div className="flex items-center gap-2">
-            <XCircle className="h-5 w-5" />
-            <span>This property is not LMI eligible</span>
-          </div>,
-          {
-            duration: 4000
-          }
-        );
+        toast.info('This property is not LMI eligible', {
+          icon: <XCircle className="h-5 w-5" />,
+          duration: 4000
+        });
       }
     } catch (error) {
       console.error('Error checking LMI status:', error);
@@ -64,12 +54,9 @@ export function useLmiTest() {
         message: error instanceof Error ? error.message : 'Unknown error occurred',
       });
       
-      toast.error(
-        <div className="flex items-center gap-2">
-          <XCircle className="h-5 w-5" />
-          <span>Error checking LMI status</span>
-        </div>
-      );
+      toast.error('Error checking LMI status', {
+        icon: <XCircle className="h-5 w-5" />
+      });
     } finally {
       setLoading(false);
     }
