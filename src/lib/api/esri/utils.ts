@@ -1,7 +1,6 @@
-
 // Utility functions for processing LMI data
 
-import { LMIResult, LMICoordinates } from './interfaces';
+import { LMIResult, LMICoordinates, AddressComponents } from './interfaces';
 import { LMI_THRESHOLD } from './constants';
 
 /**
@@ -44,6 +43,78 @@ export function processLMIData(lmiData: any): LMIResult {
   }
   
   return result;
+}
+
+/**
+ * Parse a full address string into address components
+ * @param address Full address string (e.g., "123 Main St, City, State 12345")
+ * @returns Parsed address components
+ */
+export function parseAddressComponents(address: string): AddressComponents {
+  try {
+    // Simple regex-based parser - in production, you'd want a more robust solution
+    const parts = address.split(',').map(part => part.trim());
+    
+    if (parts.length < 2) {
+      // Not enough parts to parse properly
+      return {
+        street: address,
+        city: '',
+        state: '',
+        zip: ''
+      };
+    }
+    
+    // First part is usually the street
+    const street = parts[0];
+    
+    // Last part usually contains state and zip
+    const lastPart = parts[parts.length - 1];
+    const stateZipMatch = lastPart.match(/([A-Z]{2})\s+(\d{5}(-\d{4})?)/);
+    
+    let state = '';
+    let zip = '';
+    
+    if (stateZipMatch) {
+      state = stateZipMatch[1];
+      zip = stateZipMatch[2];
+    } else {
+      // Try to extract just the state
+      const stateMatch = lastPart.match(/([A-Z]{2})/);
+      if (stateMatch) {
+        state = stateMatch[1];
+      }
+    }
+    
+    // City is usually the second-to-last part if there are at least 3 parts
+    let city = '';
+    if (parts.length >= 3) {
+      city = parts[parts.length - 2];
+    } else if (parts.length === 2) {
+      // If only 2 parts, the second part might contain city and state/zip
+      const cityStateMatch = parts[1].match(/([^0-9]+)([A-Z]{2}\s+\d{5}(-\d{4})?)/);
+      if (cityStateMatch) {
+        city = cityStateMatch[1].trim();
+      } else {
+        city = parts[1];
+      }
+    }
+    
+    return {
+      street,
+      city,
+      state,
+      zip
+    };
+  } catch (error) {
+    console.error('Error parsing address components:', error);
+    return {
+      street: address,
+      city: '',
+      state: '',
+      zip: ''
+    };
+  }
 }
 
 /**

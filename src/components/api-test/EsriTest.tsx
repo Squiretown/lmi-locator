@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-import { geocodeAddressWithEsri, ESRI_GEOCODING_URL, ESRI_GEOCODING_API_URL } from '@/lib/api/esri/index';
+import { geocodeWithEsri, ESRI_GEOCODE_URL } from '@/lib/api/esri/index';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -45,7 +45,7 @@ const EsriTest = ({
     setResults(null);
     setDiagnosticInfo({
       requestStartTime: Date.now(),
-      apiUrl: ESRI_GEOCODING_URL,
+      apiUrl: ESRI_GEOCODE_URL,
       status: 'idle',
       message: 'Initiating ESRI API request...'
     });
@@ -54,7 +54,15 @@ const EsriTest = ({
       console.log(`[ESRI TEST] Starting geocoding request for address: ${address}`);
       const requestStartTime = Date.now();
       
-      const result = await geocodeAddressWithEsri(address);
+      // Parse the address components
+      const addressComponents = {
+        street: address,
+        city: '',
+        state: '',
+        zip: ''
+      };
+      
+      const result = await geocodeWithEsri(addressComponents);
       
       const requestEndTime = Date.now();
       const requestDuration = requestEndTime - requestStartTime;
@@ -68,7 +76,7 @@ const EsriTest = ({
         diagnostic: {
           duration_ms: requestDuration,
           timestamp: new Date().toISOString(),
-          approach: result.request_info?.approach
+          approach: 'direct'
         }
       });
       
@@ -76,10 +84,10 @@ const EsriTest = ({
         requestStartTime,
         requestEndTime,
         requestDuration,
-        apiUrl: result.request_info?.url || ESRI_GEOCODING_URL,
+        apiUrl: ESRI_GEOCODE_URL,
         status: 'success',
         message: `API call completed successfully in ${requestDuration}ms`,
-        approach: result.request_info?.approach
+        approach: 'direct'
       });
       
       toast.success('ESRI geocoding successful');

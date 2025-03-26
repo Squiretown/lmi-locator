@@ -1,8 +1,7 @@
-
 // Geocoding service for address to coordinates conversion
-import { CENSUS_GEOCODER_URL, ESRI_GEOCODING_URL } from './constants';
+import { CENSUS_GEOCODER_URL, ESRI_GEOCODE_URL } from './constants';
 import { cachedFetch } from './cache';
-import { geocodeAddressWithEsri } from './esri-service';
+import { geocodeWithEsri } from './esri';
 import { parseGeoId, formatTractId } from './census-helpers';
 
 /**
@@ -61,7 +60,7 @@ export const geocodeAddress = async (address: string): Promise<{
     // Second attempt: ESRI Geocoder
     console.log('Attempting to geocode with ESRI service');
     
-    const esriResult = await geocodeAddressWithEsri(address);
+    const esriResult = await geocodeWithEsri(address);
     
     // Successfully geocoded with ESRI, but we don't have census tract info
     // We could potentially make another call to get census tract data based on coordinates

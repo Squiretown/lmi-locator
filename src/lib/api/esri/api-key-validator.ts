@@ -1,91 +1,79 @@
 
-/**
- * Utility functions for validating ESRI API keys
- */
-import { ESRI_API_KEY } from './config';
+// Utility to validate ESRI API keys
+import { ESRI_API_KEY, ESRI_GEOCODE_URL } from './config';
 
 /**
- * Test if the ESRI API key is valid and has appropriate privileges
- * @returns Promise resolving to validation result with details
+ * Validates an ESRI API key by making a test request
+ * @param apiKey The API key to validate
+ * @returns Result of validation with status and details
  */
-export const validateEsriApiKey = async (): Promise<{
+export async function validateEsriApiKey(apiKey: string): Promise<{
   isValid: boolean;
-  status?: number;
-  version?: string;
-  error?: string;
-}> => {
+  status: 'valid' | 'invalid' | 'error';
+  message: string;
+  details?: any;
+}> {
   try {
-    console.log('Testing ESRI API key validity');
+    // Use a simple test address to validate the API key
+    const testAddress = "1600 Pennsylvania Ave, Washington DC";
     
-    if (!ESRI_API_KEY) {
-      console.error('No ESRI API key provided');
-      return {
-        isValid: false,
-        error: 'No ESRI API key provided'
-      };
-    }
-    
-    // Build request with parameters
-    const testUrl = 'https://geocode-api.arcgis.com/arcgis/rest/services/World/GeocodeServer';
+    // Form the request URL with the API key
     const params = new URLSearchParams({
+      singleLine: testAddress,
+      outFields: 'Match_addr',
+      outSR: '4326',
       f: 'json',
-      token: ESRI_API_KEY
+      token: apiKey
     });
     
-    const requestUrl = `${testUrl}?${params.toString()}`;
-    const response = await fetch(requestUrl, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
+    // Make a test request to the geocoding service
+    const response = await fetch(`${ESRI_GEOCODE_URL}?${params}`);
     
-    // Check HTTP status
     if (!response.ok) {
-      console.error(`API key validation failed with status: ${response.status}`);
       return {
         isValid: false,
-        status: response.status,
-        error: `HTTP error: ${response.status} ${response.statusText}`
+        status: 'error',
+        message: `HTTP error: ${response.status} ${response.statusText}`
       };
     }
     
     const data = await response.json();
     
-    // Check for error in response
+    // Check for error responses that indicate an invalid key
     if (data.error) {
-      console.error(`API key error:`, data.error);
       return {
         isValid: false,
-        status: response.status,
-        error: `API error: ${JSON.stringify(data.error)}`
+        status: 'invalid',
+        message: data.error.message || 'API key rejected',
+        details: data.error
       };
     }
     
-    // Check for service version as indication of success
-    if (data.currentVersion) {
-      console.log(`Service version: ${data.currentVersion}`);
+    // Check if we got valid candidates
+    if (data.candidates && data.candidates.length > 0) {
       return {
         isValid: true,
-        status: response.status,
-        version: data.currentVersion
+        status: 'valid',
+        message: 'API key is valid',
+        details: {
+          candidatesCount: data.candidates.length
+        }
       };
     }
     
-    // Unexpected response structure
-    console.warn('Unexpected service response structure');
+    // If we got here, something unexpected happened
     return {
       isValid: false,
-      status: response.status,
-      error: 'Unexpected service response structure'
+      status: 'error',
+      message: 'Unexpected API response format',
+      details: data
     };
-    
   } catch (error) {
-    console.error('Error validating API key:', error);
-    
     return {
       isValid: false,
-      error: error instanceof Error ? error.message : 'Unknown error validating API key'
+      status: 'error',
+      message: error instanceof Error ? error.message : 'Unknown error',
+      details: error
     };
   }
-};
+}

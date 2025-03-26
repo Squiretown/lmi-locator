@@ -7,6 +7,8 @@ export const LMI_BLOCK_GROUP_URL = 'https://services.arcgis.com/VTyQ9soqVukalItT
 
 // ESRI Geocoding services
 export const ESRI_GEOCODE_URL = 'https://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer/findAddressCandidates';
+export const ESRI_GEOCODING_URL = ESRI_GEOCODE_URL; // Alias for backward compatibility
+export const ESRI_GEOCODING_API_URL = 'https://geocode-api.arcgis.com/arcgis/rest/services/World/GeocodeServer/findAddressCandidates';
 
 // Census Bureau services
 export const CENSUS_GEOCODER_ENDPOINT = 'https://geocoding.geo.census.gov/geocoder/locations/address';
