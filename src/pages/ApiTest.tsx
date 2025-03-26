@@ -10,6 +10,7 @@ import LmiTest from '@/components/api-test/LmiTest';
 import EsriTest from '@/components/api-test/EsriTest';
 import EsriKeyTest from '@/components/api-test/EsriKeyTest';
 import ResultsDisplay from '@/components/api-test/ResultsDisplay';
+import ConnectionTester from '@/components/development/ConnectionTester';
 
 const ApiTest = () => {
   const [address, setAddress] = useState('');
@@ -33,6 +34,11 @@ const ApiTest = () => {
         <Button variant="outline" onClick={handleClearCache}>
           Clear API Cache
         </Button>
+      </div>
+      
+      {/* Add ConnectionTester at the top of the page */}
+      <div className="mb-8">
+        <ConnectionTester />
       </div>
       
       <Tabs defaultValue="geocode" className="w-full">
