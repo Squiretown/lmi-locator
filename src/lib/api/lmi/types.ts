@@ -28,6 +28,7 @@ export interface LmiResult {
   data_source?: string;
   message?: string;
   search_type?: string;
+  need_manual_verification?: boolean;
 }
 
 /**
@@ -36,6 +37,7 @@ export interface LmiResult {
 export interface LmiCheckOptions {
   useHud?: boolean;
   useEnhanced?: boolean;
+  useDirect?: boolean;
   searchType?: 'address' | 'place';
   level?: 'tract' | 'blockGroup';
 }

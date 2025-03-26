@@ -10,7 +10,8 @@ export {
   checkLmiStatus,
   checkHudLmiStatus,
   checkHudLmiStatusByPlace,
-  checkEnhancedLmiStatus
+  checkEnhancedLmiStatus,
+  checkDirectLmiStatus
 } from './api-functions';
 
 // Re-export mock data function for testing

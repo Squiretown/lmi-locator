@@ -9,7 +9,8 @@ import {
   checkLmiStatus, 
   checkHudLmiStatus, 
   checkHudLmiStatusByPlace,
-  checkEnhancedLmiStatus
+  checkEnhancedLmiStatus,
+  checkDirectLmiStatus
 } from '@/lib/api/lmi';
 import { Switch } from '@/components/ui/switch';
 import { 
@@ -37,6 +38,7 @@ const LmiTest = ({
 }: LmiTestProps) => {
   const [useHudData, setUseHudData] = useState(false);
   const [useEnhanced, setUseEnhanced] = useState(false);
+  const [useDirect, setUseDirect] = useState(false);
   const [searchType, setSearchType] = useState<'address' | 'place'>('address');
   const [level, setLevel] = useState<'tract' | 'blockGroup'>('tract');
 
@@ -52,7 +54,10 @@ const LmiTest = ({
     try {
       let result;
       
-      if (useEnhanced) {
+      if (useDirect) {
+        // Use direct ArcGIS service implementation
+        result = await checkDirectLmiStatus(address);
+      } else if (useEnhanced) {
         // Use enhanced implementation
         result = await checkEnhancedLmiStatus(address);
       } else if (useHudData) {
@@ -94,7 +99,7 @@ const LmiTest = ({
           <Select 
             value={searchType} 
             onValueChange={(value: 'address' | 'place') => setSearchType(value)}
-            disabled={useEnhanced}
+            disabled={useEnhanced || useDirect}
           >
             <SelectTrigger id="search-type">
               <SelectValue placeholder="Select search type" />
@@ -111,7 +116,7 @@ const LmiTest = ({
           <Select 
             value={level} 
             onValueChange={(value: 'tract' | 'blockGroup') => setLevel(value)}
-            disabled={useEnhanced}
+            disabled={useEnhanced || useDirect}
           >
             <SelectTrigger id="geography-level">
               <SelectValue placeholder="Select geography level" />
@@ -141,9 +146,12 @@ const LmiTest = ({
             checked={useHudData} 
             onCheckedChange={(checked) => {
               setUseHudData(checked);
-              if (checked) setUseEnhanced(false);
+              if (checked) {
+                setUseEnhanced(false);
+                setUseDirect(false);
+              }
             }} 
-            disabled={useEnhanced}
+            disabled={useEnhanced || useDirect}
           />
           <Label htmlFor="use-hud">
             Use HUD LMI data ({useHudData ? 'Enabled' : 'Disabled'})
@@ -156,20 +164,44 @@ const LmiTest = ({
             checked={useEnhanced} 
             onCheckedChange={(checked) => {
               setUseEnhanced(checked);
-              if (checked) setUseHudData(false);
+              if (checked) {
+                setUseHudData(false);
+                setUseDirect(false);
+              }
             }}
+            disabled={useHudData || useDirect}
           />
           <Label htmlFor="use-enhanced">
             Use Enhanced Implementation ({useEnhanced ? 'Enabled' : 'Disabled'})
           </Label>
         </div>
+        
+        <div className="flex items-center space-x-2">
+          <Switch 
+            id="use-direct" 
+            checked={useDirect} 
+            onCheckedChange={(checked) => {
+              setUseDirect(checked);
+              if (checked) {
+                setUseHudData(false);
+                setUseEnhanced(false);
+              }
+            }}
+            disabled={useHudData || useEnhanced}
+          />
+          <Label htmlFor="use-direct">
+            Use Direct ArcGIS Service ({useDirect ? 'Enabled' : 'Disabled'})
+          </Label>
+        </div>
 
         <div className="text-xs text-muted-foreground">
-          {useEnhanced 
-            ? "Using enhanced client-side implementation with direct API calls"
-            : (useHudData 
-              ? "Using HUD's Low-to-Moderate Income Summary Data (LMISD)" 
-              : "Using Census American Community Survey (ACS) data")}
+          {useDirect 
+            ? "Using direct ArcGIS Feature Service implementation"
+            : (useEnhanced 
+                ? "Using enhanced client-side implementation with direct API calls"
+                : (useHudData 
+                    ? "Using HUD's Low-to-Moderate Income Summary Data (LMISD)" 
+                    : "Using Census American Community Survey (ACS) data"))}
         </div>
         
         <Button 
