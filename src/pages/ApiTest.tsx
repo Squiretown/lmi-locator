@@ -1,9 +1,9 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { clearApiCache } from '@/lib/api/cache';
 import { toast } from 'sonner';
-import { Toaster } from '@/components/ui/sonner';
 import GeocodeTest from '@/components/api-test/GeocodeTest';
 import IncomeTest from '@/components/api-test/IncomeTest';
 import LmiTest from '@/components/api-test/LmiTest';
@@ -25,8 +25,6 @@ const ApiTest = () => {
   
   return (
     <div className="container mx-auto px-4 py-8">
-      <Toaster position="top-center" />
-      
       <h1 className="text-3xl font-bold mb-6">API Testing Tool</h1>
       <p className="text-muted-foreground mb-6">
         Use this page to test the various Census API functionality in the application.
@@ -38,6 +36,7 @@ const ApiTest = () => {
         </Button>
       </div>
       
+      {/* Add ConnectionTester at the top of the page */}
       <div className="mb-8">
         <ConnectionTester />
       </div>
