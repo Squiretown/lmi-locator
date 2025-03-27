@@ -1,7 +1,6 @@
 
 import { useState } from 'react';
 import { checkLmiStatus } from '@/lib/api/lmi';
-import { CheckCircle, XCircle } from 'lucide-react';
 
 export function useLmiTest() {
   const [loading, setLoading] = useState(false);
@@ -16,7 +15,6 @@ export function useLmiTest() {
     setLoading: (loading: boolean) => void
   ) => {
     if (!address || address.trim() === '') {
-      // Removed toast error
       return;
     }
 
@@ -33,16 +31,12 @@ export function useLmiTest() {
       });
       
       setResults(result);
-      
-      // Removed all toast notifications
     } catch (error) {
       console.error('Error checking LMI status:', error);
       setResults({
         status: 'error',
         message: error instanceof Error ? error.message : 'Unknown error occurred',
       });
-      
-      // Removed toast error
     } finally {
       setLoading(false);
     }
