@@ -8,6 +8,9 @@ export function useLmiTest() {
   const [useEnhanced, setUseEnhanced] = useState(false);
   const [useDirect, setUseDirect] = useState(true);
   const [useMock, setUseMock] = useState(false);
+  const [searchType, setSearchType] = useState<'address' | 'place'>('address');
+  const [level, setLevel] = useState<'tract' | 'blockGroup'>('tract');
+  const [errorMessage, setErrorMessage] = useState('');
 
   const checkLmi = async (
     address: string,
@@ -15,24 +18,36 @@ export function useLmiTest() {
     setLoading: (loading: boolean) => void
   ) => {
     if (!address || address.trim() === '') {
+      setErrorMessage('Please enter an address');
       return;
     }
 
     setLoading(true);
+    setErrorMessage('');
 
     try {
-      console.log('Using options:', { useHud, useEnhanced, useDirect, useMock });
+      console.log('Using options:', { 
+        useHud, 
+        useEnhanced, 
+        useDirect, 
+        useMock,
+        searchType,
+        level
+      });
       
       const result = await checkLmiStatus(address, {
         useHud,
         useEnhanced,
         useDirect,
         useMock,
+        searchType,
+        level
       });
       
       setResults(result);
     } catch (error) {
       console.error('Error checking LMI status:', error);
+      setErrorMessage(error instanceof Error ? error.message : 'Unknown error occurred');
       setResults({
         status: 'error',
         message: error instanceof Error ? error.message : 'Unknown error occurred',
@@ -42,9 +57,13 @@ export function useLmiTest() {
     }
   };
 
+  const handleLmiTest = (address: string, setResults: (data: any) => void) => {
+    checkLmi(address, setResults, setLoading);
+  };
+
   return {
     loading,
-    useHud,
+    useHud: useHud,
     setUseHud,
     useEnhanced,
     setUseEnhanced,
@@ -52,6 +71,12 @@ export function useLmiTest() {
     setUseDirect,
     useMock,
     setUseMock,
+    searchType,
+    setSearchType,
+    level,
+    setLevel,
+    errorMessage,
     checkLmi,
+    handleLmiTest
   };
 }

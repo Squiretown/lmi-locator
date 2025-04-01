@@ -14,12 +14,24 @@ const LmiTestButton: React.FC<LmiTestButtonProps> = ({
   disabled
 }) => {
   return (
-    <Button 
-      onClick={onClick} 
-      disabled={loading || disabled}
-    >
-      {loading ? 'Processing...' : 'Test LMI Status'}
-    </Button>
+    <div className="flex justify-end mt-4">
+      <Button 
+        onClick={onClick} 
+        disabled={loading || disabled}
+        className="w-full sm:w-auto"
+      >
+        {loading ? (
+          <span className="flex items-center">
+            <span className="mr-2">Processing</span>
+            <span className="loading-dots">
+              <span></span>
+              <span></span>
+              <span></span>
+            </span>
+          </span>
+        ) : 'Test LMI Status'}
+      </Button>
+    </div>
   );
 };
 

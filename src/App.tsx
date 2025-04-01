@@ -11,7 +11,6 @@ import NotFound from '@/pages/NotFound';
 import AdminLayout from '@/components/admin/AdminLayout';
 import AdminDashboard from '@/components/admin/AdminDashboard';
 import { MarketingDashboard } from '@/components/admin/MarketingDashboard';
-import { Toaster } from '@/components/ui/sonner';
 
 function App() {
   return (
@@ -31,7 +30,6 @@ function App() {
           </Routes>
         </div>
         <Footer />
-        <Toaster />
       </div>
     </Router>
   );

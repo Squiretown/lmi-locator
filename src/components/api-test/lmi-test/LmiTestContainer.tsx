@@ -26,25 +26,22 @@ const LmiTestContainer: React.FC<LmiTestContainerProps> = ({
     setSearchType,
     level,
     setLevel,
-    useHudData,
-    setUseHudData,
+    useHud,
+    setUseHud,
     useEnhanced,
     setUseEnhanced,
     useDirect,
     setUseDirect,
     useMock,
     setUseMock,
+    errorMessage,
     handleLmiTest
-  } = useLmiTest({
-    address,
-    setResults,
-    setLoading
-  });
+  } = useLmiTest();
 
   return (
-    <Card>
+    <Card className="w-full">
       <CardHeader>
-        <CardTitle>Test LMI Status Check</CardTitle>
+        <CardTitle className="text-xl md:text-2xl">Test LMI Status Check</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <LmiTestOptions 
@@ -52,8 +49,8 @@ const LmiTestContainer: React.FC<LmiTestContainerProps> = ({
           setSearchType={setSearchType}
           level={level}
           setLevel={setLevel}
-          useHudData={useHudData}
-          setUseHudData={setUseHudData}
+          useHudData={useHud}
+          setUseHudData={setUseHud}
           useEnhanced={useEnhanced}
           setUseEnhanced={setUseEnhanced}
           useDirect={useDirect}
@@ -68,8 +65,12 @@ const LmiTestContainer: React.FC<LmiTestContainerProps> = ({
           searchType={searchType}
         />
         
+        {errorMessage && (
+          <div className="text-destructive text-sm">{errorMessage}</div>
+        )}
+        
         <LmiTestButton 
-          onClick={handleLmiTest}
+          onClick={() => handleLmiTest(address, setResults)}
           loading={loading}
           disabled={!address}
         />

@@ -3,7 +3,6 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { clearApiCache } from '@/lib/api/cache';
-import { toast } from 'sonner';
 import GeocodeTest from '@/components/api-test/GeocodeTest';
 import IncomeTest from '@/components/api-test/IncomeTest';
 import LmiTest from '@/components/api-test/LmiTest';
@@ -17,10 +16,16 @@ const ApiTest = () => {
   const [tractId, setTractId] = useState('');
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<any>(null);
+  const [statusMessage, setStatusMessage] = useState('');
   
   const handleClearCache = () => {
     clearApiCache();
-    toast.success('API cache cleared');
+    setStatusMessage('API cache cleared');
+    
+    // Clear the status message after a few seconds
+    setTimeout(() => {
+      setStatusMessage('');
+    }, 3000);
   };
   
   return (
@@ -30,7 +35,10 @@ const ApiTest = () => {
         Use this page to test the various Census API functionality in the application.
       </p>
       
-      <div className="flex justify-end mb-4">
+      <div className="flex justify-between items-center mb-4">
+        <div className="text-sm font-medium text-primary">
+          {statusMessage}
+        </div>
         <Button variant="outline" onClick={handleClearCache}>
           Clear API Cache
         </Button>
@@ -42,7 +50,7 @@ const ApiTest = () => {
       </div>
       
       <Tabs defaultValue="geocode" className="w-full">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-2 md:grid-cols-5">
           <TabsTrigger value="geocode">Geocoding API</TabsTrigger>
           <TabsTrigger value="esri">ESRI API</TabsTrigger>
           <TabsTrigger value="esri-key">ESRI API Key</TabsTrigger>
@@ -87,7 +95,7 @@ const ApiTest = () => {
           />
         </TabsContent>
         
-        <TabsContent value="lmi" className="space-y-4">
+        <TabsContent value="lmi" className="space-y-4 pt-4">
           <LmiTest 
             address={address}
             setAddress={setAddress}
@@ -98,7 +106,9 @@ const ApiTest = () => {
         </TabsContent>
       </Tabs>
       
-      <ResultsDisplay results={results} />
+      <div className="mt-8">
+        <ResultsDisplay results={results} />
+      </div>
       
       <div className="mt-8 text-center">
         <a href="/" className="text-blue-600 hover:underline">
