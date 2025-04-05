@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
@@ -15,6 +16,7 @@ const LoginPage: React.FC = () => {
   const [lastName, setLastName] = useState('');
   const [userRole, setUserRole] = useState('client');
   const { signIn, signUp, isLoading } = useAuth();
+  const navigate = useNavigate();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -23,11 +25,18 @@ const LoginPage: React.FC = () => {
       return;
     }
 
-    const { error } = await signIn(email, password);
-    if (error) {
-      toast.error(error.message);
-    } else {
-      toast.success('Logged in successfully');
+    try {
+      const { error } = await signIn(email, password);
+      if (error) {
+        console.error('Login error:', error);
+        toast.error(error.message);
+      } else {
+        toast.success('Logged in successfully');
+        // Navigation will be handled by AuthWrapper in App.tsx
+      }
+    } catch (err) {
+      console.error('Exception during login:', err);
+      toast.error('An unexpected error occurred. Please try again.');
     }
   };
 
@@ -43,16 +52,23 @@ const LoginPage: React.FC = () => {
       return;
     }
 
-    const { error } = await signUp(email, password, {
-      first_name: firstName,
-      last_name: lastName,
-      user_type: userRole
-    });
+    try {
+      const { error } = await signUp(email, password, {
+        first_name: firstName,
+        last_name: lastName,
+        user_type: userRole
+      });
 
-    if (error) {
-      toast.error(error.message);
-    } else {
-      toast.success('Sign up successful! Check your email to confirm your account.');
+      if (error) {
+        console.error('Signup error:', error);
+        toast.error(error.message);
+      } else {
+        toast.success('Sign up successful! Check your email to confirm your account.');
+        // Stay on login page for them to login
+      }
+    } catch (err) {
+      console.error('Exception during signup:', err);
+      toast.error('An unexpected error occurred. Please try again.');
     }
   };
 
