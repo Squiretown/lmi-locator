@@ -38,3 +38,10 @@ export {
   addClient, 
   getProfessionalClients 
 } from './clients';
+
+// User permissions and types
+export {
+  checkUserPermission,
+  getUserPermissions,
+  getUserTypeName
+} from './user';

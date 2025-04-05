@@ -22,6 +22,7 @@ import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { getUserPermissions, getUserTypeName } from "@/lib/supabase/user";
 
 const AdminLayout: React.FC = () => {
   const location = useLocation();
@@ -48,54 +49,13 @@ const AdminLayout: React.FC = () => {
       setUnreadNotifications(notificationCount?.[0]?.unread_count || 0);
       
       try {
-        // Check if user is admin using the rpc function
-        const { data: isAdmin } = await supabase.rpc('user_is_admin');
+        // Get user type name using our utility function
+        const userTypeName = await getUserTypeName();
+        setUserType(userTypeName || 'standard');
         
-        if (isAdmin) {
-          setUserType('admin');
-          // Admins have all permissions
-          setPermissions(['manage_system', 'run_marketing', 'manage_clients', 'manage_programs', 'basic_search']);
-          return;
-        }
-        
-        // If not admin, fetch user's profile to get type info
-        // Use dynamic query to avoid TypeScript errors with the new columns
-        const { data: profileData, error: profileError } = await supabase
-          .from('user_profiles')
-          .select('*')
-          .eq('user_id', session.user.id)
-          .single();
-          
-        if (profileError) {
-          console.error('Error fetching user profile:', profileError);
-          return;
-        }
-        
-        // Use raw SQL query through RPC to get user type name
-        const { data: userTypeData, error: userTypeError } = await supabase.rpc(
-          'get_user_type_name',
-          { profile_id: profileData.id }
-        ).single();
-        
-        if (userTypeError) {
-          console.error('Error getting user type:', userTypeError);
-          // Default to standard if there's an error
-          setUserType('standard');
-        } else {
-          setUserType(userTypeData?.type_name || 'standard');
-        }
-        
-        // Use raw SQL query through RPC to get user permissions
-        const { data: permissionsData, error: permissionsError } = await supabase.rpc(
-          'get_user_permissions',
-          { user_uuid: session.user.id }
-        );
-        
-        if (permissionsError) {
-          console.error('Error fetching permissions:', permissionsError);
-        } else if (permissionsData) {
-          setPermissions(permissionsData.map((p: any) => p.permission_name));
-        }
+        // Get user permissions using our utility function
+        const userPermissions = await getUserPermissions();
+        setPermissions(userPermissions);
       } catch (error) {
         console.error('Error in user data fetch:', error);
       }
