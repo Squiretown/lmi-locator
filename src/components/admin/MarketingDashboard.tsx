@@ -1,5 +1,7 @@
 
+import React from 'react';
 import { MarketingDashboard as MarketingDashboardComponent } from './marketing-dashboard/MarketingDashboard';
 
-export { MarketingDashboardComponent as MarketingDashboard };
-export default MarketingDashboardComponent;
+// Export both named and default export
+export const MarketingDashboard = MarketingDashboardComponent;
+export default MarketingDashboard;

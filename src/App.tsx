@@ -8,9 +8,7 @@ import Index from '@/pages/Index';
 import ApiDocs from '@/pages/ApiDocs';
 import ApiTest from '@/pages/ApiTest';
 import NotFound from '@/pages/NotFound';
-import { AdminLayout } from '@/components/admin';
-import { AdminDashboard } from '@/components/admin';
-import { MarketingDashboard } from '@/components/admin';
+import { AdminLayout, AdminDashboard, MarketingDashboard } from '@/components/admin';
 
 function App() {
   return (
