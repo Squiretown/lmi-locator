@@ -23,19 +23,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
-// Define the user type based on our database schema
-interface UserType {
-  type_id: string;
-  type_name: string;
-  description: string;
-}
-
-// Define the permission interface
-interface Permission {
-  permission_name: string;
-  description: string;
-}
-
 const AdminLayout: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -51,45 +38,67 @@ const AdminLayout: React.FC = () => {
         navigate('/login');
         return;
       }
-      
-      // Get user profile with user type
-      const { data: profileData } = await supabase
-        .from('user_profiles')
-        .select('user_type_id')
-        .eq('user_id', session.user.id)
-        .single();
-      
-      if (profileData?.user_type_id) {
-        // Get user type name
-        const { data: userTypeData } = await supabase
-          .from('user_types')
-          .select('type_name')
-          .eq('type_id', profileData.user_type_id)
-          .single();
-          
-        setUserType(userTypeData?.type_name || null);
-        
-        // Get user permissions
-        const { data: permissionsData } = await supabase
-          .from('user_type_permissions')
-          .select('permissions(permission_name)')
-          .eq('user_type_id', profileData.user_type_id);
-          
-        if (permissionsData) {
-          const permissionNames = permissionsData
-            .map(p => p.permissions?.permission_name)
-            .filter(Boolean) as string[];
-          setPermissions(permissionNames);
-        }
-      }
 
-      // Get unread notification count
+      // Get unread notification count using the RPC function
       const { data: notificationCount } = await supabase.rpc(
         'get_notification_counts',
         { user_uuid: session.user.id }
       );
       
       setUnreadNotifications(notificationCount?.[0]?.unread_count || 0);
+      
+      try {
+        // Check if user is admin using the rpc function
+        const { data: isAdmin } = await supabase.rpc('user_is_admin');
+        
+        if (isAdmin) {
+          setUserType('admin');
+          // Admins have all permissions
+          setPermissions(['manage_system', 'run_marketing', 'manage_clients', 'manage_programs', 'basic_search']);
+          return;
+        }
+        
+        // If not admin, fetch user's profile to get type info
+        // Use dynamic query to avoid TypeScript errors with the new columns
+        const { data: profileData, error: profileError } = await supabase
+          .from('user_profiles')
+          .select('*')
+          .eq('user_id', session.user.id)
+          .single();
+          
+        if (profileError) {
+          console.error('Error fetching user profile:', profileError);
+          return;
+        }
+        
+        // Use raw SQL query through RPC to get user type name
+        const { data: userTypeData, error: userTypeError } = await supabase.rpc(
+          'get_user_type_name',
+          { profile_id: profileData.id }
+        ).single();
+        
+        if (userTypeError) {
+          console.error('Error getting user type:', userTypeError);
+          // Default to standard if there's an error
+          setUserType('standard');
+        } else {
+          setUserType(userTypeData?.type_name || 'standard');
+        }
+        
+        // Use raw SQL query through RPC to get user permissions
+        const { data: permissionsData, error: permissionsError } = await supabase.rpc(
+          'get_user_permissions',
+          { user_uuid: session.user.id }
+        );
+        
+        if (permissionsError) {
+          console.error('Error fetching permissions:', permissionsError);
+        } else if (permissionsData) {
+          setPermissions(permissionsData.map((p: any) => p.permission_name));
+        }
+      } catch (error) {
+        console.error('Error in user data fetch:', error);
+      }
     };
 
     fetchUserData();
