@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
@@ -116,7 +117,7 @@ const ClientDashboard: React.FC = () => {
                           </div>
                         </div>
                       </div>
-                      <Badge variant={property.lmiStatus ? 'success' : 'destructive'} className="ml-auto">
+                      <Badge variant={property.lmiStatus ? 'secondary' : 'destructive'} className={property.lmiStatus ? 'bg-green-600 text-white' : ''}>
                         {property.lmiStatus ? 'LMI Eligible' : 'Not Eligible'}
                       </Badge>
                     </div>
