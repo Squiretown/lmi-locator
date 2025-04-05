@@ -4,45 +4,50 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import LmiTestOptions from './LmiTestOptions';
 import AddressInput from './AddressInput';
 import LmiTestButton from './LmiTestButton';
-import { useLmiTest } from './useLmiTest';
 
 interface LmiTestContainerProps {
   address: string;
   setAddress: (address: string) => void;
+  searchType: 'address' | 'place';
+  setSearchType: (type: 'address' | 'place') => void;
+  level: 'tract' | 'blockGroup';
+  setLevel: (level: 'tract' | 'blockGroup') => void;
+  useHud: boolean;
+  setUseHud: (useHud: boolean) => void;
+  useEnhanced: boolean;
+  setUseEnhanced: (useEnhanced: boolean) => void;
+  useDirect: boolean;
+  setUseDirect: (useDirect: boolean) => void;
+  useMock: boolean;
+  setUseMock: (useMock: boolean) => void;
+  errorMessage: string;
+  setErrorMessage: (message: string) => void;
   setResults: (results: any) => void;
   loading: boolean;
   setLoading: (loading: boolean) => void;
+  handleLmiTest: () => void;
 }
 
 const LmiTestContainer: React.FC<LmiTestContainerProps> = ({
   address,
   setAddress,
-  setResults,
+  searchType,
+  setSearchType,
+  level,
+  setLevel,
+  useHud,
+  setUseHud,
+  useEnhanced,
+  setUseEnhanced,
+  useDirect,
+  setUseDirect,
+  useMock,
+  setUseMock,
+  errorMessage,
+  setErrorMessage,
   loading,
-  setLoading
+  handleLmiTest
 }) => {
-  const {
-    searchType,
-    setSearchType,
-    level,
-    setLevel,
-    useHud,
-    setUseHud,
-    useEnhanced,
-    setUseEnhanced,
-    useDirect,
-    setUseDirect,
-    useMock,
-    setUseMock,
-    errorMessage,
-    setErrorMessage,
-    handleLmiTest
-  } = useLmiTest();
-
-  const onTestButtonClick = () => {
-    handleLmiTest(address, setResults);
-  };
-
   return (
     <Card className="w-full">
       <CardHeader>
@@ -83,7 +88,7 @@ const LmiTestContainer: React.FC<LmiTestContainerProps> = ({
         )}
         
         <LmiTestButton 
-          onClick={onTestButtonClick}
+          onClick={handleLmiTest}
           loading={loading}
           disabled={!address}
         />
