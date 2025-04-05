@@ -1,34 +1,10 @@
-
 import React from 'react';
-import { 
-  SidebarProvider, 
-  Sidebar, 
-  SidebarHeader, 
-  SidebarContent, 
-  SidebarFooter,
-  SidebarMenu,
-  SidebarMenuItem,
-  SidebarMenuButton,
-  SidebarSeparator
-} from "@/components/ui/sidebar";
-import { 
-  BarChart4, 
-  Building, 
-  Users, 
-  Bell, 
-  UserCog, 
-  BarChart2, 
-  Settings,
-  LogOut,
-  HelpCircle,
-  Activity
-} from "lucide-react";
+import { SidebarProvider, Sidebar, SidebarHeader, SidebarContent, SidebarFooter, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarSeparator } from "@/components/ui/sidebar";
+import { BarChart4, Building, Users, Bell, UserCog, BarChart2, Settings, LogOut, HelpCircle, Activity } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Outlet } from "react-router-dom";
-
 const AdminLayout: React.FC = () => {
-  return (
-    <SidebarProvider defaultOpen={true}>
+  return <SidebarProvider defaultOpen={true}>
       <div className="flex h-screen overflow-hidden">
         <Sidebar>
           <SidebarHeader>
@@ -36,7 +12,7 @@ const AdminLayout: React.FC = () => {
               <div className="flex items-center justify-center w-8 h-8 rounded-md bg-primary text-primary-foreground">
                 <Building className="h-5 w-5" />
               </div>
-              <div className="font-bold text-lg">LMI Admin</div>
+              <div className="font-bold text-lg">LMI Check Admin</div>
             </div>
           </SidebarHeader>
           
@@ -132,8 +108,6 @@ const AdminLayout: React.FC = () => {
           </ScrollArea>
         </main>
       </div>
-    </SidebarProvider>
-  );
+    </SidebarProvider>;
 };
-
 export default AdminLayout;
