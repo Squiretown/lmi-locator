@@ -1,4 +1,6 @@
 
-import { MarketingDashboard } from './marketing-dashboard/MarketingDashboard';
+import { MarketingDashboard as MarketingDashboardComponent } from './marketing-dashboard/MarketingDashboard';
 
-export { MarketingDashboard };
+const MarketingDashboard = MarketingDashboardComponent;
+
+export default MarketingDashboard;
