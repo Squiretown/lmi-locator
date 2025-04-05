@@ -29,11 +29,11 @@ const EligibilityScreener: React.FC<EligibilityScreenerProps> = ({
       // Call the onComplete callback with results
       onComplete(result);
       
-      // Since toast is now an empty function, we don't need to pass arguments
+      // Call toast without arguments since it's now an empty function
       toast();
     } catch (error) {
       console.error('Error during eligibility check:', error);
-      // Since toast is now an empty function, we don't need to pass arguments
+      // Call toast without arguments since it's now an empty function
       toast();
     }
   };

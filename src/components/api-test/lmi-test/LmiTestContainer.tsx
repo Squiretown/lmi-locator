@@ -35,6 +35,7 @@ const LmiTestContainer: React.FC<LmiTestContainerProps> = ({
     useMock,
     setUseMock,
     errorMessage,
+    setErrorMessage,
     handleLmiTest
   } = useLmiTest();
 
@@ -70,7 +71,15 @@ const LmiTestContainer: React.FC<LmiTestContainerProps> = ({
         />
         
         {errorMessage && (
-          <div className="text-destructive text-sm">{errorMessage}</div>
+          <div className="text-destructive text-sm">
+            {errorMessage}
+            <button 
+              className="ml-2 text-xs underline"
+              onClick={() => setErrorMessage('')}
+            >
+              Clear
+            </button>
+          </div>
         )}
         
         <LmiTestButton 
