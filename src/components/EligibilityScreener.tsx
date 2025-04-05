@@ -29,17 +29,12 @@ const EligibilityScreener: React.FC<EligibilityScreenerProps> = ({
       // Call the onComplete callback with results
       onComplete(result);
       
-      toast({
-        title: "Eligibility Check Complete",
-        description: `Found ${result.matchingPrograms?.length || 0} potential assistance programs for you.`,
-      });
+      // Since toast is now an empty function, we don't need to pass arguments
+      toast();
     } catch (error) {
       console.error('Error during eligibility check:', error);
-      toast({
-        title: "Error",
-        description: "Failed to complete eligibility check. Please try again.",
-        variant: "destructive",
-      });
+      // Since toast is now an empty function, we don't need to pass arguments
+      toast();
     }
   };
 

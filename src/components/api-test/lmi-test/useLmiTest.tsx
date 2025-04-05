@@ -12,11 +12,7 @@ export function useLmiTest() {
   const [level, setLevel] = useState<'tract' | 'blockGroup'>('tract');
   const [errorMessage, setErrorMessage] = useState('');
 
-  const checkLmi = async (
-    address: string,
-    setResults: (data: any) => void,
-    setLoading: (loading: boolean) => void
-  ) => {
+  const handleLmiTest = async (address: string, setResults: (data: any) => void) => {
     if (!address || address.trim() === '') {
       setErrorMessage('Please enter an address');
       return;
@@ -57,13 +53,10 @@ export function useLmiTest() {
     }
   };
 
-  const handleLmiTest = (address: string, setResults: (data: any) => void) => {
-    checkLmi(address, setResults, setLoading);
-  };
-
   return {
     loading,
-    useHud: useHud,
+    setLoading,
+    useHud,
     setUseHud,
     useEnhanced,
     setUseEnhanced,
@@ -76,7 +69,7 @@ export function useLmiTest() {
     level,
     setLevel,
     errorMessage,
-    checkLmi,
+    setErrorMessage,
     handleLmiTest
   };
 }

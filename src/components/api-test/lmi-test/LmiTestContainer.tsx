@@ -38,6 +38,10 @@ const LmiTestContainer: React.FC<LmiTestContainerProps> = ({
     handleLmiTest
   } = useLmiTest();
 
+  const onTestButtonClick = () => {
+    handleLmiTest(address, setResults);
+  };
+
   return (
     <Card className="w-full">
       <CardHeader>
@@ -70,7 +74,7 @@ const LmiTestContainer: React.FC<LmiTestContainerProps> = ({
         )}
         
         <LmiTestButton 
-          onClick={() => handleLmiTest(address, setResults)}
+          onClick={onTestButtonClick}
           loading={loading}
           disabled={!address}
         />
