@@ -8,8 +8,8 @@ import { supabase } from "@/integrations/supabase/client";
 export async function checkUserPermission(permission: string): Promise<boolean> {
   try {
     // Use the user_has_permission database function
-    const { data, error } = await supabase.rpc('user_has_permission', {
-      required_permission: permission
+    const { data, error } = await supabase.functions.invoke('user-has-permission', {
+      body: { permission }
     });
     
     if (error) {
@@ -51,9 +51,10 @@ export async function getUserTypeName(): Promise<string | null> {
     }
     
     // We need to get the type name through a separate query
-    // since the typed client doesn't know about user_type_id yet
-    const { data: typeData, error: typeError } = await supabase
-      .rpc('get_user_type_name', { profile_id: data.id });
+    // Use functions.invoke instead of rpc for custom functions
+    const { data: typeData, error: typeError } = await supabase.functions.invoke('get-user-type-name', {
+      body: { profileId: data.id }
+    });
     
     if (typeError) {
       console.error('Error fetching user type:', typeError);
@@ -81,21 +82,20 @@ export async function getUserPermissions(): Promise<string[]> {
     const { data: isAdmin } = await supabase.rpc('user_is_admin');
     if (isAdmin) {
       // Return all possible permissions for admin
-      const { data } = await supabase
-        .rpc('get_all_permissions');
-      return data?.map((p: any) => p.permission_name) || [];
+      const { data } = await supabase.functions.invoke('get-all-permissions');
+      return data && Array.isArray(data) ? data.map((p: any) => p.permission_name) : [];
     }
     
     // Otherwise get the user's specific permissions
-    const { data, error } = await supabase
-      .rpc('get_user_permissions', { user_uuid: user.id });
+    const { data } = await supabase.functions.invoke('get-user-permissions', {
+      body: { userId: user.id }
+    });
     
-    if (error) {
-      console.error('Error fetching permissions:', error);
+    if (!data) {
       return [];
     }
     
-    return data?.map((p: any) => p.permission_name) || [];
+    return Array.isArray(data) ? data.map((p: any) => p.permission_name) : [];
   } catch (error) {
     console.error('Exception in getUserPermissions:', error);
     return [];
