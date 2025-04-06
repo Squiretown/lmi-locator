@@ -1,3 +1,4 @@
+
 import { useState, useEffect, createContext, useContext } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { User, Session } from '@supabase/supabase-js';
@@ -102,6 +103,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         user_type: metadata.user_type || 'client'
       };
       
+      // Updated to match Supabase API requirements
       const { data, error } = await supabase.auth.signUp({ 
         email, 
         password, 
