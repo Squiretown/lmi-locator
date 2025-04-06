@@ -94,19 +94,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setIsLoading(true);
     try {
       console.log('Attempting to sign up:', email, metadata);
+      
+      // Ensure metadata is properly structured
+      const formattedMetadata = {
+        ...metadata,
+        user_type: metadata.user_type || 'client'
+      };
+      
       const { data, error } = await supabase.auth.signUp({ 
         email, 
         password, 
         options: { 
-          data: metadata,
+          data: formattedMetadata,
+          emailRedirectTo: window.location.origin
         }
       });
       
       console.log('Sign up result:', error ? 'Error' : 'Success', data?.user?.email);
       
       if (!error && data?.user) {
-        // Don't set userType here, wait for auth state change
-        toast.success("Account created successfully! You can now sign in.");
+        toast.success("Account created successfully! Please check your email to confirm your account.");
       }
       
       setIsLoading(false);

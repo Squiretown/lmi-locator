@@ -29,7 +29,7 @@ const LoginPage: React.FC = () => {
       const { error } = await signIn(email, password);
       if (error) {
         console.error('Login error:', error);
-        toast.error(error.message);
+        toast.error(error.message || 'Failed to login');
       } else {
         toast.success('Logged in successfully');
         // Navigation will be handled by AuthWrapper in App.tsx
@@ -65,16 +65,24 @@ const LoginPage: React.FC = () => {
 
       if (error) {
         console.error('Signup error:', error);
-        toast.error(error.message || 'Failed to create account');
+        
+        // Check for specific error types
+        if (error.message?.includes("already exists")) {
+          toast.error('An account with this email already exists. Please log in instead.');
+        } else {
+          toast.error(error.message || 'Failed to create account');
+        }
       } else if (data?.user) {
         toast.success('Account created successfully! Please check your email to confirm your account.');
         
-        // Email confirmation is likely required
-        console.log('User created:', data.user);
-        console.log('Confirmation status:', data.user.confirmation_sent_at ? 'Confirmation sent' : 'No confirmation needed');
+        // Check if email confirmation is required
+        const requiresEmailConfirmation = !data.session;
         
-        if (!data.user.identities || data.user.identities.length === 0) {
-          toast.error('Account already exists with this email. Please log in instead.');
+        if (requiresEmailConfirmation) {
+          toast.info('Please check your email to confirm your account before logging in.');
+        } else {
+          // User is auto-logged in, navigate appropriately
+          // Navigation will be handled by AuthWrapper in App.tsx
         }
         
         // Clear signup form fields
