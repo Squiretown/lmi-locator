@@ -53,18 +53,35 @@ const LoginPage: React.FC = () => {
     }
 
     try {
-      const { error } = await signUp(email, password, {
+      console.log('Starting signup process for:', email);
+      
+      const { error, data } = await signUp(email, password, {
         first_name: firstName,
         last_name: lastName,
         user_type: userRole
       });
 
+      console.log('Signup response:', { error, data });
+
       if (error) {
         console.error('Signup error:', error);
-        toast.error(error.message);
-      } else {
-        toast.success('Sign up successful! Check your email to confirm your account.');
-        // Stay on login page for them to login
+        toast.error(error.message || 'Failed to create account');
+      } else if (data?.user) {
+        toast.success('Account created successfully! Please check your email to confirm your account.');
+        
+        // Email confirmation is likely required
+        console.log('User created:', data.user);
+        console.log('Confirmation status:', data.user.confirmation_sent_at ? 'Confirmation sent' : 'No confirmation needed');
+        
+        if (!data.user.identities || data.user.identities.length === 0) {
+          toast.error('Account already exists with this email. Please log in instead.');
+        }
+        
+        // Clear signup form fields
+        setEmail('');
+        setPassword('');
+        setFirstName('');
+        setLastName('');
       }
     } catch (err) {
       console.error('Exception during signup:', err);

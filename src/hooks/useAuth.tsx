@@ -3,6 +3,7 @@ import { useState, useEffect, createContext, useContext } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { User, Session } from '@supabase/supabase-js';
 import { getUserTypeName } from '@/lib/supabase/user';
+import { toast } from 'sonner';
 
 interface AuthContextType {
   user: User | null;
@@ -10,7 +11,7 @@ interface AuthContextType {
   userType: string | null;
   isLoading: boolean;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
-  signUp: (email: string, password: string, metadata?: any) => Promise<{ error: Error | null }>;
+  signUp: (email: string, password: string, metadata?: any) => Promise<{ error: Error | null, data: any }>;
   signOut: () => Promise<void>;
 }
 
@@ -103,12 +104,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       console.log('Sign up result:', error ? 'Error' : 'Success', data?.user?.email);
       
+      if (!error && data?.user) {
+        // Don't set userType here, wait for auth state change
+        toast.success("Account created successfully! You can now sign in.");
+      }
+      
       setIsLoading(false);
-      return { error };
+      return { error, data };
     } catch (err) {
       console.error('Exception during sign up:', err);
       setIsLoading(false);
-      return { error: err as Error };
+      return { error: err as Error, data: null };
     }
   };
 
