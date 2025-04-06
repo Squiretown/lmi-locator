@@ -1,4 +1,3 @@
-
 import { useState, useEffect, createContext, useContext } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { User, Session } from '@supabase/supabase-js';
@@ -11,8 +10,15 @@ interface AuthContextType {
   userType: string | null;
   isLoading: boolean;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
-  signUp: (email: string, password: string, metadata?: any) => Promise<{ error: Error | null, data: any }>;
+  signUp: (email: string, password: string, metadata?: UserMetadata) => Promise<{ error: Error | null, data: any }>;
   signOut: () => Promise<void>;
+}
+
+interface UserMetadata {
+  first_name?: string;
+  last_name?: string;
+  user_type?: string;
+  [key: string]: any;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -24,16 +30,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Set up auth state listener first
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, newSession) => {
         console.log('Auth state changed:', event, newSession?.user?.email);
         setSession(newSession);
         setUser(newSession?.user || null);
         
-        // If auth state changes, we need to get the userType again
         if (newSession?.user) {
-          // Use setTimeout to prevent potential deadlocks
           setTimeout(() => {
             getUserTypeName().then(type => {
               console.log('User type:', type);
@@ -46,7 +49,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     );
     
-    // Check for existing session
     supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
       console.log('Initial session check:', currentSession?.user?.email);
       setSession(currentSession);
@@ -90,12 +92,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const signUp = async (email: string, password: string, metadata = {}) => {
+  const signUp = async (email: string, password: string, metadata: UserMetadata = {}) => {
     setIsLoading(true);
     try {
       console.log('Attempting to sign up:', email, metadata);
       
-      // Ensure metadata is properly structured
       const formattedMetadata = {
         ...metadata,
         user_type: metadata.user_type || 'client'
