@@ -8,15 +8,42 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { AlertCircle } from 'lucide-react';
 
 const LoginPage: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [passwordError, setPasswordError] = useState<string | null>(null);
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [userRole, setUserRole] = useState('client');
   const { signIn, signUp, isLoading } = useAuth();
   const navigate = useNavigate();
+
+  const validatePassword = (pwd: string) => {
+    if (pwd.length < 8) {
+      return "Password must be at least 8 characters long";
+    }
+    if (!/[A-Z]/.test(pwd)) {
+      return "Password must include at least one uppercase letter";
+    }
+    if (!/[a-z]/.test(pwd)) {
+      return "Password must include at least one lowercase letter";
+    }
+    if (!/[0-9]/.test(pwd)) {
+      return "Password must include at least one number";
+    }
+    if (!/[^A-Za-z0-9]/.test(pwd)) {
+      return "Password must include at least one special character";
+    }
+    return null;
+  };
+
+  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newPassword = e.target.value;
+    setPassword(newPassword);
+    setPasswordError(newPassword ? validatePassword(newPassword) : null);
+  };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -52,6 +79,12 @@ const LoginPage: React.FC = () => {
       return;
     }
 
+    const passwordValidationError = validatePassword(password);
+    if (passwordValidationError) {
+      toast.error(passwordValidationError);
+      return;
+    }
+
     try {
       console.log('Starting signup process for:', email);
       
@@ -69,6 +102,8 @@ const LoginPage: React.FC = () => {
         // Check for specific error types
         if (error.message?.includes("already exists")) {
           toast.error('An account with this email already exists. Please log in instead.');
+        } else if (error.message?.includes("weak password")) {
+          toast.error('Please use a stronger password with a mix of uppercase, lowercase, numbers, and special characters.');
         } else {
           toast.error(error.message || 'Failed to create account');
         }
@@ -190,9 +225,18 @@ const LoginPage: React.FC = () => {
                     type="password"
                     placeholder="Password"
                     value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    onChange={handlePasswordChange}
                     required
                   />
+                  {passwordError && (
+                    <div className="flex items-center text-sm text-red-500 mt-1">
+                      <AlertCircle className="h-4 w-4 mr-1" />
+                      {passwordError}
+                    </div>
+                  )}
+                  <p className="text-xs text-gray-500 mt-1">
+                    Password must be at least 8 characters long and include uppercase, lowercase, numbers, and special characters.
+                  </p>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="user-role">I am a</Label>
