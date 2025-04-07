@@ -15,12 +15,19 @@ import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import MortgageProfessionalDashboard from '@/pages/dashboard/MortgageProfessional';
 import RealtorDashboard from '@/pages/dashboard/Realtor';
 import ClientDashboard from '@/pages/dashboard/Client';
+import LoadingSpinner from '@/components/LoadingSpinner';
 
 // Auth wrapper to manage redirection based on auth state
 const AuthWrapper = ({ children }: { children: React.ReactNode }) => {
-  const { session, userType, isLoading } = useAuth();
+  const { session, userType, isLoading, authInitialized } = useAuth();
   
-  if (isLoading) return <div className="flex h-screen items-center justify-center">Loading...</div>;
+  if (!authInitialized || isLoading) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <LoadingSpinner />
+      </div>
+    );
+  }
   
   // Not authenticated, render children (should be login page)
   if (!session) return <>{children}</>;

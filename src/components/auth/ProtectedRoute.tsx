@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
@@ -12,16 +13,17 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   children, 
   requiredUserType 
 }) => {
-  const { session, userType, isLoading } = useAuth();
+  const { session, userType, isLoading, authInitialized } = useAuth();
 
   console.log("ProtectedRoute:", { 
     isLoading, 
+    authInitialized,
     hasSession: !!session, 
     userType, 
     requiredUserType 
   });
 
-  if (isLoading) {
+  if (!authInitialized || isLoading) {
     return (
       <div className="flex h-screen items-center justify-center">
         <LoadingSpinner />

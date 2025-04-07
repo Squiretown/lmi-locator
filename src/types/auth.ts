@@ -13,6 +13,7 @@ export interface AuthContextType {
   session: Session | null;
   userType: string | null;
   isLoading: boolean;
+  authInitialized: boolean; // New property to indicate auth has initialized
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signUp: (email: string, password: string, metadata?: UserMetadata) => Promise<{ error: Error | null, data: any }>;
   signOut: () => Promise<void>;

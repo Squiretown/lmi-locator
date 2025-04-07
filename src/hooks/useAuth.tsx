@@ -18,72 +18,105 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [userType, setUserType] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [authInitialized, setAuthInitialized] = useState(false);
 
   useEffect(() => {
-    // Set up auth state listener FIRST (to avoid missing events)
+    // Track if component is mounted to avoid state updates after unmount
+    let isMounted = true;
+    
+    // Function to safely update state only if component is still mounted
+    const safeSetState = {
+      setUser: (u: User | null) => isMounted && setUser(u),
+      setSession: (s: Session | null) => isMounted && setSession(s),
+      setUserType: (t: string | null) => isMounted && setUserType(t),
+      setIsLoading: (l: boolean) => isMounted && setIsLoading(l),
+      setAuthInitialized: (i: boolean) => isMounted && setAuthInitialized(i)
+    };
+
+    // Function to fetch user type safely
+    const fetchUserType = async () => {
+      try {
+        const type = await getUserTypeName();
+        safeSetState.setUserType(type);
+      } catch (error) {
+        console.error('Error getting user type:', error);
+        safeSetState.setUserType('client'); // Default fallback
+      }
+    };
+
+    // Setup auth state listener first
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, newSession) => {
         console.log('Auth state changed:', event, newSession?.user?.email);
-        setSession(newSession);
-        setUser(newSession?.user || null);
+        
+        if (!isMounted) return;
+        
+        safeSetState.setSession(newSession);
+        safeSetState.setUser(newSession?.user || null);
         
         if (newSession?.user) {
-          // Use setTimeout(0) to avoid recursive calls to Supabase within the onAuthStateChange callback
-          setTimeout(async () => {
-            try {
-              const type = await getUserTypeName();
-              console.log('User type determined:', type);
-              setUserType(type);
-            } catch (error) {
-              console.error('Error getting user type:', error);
-              setUserType('client'); // Default fallback
-            }
+          // Use setTimeout(0) to avoid recursive calls
+          setTimeout(() => {
+            if (isMounted) fetchUserType();
           }, 0);
         } else {
-          setUserType(null);
+          safeSetState.setUserType(null);
         }
       }
     );
     
-    // THEN check for existing session
-    supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
-      console.log('Initial session check:', currentSession?.user?.email);
-      setSession(currentSession);
-      setUser(currentSession?.user || null);
-      
-      if (currentSession?.user) {
-        getUserTypeName().then(type => {
-          console.log('Initial user type:', type);
-          setUserType(type);
-          setIsLoading(false);
-        }).catch(err => {
-          console.error('Error getting initial user type:', err);
-          setUserType('client'); // Default fallback
-          setIsLoading(false);
-        });
-      } else {
-        setIsLoading(false);
+    // Then check for existing session
+    const initializeAuth = async () => {
+      try {
+        const { data: { session: currentSession }, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error('Error getting session:', error);
+          safeSetState.setIsLoading(false);
+          safeSetState.setAuthInitialized(true);
+          return;
+        }
+        
+        console.log('Initial session check:', currentSession?.user?.email);
+        safeSetState.setSession(currentSession);
+        safeSetState.setUser(currentSession?.user || null);
+        
+        if (currentSession?.user) {
+          await fetchUserType();
+        }
+      } catch (err) {
+        console.error('Exception during auth initialization:', err);
+      } finally {
+        safeSetState.setIsLoading(false);
+        safeSetState.setAuthInitialized(true);
       }
-    }).catch(error => {
-      console.error('Error getting initial session:', error);
-      setIsLoading(false);
-    });
+    };
+    
+    initializeAuth();
 
+    // Cleanup function
     return () => {
+      isMounted = false;
       subscription.unsubscribe();
     };
   }, []);
 
   const signIn = async (email: string, password: string) => {
     setIsLoading(true);
-    const result = await signInWithEmail(email, password);
-    
-    if (result.userType) {
-      setUserType(result.userType);
+    try {
+      const result = await signInWithEmail(email, password);
+      
+      if (result.userType) {
+        setUserType(result.userType);
+      }
+      
+      return { error: result.error };
+    } catch (error) {
+      console.error('Unexpected error during sign in:', error);
+      return { error: error as Error };
+    } finally {
+      setIsLoading(false);
     }
-    
-    setIsLoading(false);
-    return { error: result.error };
   };
 
   const signUp = async (email: string, password: string, metadata: UserMetadata = {}) => {
@@ -105,27 +138,38 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       }
       
-      setIsLoading(false);
       return result;
     } catch (error) {
       console.error('Error in AuthProvider signUp:', error);
-      setIsLoading(false);
       return { error: error as Error, data: null };
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const signOut = async () => {
     setIsLoading(true);
-    await signOutUser();
-    setUserType(null);
-    setIsLoading(false);
+    try {
+      await signOutUser();
+      setUserType(null);
+    } catch (error) {
+      console.error('Error during sign out:', error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const deleteAccount = async (currentPassword: string) => {
     setIsLoading(true);
-    const result = await deleteUserWithPassword(currentPassword);
-    setIsLoading(false);
-    return result;
+    try {
+      const result = await deleteUserWithPassword(currentPassword);
+      return result;
+    } catch (error) {
+      console.error('Error during account deletion:', error);
+      return { success: false, error: error as Error };
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -133,7 +177,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       user, 
       session, 
       userType,
-      isLoading, 
+      isLoading,
+      authInitialized, // New property to indicate auth has initialized 
       signIn, 
       signUp, 
       signOut,
