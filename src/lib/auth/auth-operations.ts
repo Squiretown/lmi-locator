@@ -87,8 +87,8 @@ export async function signOutUser() {
 
 export async function signOutAllUsers() {
   try {
-    // This requires admin/service_role privileges
-    const { error } = await supabase.auth.admin.signOut('global');
+    // Fix: Pass a string instead of an object to match the expected type
+    const { error } = await supabase.auth.admin.signOut('*');
     
     if (error) {
       console.error('Error signing out all users:', error);
