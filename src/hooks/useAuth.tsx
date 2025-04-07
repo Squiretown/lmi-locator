@@ -55,7 +55,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         safeSetState.setUser(newSession?.user || null);
         
         if (newSession?.user) {
-          // Use setTimeout(0) to avoid recursive calls
+          // Use setTimeout(0) to avoid recursive calls with Supabase client
           setTimeout(() => {
             if (isMounted) fetchUserType();
           }, 0);
@@ -178,7 +178,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       session, 
       userType,
       isLoading,
-      authInitialized, // New property to indicate auth has initialized 
+      authInitialized,
       signIn, 
       signUp, 
       signOut,

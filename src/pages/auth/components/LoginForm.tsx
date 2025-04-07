@@ -124,7 +124,7 @@ const LoginForm: React.FC = () => {
           />
         </CardContent>
         
-        <CardFooter>
+        <CardFooter className="flex flex-col space-y-2">
           <Button className="w-full" type="submit" disabled={isLoading}>
             {isLoading ? 'Signing in...' : 'Sign In'}
           </Button>
