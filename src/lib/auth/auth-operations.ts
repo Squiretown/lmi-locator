@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from 'sonner';
 import { getUserTypeName } from '@/lib/supabase/user';
@@ -81,6 +82,26 @@ export async function signOutUser() {
     console.error('Error signing out:', error);
     toast.error('Error signing out');
     throw error;
+  }
+}
+
+export async function signOutAllUsers() {
+  try {
+    // This requires admin/service_role privileges
+    const { error } = await supabase.auth.admin.signOutAll();
+    
+    if (error) {
+      console.error('Error signing out all users:', error);
+      toast.error(`Failed to sign out all users: ${error.message}`);
+      return { success: false, error };
+    }
+    
+    toast.success('All users have been signed out successfully');
+    return { success: true, error: null };
+  } catch (error) {
+    console.error('Exception during sign out all users:', error);
+    toast.error('An unexpected error occurred while signing out all users');
+    return { success: false, error: error as Error };
   }
 }
 

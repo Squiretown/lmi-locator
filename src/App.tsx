@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import './App.css';
@@ -15,6 +16,7 @@ import MortgageProfessionalDashboard from '@/pages/dashboard/MortgageProfessiona
 import RealtorDashboard from '@/pages/dashboard/Realtor';
 import ClientDashboard from '@/pages/dashboard/Client';
 import LoadingSpinner from '@/components/LoadingSpinner';
+import AdminTools from '@/pages/auth/AdminTools';
 
 // Auth wrapper to manage redirection based on auth state
 const AuthWrapper = ({ children }: { children: React.ReactNode }) => {
@@ -70,6 +72,7 @@ function AppContent() {
             }>
               <Route index element={<AdminDashboard />} />
               <Route path="marketing" element={<MarketingDashboard />} />
+              <Route path="tools" element={<AdminTools />} />
             </Route>
             
             {/* Mortgage Professional routes */}
