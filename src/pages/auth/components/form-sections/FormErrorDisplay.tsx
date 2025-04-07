@@ -18,6 +18,9 @@ const FormErrorDisplay: React.FC<FormErrorDisplayProps> = ({
   const formatErrorMessage = (message: string): string => {
     // Handle common Supabase error messages
     if (message.includes('permission denied for')) {
+      if (message.includes('notification_preferences')) {
+        return 'There was an issue with account creation. Our team has been notified. Please try again later or contact support.';
+      }
       return 'Database permission error. This is likely due to Row-Level Security settings. Please contact support.';
     }
     
@@ -31,6 +34,11 @@ const FormErrorDisplay: React.FC<FormErrorDisplayProps> = ({
     
     if (message.includes('Invalid login credentials')) {
       return 'Invalid email or password. Please try again.';
+    }
+    
+    // For transaction aborted errors
+    if (message.includes('current transaction is aborted')) {
+      return 'An error occurred during account creation. Please try again later.';
     }
     
     return message;
