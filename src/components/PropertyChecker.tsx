@@ -5,8 +5,12 @@ import { usePropertyWorkflow } from '@/hooks/usePropertyWorkflow';
 import PropertyCheckerContent from './PropertyCheckerContent';
 
 const PropertyChecker: React.FC = () => {
-  // Use our custom hooks to handle state and logic
-  const { lmiStatus, isLoading, submitPropertySearch } = usePropertySearch();
+  // Initialize hooks outside of any conditional logic
+  const searchHook = usePropertySearch();
+  const workflowHook = usePropertyWorkflow();
+  
+  // Destructure the values from the hooks
+  const { lmiStatus, isLoading, submitPropertySearch } = searchHook;
   const { 
     displayMode, 
     matchingPrograms, 
@@ -16,7 +20,7 @@ const PropertyChecker: React.FC = () => {
     resetProcess,
     showResults,
     showScreener
-  } = usePropertyWorkflow();
+  } = workflowHook;
 
   // Handle form submission
   const onSubmit = async (values: any) => {

@@ -1,10 +1,10 @@
 
 import React from 'react';
-import { motion } from 'framer-motion';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/components/ui/use-toast';
 import EligibilityForm from './eligibility/EligibilityForm';
 import { useProgramEligibilityCheck } from './eligibility/useProgramEligibilityCheck';
+// Remove framer-motion import
 
 interface EligibilityScreenerProps {
   propertyId?: string;
@@ -38,13 +38,9 @@ const EligibilityScreener: React.FC<EligibilityScreenerProps> = ({
     }
   };
 
+  // Remove motion.div and use regular div instead
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
-      className="w-full max-w-3xl mx-auto mt-8"
-    >
+    <div className="w-full max-w-3xl mx-auto mt-8 animate-in fade-in slide-in-from-bottom-5 duration-300">
       <Card>
         <CardHeader>
           <CardTitle>Down Payment Assistance Eligibility</CardTitle>
@@ -56,7 +52,7 @@ const EligibilityScreener: React.FC<EligibilityScreenerProps> = ({
           <EligibilityForm onSubmit={handleSubmit} />
         </CardContent>
       </Card>
-    </motion.div>
+    </div>
   );
 };
 

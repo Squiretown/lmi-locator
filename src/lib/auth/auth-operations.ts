@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from 'sonner';
 import { getUserTypeName } from '@/lib/supabase/user';
@@ -88,7 +87,7 @@ export async function signOutUser() {
 export async function signOutAllUsers() {
   try {
     // This requires admin/service_role privileges
-    const { error } = await supabase.auth.admin.signOutAll();
+    const { error } = await supabase.auth.admin.signOut({ scope: 'global' });
     
     if (error) {
       console.error('Error signing out all users:', error);

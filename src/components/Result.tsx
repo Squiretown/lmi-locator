@@ -1,6 +1,4 @@
-
 import React from 'react';
-import { motion } from 'framer-motion';
 import { CheckCircle2Icon, XCircleIcon, MapPinIcon, DollarSignIcon, PercentIcon } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
@@ -30,11 +28,8 @@ const ResultCard: React.FC<ResultProps> = ({ data }) => {
   const percentageOfAmi = data.percentage_of_ami ?? 0;
   
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
-      className="w-full max-w-3xl mx-auto"
+    <div
+      className="w-full max-w-3xl mx-auto animate-in fade-in slide-in-from-bottom-5 duration-300"
     >
       <Card className={`border-2 overflow-hidden ${isEligible ? 'border-eligible' : 'border-ineligible'}`}>
         <div className={`${isEligible ? 'bg-eligible/10' : 'bg-ineligible/10'} p-4 relative overflow-hidden`}>
@@ -102,7 +97,7 @@ const ResultCard: React.FC<ResultProps> = ({ data }) => {
           </div>
         </div>
       </Card>
-    </motion.div>
+    </div>
   );
 };
 

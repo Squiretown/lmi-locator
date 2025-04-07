@@ -15,7 +15,7 @@ import {
   ListChecks,
   UserPlus,
   Mail,
-  ToolIcon
+  Tool
 } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
@@ -41,7 +41,6 @@ const AdminLayout: React.FC = () => {
         return;
       }
 
-      // Get unread notification count using the RPC function
       const { data: notificationCount } = await supabase.rpc(
         'get_notification_counts',
         { user_uuid: session.user.id }
@@ -50,11 +49,9 @@ const AdminLayout: React.FC = () => {
       setUnreadNotifications(notificationCount?.[0]?.unread_count || 0);
       
       try {
-        // Get user type name using our utility function
         const userTypeName = await getUserTypeName();
         setUserType(userTypeName || 'standard');
         
-        // Get user permissions using our utility function
         const userPermissions = await getUserPermissions();
         setPermissions(userPermissions);
       } catch (error) {
@@ -65,7 +62,6 @@ const AdminLayout: React.FC = () => {
     fetchUserData();
   }, [navigate]);
 
-  // Helper function to check if user has a specific permission
   const hasPermission = (permissionName: string) => {
     return permissions.includes(permissionName) || userType === 'admin';
   };
@@ -127,7 +123,7 @@ const AdminLayout: React.FC = () => {
                     tooltip="Admin Tools"
                     onClick={() => navigate('/admin/tools')}
                   >
-                    <ToolIcon className="mr-2" />
+                    <Tool className="mr-2" />
                     <span>Admin Tools</span>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
