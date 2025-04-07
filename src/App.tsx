@@ -10,7 +10,7 @@ import ApiTest from '@/pages/ApiTest';
 import NotFound from '@/pages/NotFound';
 import { AdminLayout, AdminDashboard, MarketingDashboard } from '@/components/admin';
 import LoginPage from '@/pages/auth/LoginPage';
-import { useAuth } from '@/hooks/useAuth';
+import { AuthProvider, useAuth } from '@/hooks/useAuth';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import MortgageProfessionalDashboard from '@/pages/dashboard/MortgageProfessional';
 import RealtorDashboard from '@/pages/dashboard/Realtor';
@@ -47,7 +47,7 @@ const AuthWrapper = ({ children }: { children: React.ReactNode }) => {
   }
 };
 
-function App() {
+function AppContent() {
   return (
     <Router>
       <div className="flex flex-col min-h-screen">
@@ -104,6 +104,14 @@ function App() {
         <Footer />
       </div>
     </Router>
+  );
+}
+
+function App() {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
   );
 }
 

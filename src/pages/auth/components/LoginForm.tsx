@@ -44,8 +44,13 @@ const LoginForm: React.FC = () => {
       if (error) {
         console.error('Login error:', error);
         
-        // Use the FormErrorDisplay component for consistent error handling
-        setAuthError(error.message || 'Failed to login. Please try again.');
+        if (error.message?.includes("Invalid login credentials")) {
+          setAuthError('Invalid email or password. Please try again.');
+        } else if (error.message?.includes("Email not confirmed")) {
+          setAuthError('Please confirm your email address before logging in.');
+        } else {
+          setAuthError(error.message || 'Failed to login. Please try again.');
+        }
       }
       // Navigation will be handled by AuthWrapper in App.tsx if successful
     } catch (err) {
