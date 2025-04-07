@@ -1205,15 +1205,7 @@ export type Database = {
           website?: string | null
           zip_code?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "user_profiles_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       users: {
         Row: {
@@ -1301,6 +1293,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      create_default_notification_preferences: {
+        Args: { user_uuid: string }
+        Returns: undefined
+      }
       get_marketing_summary: {
         Args: { user_uuid: string }
         Returns: {
