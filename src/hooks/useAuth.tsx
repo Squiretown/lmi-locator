@@ -84,6 +84,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       if (error) {
         console.error('Sign in error:', error.message);
+        
+        // Provide more helpful error messages for common issues
+        if (error.message.includes('Email not confirmed')) {
+          toast.error('Please verify your email address before signing in.');
+        } else if (error.message.includes('Invalid login credentials')) {
+          toast.error('Invalid email or password. Please try again.');
+        } else {
+          toast.error(`Login failed: ${error.message}`);
+        }
       } else if (data?.user) {
         const userType = await getUserTypeName();
         setUserType(userType);
@@ -95,6 +104,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch (err) {
       console.error('Exception during sign in:', err);
       setIsLoading(false);
+      toast.error('An unexpected error occurred during login');
       return { error: err as Error };
     }
   };
@@ -123,8 +133,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       if (error) {
         console.error('Sign up error:', error.message);
+        
+        // Enhanced error handling with more specific messages
+        if (error.message.includes('already registered')) {
+          toast.error('This email is already registered. Please sign in instead.');
+        } else if (error.message.includes('permission denied')) {
+          console.error('Permission denied error details:', error);
+          toast.error('Account creation failed due to permission issues. Please contact support.');
+        } else if (error.message.includes('weak password')) {
+          toast.error('Please use a stronger password that meets all requirements.');
+        } else {
+          toast.error(`Sign up failed: ${error.message}`);
+        }
       } else if (data?.user) {
-        toast.success("Account created successfully! Please check your email to confirm your account.");
+        toast.success('Account created successfully! Please check your email to confirm your account.');
+        
+        // Check if email confirmation is required
+        const requiresEmailConfirmation = !data.session;
+        
+        if (requiresEmailConfirmation) {
+          toast.info('Please check your email to confirm your account before logging in.');
+        }
       }
       
       setIsLoading(false);
@@ -132,6 +161,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch (err) {
       console.error('Exception during sign up:', err);
       setIsLoading(false);
+      toast.error('An unexpected error occurred during sign up');
       return { error: err as Error, data: null };
     }
   };

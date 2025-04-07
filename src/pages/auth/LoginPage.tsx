@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
@@ -115,27 +114,25 @@ const LoginPage: React.FC = () => {
       if (error) {
         console.error('Signup error:', error);
         
-        // Check for specific error types
         if (error.message?.includes("already registered")) {
           setAuthError('An account with this email already exists. Please log in instead.');
         } else if (error.message?.includes("weak password")) {
           setPasswordError('Please use a stronger password with a mix of uppercase, lowercase, numbers, and special characters.');
-        } else if (error.message?.includes("permission denied for table")) {
-          setAuthError('There is a database permission issue. Please contact support.');
+        } else if (error.message?.includes("permission denied")) {
+          console.error('Permission denied details:', error);
+          setAuthError('There was a database permission issue. Our team has been notified. Please try again later.');
         } else {
           setAuthError(error.message || 'Failed to create account');
         }
       } else if (data?.user) {
         toast.success('Account created successfully! Please check your email to confirm your account.');
         
-        // Check if email confirmation is required
         const requiresEmailConfirmation = !data.session;
         
         if (requiresEmailConfirmation) {
           toast.info('Please check your email to confirm your account before logging in.');
         }
         
-        // Clear signup form fields
         setEmail('');
         setPassword('');
         setFirstName('');
