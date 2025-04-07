@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { CheckCircle2Icon, XCircleIcon, MapPinIcon, DollarSignIcon, PercentIcon } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';

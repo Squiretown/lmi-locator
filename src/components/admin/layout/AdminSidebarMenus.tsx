@@ -21,7 +21,8 @@ import {
   Shield, 
   ListChecks,
   UserPlus,
-  Mail
+  Mail,
+  Wrench // Replacing Tool with Wrench
 } from "lucide-react";
 
 export const AdminSidebarMainMenu: React.FC = () => {
@@ -51,6 +52,19 @@ export const AdminSidebarMainMenu: React.FC = () => {
           >
             <Mail className="mr-2" />
             <span>Marketing</span>
+          </SidebarMenuButton>
+        </SidebarMenuItem>
+      )}
+      
+      {hasPermission('manage_system') && (
+        <SidebarMenuItem>
+          <SidebarMenuButton 
+            isActive={location.pathname === '/admin/tools'} 
+            tooltip="Admin Tools"
+            onClick={() => navigate('/admin/tools')}
+          >
+            <Wrench className="mr-2" />
+            <span>Admin Tools</span>
           </SidebarMenuButton>
         </SidebarMenuItem>
       )}
