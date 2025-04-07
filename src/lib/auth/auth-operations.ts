@@ -47,7 +47,7 @@ export async function signUpWithEmail(email: string, password: string, metadata:
     };
     
     // Log the actual data being sent to Supabase
-    console.log('Signup data:', { email, metadata: formattedMetadata, redirectTo: window.location.origin });
+    console.log('Signup data:', { email, metadata: formattedMetadata });
     
     const { data, error } = await supabase.auth.signUp({ 
       email, 

@@ -2,7 +2,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
-import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
@@ -20,7 +19,6 @@ const LoginPage: React.FC = () => {
   const [userRole, setUserRole] = useState('client');
   const [authError, setAuthError] = useState<string | null>(null);
   const { signIn, signUp, isLoading } = useAuth();
-  const navigate = useNavigate();
 
   const validatePassword = (pwd: string) => {
     if (pwd.length < 8) {
@@ -62,7 +60,10 @@ const LoginPage: React.FC = () => {
     }
 
     try {
+      console.log('Attempting login with:', email);
       const { error } = await signIn(email, password);
+      console.log('Login result:', error ? 'Error' : 'Success');
+      
       if (error) {
         console.error('Login error:', error);
         
