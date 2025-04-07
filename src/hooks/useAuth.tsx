@@ -1,9 +1,9 @@
-
 import { useState, useEffect, createContext, useContext } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { User, Session } from '@supabase/supabase-js';
 import { getUserTypeName } from '@/lib/supabase/user';
 import { toast } from 'sonner';
+import { deleteUserAccount } from '@/lib/supabase/user-management';
 
 interface AuthContextType {
   user: User | null;
@@ -13,6 +13,7 @@ interface AuthContextType {
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signUp: (email: string, password: string, metadata?: UserMetadata) => Promise<{ error: Error | null, data: any }>;
   signOut: () => Promise<void>;
+  deleteAccount: (currentPassword: string) => Promise<{ success: boolean; error: Error | null }>;
 }
 
 interface UserMetadata {
@@ -31,7 +32,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, newSession) => {
         console.log('Auth state changed:', event, newSession?.user?.email);
@@ -39,7 +39,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(newSession?.user || null);
         
         if (newSession?.user) {
-          // Defer fetching user type with setTimeout to avoid potential deadlocks
           setTimeout(() => {
             getUserTypeName().then(type => {
               console.log('User type:', type);
@@ -52,7 +51,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     );
     
-    // THEN check for existing session
     supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
       console.log('Initial session check:', currentSession?.user?.email);
       setSession(currentSession);
@@ -85,7 +83,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (error) {
         console.error('Sign in error:', error.message);
         
-        // Provide more helpful error messages for common issues
         if (error.message.includes('Email not confirmed')) {
           toast.error('Please verify your email address before signing in.');
         } else if (error.message.includes('Invalid login credentials')) {
@@ -119,7 +116,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         user_type: metadata.user_type || 'client'
       };
       
-      // Updated to match Supabase API requirements
       const { data, error } = await supabase.auth.signUp({ 
         email, 
         password, 
@@ -134,7 +130,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (error) {
         console.error('Sign up error:', error.message);
         
-        // Enhanced error handling with more specific messages
         if (error.message.includes('already registered')) {
           toast.error('This email is already registered. Please sign in instead.');
         } else if (error.message.includes('permission denied')) {
@@ -148,7 +143,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } else if (data?.user) {
         toast.success('Account created successfully! Please check your email to confirm your account.');
         
-        // Check if email confirmation is required
         const requiresEmailConfirmation = !data.session;
         
         if (requiresEmailConfirmation) {
@@ -180,6 +174,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const deleteAccount = async (currentPassword: string) => {
+    setIsLoading(true);
+    try {
+      const result = await deleteUserAccount(currentPassword);
+      
+      if (result.success) {
+        toast.success('Your account has been deleted successfully');
+      } else if (result.error) {
+        toast.error(`Failed to delete account: ${result.error.message}`);
+      }
+      
+      setIsLoading(false);
+      return result;
+    } catch (err) {
+      console.error('Exception during account deletion:', err);
+      setIsLoading(false);
+      toast.error('An unexpected error occurred while deleting your account');
+      return { success: false, error: err as Error };
+    }
+  };
+
   return (
     <AuthContext.Provider value={{ 
       user, 
@@ -188,7 +203,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       isLoading, 
       signIn, 
       signUp, 
-      signOut 
+      signOut,
+      deleteAccount 
     }}>
       {children}
     </AuthContext.Provider>
