@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from 'sonner';
 import { getUserTypeName } from '@/lib/supabase/user';
@@ -14,21 +13,14 @@ export async function signInWithEmail(email: string, password: string) {
     
     if (error) {
       console.error('Sign in error:', error.message);
-      
-      if (error.message.includes('Email not confirmed')) {
-        toast.error('Please verify your email address before signing in.');
-      } else if (error.message.includes('Invalid login credentials')) {
-        toast.error('Invalid email or password. Please try again.');
-      } else {
-        toast.error(`Login failed: ${error.message}`);
-      }
+      return { userType: null, error };
     } else if (data?.user) {
       const userType = await getUserTypeName();
       toast.success('Signed in successfully');
       return { userType, error: null };
     }
     
-    return { userType: null, error };
+    return { userType: null, error: new Error('Unknown error occurred during sign in') };
   } catch (err) {
     console.error('Exception during sign in:', err);
     toast.error('An unexpected error occurred during login');
@@ -62,17 +54,6 @@ export async function signUpWithEmail(email: string, password: string, metadata:
     
     if (error) {
       console.error('Sign up error:', error.message);
-      
-      if (error.message.includes('already registered')) {
-        toast.error('This email is already registered. Please sign in instead.');
-      } else if (error.message.includes('permission denied')) {
-        console.error('Permission denied error details:', error);
-        toast.error('Account creation failed due to permission issues. Please contact support.');
-      } else if (error.message.includes('weak password')) {
-        toast.error('Please use a stronger password that meets all requirements.');
-      } else {
-        toast.error(`Sign up failed: ${error.message}`);
-      }
       return { error, data: null };
     } else if (data?.user) {
       toast.success('Account created successfully!');

@@ -10,6 +10,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import FormErrorDisplay from './form-sections/FormErrorDisplay';
 
 // Define the form schema
 const formSchema = z.object({
@@ -43,13 +44,8 @@ const LoginForm: React.FC = () => {
       if (error) {
         console.error('Login error:', error);
         
-        if (error.message?.includes("Invalid login credentials")) {
-          setAuthError('Invalid email or password. Please try again.');
-        } else if (error.message?.includes("Email not confirmed")) {
-          setAuthError('Please confirm your email address before logging in.');
-        } else {
-          setAuthError(error.message || 'Failed to login. Please try again.');
-        }
+        // Use the FormErrorDisplay component for consistent error handling
+        setAuthError(error.message || 'Failed to login. Please try again.');
       }
       // Navigation will be handled by AuthWrapper in App.tsx if successful
     } catch (err) {
@@ -66,13 +62,7 @@ const LoginForm: React.FC = () => {
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleLogin)}>
         <CardContent className="space-y-4 pt-4">
-          {authError && (
-            <Alert variant="destructive">
-              <AlertCircle className="h-4 w-4" />
-              <AlertTitle>Error</AlertTitle>
-              <AlertDescription>{authError}</AlertDescription>
-            </Alert>
-          )}
+          <FormErrorDisplay error={authError} />
           
           <FormField
             control={form.control}
