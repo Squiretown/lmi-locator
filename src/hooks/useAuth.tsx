@@ -31,6 +31,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, newSession) => {
         console.log('Auth state changed:', event, newSession?.user?.email);
@@ -38,6 +39,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(newSession?.user || null);
         
         if (newSession?.user) {
+          // Defer fetching user type with setTimeout to avoid potential deadlocks
           setTimeout(() => {
             getUserTypeName().then(type => {
               console.log('User type:', type);
@@ -50,6 +52,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     );
     
+    // THEN check for existing session
     supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
       console.log('Initial session check:', currentSession?.user?.email);
       setSession(currentSession);
@@ -79,9 +82,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       console.log('Sign in result:', error ? 'Error' : 'Success', data?.user?.email);
       
-      if (!error && data?.user) {
+      if (error) {
+        console.error('Sign in error:', error.message);
+      } else if (data?.user) {
         const userType = await getUserTypeName();
         setUserType(userType);
+        toast.success('Signed in successfully');
       }
       
       setIsLoading(false);
@@ -115,7 +121,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       console.log('Sign up result:', error ? 'Error' : 'Success', data?.user?.email);
       
-      if (!error && data?.user) {
+      if (error) {
+        console.error('Sign up error:', error.message);
+      } else if (data?.user) {
         toast.success("Account created successfully! Please check your email to confirm your account.");
       }
       
@@ -133,8 +141,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       await supabase.auth.signOut();
       setUserType(null);
+      toast.success('Signed out successfully');
     } catch (error) {
       console.error('Error signing out:', error);
+      toast.error('Error signing out');
     } finally {
       setIsLoading(false);
     }

@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AlertCircle } from 'lucide-react';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 
 const LoginPage: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -17,6 +18,7 @@ const LoginPage: React.FC = () => {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [userRole, setUserRole] = useState('client');
+  const [authError, setAuthError] = useState<string | null>(null);
   const { signIn, signUp, isLoading } = useAuth();
   const navigate = useNavigate();
 
@@ -45,10 +47,17 @@ const LoginPage: React.FC = () => {
     setPasswordError(newPassword ? validatePassword(newPassword) : null);
   };
 
+  const clearErrors = () => {
+    setAuthError(null);
+    setPasswordError(null);
+  };
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    clearErrors();
+    
     if (!email || !password) {
-      toast.error('Please enter both email and password');
+      setAuthError('Please enter both email and password');
       return;
     }
 
@@ -56,32 +65,39 @@ const LoginPage: React.FC = () => {
       const { error } = await signIn(email, password);
       if (error) {
         console.error('Login error:', error);
-        toast.error(error.message || 'Failed to login');
-      } else {
-        toast.success('Logged in successfully');
-        // Navigation will be handled by AuthWrapper in App.tsx
+        
+        if (error.message?.includes("Invalid login credentials")) {
+          setAuthError('Invalid email or password. Please try again.');
+        } else if (error.message?.includes("Email not confirmed")) {
+          setAuthError('Please confirm your email address before logging in.');
+        } else {
+          setAuthError(error.message || 'Failed to login. Please try again.');
+        }
       }
+      // Navigation will be handled by AuthWrapper in App.tsx if successful
     } catch (err) {
       console.error('Exception during login:', err);
-      toast.error('An unexpected error occurred. Please try again.');
+      setAuthError('An unexpected error occurred. Please try again.');
     }
   };
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
+    clearErrors();
+    
     if (!email || !password) {
-      toast.error('Please enter both email and password');
+      setAuthError('Please enter both email and password');
       return;
     }
 
     if (!firstName || !lastName) {
-      toast.error('Please enter your first and last name');
+      setAuthError('Please enter your first and last name');
       return;
     }
 
     const passwordValidationError = validatePassword(password);
     if (passwordValidationError) {
-      toast.error(passwordValidationError);
+      setPasswordError(passwordValidationError);
       return;
     }
 
@@ -100,12 +116,14 @@ const LoginPage: React.FC = () => {
         console.error('Signup error:', error);
         
         // Check for specific error types
-        if (error.message?.includes("already exists")) {
-          toast.error('An account with this email already exists. Please log in instead.');
+        if (error.message?.includes("already registered")) {
+          setAuthError('An account with this email already exists. Please log in instead.');
         } else if (error.message?.includes("weak password")) {
-          toast.error('Please use a stronger password with a mix of uppercase, lowercase, numbers, and special characters.');
+          setPasswordError('Please use a stronger password with a mix of uppercase, lowercase, numbers, and special characters.');
+        } else if (error.message?.includes("permission denied for table")) {
+          setAuthError('There is a database permission issue. Please contact support.');
         } else {
-          toast.error(error.message || 'Failed to create account');
+          setAuthError(error.message || 'Failed to create account');
         }
       } else if (data?.user) {
         toast.success('Account created successfully! Please check your email to confirm your account.');
@@ -115,9 +133,6 @@ const LoginPage: React.FC = () => {
         
         if (requiresEmailConfirmation) {
           toast.info('Please check your email to confirm your account before logging in.');
-        } else {
-          // User is auto-logged in, navigate appropriately
-          // Navigation will be handled by AuthWrapper in App.tsx
         }
         
         // Clear signup form fields
@@ -128,7 +143,7 @@ const LoginPage: React.FC = () => {
       }
     } catch (err) {
       console.error('Exception during signup:', err);
-      toast.error('An unexpected error occurred. Please try again.');
+      setAuthError('An unexpected error occurred. Please try again.');
     }
   };
 
@@ -151,6 +166,13 @@ const LoginPage: React.FC = () => {
           <TabsContent value="login">
             <form onSubmit={handleLogin}>
               <CardContent className="space-y-4 pt-4">
+                {authError && (
+                  <Alert variant="destructive">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertTitle>Error</AlertTitle>
+                    <AlertDescription>{authError}</AlertDescription>
+                  </Alert>
+                )}
                 <div className="space-y-2">
                   <Label htmlFor="email">Email</Label>
                   <Input
@@ -185,6 +207,13 @@ const LoginPage: React.FC = () => {
           <TabsContent value="signup">
             <form onSubmit={handleSignup}>
               <CardContent className="space-y-4 pt-4">
+                {authError && (
+                  <Alert variant="destructive">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertTitle>Error</AlertTitle>
+                    <AlertDescription>{authError}</AlertDescription>
+                  </Alert>
+                )}
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="firstName">First Name</Label>
