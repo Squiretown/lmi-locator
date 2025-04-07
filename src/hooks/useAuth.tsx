@@ -20,18 +20,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    // Set up auth state listener FIRST (to avoid missing events)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, newSession) => {
+      async (event, newSession) => {
         console.log('Auth state changed:', event, newSession?.user?.email);
         setSession(newSession);
         setUser(newSession?.user || null);
         
         if (newSession?.user) {
-          setTimeout(() => {
-            getUserTypeName().then(type => {
-              console.log('User type:', type);
+          // Use setTimeout(0) to avoid recursive calls to Supabase within the onAuthStateChange callback
+          setTimeout(async () => {
+            try {
+              const type = await getUserTypeName();
+              console.log('User type determined:', type);
               setUserType(type);
-            });
+            } catch (error) {
+              console.error('Error getting user type:', error);
+              setUserType('client'); // Default fallback
+            }
           }, 0);
         } else {
           setUserType(null);
@@ -39,6 +45,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     );
     
+    // THEN check for existing session
     supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
       console.log('Initial session check:', currentSession?.user?.email);
       setSession(currentSession);
@@ -49,10 +56,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           console.log('Initial user type:', type);
           setUserType(type);
           setIsLoading(false);
+        }).catch(err => {
+          console.error('Error getting initial user type:', err);
+          setUserType('client'); // Default fallback
+          setIsLoading(false);
         });
       } else {
         setIsLoading(false);
       }
+    }).catch(error => {
+      console.error('Error getting initial session:', error);
+      setIsLoading(false);
     });
 
     return () => {
@@ -74,9 +88,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signUp = async (email: string, password: string, metadata: UserMetadata = {}) => {
     setIsLoading(true);
-    const result = await signUpWithEmail(email, password, metadata);
-    setIsLoading(false);
-    return result;
+    console.log('AuthProvider signUp called with metadata:', metadata);
+    
+    try {
+      const result = await signUpWithEmail(email, password, metadata);
+      console.log('AuthProvider signUp result:', result);
+      
+      // If signup was successful and we got back a session (no email confirmation required)
+      if (result.data?.session) {
+        setSession(result.data.session);
+        setUser(result.data.user || null);
+        
+        // Set user type from metadata
+        if (metadata.user_type) {
+          setUserType(metadata.user_type);
+        }
+      }
+      
+      setIsLoading(false);
+      return result;
+    } catch (error) {
+      console.error('Error in AuthProvider signUp:', error);
+      setIsLoading(false);
+      return { error: error as Error, data: null };
+    }
   };
 
   const signOut = async () => {

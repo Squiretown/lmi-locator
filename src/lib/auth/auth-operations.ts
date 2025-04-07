@@ -40,21 +40,25 @@ export async function signUpWithEmail(email: string, password: string, metadata:
   try {
     console.log('Attempting to sign up:', email, metadata);
     
+    // Ensure user_type is included in metadata
     const formattedMetadata = {
       ...metadata,
       user_type: metadata.user_type || 'client'
     };
+    
+    // Log the actual data being sent to Supabase
+    console.log('Signup data:', { email, metadata: formattedMetadata, redirectTo: window.location.origin });
     
     const { data, error } = await supabase.auth.signUp({ 
       email, 
       password, 
       options: { 
         data: formattedMetadata,
-        emailRedirectTo: window.location.origin
+        emailRedirectTo: `${window.location.origin}/login`
       }
     });
     
-    console.log('Sign up result:', error ? 'Error' : 'Success', data?.user?.email);
+    console.log('Sign up result:', error ? 'Error' : 'Success', data);
     
     if (error) {
       console.error('Sign up error:', error.message);
@@ -69,8 +73,9 @@ export async function signUpWithEmail(email: string, password: string, metadata:
       } else {
         toast.error(`Sign up failed: ${error.message}`);
       }
+      return { error, data: null };
     } else if (data?.user) {
-      toast.success('Account created successfully! Please check your email to confirm your account.');
+      toast.success('Account created successfully!');
       
       const requiresEmailConfirmation = !data.session;
       

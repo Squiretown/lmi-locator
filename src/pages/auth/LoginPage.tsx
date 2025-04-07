@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
@@ -103,11 +104,15 @@ const LoginPage: React.FC = () => {
     try {
       console.log('Starting signup process for:', email);
       
-      const { error, data } = await signUp(email, password, {
+      const metadata = {
         first_name: firstName,
         last_name: lastName,
         user_type: userRole
-      });
+      };
+      
+      console.log('Sending metadata:', metadata);
+      
+      const { error, data } = await signUp(email, password, metadata);
 
       console.log('Signup response:', { error, data });
 
@@ -125,14 +130,19 @@ const LoginPage: React.FC = () => {
           setAuthError(error.message || 'Failed to create account');
         }
       } else if (data?.user) {
-        toast.success('Account created successfully! Please check your email to confirm your account.');
+        toast.success('Account created successfully!');
         
+        // Check if email confirmation is required
         const requiresEmailConfirmation = !data.session;
         
         if (requiresEmailConfirmation) {
           toast.info('Please check your email to confirm your account before logging in.');
+        } else {
+          // If no email confirmation required, user should be logged in already
+          // The AuthWrapper in App.tsx will handle the redirection
         }
         
+        // Clear form fields after successful signup
         setEmail('');
         setPassword('');
         setFirstName('');
