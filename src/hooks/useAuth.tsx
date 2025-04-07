@@ -1,27 +1,15 @@
+
 import { useState, useEffect, createContext, useContext } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { User, Session } from '@supabase/supabase-js';
 import { getUserTypeName } from '@/lib/supabase/user';
-import { toast } from 'sonner';
-import { deleteUserAccount } from '@/lib/supabase/user-management';
-
-interface AuthContextType {
-  user: User | null;
-  session: Session | null;
-  userType: string | null;
-  isLoading: boolean;
-  signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
-  signUp: (email: string, password: string, metadata?: UserMetadata) => Promise<{ error: Error | null, data: any }>;
-  signOut: () => Promise<void>;
-  deleteAccount: (currentPassword: string) => Promise<{ success: boolean; error: Error | null }>;
-}
-
-interface UserMetadata {
-  first_name?: string;
-  last_name?: string;
-  user_type?: string;
-  [key: string]: any;
-}
+import { AuthContextType, UserMetadata } from '@/types/auth';
+import { 
+  signInWithEmail, 
+  signUpWithEmail, 
+  signOutUser,
+  deleteUserWithPassword
+} from '@/lib/auth/auth-operations';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -74,125 +62,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signIn = async (email: string, password: string) => {
     setIsLoading(true);
-    try {
-      console.log('Attempting to sign in:', email);
-      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-      
-      console.log('Sign in result:', error ? 'Error' : 'Success', data?.user?.email);
-      
-      if (error) {
-        console.error('Sign in error:', error.message);
-        
-        if (error.message.includes('Email not confirmed')) {
-          toast.error('Please verify your email address before signing in.');
-        } else if (error.message.includes('Invalid login credentials')) {
-          toast.error('Invalid email or password. Please try again.');
-        } else {
-          toast.error(`Login failed: ${error.message}`);
-        }
-      } else if (data?.user) {
-        const userType = await getUserTypeName();
-        setUserType(userType);
-        toast.success('Signed in successfully');
-      }
-      
-      setIsLoading(false);
-      return { error };
-    } catch (err) {
-      console.error('Exception during sign in:', err);
-      setIsLoading(false);
-      toast.error('An unexpected error occurred during login');
-      return { error: err as Error };
+    const result = await signInWithEmail(email, password);
+    
+    if (result.userType) {
+      setUserType(result.userType);
     }
+    
+    setIsLoading(false);
+    return { error: result.error };
   };
 
   const signUp = async (email: string, password: string, metadata: UserMetadata = {}) => {
     setIsLoading(true);
-    try {
-      console.log('Attempting to sign up:', email, metadata);
-      
-      const formattedMetadata = {
-        ...metadata,
-        user_type: metadata.user_type || 'client'
-      };
-      
-      const { data, error } = await supabase.auth.signUp({ 
-        email, 
-        password, 
-        options: { 
-          data: formattedMetadata,
-          emailRedirectTo: window.location.origin
-        }
-      });
-      
-      console.log('Sign up result:', error ? 'Error' : 'Success', data?.user?.email);
-      
-      if (error) {
-        console.error('Sign up error:', error.message);
-        
-        if (error.message.includes('already registered')) {
-          toast.error('This email is already registered. Please sign in instead.');
-        } else if (error.message.includes('permission denied')) {
-          console.error('Permission denied error details:', error);
-          toast.error('Account creation failed due to permission issues. Please contact support.');
-        } else if (error.message.includes('weak password')) {
-          toast.error('Please use a stronger password that meets all requirements.');
-        } else {
-          toast.error(`Sign up failed: ${error.message}`);
-        }
-      } else if (data?.user) {
-        toast.success('Account created successfully! Please check your email to confirm your account.');
-        
-        const requiresEmailConfirmation = !data.session;
-        
-        if (requiresEmailConfirmation) {
-          toast.info('Please check your email to confirm your account before logging in.');
-        }
-      }
-      
-      setIsLoading(false);
-      return { error, data };
-    } catch (err) {
-      console.error('Exception during sign up:', err);
-      setIsLoading(false);
-      toast.error('An unexpected error occurred during sign up');
-      return { error: err as Error, data: null };
-    }
+    const result = await signUpWithEmail(email, password, metadata);
+    setIsLoading(false);
+    return result;
   };
 
   const signOut = async () => {
     setIsLoading(true);
-    try {
-      await supabase.auth.signOut();
-      setUserType(null);
-      toast.success('Signed out successfully');
-    } catch (error) {
-      console.error('Error signing out:', error);
-      toast.error('Error signing out');
-    } finally {
-      setIsLoading(false);
-    }
+    await signOutUser();
+    setUserType(null);
+    setIsLoading(false);
   };
 
   const deleteAccount = async (currentPassword: string) => {
     setIsLoading(true);
-    try {
-      const result = await deleteUserAccount(currentPassword);
-      
-      if (result.success) {
-        toast.success('Your account has been deleted successfully');
-      } else if (result.error) {
-        toast.error(`Failed to delete account: ${result.error.message}`);
-      }
-      
-      setIsLoading(false);
-      return result;
-    } catch (err) {
-      console.error('Exception during account deletion:', err);
-      setIsLoading(false);
-      toast.error('An unexpected error occurred while deleting your account');
-      return { success: false, error: err as Error };
-    }
+    const result = await deleteUserWithPassword(currentPassword);
+    setIsLoading(false);
+    return result;
   };
 
   return (
