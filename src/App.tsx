@@ -49,6 +49,21 @@ const AuthWrapper = ({ children }: { children: React.ReactNode }) => {
     default:
       // If we have a session but no userType yet, wait for it to load
       if (session && !userType && !isLoading) {
+        // Check if user type info is in metadata
+        const metadataUserType = session.user?.user_metadata?.user_type;
+        if (metadataUserType) {
+          // Redirect based on metadata user type
+          switch (metadataUserType) {
+            case 'admin':
+              return <Navigate to="/admin" replace />;
+            case 'mortgage_professional':
+              return <Navigate to="/mortgage" replace />;
+            case 'realtor':
+              return <Navigate to="/realtor" replace />;
+            case 'client':
+              return <Navigate to="/client" replace />;
+          }
+        }
         console.log('Has session but no user type yet');
         return <>{children}</>; // Stay on current page until userType loads
       }
