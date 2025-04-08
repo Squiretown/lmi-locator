@@ -44,15 +44,24 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
       return <>{children}</>;
     }
     
-    // If userType is null but we have a session, we're likely still loading user metadata
-    // Let's wait instead of redirecting instantly
+    // If user has a session but userType isn't loaded yet, try to get it from session
     if (!userType && session) {
-      console.log('Has session but user type not loaded yet. Showing loading spinner');
-      return (
-        <div className="flex h-screen items-center justify-center">
-          <LoadingSpinner />
-        </div>
-      );
+      // Try to extract user_type from session metadata
+      const metadataUserType = session.user?.user_metadata?.user_type;
+      
+      if (metadataUserType === requiredUserType) {
+        console.log('Using user type from session metadata:', metadataUserType);
+        return <>{children}</>;
+      }
+      
+      if (!metadataUserType) {
+        console.log('Has session but user type not loaded yet. Showing loading spinner');
+        return (
+          <div className="flex h-screen items-center justify-center">
+            <LoadingSpinner />
+          </div>
+        );
+      }
     }
     
     console.log(`User type mismatch: expected ${requiredUserType}, got ${userType}. Redirecting.`);
