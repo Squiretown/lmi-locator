@@ -44,6 +44,17 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
       return <>{children}</>;
     }
     
+    // If userType is null but we have a session, we're likely still loading user metadata
+    // Let's wait instead of redirecting instantly
+    if (!userType && session) {
+      console.log('Has session but user type not loaded yet. Showing loading spinner');
+      return (
+        <div className="flex h-screen items-center justify-center">
+          <LoadingSpinner />
+        </div>
+      );
+    }
+    
     console.log(`User type mismatch: expected ${requiredUserType}, got ${userType}. Redirecting.`);
     
     // Otherwise, redirect to appropriate dashboard

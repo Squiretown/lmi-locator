@@ -10,7 +10,7 @@ import ApiTest from '@/pages/ApiTest';
 import NotFound from '@/pages/NotFound';
 import { AdminLayout, AdminDashboard, MarketingDashboard } from '@/components/admin';
 import LoginPage from '@/pages/auth/LoginPage';
-import { AuthProvider, useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/hooks/useAuth';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import MortgageProfessionalDashboard from '@/pages/dashboard/MortgageProfessional';
 import RealtorDashboard from '@/pages/dashboard/Realtor';
@@ -30,6 +30,9 @@ const AuthWrapper = ({ children }: { children: React.ReactNode }) => {
     );
   }
   
+  // Debug logging
+  console.log('AuthWrapper state:', { session, userType, isLoading, authInitialized });
+  
   // Not authenticated, render children (should be login page)
   if (!session) return <>{children}</>;
   
@@ -44,6 +47,11 @@ const AuthWrapper = ({ children }: { children: React.ReactNode }) => {
     case 'client':
       return <Navigate to="/client" replace />;
     default:
+      // If we have a session but no userType yet, wait for it to load
+      if (session && !userType && !isLoading) {
+        console.log('Has session but no user type yet');
+        return <>{children}</>; // Stay on current page until userType loads
+      }
       return <Navigate to="/" replace />;
   }
 };
@@ -110,11 +118,7 @@ function AppContent() {
 }
 
 function App() {
-  return (
-    <AuthProvider>
-      <AppContent />
-    </AuthProvider>
-  );
+  return <AppContent />;
 }
 
 export default App;

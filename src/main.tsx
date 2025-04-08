@@ -3,11 +3,11 @@ import { createRoot } from 'react-dom/client'
 import App from './App.tsx'
 import './index.css'
 import { AuthProvider } from '@/hooks/useAuth'
-import { MotionConfig } from 'framer-motion'  // Add import for MotionConfig
+import { MotionConfig } from 'framer-motion'
 
 createRoot(document.getElementById("root")!).render(
   <AuthProvider>
-    <MotionConfig>  {/* Add MotionConfig provider */}
+    <MotionConfig reducedMotion="user">
       <App />
     </MotionConfig>
   </AuthProvider>

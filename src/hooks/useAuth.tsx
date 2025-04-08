@@ -37,6 +37,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const fetchUserType = async () => {
       try {
         const type = await getUserTypeName();
+        console.log('Fetched user type:', type);
         safeSetState.setUserType(type);
       } catch (error) {
         console.error('Error getting user type:', error);
@@ -134,6 +135,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         
         // Set user type from metadata
         if (metadata.user_type) {
+          console.log('Setting user type from metadata:', metadata.user_type);
           setUserType(metadata.user_type);
         }
       }
