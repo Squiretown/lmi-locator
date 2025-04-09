@@ -1,5 +1,6 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { Eye, EyeOff } from 'lucide-react';
 import { Input } from '@/components/ui/input';
@@ -22,7 +23,32 @@ type FormValues = z.infer<typeof formSchema>;
 const LoginForm: React.FC = () => {
   const [authError, setAuthError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
-  const { signIn, isLoading } = useAuth();
+  const { signIn, isLoading, userType } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    // Redirect based on user type after successful login
+    if (userType) {
+      console.log('User type detected after login:', userType);
+      
+      switch (userType) {
+        case 'admin':
+          navigate('/admin');
+          break;
+        case 'mortgage_professional':
+          navigate('/mortgage');
+          break;
+        case 'realtor':
+          navigate('/realtor');
+          break;
+        case 'client':
+          navigate('/client');
+          break;
+        default:
+          navigate('/');
+      }
+    }
+  }, [userType, navigate]);
 
   // Initialize form
   const form = useForm<FormValues>({
@@ -51,7 +77,7 @@ const LoginForm: React.FC = () => {
           setAuthError(error.message || 'Failed to login. Please try again.');
         }
       }
-      // Navigation will be handled by AuthWrapper in App.tsx if successful
+      // Redirection will be handled by the useEffect hook above
     } catch (err) {
       console.error('Exception during login:', err);
       setAuthError('An unexpected error occurred. Please try again.');
