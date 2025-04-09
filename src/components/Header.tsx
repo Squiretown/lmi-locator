@@ -1,7 +1,8 @@
+
 import React from 'react';
 import { motion } from 'framer-motion';
-import { MapPinIcon, BookOpenIcon } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { MapPinIcon } from 'lucide-react';
+
 const Header = () => {
   return <motion.header className="relative z-10 pt-12 pb-6 mb-8" initial={{
     opacity: 0,
@@ -42,20 +43,6 @@ const Header = () => {
             Determine if an address is in a Low-to-Moderate Income (LMI) eligible census tract
             using U.S. Census Bureau data.
           </motion.p>
-          
-          <motion.div className="mt-4" initial={{
-          opacity: 0
-        }} animate={{
-          opacity: 1
-        }} transition={{
-          delay: 0.4,
-          duration: 0.5
-        }}>
-            <Link to="/api-docs" className="inline-flex items-center text-primary hover:text-primary/80 text-sm font-medium">
-              <BookOpenIcon className="h-4 w-4 mr-1" />
-              API Documentation
-            </Link>
-          </motion.div>
         </div>
       </div>
     </motion.header>;

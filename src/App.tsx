@@ -1,14 +1,12 @@
+
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import './App.css';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import Index from '@/pages/Index';
-import ApiDocs from '@/pages/ApiDocs';
-import ApiTest from '@/pages/ApiTest';
-import NotFound from '@/pages/NotFound';
-import { AdminLayout, AdminDashboard, MarketingDashboard } from '@/components/admin';
 import LoginPage from '@/pages/auth/LoginPage';
+import { AdminLayout, AdminDashboard, MarketingDashboard } from '@/components/admin';
 import { useAuth } from '@/hooks/useAuth';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import MortgageProfessionalDashboard from '@/pages/dashboard/MortgageProfessional';
@@ -17,6 +15,7 @@ import ClientDashboard from '@/pages/dashboard/Client';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import AdminTools from '@/pages/auth/AdminTools';
 import LmiMarketingList from '@/pages/dashboard/LmiMarketingList';
+import NotFound from '@/pages/NotFound';
 
 const AuthWrapper = ({ children }: { children: React.ReactNode }) => {
   const { session, userType, isLoading, authInitialized } = useAuth();
@@ -28,8 +27,6 @@ const AuthWrapper = ({ children }: { children: React.ReactNode }) => {
       </div>
     );
   }
-  
-  console.log('AuthWrapper state:', { session, userType, isLoading, authInitialized });
   
   if (!session) return <>{children}</>;
   
@@ -57,7 +54,6 @@ const AuthWrapper = ({ children }: { children: React.ReactNode }) => {
               return <Navigate to="/client" replace />;
           }
         }
-        console.log('Has session but no user type yet');
         return <>{children}</>;
       }
       return <Navigate to="/" replace />;
@@ -106,9 +102,6 @@ function AppContent() {
                 <ClientDashboard />
               </ProtectedRoute>
             } />
-            
-            <Route path="/api/docs" element={<ApiDocs />} />
-            <Route path="/api/test" element={<ApiTest />} />
             
             <Route path="/marketing-list" element={
               <ProtectedRoute requiredUserType="mortgage_professional">
