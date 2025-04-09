@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -20,9 +21,15 @@ import {
 import { signOutAllUsers } from '@/lib/auth/auth-operations';
 import { toast } from 'sonner';
 import { MoreHorizontal, Shield, Ban, UserCheck, Lock, LockOpen } from 'lucide-react';
-import { User as SupabaseUser } from '@supabase/supabase-js';
+import { User } from '@supabase/supabase-js';
 
-interface AdminUser extends SupabaseUser {
+// Define our AdminUser type separately instead of extending the User type
+// to avoid the type compatibility issue
+interface AdminUser {
+  id: string;
+  email?: string;
+  created_at: string;
+  last_sign_in_at?: string;
   user_metadata?: {
     user_type?: string;
     first_name?: string;
