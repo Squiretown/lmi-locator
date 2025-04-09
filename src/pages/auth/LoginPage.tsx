@@ -1,56 +1,61 @@
 
-import React, { useEffect, useState } from 'react';
-import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import React, { useState } from 'react';
+import { Button } from '@/components/ui/button';
 import LoginForm from './components/LoginForm';
-import SignupForm from './components/SignupForm';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { createInitialAdminUser } from '@/lib/auth/auth-operations';
+import { toast } from 'sonner';
 
 const LoginPage: React.FC = () => {
-  const location = useLocation();
-  const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<string>("login");
-  
-  // Check for tab parameter in URL
-  useEffect(() => {
-    const params = new URLSearchParams(location.search);
-    const tabParam = params.get('tab');
-    if (tabParam === 'login' || tabParam === 'signup') {
-      setActiveTab(tabParam);
-    }
-  }, [location]);
+  const [showInitialAdminCreation, setShowInitialAdminCreation] = useState(false);
+  const [adminCredentials, setAdminCredentials] = useState<{ email: string, password: string } | null>(null);
 
-  // Handle tab change
-  const handleTabChange = (value: string) => {
-    setActiveTab(value);
-    navigate(`/login?tab=${value}`, { replace: true });
+  const handleCreateInitialAdmin = async () => {
+    const credentials = await createInitialAdminUser();
+    
+    if (credentials) {
+      setAdminCredentials(credentials);
+      setShowInitialAdminCreation(true);
+      toast.success('Initial admin user created. Please log in.');
+    }
   };
 
   return (
-    <div className="container flex items-center justify-center min-h-screen py-8">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <CardTitle className="text-2xl">Welcome to LMI Property Checker</CardTitle>
-          <CardDescription>
-            Sign in to access your account or create a new one
-          </CardDescription>
-        </CardHeader>
-        
-        <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-          <TabsList className="grid w-full grid-cols-2 mb-6">
-            <TabsTrigger value="login" className="rounded-l-md">Login</TabsTrigger>
-            <TabsTrigger value="signup" className="rounded-r-md">Sign Up</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="login">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-md w-full space-y-8">
+        {!showInitialAdminCreation ? (
+          <>
             <LoginForm />
-          </TabsContent>
-          
-          <TabsContent value="signup">
-            <SignupForm />
-          </TabsContent>
-        </Tabs>
-      </Card>
+            <div className="text-center mt-4">
+              <Button 
+                variant="outline" 
+                onClick={handleCreateInitialAdmin}
+                className="w-full"
+              >
+                Create Initial Admin User
+              </Button>
+            </div>
+          </>
+        ) : (
+          <div className="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4">
+            <h2 className="text-2xl font-bold text-center mb-4">Initial Admin Credentials</h2>
+            <p className="text-center mb-4">
+              <strong>Email:</strong> {adminCredentials?.email}
+            </p>
+            <p className="text-center mb-4">
+              <strong>Password:</strong> {adminCredentials?.password}
+            </p>
+            <p className="text-sm text-red-600 text-center mb-4">
+              Please change this password after first login!
+            </p>
+            <Button 
+              onClick={() => setShowInitialAdminCreation(false)}
+              className="w-full"
+            >
+              Back to Login
+            </Button>
+          </div>
+        )}
+      </div>
     </div>
   );
 };

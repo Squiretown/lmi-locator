@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from 'sonner';
 import { getUserTypeName } from '@/lib/supabase/user';
@@ -120,5 +119,55 @@ export async function deleteUserWithPassword(currentPassword: string) {
     console.error('Exception during account deletion:', err);
     toast.error('An unexpected error occurred while deleting your account');
     return { success: false, error: err as Error };
+  }
+}
+
+/**
+ * Create an initial admin user if no admins exist
+ */
+export async function createInitialAdminUser() {
+  try {
+    // Check if any admin users already exist
+    const { data: existingAdmins } = await supabase.rpc('user_is_admin');
+    
+    if (existingAdmins) {
+      console.log('Admin user already exists');
+      return null;
+    }
+
+    // Create the initial admin user
+    const adminEmail = 'admin@example.com';
+    const adminPassword = 'AdminPassword123!'; // Strong, temporary password
+
+    const { data, error } = await supabase.auth.signUp({
+      email: adminEmail, 
+      password: adminPassword,
+      options: { 
+        data: {
+          user_type: 'admin',
+          first_name: 'System',
+          last_name: 'Administrator'
+        },
+        emailRedirectTo: `${window.location.origin}/login`
+      }
+    });
+
+    if (error) {
+      console.error('Error creating admin user:', error);
+      toast.error('Failed to create initial admin user');
+      return null;
+    }
+
+    if (data?.user) {
+      toast.success('Initial admin user created successfully');
+      console.log('Initial admin user created:', data.user.email);
+      return { email: adminEmail, password: adminPassword };
+    }
+
+    return null;
+  } catch (error) {
+    console.error('Exception during admin user creation:', error);
+    toast.error('An unexpected error occurred');
+    return null;
   }
 }
