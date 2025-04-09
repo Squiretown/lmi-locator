@@ -1,17 +1,16 @@
-
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Info, Github, Book, Mail, Phone, MapPin } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
-
 const Footer = () => {
-  return (
-    <motion.footer 
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.5, delay: 0.5 }}
-      className="mt-20 py-8 bg-muted/30"
-    >
+  return <motion.footer initial={{
+    opacity: 0
+  }} animate={{
+    opacity: 1
+  }} transition={{
+    duration: 0.5,
+    delay: 0.5
+  }} className="mt-20 py-8 bg-muted/30">
       <div className="container mx-auto px-4">
         <div className="max-w-5xl mx-auto">
           <Separator className="mb-6" />
@@ -19,11 +18,7 @@ const Footer = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-6">
             <div>
               <h3 className="text-lg font-semibold mb-3">About LMICHECK.COM</h3>
-              <p className="text-sm text-muted-foreground">
-                We utilize U.S. Census Bureau data to identify properties 
-                in Low-to-Moderate Income (LMI) census tracts, helping 
-                homebuyers access special programs and incentives.
-              </p>
+              <p className="text-sm text-muted-foreground">We utilize data to identify properties in Low-to-Moderate Income (LMI) census tracts, helping homebuyers access special programs and incentives.</p>
             </div>
             
             <div>
@@ -39,7 +34,7 @@ const Footer = () => {
                 </li>
                 <li className="flex items-center gap-2">
                   <MapPin className="h-4 w-4" />
-                  <span>Washington, DC</span>
+                  <span>Suffolk, NY </span>
                 </li>
               </ul>
             </div>
@@ -79,8 +74,6 @@ const Footer = () => {
           </div>
         </div>
       </div>
-    </motion.footer>
-  );
+    </motion.footer>;
 };
-
 export default Footer;
