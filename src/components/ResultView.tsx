@@ -1,18 +1,18 @@
-
 import React from 'react';
 import { Button } from "@/components/ui/button";
 import { CheckLmiStatusResponse } from '@/lib/types';
 import ResultCard from '@/components/Result';
-
 interface ResultViewProps {
   lmiStatus: CheckLmiStatusResponse;
   onContinue: () => void;
   onReset: () => void;
 }
-
-const ResultView: React.FC<ResultViewProps> = ({ lmiStatus, onContinue, onReset }) => {
-  return (
-    <>
+const ResultView: React.FC<ResultViewProps> = ({
+  lmiStatus,
+  onContinue,
+  onReset
+}) => {
+  return <>
       <ResultCard data={lmiStatus} />
       
       <div className="mt-8 text-center">
@@ -24,13 +24,9 @@ const ResultView: React.FC<ResultViewProps> = ({ lmiStatus, onContinue, onReset 
           <Button onClick={onContinue}>
             Check Eligibility
           </Button>
-          <Button variant="outline" onClick={onReset}>
-            Start Over
-          </Button>
+          <Button variant="outline" onClick={onReset}>Check Another</Button>
         </div>
       </div>
-    </>
-  );
+    </>;
 };
-
 export default ResultView;
