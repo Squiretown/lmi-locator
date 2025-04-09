@@ -8,7 +8,7 @@ import { useAuth } from '@/hooks/useAuth';
 
 const Header = () => {
   const { pathname } = useLocation();
-  const { user, signOut } = useAuth();
+  const { user, userType, signOut } = useAuth();
   
   // Don't show header in admin area
   if (pathname.startsWith('/admin')) {
