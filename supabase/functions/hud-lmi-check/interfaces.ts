@@ -50,4 +50,3 @@ export interface GeocodingResult {
   addressInfo?: AddressInfo;
   placeQuery?: string;
 }
-

@@ -1,8 +1,29 @@
 
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { searchLMIByAddress, searchLMIByPlaceName, processLMIData } from "./lmi-data-service.ts";
-import { validateAddress } from "../lmi-check/census-service.ts"; // Reuse validation from existing function
-import { corsHeaders } from "../lmi-check/cors.ts"; // Reuse CORS helpers
+import { corsHeaders } from "../lmi-check/cors.ts";
+
+// Local implementation of address validation to avoid cross-function imports
+function validateAddress(address: string): boolean {
+  if (!address || typeof address !== 'string') {
+    return false;
+  }
+
+  // Remove extra whitespace
+  address = address.replace(/\s+/g, ' ').trim();
+
+  // Basic address validation
+  const requiredComponents = [
+    // At least one number (street number)
+    (x: string) => /\d/.test(x),
+    // Minimum length for a reasonable address
+    (x: string) => x.trim().length >= 10,
+    // Contains street identifier
+    (x: string) => /street|st|avenue|ave|road|rd|drive|dr|lane|ln|boulevard|blvd|way|place|pl|court|ct|circle|cir|terrace|ter|highway|hwy/i.test(x)
+  ];
+
+  return requiredComponents.every(check => check(address));
+}
 
 // Handle CORS preflight requests
 function handleCors(req: Request) {
