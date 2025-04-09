@@ -16,6 +16,7 @@ import LoginPage from './pages/auth/LoginPage';
 import { AdminLayout, AdminDashboard, MarketingDashboard } from './components/admin';
 import AdminTools from './pages/auth/AdminTools';
 import UserManagement from './pages/auth/UserManagement';
+import SettingsPage from './pages/auth/SettingsPage';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import { AuthProvider } from '@/providers/AuthProvider';
 
@@ -54,6 +55,7 @@ function App() {
                 <Route path="marketing" element={<MarketingDashboard />} />
                 <Route path="tools" element={<AdminTools />} />
                 <Route path="users" element={<UserManagement />} />
+                <Route path="settings" element={<SettingsPage />} />
                 <Route path="*" element={<Navigate to="/admin" replace />} />
               </Route>
 
