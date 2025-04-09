@@ -22,7 +22,7 @@ import {
   ListChecks,
   UserPlus,
   Mail,
-  Wrench // Using Wrench icon instead of Tool
+  Wrench
 } from "lucide-react";
 
 export const AdminSidebarMainMenu: React.FC = () => {

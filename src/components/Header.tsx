@@ -1,11 +1,20 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { MapPinIcon } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
 
 const Header = () => {
+  const { pathname } = useLocation();
+  const { user, signOut } = useAuth();
+  
+  // Don't show header in admin area
+  if (pathname.startsWith('/admin')) {
+    return null;
+  }
+  
   return (
     <motion.header 
       className="sticky top-0 z-50 bg-black text-white py-4"
@@ -56,12 +65,31 @@ const Header = () => {
           
           {/* Auth Buttons */}
           <div className="flex items-center gap-4">
-            <Link to="/login?tab=login" className="text-white hover:text-primary transition-colors hidden sm:inline-block">
-              Log in
-            </Link>
-            <Button asChild size="sm" className="bg-white text-black hover:bg-white/90">
-              <Link to="/login?tab=signup">Sign up</Link>
-            </Button>
+            {user ? (
+              <>
+                {userType === 'admin' && (
+                  <Button asChild variant="ghost" className="text-white hover:text-primary">
+                    <Link to="/admin">Admin Panel</Link>
+                  </Button>
+                )}
+                <Button 
+                  variant="ghost" 
+                  className="text-white hover:text-primary" 
+                  onClick={() => signOut()}
+                >
+                  Log out
+                </Button>
+              </>
+            ) : (
+              <>
+                <Link to="/login?tab=login" className="text-white hover:text-primary transition-colors hidden sm:inline-block">
+                  Log in
+                </Link>
+                <Button asChild size="sm" className="bg-white text-black hover:bg-white/90">
+                  <Link to="/login?tab=signup">Sign up</Link>
+                </Button>
+              </>
+            )}
           </div>
         </div>
       </div>

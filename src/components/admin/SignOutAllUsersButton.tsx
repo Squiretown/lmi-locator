@@ -1,75 +1,75 @@
 
 import React, { useState } from 'react';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { Loader2, LogOut } from "lucide-react";
+import { AlertCircle, LogOut } from "lucide-react";
+import { toast } from "sonner";
 import { signOutAllUsers } from "@/lib/auth/auth-operations";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
-interface SignOutAllUsersButtonProps {
-  variant?: "default" | "destructive" | "outline" | "secondary" | "ghost" | "link";
-  size?: "default" | "sm" | "lg";
-  className?: string;
-}
-
-const SignOutAllUsersButton: React.FC<SignOutAllUsersButtonProps> = ({
-  variant = "destructive",
-  size = "default",
-  className = "",
-}) => {
+const SignOutAllUsersButton: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
-
-  const handleSignOutAllUsers = async () => {
+  
+  const handleSignOutAll = async () => {
     setIsLoading(true);
+    
     try {
-      await signOutAllUsers();
-      // Don't close the dialog immediately to give time for the toast to be seen
-      setTimeout(() => {
-        setIsOpen(false);
-      }, 1000);
+      const result = await signOutAllUsers();
+      
+      if (result.success) {
+        toast.success("All users have been signed out successfully");
+      } else {
+        toast.error(`Operation failed: ${result.error?.message || 'Unknown error'}`);
+      }
+    } catch (error) {
+      toast.error("An unexpected error occurred");
+      console.error("Error in sign out all:", error);
     } finally {
       setIsLoading(false);
+      setIsOpen(false);
     }
   };
-
+  
   return (
     <AlertDialog open={isOpen} onOpenChange={setIsOpen}>
       <AlertDialogTrigger asChild>
-        <Button 
-          variant={variant} 
-          size={size} 
-          className={className}
-        >
+        <Button variant="destructive" size="sm">
           <LogOut className="mr-2 h-4 w-4" />
           Sign Out All Users
         </Button>
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Sign out all users?</AlertDialogTitle>
+          <AlertDialogTitle className="flex items-center">
+            <AlertCircle className="h-5 w-5 mr-2 text-destructive" />
+            Sign Out All Users
+          </AlertDialogTitle>
           <AlertDialogDescription>
-            This will sign out all currently authenticated users across all devices.
-            Users will need to sign in again to access their accounts.
-            This action cannot be undone.
+            This action will immediately terminate all user sessions across the entire platform.
+            All users will need to sign in again.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={isLoading}>Cancel</AlertDialogCancel>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
           <AlertDialogAction
             onClick={(e) => {
               e.preventDefault();
-              handleSignOutAllUsers();
+              handleSignOutAll();
             }}
+            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             disabled={isLoading}
           >
-            {isLoading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Processing...
-              </>
-            ) : (
-              "Sign Out All Users"
-            )}
+            {isLoading ? "Processing..." : "Sign Out All Users"}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
