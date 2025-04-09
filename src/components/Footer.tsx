@@ -68,7 +68,8 @@ const Footer = () => {
           
           <div className="text-center text-sm text-muted-foreground">
             <p>
-              <span className="block">Data Source: U.S. Census Bureau American Community Survey 5-Year Estimates</span>
+              <span className="block">
+            </span>
               <span className="block mt-1">© {new Date().getFullYear()} LMICHECK.COM - All Rights Reserved</span>
             </p>
           </div>
