@@ -28,7 +28,7 @@ const AddressSearchForm: React.FC<AddressSearchFormProps> = ({
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
         <FormField control={form.control} name="address" render={({
         field
-      }) => <FormItem>
+      }) => <FormItem className="mx-0">
               <FormLabel className="my-[20px] mx-0">Property Address</FormLabel>
               <FormControl>
                 <Input placeholder="123 Main St, Anytown, CA" {...field} />
