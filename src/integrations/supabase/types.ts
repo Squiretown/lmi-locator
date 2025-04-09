@@ -289,6 +289,95 @@ export type Database = {
         }
         Relationships: []
       }
+      census_tract_results: {
+        Row: {
+          ami_percentage: number | null
+          created_at: string
+          id: string
+          lmi_status: boolean
+          property_count: number | null
+          search_id: string
+          tract_id: string
+          tract_name: string | null
+        }
+        Insert: {
+          ami_percentage?: number | null
+          created_at?: string
+          id?: string
+          lmi_status?: boolean
+          property_count?: number | null
+          search_id: string
+          tract_id: string
+          tract_name?: string | null
+        }
+        Update: {
+          ami_percentage?: number | null
+          created_at?: string
+          id?: string
+          lmi_status?: boolean
+          property_count?: number | null
+          search_id?: string
+          tract_id?: string
+          tract_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "census_tract_results_search_id_fkey"
+            columns: ["search_id"]
+            isOneToOne: false
+            referencedRelation: "census_tract_searches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      census_tract_searches: {
+        Row: {
+          created_at: string
+          download_count: number | null
+          error_message: string | null
+          expires_at: string | null
+          export_format: string | null
+          id: string
+          last_updated: string
+          result_count: number | null
+          search_name: string | null
+          search_type: string
+          search_value: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          download_count?: number | null
+          error_message?: string | null
+          expires_at?: string | null
+          export_format?: string | null
+          id?: string
+          last_updated?: string
+          result_count?: number | null
+          search_name?: string | null
+          search_type: string
+          search_value: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          download_count?: number | null
+          error_message?: string | null
+          expires_at?: string | null
+          export_format?: string | null
+          id?: string
+          last_updated?: string
+          result_count?: number | null
+          search_name?: string | null
+          search_type?: string
+          search_value?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       client_profiles: {
         Row: {
           created_at: string | null
@@ -1119,6 +1208,47 @@ export type Database = {
             columns: ["updated_by"]
             isOneToOne: false
             referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tract_properties: {
+        Row: {
+          address: string
+          city: string
+          created_at: string
+          id: string
+          property_type: string | null
+          state: string
+          tract_result_id: string
+          zip_code: string
+        }
+        Insert: {
+          address: string
+          city: string
+          created_at?: string
+          id?: string
+          property_type?: string | null
+          state: string
+          tract_result_id: string
+          zip_code: string
+        }
+        Update: {
+          address?: string
+          city?: string
+          created_at?: string
+          id?: string
+          property_type?: string | null
+          state?: string
+          tract_result_id?: string
+          zip_code?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tract_properties_tract_result_id_fkey"
+            columns: ["tract_result_id"]
+            isOneToOne: false
+            referencedRelation: "census_tract_results"
             referencedColumns: ["id"]
           },
         ]

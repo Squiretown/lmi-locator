@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import './App.css';
@@ -17,8 +16,8 @@ import RealtorDashboard from '@/pages/dashboard/Realtor';
 import ClientDashboard from '@/pages/dashboard/Client';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import AdminTools from '@/pages/auth/AdminTools';
+import LmiMarketingList from '@/pages/dashboard/LmiMarketingList';
 
-// Auth wrapper to manage redirection based on auth state
 const AuthWrapper = ({ children }: { children: React.ReactNode }) => {
   const { session, userType, isLoading, authInitialized } = useAuth();
   
@@ -30,13 +29,10 @@ const AuthWrapper = ({ children }: { children: React.ReactNode }) => {
     );
   }
   
-  // Debug logging
   console.log('AuthWrapper state:', { session, userType, isLoading, authInitialized });
   
-  // Not authenticated, render children (should be login page)
   if (!session) return <>{children}</>;
   
-  // User is authenticated, redirect based on user type
   switch (userType) {
     case 'admin':
       return <Navigate to="/admin" replace />;
@@ -47,12 +43,9 @@ const AuthWrapper = ({ children }: { children: React.ReactNode }) => {
     case 'client':
       return <Navigate to="/client" replace />;
     default:
-      // If we have a session but no userType yet, wait for it to load
       if (session && !userType && !isLoading) {
-        // Check if user type info is in metadata
         const metadataUserType = session.user?.user_metadata?.user_type;
         if (metadataUserType) {
-          // Redirect based on metadata user type
           switch (metadataUserType) {
             case 'admin':
               return <Navigate to="/admin" replace />;
@@ -65,7 +58,7 @@ const AuthWrapper = ({ children }: { children: React.ReactNode }) => {
           }
         }
         console.log('Has session but no user type yet');
-        return <>{children}</>; // Stay on current page until userType loads
+        return <>{children}</>;
       }
       return <Navigate to="/" replace />;
   }
@@ -80,14 +73,12 @@ function AppContent() {
           <Routes>
             <Route path="/" element={<Index />} />
             
-            {/* Auth routes */}
             <Route path="/login" element={
               <AuthWrapper>
                 <LoginPage />
               </AuthWrapper>
             } />
             
-            {/* Admin routes */}
             <Route path="/admin" element={
               <ProtectedRoute requiredUserType="admin">
                 <AdminLayout />
@@ -98,30 +89,32 @@ function AppContent() {
               <Route path="tools" element={<AdminTools />} />
             </Route>
             
-            {/* Mortgage Professional routes */}
             <Route path="/mortgage" element={
               <ProtectedRoute requiredUserType="mortgage_professional">
                 <MortgageProfessionalDashboard />
               </ProtectedRoute>
             } />
             
-            {/* Realtor routes */}
             <Route path="/realtor" element={
               <ProtectedRoute requiredUserType="realtor">
                 <RealtorDashboard />
               </ProtectedRoute>
             } />
             
-            {/* Client routes */}
             <Route path="/client" element={
               <ProtectedRoute requiredUserType="client">
                 <ClientDashboard />
               </ProtectedRoute>
             } />
             
-            {/* API routes */}
             <Route path="/api/docs" element={<ApiDocs />} />
             <Route path="/api/test" element={<ApiTest />} />
+            
+            <Route path="/marketing-list" element={
+              <ProtectedRoute requiredUserType="mortgage_professional">
+                <LmiMarketingList />
+              </ProtectedRoute>
+            } />
             
             <Route path="*" element={<NotFound />} />
           </Routes>
