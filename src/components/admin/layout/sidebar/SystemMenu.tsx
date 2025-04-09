@@ -1,65 +1,87 @@
 
 import React from 'react';
-import { useLocation, useNavigate } from "react-router-dom";
-import { useAdminPermissions } from '../AdminPermissionsContext';
+import { NavLink } from 'react-router-dom';
 import { 
+  ShieldAlert, 
+  ToggleLeft, 
+  Wrench,
+  ShieldCheck
+} from 'lucide-react';
+import { 
+  SidebarGroup, 
+  SidebarGroupContent, 
+  SidebarGroupLabel, 
   SidebarMenu, 
-  SidebarMenuItem, 
-  SidebarMenuButton,
-  SidebarSeparator
-} from "@/components/ui/sidebar";
-import {
-  UserPlus,
-  Shield,
-  ListChecks
-} from "lucide-react";
+  SidebarMenuButton, 
+  SidebarMenuItem 
+} from '@/components/ui/sidebar';
+import { useAdminPermissions } from '../AdminPermissionsContext';
 
-export const AdminSidebarSystemMenu: React.FC = () => {
-  const location = useLocation();
-  const navigate = useNavigate();
+export function AdminSidebarSystemMenu() {
   const { hasPermission } = useAdminPermissions();
   
-  if (!hasPermission('manage_system')) {
-    return null;
-  }
-  
   return (
-    <>
-      <SidebarSeparator />
-      <SidebarMenu>
-        <SidebarMenuItem>
-          <SidebarMenuButton 
-            isActive={location.pathname === '/admin/user-management'} 
-            tooltip="User Management"
-            onClick={() => navigate('/admin/user-management')}
-          >
-            <UserPlus className="mr-2" />
-            <span>User Management</span>
-          </SidebarMenuButton>
-        </SidebarMenuItem>
-        
-        <SidebarMenuItem>
-          <SidebarMenuButton 
-            isActive={location.pathname === '/admin/permissions'} 
-            tooltip="Permissions"
-            onClick={() => navigate('/admin/permissions')}
-          >
-            <Shield className="mr-2" />
-            <span>Permissions</span>
-          </SidebarMenuButton>
-        </SidebarMenuItem>
-        
-        <SidebarMenuItem>
-          <SidebarMenuButton 
-            isActive={location.pathname === '/admin/verification'} 
-            tooltip="Verification"
-            onClick={() => navigate('/admin/verification')}
-          >
-            <ListChecks className="mr-2" />
-            <span>Verification</span>
-          </SidebarMenuButton>
-        </SidebarMenuItem>
-      </SidebarMenu>
-    </>
+    <SidebarGroup>
+      <SidebarGroupLabel>System</SidebarGroupLabel>
+      <SidebarGroupContent>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild tooltip="Admin Tools">
+              <NavLink 
+                to="/admin/tools" 
+                className={({ isActive }) => 
+                  isActive ? 'data-[active=true]' : ''
+                }
+              >
+                <Wrench />
+                <span>Admin Tools</span>
+              </NavLink>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild tooltip="Permissions">
+              <NavLink 
+                to="/admin/permissions" 
+                className={({ isActive }) => 
+                  isActive ? 'data-[active=true]' : ''
+                }
+              >
+                <ShieldCheck />
+                <span>Permissions</span>
+              </NavLink>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild tooltip="Security">
+              <NavLink 
+                to="/admin/security" 
+                className={({ isActive }) => 
+                  isActive ? 'data-[active=true]' : ''
+                }
+              >
+                <ShieldAlert />
+                <span>Security</span>
+              </NavLink>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild tooltip="System Settings">
+              <NavLink 
+                to="/admin/settings" 
+                className={({ isActive }) => 
+                  isActive ? 'data-[active=true]' : ''
+                }
+              >
+                <ToggleLeft />
+                <span>System Settings</span>
+              </NavLink>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarGroupContent>
+    </SidebarGroup>
   );
-};
+}
