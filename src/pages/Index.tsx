@@ -1,7 +1,6 @@
 
 import React from 'react';
 import { Helmet } from 'react-helmet';
-import PageHeader from '@/components/PageHeader';
 import PropertyChecker from '@/components/PropertyChecker';
 
 const Index = () => {
@@ -28,14 +27,14 @@ const Index = () => {
       </Helmet>
       
       <div className="container mx-auto px-4 py-8">
-        <PageHeader 
-          title="LMI Property Checker"
-          description="Check if a property is in a Low-to-Moderate Income (LMI) census tract and eligible for special programs and incentives."
-          actionLink={{
-            text: "Admin Dashboard",
-            href: "/admin"
-          }}
-        />
+        <div className="max-w-3xl mx-auto text-center mt-16 mb-12">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-6">
+            Determine If Your Property Is In An LMI Eligible Census Tract
+          </h1>
+          <p className="text-xl text-muted-foreground">
+            Check if a property is in a Low-to-Moderate Income (LMI) census tract and eligible for special programs and incentives.
+          </p>
+        </div>
         
         <PropertyChecker />
       </div>
