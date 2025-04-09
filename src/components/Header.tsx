@@ -56,11 +56,11 @@ const Header = () => {
           
           {/* Auth Buttons */}
           <div className="flex items-center gap-4">
-            <Link to="/login" className="text-white hover:text-primary transition-colors hidden sm:inline-block">
+            <Link to="/login?tab=login" className="text-white hover:text-primary transition-colors hidden sm:inline-block">
               Log in
             </Link>
             <Button asChild size="sm" className="bg-white text-black hover:bg-white/90">
-              <Link to="/login">Sign up</Link>
+              <Link to="/login?tab=signup">Sign up</Link>
             </Button>
           </div>
         </div>
