@@ -1427,6 +1427,12 @@ export type Database = {
         Args: { user_uuid: string }
         Returns: undefined
       }
+      get_all_permissions: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          permission_name: string
+        }[]
+      }
       get_marketing_summary: {
         Args: { user_uuid: string }
         Returns: {
@@ -1450,6 +1456,18 @@ export type Database = {
         Returns: {
           address: string
           search_count: number
+        }[]
+      }
+      get_user_permissions: {
+        Args: { user_uuid: string }
+        Returns: {
+          permission_name: string
+        }[]
+      }
+      get_user_type_name: {
+        Args: { profile_id: string }
+        Returns: {
+          type_name: string
         }[]
       }
       user_is_admin: {

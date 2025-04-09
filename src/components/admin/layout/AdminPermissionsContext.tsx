@@ -2,7 +2,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { getUserPermissions, getUserTypeName } from "@/lib/supabase/user";
+import { getTemporaryPermissions } from "@/lib/supabase/temporary-permissions";
 
 interface AdminPermissionsContextType {
   userType: string | null;
@@ -35,22 +35,29 @@ export const AdminPermissionsProvider: React.FC<{children: React.ReactNode}> = (
         return;
       }
 
-      // Get unread notification count using the RPC function
-      const { data: notificationCount } = await supabase.rpc(
-        'get_notification_counts',
-        { user_uuid: session.user.id }
-      );
-      
-      setUnreadNotifications(notificationCount?.[0]?.unread_count || 0);
-      
       try {
-        // Get user type name using our utility function
-        const userTypeName = await getUserTypeName();
-        setUserType(userTypeName || 'standard');
+        // Get unread notification count
+        // Note: This is commented out until we have the actual notification table
+        // const { data: notificationCount } = await supabase.rpc(
+        //   'get_notification_counts',
+        //   { user_uuid: session.user.id }
+        // );
         
-        // Get user permissions using our utility function
-        const userPermissions = await getUserPermissions();
+        // Temporary hardcoded notification count
+        setUnreadNotifications(3);
+        
+        // Temporary: Get user type from user metadata
+        const userMetadataType = session.user?.user_metadata?.user_type;
+        const tempUserType = userMetadataType || 'admin'; // Default to admin for testing
+        setUserType(tempUserType);
+        
+        // Use our temporary permissions implementation
+        const userPermissions = getTemporaryPermissions(tempUserType);
         setPermissions(userPermissions);
+        
+        // Once database functions are ready, we'll use:
+        // const userPermissions = await getUserPermissions();
+        // setPermissions(userPermissions);
       } catch (error) {
         console.error('Error in user data fetch:', error);
       }

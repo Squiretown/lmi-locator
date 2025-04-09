@@ -8,6 +8,9 @@ interface AdminStatusFooterProps {
 }
 
 const AdminStatusFooter: React.FC<AdminStatusFooterProps> = ({ onLogout }) => {
+  const currentYear = new Date().getFullYear();
+  const appVersion = "1.0.1"; // Increment version
+
   return (
     <div className="p-4 border-t">
       <Button 
@@ -20,8 +23,8 @@ const AdminStatusFooter: React.FC<AdminStatusFooterProps> = ({ onLogout }) => {
         <span>Log Out</span>
       </Button>
       <div className="text-xs text-muted-foreground mt-4">
-        <div>© {new Date().getFullYear()} LMI Check</div>
-        <div>Version 1.0.0</div>
+        <div>© {currentYear} LMI Check</div>
+        <div>Version {appVersion}</div>
       </div>
     </div>
   );

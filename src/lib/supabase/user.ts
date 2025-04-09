@@ -1,4 +1,6 @@
+
 import { supabase } from "@/integrations/supabase/client";
+import { getTemporaryPermissions } from "./temporary-permissions";
 
 /**
  * Checks if current user has a specific permission
@@ -7,7 +9,26 @@ import { supabase } from "@/integrations/supabase/client";
  */
 export async function checkUserPermission(permission: string): Promise<boolean> {
   try {
-    // Use the user_has_permission database function
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) return false;
+    
+    // Use edge function when database is fully set up
+    // return await checkPermissionFromEdgeFunction(permission);
+    
+    // Temporary implementation
+    const userType = user.user_metadata?.user_type as string || 'client';
+    const permissions = getTemporaryPermissions(userType);
+    return permissions.includes(permission) || userType === 'admin';
+  } catch (error) {
+    console.error('Exception checking permission:', error);
+    return false;
+  }
+}
+
+// This function will be used when the database is fully set up
+async function checkPermissionFromEdgeFunction(permission: string): Promise<boolean> {
+  try {
     const { data, error } = await supabase.functions.invoke('user-has-permission', {
       body: { permission }
     });
@@ -19,7 +40,7 @@ export async function checkUserPermission(permission: string): Promise<boolean> 
     
     return !!data;
   } catch (error) {
-    console.error('Exception checking permission:', error);
+    console.error('Exception calling edge function:', error);
     return false;
   }
 }
@@ -39,6 +60,11 @@ export async function getUserTypeName(): Promise<string | null> {
       return user.user_metadata.user_type as string;
     }
     
+    // For now, just return a default user type until we have the proper tables set up
+    return 'client';
+    
+    // Once the database is set up, we'll use:
+    /*
     // First check if user is admin - this is a special case
     try {
       const { data: isAdmin } = await supabase.rpc('user_is_admin');
@@ -47,39 +73,23 @@ export async function getUserTypeName(): Promise<string | null> {
       console.warn('Error checking admin status:', error);
     }
     
-    // Otherwise try to fetch the user type from their profile
+    // Get user type using edge function
     try {
-      const { data, error } = await supabase
-        .from('user_profiles')
-        .select('*')
-        .eq('user_id', user.id)
-        .single();
+      const { data, error } = await supabase.functions.invoke('get-user-type-name', {
+        body: {}
+      });
       
-      if (error || !data) {
-        console.error('Error fetching user profile:', error);
+      if (error) {
+        console.error('Error fetching user type:', error);
         return user.user_metadata?.user_type as string || null;
       }
       
-      // We need to get the type name through a separate query
-      try {
-        const { data: typeData, error: typeError } = await supabase.functions.invoke('get-user-type-name', {
-          body: { profileId: data.id }
-        });
-        
-        if (typeError) {
-          console.error('Error fetching user type:', typeError);
-          return user.user_metadata?.user_type as string || null;
-        }
-        
-        return typeData?.type_name || user.user_metadata?.user_type as string || 'client';
-      } catch (innerError) {
-        console.error('Exception in type name fetch:', innerError);
-        return user.user_metadata?.user_type as string || null;
-      }
-    } catch (profileError) {
-      console.error('Exception in profile fetch:', profileError);
+      return data?.type_name || user.user_metadata?.user_type as string || 'client';
+    } catch (error) {
+      console.error('Exception calling edge function:', error);
       return user.user_metadata?.user_type as string || null;
     }
+    */
   } catch (error) {
     console.error('Exception in getUserTypeName:', error);
     
@@ -107,7 +117,13 @@ export async function getUserPermissions(): Promise<string[]> {
     
     if (!user) return [];
     
-    // First check if user is admin - gets all permissions
+    // Temporary implementation
+    const userType = user.user_metadata?.user_type as string || 'client';
+    return getTemporaryPermissions(userType);
+    
+    // Once the database is fully set up, we'll use:
+    /*
+    // Check if user is admin - gets all permissions
     const { data: isAdmin } = await supabase.rpc('user_is_admin');
     if (isAdmin) {
       // Return all possible permissions for admin
@@ -115,7 +131,7 @@ export async function getUserPermissions(): Promise<string[]> {
       return data && Array.isArray(data) ? data.map((p: any) => p.permission_name) : [];
     }
     
-    // Otherwise get the user's specific permissions
+    // Get user permissions via edge function
     const { data } = await supabase.functions.invoke('get-user-permissions', {
       body: { userId: user.id }
     });
@@ -125,6 +141,7 @@ export async function getUserPermissions(): Promise<string[]> {
     }
     
     return Array.isArray(data) ? data.map((p: any) => p.permission_name) : [];
+    */
   } catch (error) {
     console.error('Exception in getUserPermissions:', error);
     return [];
