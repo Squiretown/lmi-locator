@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Helmet } from 'react-helmet';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
@@ -12,19 +11,17 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import PageHeader from '@/components/PageHeader';
 import { MailIcon, PhoneIcon, MapPinIcon, ClockIcon } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-
 const contactFormSchema = z.object({
   name: z.string().min(2, 'Name is required'),
   email: z.string().email('Please enter a valid email address'),
   subject: z.string().min(2, 'Subject is required'),
   message: z.string().min(10, 'Message must be at least 10 characters')
 });
-
 type ContactFormValues = z.infer<typeof contactFormSchema>;
-
 const ContactPage: React.FC = () => {
-  const { toast } = useToast();
-  
+  const {
+    toast
+  } = useToast();
   const form = useForm<ContactFormValues>({
     resolver: zodResolver(contactFormSchema),
     defaultValues: {
@@ -34,34 +31,23 @@ const ContactPage: React.FC = () => {
       message: ''
     }
   });
-  
   const handleSubmit = (values: ContactFormValues) => {
     // In a real app, this would send the form data to a backend API
     console.log('Form submitted:', values);
-    
     toast({
       title: "Message Sent",
-      description: "We've received your message and will get back to you shortly.",
+      description: "We've received your message and will get back to you shortly."
     });
-    
     form.reset();
   };
-  
-  return (
-    <>
+  return <>
       <Helmet>
         <title>Contact Us | LMICHECK.COM</title>
-        <meta 
-          name="description" 
-          content="Get in touch with our team for support, questions, or partnership opportunities." 
-        />
+        <meta name="description" content="Get in touch with our team for support, questions, or partnership opportunities." />
       </Helmet>
       
       <div className="container mx-auto px-4 py-12">
-        <PageHeader 
-          title="Contact Us" 
-          description="Get in touch with our team for any questions or support"
-        />
+        <PageHeader title="Contact Us" description="Get in touch with our team for any questions or support" />
         
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-12">
           <div className="lg:col-span-2">
@@ -76,66 +62,46 @@ const ContactPage: React.FC = () => {
                 <Form {...form}>
                   <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <FormField
-                        control={form.control}
-                        name="name"
-                        render={({ field }) => (
-                          <FormItem>
+                      <FormField control={form.control} name="name" render={({
+                      field
+                    }) => <FormItem>
                             <FormLabel>Your Name</FormLabel>
                             <FormControl>
                               <Input placeholder="John Doe" {...field} />
                             </FormControl>
                             <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+                          </FormItem>} />
                       
-                      <FormField
-                        control={form.control}
-                        name="email"
-                        render={({ field }) => (
-                          <FormItem>
+                      <FormField control={form.control} name="email" render={({
+                      field
+                    }) => <FormItem>
                             <FormLabel>Email Address</FormLabel>
                             <FormControl>
                               <Input placeholder="john@example.com" type="email" {...field} />
                             </FormControl>
                             <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+                          </FormItem>} />
                     </div>
                     
-                    <FormField
-                      control={form.control}
-                      name="subject"
-                      render={({ field }) => (
-                        <FormItem>
+                    <FormField control={form.control} name="subject" render={({
+                    field
+                  }) => <FormItem>
                           <FormLabel>Subject</FormLabel>
                           <FormControl>
                             <Input placeholder="How can we help?" {...field} />
                           </FormControl>
                           <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                        </FormItem>} />
                     
-                    <FormField
-                      control={form.control}
-                      name="message"
-                      render={({ field }) => (
-                        <FormItem>
+                    <FormField control={form.control} name="message" render={({
+                    field
+                  }) => <FormItem>
                           <FormLabel>Your Message</FormLabel>
                           <FormControl>
-                            <Textarea 
-                              placeholder="Please type your message here..." 
-                              rows={6}
-                              {...field}
-                            />
+                            <Textarea placeholder="Please type your message here..." rows={6} {...field} />
                           </FormControl>
                           <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                        </FormItem>} />
                     
                     <Button type="submit" className="w-full">Send Message</Button>
                   </form>
@@ -154,9 +120,7 @@ const ContactPage: React.FC = () => {
                   <MailIcon className="h-5 w-5 text-primary mt-0.5" />
                   <div>
                     <p className="font-medium">Email</p>
-                    <a href="mailto:info@lmicheck.com" className="text-muted-foreground hover:text-primary">
-                      info@lmicheck.com
-                    </a>
+                    <a href="mailto:info@lmicheck.com" className="text-muted-foreground hover:text-primary">support@lmicheck.com</a>
                   </div>
                 </div>
                 
@@ -231,8 +195,6 @@ const ContactPage: React.FC = () => {
           </div>
         </div>
       </div>
-    </>
-  );
+    </>;
 };
-
 export default ContactPage;
