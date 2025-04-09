@@ -1,5 +1,4 @@
-
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,7 +8,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { Download, FilePlus, Info } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { checkUserPermission } from '@/lib/supabase/permissions';
+import { usePermissions } from '@/hooks/usePermissions';
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table';
 
 type SearchType = 'tract_id' | 'zip_code' | 'city';
@@ -30,42 +29,15 @@ const LmiMarketingList: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [searchId, setSearchId] = useState<string | null>(null);
   
-  // Permission states
-  const [canSearch, setCanSearch] = useState(false);
-  const [canExport, setCanExport] = useState(false);
-  const [isAdmin, setIsAdmin] = useState(false);
-
-  // Load permissions when component mounts
-  useEffect(() => {
-    const loadPermissions = async () => {
-      if (!user) return;
-      
-      try {
-        // Check specific permissions
-        const hasSearchPermission = await checkUserPermission('marketing_list_search');
-        const hasExportPermission = await checkUserPermission('marketing_list_export');
-        const hasAdminPermission = await checkUserPermission('admin_access');
-        
-        setCanSearch(hasSearchPermission);
-        setCanExport(hasExportPermission);
-        setIsAdmin(hasAdminPermission);
-        
-        // For mortgage professionals, we automatically grant search permission
-        if (userType === 'mortgage_professional' && !hasSearchPermission) {
-          setCanSearch(true);
-        }
-      } catch (error) {
-        console.error('Error loading permissions:', error);
-        toast({
-          title: 'Permission Error',
-          description: 'Unable to verify your access permissions',
-          variant: 'destructive',
-        });
-      }
-    };
-
-    loadPermissions();
-  }, [user, userType, toast]);
+  const { permissions, isLoading: permissionsLoading } = usePermissions([
+    'marketing_list_search',
+    'marketing_list_export',
+    'admin_access'
+  ]);
+  
+  const canSearch = permissions['marketing_list_search'] || userType === 'mortgage_professional';
+  const canExport = permissions['marketing_list_export'];
+  const isAdmin = permissions['admin_access'];
 
   const handleSearch = async () => {
     if (!user) {
@@ -151,7 +123,6 @@ const LmiMarketingList: React.FC = () => {
 
       if (error) throw error;
       
-      // Create a download link for the CSV data
       const blob = new Blob([data.csvContent], { type: 'text/csv' });
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -162,7 +133,6 @@ const LmiMarketingList: React.FC = () => {
       a.click();
       document.body.removeChild(a);
       
-      // Update download count
       await supabase
         .from('census_tract_searches')
         .update({ download_count: data.downloadCount })
@@ -181,6 +151,14 @@ const LmiMarketingList: React.FC = () => {
       });
     }
   };
+
+  if (permissionsLoading) {
+    return (
+      <div className="container mx-auto px-4 py-6">
+        <p className="text-center text-muted-foreground">Loading permissions...</p>
+      </div>
+    );
+  }
 
   if (!user) {
     return (
