@@ -3,7 +3,6 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { AdminUser, UserManagementState } from '../types/admin-user';
-import { signOutAllUsers } from '@/lib/auth/auth-operations';
 
 export function useUserManagement() {
   const [state, setState] = useState<UserManagementState>({
@@ -58,25 +57,9 @@ export function useUserManagement() {
     }
   };
 
-  const handleSignOutAllUsers = async () => {
-    try {
-      const result = await signOutAllUsers();
-      
-      if (result.success) {
-        toast.success('All users have been signed out successfully');
-      } else {
-        toast.error(`Failed to sign out users: ${result.error?.message}`);
-      }
-    } catch (err) {
-      console.error('Error signing out all users:', err);
-      toast.error('Failed to sign out users');
-    }
-  };
-
   return {
     ...state,
     handleResetPassword,
     handleDisableUser,
-    handleSignOutAllUsers,
   };
 }

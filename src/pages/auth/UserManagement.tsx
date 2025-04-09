@@ -1,10 +1,10 @@
 
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { LockOpen } from 'lucide-react';
 import { useUserManagement } from './hooks/useUserManagement';
 import { UsersTable } from './components/UsersTable';
+import SignOutAllUsersButton from '@/components/admin/SignOutAllUsersButton';
 
 const UserManagement: React.FC = () => {
   const { 
@@ -12,8 +12,7 @@ const UserManagement: React.FC = () => {
     isLoading, 
     error, 
     handleResetPassword, 
-    handleDisableUser, 
-    handleSignOutAllUsers 
+    handleDisableUser 
   } = useUserManagement();
 
   return (
@@ -25,14 +24,7 @@ const UserManagement: React.FC = () => {
             Manage users and their access permissions
           </CardDescription>
         </div>
-        <Button 
-          variant="destructive" 
-          size="sm"
-          onClick={handleSignOutAllUsers}
-        >
-          <LockOpen className="mr-2 h-4 w-4" />
-          Sign Out All Users
-        </Button>
+        <SignOutAllUsersButton />
       </CardHeader>
       <CardContent>
         <UsersTable
