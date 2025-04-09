@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { 
@@ -9,7 +8,8 @@ import {
   ShieldCheck,
   Building,
   Kanban,
-  Search
+  Search,
+  Briefcase
 } from 'lucide-react';
 import { 
   SidebarGroup, 
@@ -69,6 +69,20 @@ export function AdminSidebarMainMenu() {
               >
                 <Home />
                 <span>Properties</span>
+              </NavLink>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild tooltip="Mortgage Brokers">
+              <NavLink 
+                to="/admin/mortgage-brokers" 
+                className={({ isActive }) => 
+                  isActive ? 'data-[active=true]' : ''
+                }
+              >
+                <Briefcase />
+                <span>Mortgage Brokers</span>
               </NavLink>
             </SidebarMenuButton>
           </SidebarMenuItem>
