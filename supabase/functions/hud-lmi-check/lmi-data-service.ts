@@ -1,16 +1,21 @@
-
-// Service for querying HUD's Low to Moderate Income data through ArcGIS
-// Main entry point module that re-exports all functionality
-
-// Re-export types and interfaces
-export {
-  LMICoordinates,
-  AddressComponents,
-  CensusInfo,
-  AddressInfo,
-  LMIResult,
-  GeocodingResult
+import { 
+  LMICoordinates, 
+  AddressComponents, 
+  CensusInfo, 
+  AddressInfo, 
+  LMIResult, 
+  GeocodingResult 
 } from './interfaces.ts';
+
+// Re-export types
+export type { 
+  LMICoordinates, 
+  AddressComponents, 
+  CensusInfo, 
+  AddressInfo, 
+  LMIResult, 
+  GeocodingResult 
+};
 
 // Re-export constants
 export {
