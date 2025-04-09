@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from 'sonner';
 import { getUserTypeName } from '@/lib/supabase/user';
@@ -135,9 +136,10 @@ export async function createInitialAdminUser() {
       return null;
     }
 
-    // Create the initial admin user
+    // Create a more secure password with special characters, numbers, and mixed case
     const adminEmail = 'admin@example.com';
-    const adminPassword = 'AdminPassword123!'; // Strong, temporary password
+    // More complex password that should pass Supabase's strength check
+    const adminPassword = `Admin${Math.random().toString(36).slice(2)}!${Math.random().toString(36).toUpperCase().slice(2)}@${Date.now().toString().slice(-4)}`;
 
     const { data, error } = await supabase.auth.signUp({
       email: adminEmail, 
