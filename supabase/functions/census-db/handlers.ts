@@ -1,5 +1,8 @@
 
-import { CENSUS_API_BASE_URL, ACS_DATASET, MEDIAN_INCOME_VARIABLE } from "../lmi-check/constants.ts";
+// Define constants locally instead of importing from another edge function
+const CENSUS_API_BASE_URL = "https://api.census.gov/data";
+const ACS_DATASET = "2019/acs/acs5"; // Using 2019 ACS 5-year estimates
+const MEDIAN_INCOME_VARIABLE = "B19013_001E"; // Median household income variable
 
 export async function getMedianIncome(params: { geoid: string, state: string, county: string, tract: string }) {
   console.log('Getting median income for tract:', params.geoid);
@@ -49,5 +52,16 @@ export async function getMedianIncome(params: { geoid: string, state: string, co
       success: false,
       error: error.message || 'Unknown error occurred',
     };
+  }
+}
+
+// Add the handleApiRequest function to process different API requests
+export async function handleApiRequest(supabase: any, action: string, params: any) {
+  switch (action) {
+    case 'getMedianIncome':
+      return await getMedianIncome(params);
+    // Add more actions as needed
+    default:
+      throw new Error(`Unknown action: ${action}`);
   }
 }
