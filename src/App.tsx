@@ -16,7 +16,7 @@ import LoginPage from './pages/auth/LoginPage';
 import { AdminLayout, AdminDashboard, MarketingDashboard } from './components/admin';
 import AdminTools from './pages/auth/AdminTools';
 import ProtectedRoute from './components/auth/ProtectedRoute';
-import { AuthProvider } from './hooks/useAuth';
+import { AuthProvider } from '@/providers/AuthProvider';
 
 // Client
 import ClientDashboard from './pages/dashboard/Client';
