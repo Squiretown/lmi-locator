@@ -7,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { Download, FilePlus } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 type SearchType = 'tract_id' | 'zip_code' | 'city';
 type SearchResult = {
@@ -18,11 +19,13 @@ type SearchResult = {
 
 const LmiMarketingList: React.FC = () => {
   const { user } = useAuth();
+  const { toast } = useToast();
   const [searchType, setSearchType] = useState<SearchType>('tract_id');
   const [searchValue, setSearchValue] = useState('');
   const [searchName, setSearchName] = useState('');
   const [results, setResults] = useState<SearchResult[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [searchId, setSearchId] = useState<string | null>(null);
 
   const handleSearch = async () => {
     if (!user) return;
@@ -41,17 +44,70 @@ const LmiMarketingList: React.FC = () => {
       if (error) throw error;
 
       setResults(data.results);
+      setSearchId(data.searchId);
+      
+      toast({
+        title: 'Search completed',
+        description: `Found ${data.results.length} properties`,
+      });
     } catch (error) {
       console.error('Search error:', error);
-      // TODO: Add toast or error handling
+      toast({
+        title: 'Search failed',
+        description: 'Unable to complete the search. Please try again.',
+        variant: 'destructive',
+      });
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleExport = async () => {
-    // TODO: Implement export functionality
-    console.log('Exporting results');
+    if (!searchId || !user) return;
+    
+    try {
+      const { data, error } = await supabase.functions.invoke('census-db', {
+        body: {
+          action: 'exportSearchResults',
+          params: {
+            searchId,
+            userId: user.id,
+            format: 'csv'
+          }
+        }
+      });
+
+      if (error) throw error;
+      
+      // Create a download link for the CSV data
+      const blob = new Blob([data.csvContent], { type: 'text/csv' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.setAttribute('hidden', '');
+      a.setAttribute('href', url);
+      a.setAttribute('download', `${searchName || 'marketing-list'}.csv`);
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      
+      // Update download count
+      await supabase
+        .from('census_tract_searches')
+        .update({ download_count: data.downloadCount })
+        .eq('id', searchId);
+        
+      toast({
+        title: 'Export successful',
+        description: 'Your marketing list has been downloaded',
+      });
+    } catch (error) {
+      console.error('Export error:', error);
+      toast({
+        title: 'Export failed',
+        description: 'Unable to export the data. Please try again.',
+        variant: 'destructive',
+      });
+    }
   };
 
   return (
