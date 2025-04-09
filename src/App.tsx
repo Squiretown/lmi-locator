@@ -5,6 +5,12 @@ import './App.css';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import Index from '@/pages/Index';
+import ProductPage from '@/pages/ProductPage';
+import ResourcesPage from '@/pages/ResourcesPage';
+import PricingPage from '@/pages/PricingPage';
+import CustomersPage from '@/pages/CustomersPage';
+import BlogPage from '@/pages/BlogPage';
+import ContactPage from '@/pages/ContactPage';
 import LoginPage from '@/pages/auth/LoginPage';
 import { AdminLayout, AdminDashboard, MarketingDashboard } from '@/components/admin';
 import { useAuth } from '@/hooks/useAuth';
@@ -68,6 +74,12 @@ function AppContent() {
         <div className="flex-1">
           <Routes>
             <Route path="/" element={<Index />} />
+            <Route path="/product" element={<ProductPage />} />
+            <Route path="/resources" element={<ResourcesPage />} />
+            <Route path="/pricing" element={<PricingPage />} />
+            <Route path="/customers" element={<CustomersPage />} />
+            <Route path="/blog" element={<BlogPage />} />
+            <Route path="/contact" element={<ContactPage />} />
             
             <Route path="/login" element={
               <AuthWrapper>

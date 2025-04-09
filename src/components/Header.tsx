@@ -34,22 +34,22 @@ const Header = () => {
           
           {/* Navigation Links */}
           <nav className="hidden md:flex space-x-8">
-            <Link to="/" className="hover:text-primary transition-colors">
+            <Link to="/product" className="hover:text-primary transition-colors">
               Product
             </Link>
-            <Link to="/" className="hover:text-primary transition-colors">
+            <Link to="/resources" className="hover:text-primary transition-colors">
               Resources
             </Link>
-            <Link to="/" className="hover:text-primary transition-colors">
+            <Link to="/pricing" className="hover:text-primary transition-colors">
               Pricing
             </Link>
-            <Link to="/" className="hover:text-primary transition-colors">
+            <Link to="/customers" className="hover:text-primary transition-colors">
               Customers
             </Link>
-            <Link to="/" className="hover:text-primary transition-colors">
+            <Link to="/blog" className="hover:text-primary transition-colors">
               Blog
             </Link>
-            <Link to="/" className="hover:text-primary transition-colors">
+            <Link to="/contact" className="hover:text-primary transition-colors">
               Contact
             </Link>
           </nav>
