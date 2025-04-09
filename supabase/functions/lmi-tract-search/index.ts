@@ -1,9 +1,9 @@
 
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.21.0";
-import { determineCensusTract } from "../lmi-check/census/tract-lookup.ts";
-import { geocodeAddress } from "../lmi-check/census/address-geocoder.ts";
-import { corsHeaders } from "../lmi-check/cors.ts";
+import { determineCensusTract } from "./census/tract-lookup.ts";  // Updated path
+import { geocodeAddress } from "./census/address-geocoder.ts";    // Updated path
+import { corsHeaders } from "./cors.ts";                         // Updated path
 
 serve(async (req) => {
   // Handle CORS
