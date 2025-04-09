@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -21,12 +20,9 @@ import {
 import { signOutAllUsers } from '@/lib/auth/auth-operations';
 import { toast } from 'sonner';
 import { MoreHorizontal, Shield, Ban, UserCheck, Lock, LockOpen } from 'lucide-react';
+import { User as SupabaseUser } from '@supabase/supabase-js';
 
-interface User {
-  id: string;
-  email: string;
-  created_at: string;
-  last_sign_in_at?: string;
+interface AdminUser extends SupabaseUser {
   user_metadata?: {
     user_type?: string;
     first_name?: string;
@@ -35,7 +31,7 @@ interface User {
 }
 
 const UserManagement: React.FC = () => {
-  const [users, setUsers] = useState<User[]>([]);
+  const [users, setUsers] = useState<AdminUser[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -44,8 +40,6 @@ const UserManagement: React.FC = () => {
       try {
         setIsLoading(true);
         
-        // In a real app, you might need to use a Supabase Edge Function for this
-        // as it requires admin privileges
         const { data, error } = await supabase.auth.admin.listUsers();
         
         if (error) throw error;
@@ -65,7 +59,6 @@ const UserManagement: React.FC = () => {
 
   const handleResetPassword = async (userId: string) => {
     try {
-      // This would typically be handled through an admin API or Edge Function
       toast.info('Password reset functionality will be available soon.');
     } catch (err) {
       console.error('Error resetting password:', err);
@@ -75,7 +68,6 @@ const UserManagement: React.FC = () => {
 
   const handleDisableUser = async (userId: string) => {
     try {
-      // This would typically be handled through an admin API or Edge Function
       toast.info('User disable functionality will be available soon.');
     } catch (err) {
       console.error('Error disabling user:', err);
