@@ -10,7 +10,7 @@ export {
   AddressInfo,
   LMIResult,
   GeocodingResult
-} from './interfaces';
+} from './interfaces.ts';
 
 // Re-export constants
 export {
@@ -18,13 +18,13 @@ export {
   LMI_BLOCK_GROUP_ENDPOINT,
   CENSUS_GEOCODER_ENDPOINT,
   LMI_ELIGIBILITY_THRESHOLD
-} from './constants';
+} from './constants.ts';
 
 // Re-export geocoding functions
 export {
   geocodeAddress,
   geocodePlace
-} from './geocoding';
+} from './geocoding.ts';
 
 // Re-export HUD API functions
 export {
@@ -32,10 +32,10 @@ export {
   searchLMIByFIPS,
   searchLMIByPlaceName,
   searchLMIByAddress
-} from './hud-api';
+} from './hud-api.ts';
 
 // Re-export data processing functions
 export {
   processLMIData
-} from './data-processing';
+} from './data-processing.ts';
 

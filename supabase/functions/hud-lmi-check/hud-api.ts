@@ -1,8 +1,7 @@
-
 // Service for interacting with HUD's ArcGIS REST API endpoints
-import { LMI_TRACT_ENDPOINT, LMI_BLOCK_GROUP_ENDPOINT } from './constants';
-import { LMICoordinates, AddressComponents, AddressInfo, GeocodingResult } from './interfaces';
-import { geocodeAddress, geocodePlace } from './geocoding';
+import { LMI_TRACT_ENDPOINT, LMI_BLOCK_GROUP_ENDPOINT } from './constants.ts';
+import { LMICoordinates, AddressComponents, AddressInfo, GeocodingResult } from './interfaces.ts';
+import { geocodeAddress, geocodePlace } from './geocoding.ts';
 
 /**
  * Search for LMI areas by location (latitude/longitude)
@@ -140,4 +139,3 @@ export async function searchLMIByAddress(
     throw error;
   }
 }
-

@@ -1,7 +1,6 @@
-
 // Geocoding service for address to place lookups
-import { CENSUS_GEOCODER_ENDPOINT } from './constants';
-import { LMICoordinates, AddressComponents, AddressInfo } from './interfaces';
+import { CENSUS_GEOCODER_ENDPOINT } from './constants.ts';
+import { LMICoordinates, AddressComponents, AddressInfo } from './interfaces.ts';
 
 /**
  * Geocode an address using Census Geocoder
@@ -110,4 +109,3 @@ export async function geocodePlace(placeName: string): Promise<AddressInfo> {
     throw error;
   }
 }
-

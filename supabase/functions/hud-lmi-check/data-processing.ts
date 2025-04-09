@@ -1,7 +1,6 @@
-
 // Data processing utilities for HUD LMI data
-import { LMIResult, GeocodingResult } from './interfaces';
-import { LMI_ELIGIBILITY_THRESHOLD } from './constants';
+import { LMIResult, GeocodingResult } from './interfaces.ts';
+import { LMI_ELIGIBILITY_THRESHOLD } from './constants.ts';
 
 /**
  * Process the LMI data to extract useful information
@@ -42,4 +41,3 @@ export function processLMIData(lmiData: GeocodingResult): LMIResult {
   
   return result;
 }
-
