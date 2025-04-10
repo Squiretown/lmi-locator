@@ -6,7 +6,6 @@ import { useAuth } from '@/hooks/useAuth';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import DeleteAccountDialog from '@/components/auth/DeleteAccountDialog';
 
 interface PasswordFormValues {
@@ -24,7 +23,6 @@ const SecuritySettings: React.FC = () => {
   const { user, deleteAccount } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [isEmailLoading, setIsEmailLoading] = useState(false);
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   
   const passwordForm = useForm<PasswordFormValues>({
     defaultValues: {
@@ -114,14 +112,6 @@ const SecuritySettings: React.FC = () => {
       toast.error(`Failed to update email: ${error.message}`);
     } finally {
       setIsEmailLoading(false);
-    }
-  };
-
-  const handleDeleteAccount = async (currentPassword: string) => {
-    const result = await deleteAccount(currentPassword);
-    
-    if (result.success) {
-      setShowDeleteDialog(false);
     }
   };
 
@@ -239,18 +229,7 @@ const SecuritySettings: React.FC = () => {
           Permanently delete your account and all associated data.
         </p>
         
-        <Button 
-          variant="destructive"
-          onClick={() => setShowDeleteDialog(true)}
-        >
-          Delete Account
-        </Button>
-        
-        <DeleteAccountDialog 
-          isOpen={showDeleteDialog}
-          onClose={() => setShowDeleteDialog(false)}
-          onConfirm={handleDeleteAccount}
-        />
+        <DeleteAccountDialog />
       </div>
     </div>
   );
