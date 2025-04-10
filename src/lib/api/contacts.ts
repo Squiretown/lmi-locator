@@ -74,7 +74,7 @@ const transformInteraction = (item: ContactInteractionTable): ContactInteraction
 export const fetchContacts = async (professionalId: string): Promise<Contact[]> => {
   const { data, error } = await supabase
     .from('contacts')
-    .select('*')
+    .select()
     .eq('owner_id', professionalId)
     .order('created_at', { ascending: false });
 
@@ -83,14 +83,14 @@ export const fetchContacts = async (professionalId: string): Promise<Contact[]> 
     throw new Error(`Failed to fetch contacts: ${error.message}`);
   }
 
-  const contacts = (data || []).map((item: ContactTable) => transformContact(item));
+  const contacts = (data || []).map((item: any) => transformContact(item as ContactTable));
   return contacts;
 };
 
 export const fetchContactById = async (id: string): Promise<Contact | null> => {
   const { data, error } = await supabase
     .from('contacts')
-    .select('*')
+    .select()
     .eq('id', id)
     .single();
 
@@ -183,7 +183,7 @@ export const deleteContact = async (id: string): Promise<void> => {
 export const fetchContactInteractions = async (contactId: string): Promise<ContactInteraction[]> => {
   const { data, error } = await supabase
     .from('contact_interactions')
-    .select('*')
+    .select()
     .eq('contact_id', contactId)
     .order('timestamp', { ascending: false });
 
@@ -192,7 +192,7 @@ export const fetchContactInteractions = async (contactId: string): Promise<Conta
     throw new Error(`Failed to fetch interactions: ${error.message}`);
   }
 
-  const interactions = (data || []).map((item: ContactInteractionTable) => transformInteraction(item));
+  const interactions = (data || []).map((item: any) => transformInteraction(item as ContactInteractionTable));
   return interactions;
 };
 

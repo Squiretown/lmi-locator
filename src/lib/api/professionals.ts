@@ -61,23 +61,22 @@ const transformProfessional = (item: ProfessionalTable): Professional => ({
 
 export const fetchProfessionals = async (type?: 'realtor' | 'mortgage_broker'): Promise<Professional[]> => {
   let query = supabase
-    .from('professionals')
-    .select('*')
-    .order('created_at', { ascending: false });
+    .from('professionals');
   
   if (type) {
     query = query.eq('type', type);
   }
   
-  const { data, error } = await query;
+  const { data, error } = await query
+    .select('*')
+    .order('created_at', { ascending: false });
 
   if (error) {
     console.error('Error fetching professionals:', error);
     throw new Error(`Failed to fetch professionals: ${error.message}`);
   }
 
-  const professionals = (data || []).map((item: ProfessionalTable) => transformProfessional(item));
-  return professionals;
+  return (data || []).map((item) => transformProfessional(item as ProfessionalTable));
 };
 
 export const fetchProfessionalById = async (id: string): Promise<Professional | null> => {
@@ -198,15 +197,15 @@ export const getProfessionalByUserId = async (type?: 'realtor' | 'mortgage_broke
     }
 
     let query = supabase
-      .from('professionals')
-      .select('*')
-      .eq('user_id', user.id);
+      .from('professionals');
+    
+    query = query.eq('user_id', user.id);
     
     if (type) {
       query = query.eq('type', type);
     }
 
-    const { data, error } = await query.single();
+    const { data, error } = await query.select().single();
 
     if (error) {
       if (error.code === 'PGRST116') {
@@ -236,7 +235,7 @@ export const getPermissionsForProfessional = async (professionalId: string): Pro
     throw new Error(`Failed to fetch permissions: ${error.message}`);
   }
 
-  return (data || []).map((permission: ProfessionalPermissionTable) => permission.permission_name);
+  return (data || []).map((permission) => permission.permission_name as string);
 };
 
 export const addPermissionToProfessional = async (professionalId: string, permissionName: string): Promise<void> => {

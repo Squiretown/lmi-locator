@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { BrokerFormValues } from '@/components/brokers/BrokerForm';
 import { MortgageBrokerTable, BrokerPermissionTable } from './database-types';
@@ -16,7 +17,7 @@ export interface MortgageBroker {
 export const fetchBrokers = async (): Promise<MortgageBroker[]> => {
   const { data, error } = await supabase
     .from('mortgage_brokers')
-    .select('*')
+    .select()
     .order('created_at', { ascending: false });
 
   if (error) {

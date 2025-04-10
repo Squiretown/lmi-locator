@@ -53,6 +53,25 @@ export interface ContactInteractionTable {
   metadata: any | null;
 }
 
+// For backward compatibility with the brokers.ts file that still references these
+export interface MortgageBrokerTable {
+  id: string;
+  name: string;
+  company: string;
+  license_number: string;
+  email: string;
+  phone: string | null;
+  status: 'active' | 'pending' | 'inactive';
+  created_at: string;
+}
+
+export interface BrokerPermissionTable {
+  id: string;
+  broker_id: string;
+  permission_name: string;
+  granted_at: string;
+}
+
 // Keep the RealtorTable for backward compatibility during transition
 export interface RealtorTable {
   id: string;
