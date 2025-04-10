@@ -1,3 +1,4 @@
+
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Header from './components/Header';
 import Footer from './components/Footer';
@@ -20,6 +21,7 @@ import ClientDashboard from './pages/dashboard/Client';
 import RealtorDashboard from './pages/dashboard/Realtor';
 import MortgageProfessionalDashboard from './pages/dashboard/MortgageProfessional';
 import MortgageBrokersPage from './pages/admin/MortgageBrokersPage';
+import SearchHistoryPage from './pages/admin/SearchHistoryPage';
 
 function App() {
   return (
@@ -49,6 +51,7 @@ function App() {
                 <Route path="users" element={<UserManagement />} />
                 <Route path="settings" element={<SettingsPage />} />
                 <Route path="mortgage-brokers" element={<MortgageBrokersPage />} />
+                <Route path="search-history" element={<SearchHistoryPage />} />
                 <Route path="*" element={<Navigate to="/admin" replace />} />
               </Route>
 

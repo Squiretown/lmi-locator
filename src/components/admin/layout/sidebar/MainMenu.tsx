@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { 
@@ -9,7 +10,8 @@ import {
   Building,
   Kanban,
   Search,
-  Briefcase
+  Briefcase,
+  History
 } from 'lucide-react';
 import { 
   SidebarGroup, 
@@ -128,7 +130,7 @@ export function AdminSidebarMainMenu() {
                   isActive ? 'data-[active=true]' : ''
                 }
               >
-                <Search />
+                <History />
                 <span>Search History</span>
               </NavLink>
             </SidebarMenuButton>
