@@ -30,5 +30,9 @@ export interface RealtorTable {
   bio: string | null;
   photo_url: string | null;
   created_at: string;
-  user_id: string;
+  is_flagged?: boolean;
+  notes?: string | null;
+  social_media?: any;
+  last_updated?: string;
+  user_id?: string;
 }

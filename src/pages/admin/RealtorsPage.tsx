@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -9,7 +8,7 @@ import RealtorDialog from '@/components/realtors/RealtorDialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableHeader, TableBody, TableFooter, TableHead, TableRow, TableCell } from '@/components/ui/table';
-import { UserPlus, Search, Pencil, Trash2, UserX } from 'lucide-react';
+import { UserPlus, Search, Pencil, Trash2 } from 'lucide-react';
 
 const RealtorsPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -20,13 +19,11 @@ const RealtorsPage: React.FC = () => {
   
   const queryClient = useQueryClient();
 
-  // Query to fetch realtors
   const { data: realtors, isLoading, error } = useQuery({
     queryKey: ['realtors'],
     queryFn: fetchRealtors
   });
 
-  // Mutations for realtor operations
   const createRealtorMutation = useMutation({
     mutationFn: createRealtor,
     onSuccess: () => {
@@ -199,7 +196,6 @@ const RealtorsPage: React.FC = () => {
         </CardContent>
       </Card>
 
-      {/* Add Realtor Dialog */}
       <RealtorDialog
         isOpen={addDialogOpen}
         setIsOpen={setAddDialogOpen}
@@ -208,7 +204,6 @@ const RealtorsPage: React.FC = () => {
         title="Add New Realtor"
       />
 
-      {/* Edit Realtor Dialog */}
       {selectedRealtor && (
         <RealtorDialog
           isOpen={editDialogOpen}
@@ -220,7 +215,6 @@ const RealtorsPage: React.FC = () => {
         />
       )}
 
-      {/* Delete Confirmation Dialog */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>

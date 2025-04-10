@@ -14,6 +14,7 @@ export interface Realtor {
   bio: string | null;
   photo_url: string | null;
   created_at: string;
+  user_id?: string;
 }
 
 export interface RealtorFormValues {
@@ -39,7 +40,26 @@ export const fetchRealtors = async (): Promise<Realtor[]> => {
     throw new Error(`Failed to fetch realtors: ${error.message}`);
   }
 
-  return (data || []) as Realtor[];
+  // Transform the data to match our Realtor interface
+  const realtors = (data || []).map(item => {
+    const realtor: Realtor = {
+      id: item.id,
+      name: item.name,
+      email: item.email,
+      phone: item.phone,
+      brokerage: item.brokerage,
+      license_number: item.license_number,
+      status: item.status || 'pending',
+      website: item.website,
+      bio: item.bio,
+      photo_url: item.photo_url,
+      created_at: item.created_at,
+      user_id: item.user_id
+    };
+    return realtor;
+  });
+
+  return realtors;
 };
 
 export const createRealtor = async (realtor: RealtorFormValues): Promise<Realtor> => {
@@ -81,7 +101,23 @@ export const createRealtor = async (realtor: RealtorFormValues): Promise<Realtor
       throw new Error(`Failed to create realtor: ${error.message}`);
     }
 
-    return data as Realtor;
+    // Transform the response to match our Realtor interface
+    const createdRealtor: Realtor = {
+      id: data.id,
+      name: data.name,
+      email: data.email,
+      phone: data.phone,
+      brokerage: data.brokerage,
+      license_number: data.license_number,
+      status: data.status,
+      website: data.website,
+      bio: data.bio,
+      photo_url: data.photo_url,
+      created_at: data.created_at,
+      user_id: data.user_id
+    };
+
+    return createdRealtor;
   } catch (err) {
     console.error('Error in createRealtor:', err);
     throw err;
@@ -114,7 +150,23 @@ export const updateRealtor = async (id: string, realtor: RealtorFormValues): Pro
     throw new Error(`Failed to update realtor: ${error.message}`);
   }
 
-  return data as Realtor;
+  // Transform the response to match our Realtor interface
+  const updatedRealtor: Realtor = {
+    id: data.id,
+    name: data.name,
+    email: data.email,
+    phone: data.phone,
+    brokerage: data.brokerage,
+    license_number: data.license_number,
+    status: data.status,
+    website: data.website,
+    bio: data.bio,
+    photo_url: data.photo_url,
+    created_at: data.created_at,
+    user_id: data.user_id
+  };
+
+  return updatedRealtor;
 };
 
 export const deleteRealtor = async (id: string): Promise<void> => {
@@ -154,7 +206,23 @@ export const getRealtorByUserId = async (): Promise<Realtor | null> => {
       throw new Error(`Failed to fetch realtor: ${error.message}`);
     }
 
-    return data as Realtor;
+    // Transform the response to match our Realtor interface
+    const realtor: Realtor = {
+      id: data.id,
+      name: data.name,
+      email: data.email,
+      phone: data.phone,
+      brokerage: data.brokerage,
+      license_number: data.license_number,
+      status: data.status || 'pending',
+      website: data.website,
+      bio: data.bio,
+      photo_url: data.photo_url,
+      created_at: data.created_at,
+      user_id: data.user_id
+    };
+
+    return realtor;
   } catch (err) {
     console.error('Error in getRealtorByUserId:', err);
     return null;
