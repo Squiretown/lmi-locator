@@ -4,91 +4,93 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Briefcase, Plus, Pencil, Trash2, Search, Shield } from 'lucide-react';
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { fetchBrokers, createBroker, updateBroker, deleteBroker, MortgageBroker } from '@/lib/api/brokers';
 import { toast } from 'sonner';
-
-// Mock data for initial development
-const mockBrokers = [
-  {
-    id: '1',
-    name: 'John Smith',
-    company: 'First Choice Mortgage',
-    license_number: 'ML123456',
-    email: 'john.smith@example.com',
-    phone: '(555) 123-4567',
-    status: 'active',
-    created_at: '2023-05-15T10:30:00Z'
-  },
-  {
-    id: '2',
-    name: 'Sarah Johnson',
-    company: 'Premier Lending Group',
-    license_number: 'ML789012',
-    email: 'sarah.j@example.com',
-    phone: '(555) 987-6543',
-    status: 'pending',
-    created_at: '2023-06-02T14:45:00Z'
-  },
-  {
-    id: '3',
-    name: 'Michael Brown',
-    company: 'Reliable Mortgage Solutions',
-    license_number: 'ML345678',
-    email: 'michael.b@example.com',
-    phone: '(555) 456-7890',
-    status: 'inactive',
-    created_at: '2023-04-20T09:15:00Z'
-  }
-];
-
-// Interface for broker data
-interface MortgageBroker {
-  id: string;
-  name: string;
-  company: string;
-  license_number: string;
-  email: string;
-  phone: string;
-  status: 'active' | 'pending' | 'inactive';
-  created_at: string;
-}
+import BrokerDialog from '@/components/brokers/BrokerDialog';
+import { BrokerFormValues } from '@/components/brokers/BrokerForm';
+import BrokerPermissionsDialog from '@/components/brokers/BrokerPermissionsDialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 
 const MortgageBrokersPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
+  const [addDialogOpen, setAddDialogOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [permissionsDialogOpen, setPermissionsDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [selectedBroker, setSelectedBroker] = useState<MortgageBroker | null>(null);
+  
+  const queryClient = useQueryClient();
 
-  // In a real implementation, this would fetch from Supabase
+  // Query to fetch brokers
   const { data: brokers, isLoading, error } = useQuery({
     queryKey: ['mortgageBrokers'],
-    queryFn: async () => {
-      // This is where you would fetch real data from Supabase
-      // const { data, error } = await supabase
-      //   .from('mortgage_brokers')
-      //   .select('*')
-      //   .order('created_at', { ascending: false });
-      
-      // if (error) throw error;
-      // return data;
-      
-      // For now, return mock data
-      return mockBrokers;
+    queryFn: fetchBrokers
+  });
+
+  // Mutations for broker operations
+  const createBrokerMutation = useMutation({
+    mutationFn: createBroker,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['mortgageBrokers'] });
+      toast.success('Broker added successfully');
+    },
+    onError: (error) => {
+      toast.error(`Failed to add broker: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   });
 
-  const handleAddBroker = () => {
-    toast.info("Add broker functionality coming soon");
+  const updateBrokerMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string, data: BrokerFormValues }) => 
+      updateBroker(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['mortgageBrokers'] });
+      toast.success('Broker updated successfully');
+    },
+    onError: (error) => {
+      toast.error(`Failed to update broker: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  });
+
+  const deleteBrokerMutation = useMutation({
+    mutationFn: deleteBroker,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['mortgageBrokers'] });
+      toast.success('Broker deleted successfully');
+    },
+    onError: (error) => {
+      toast.error(`Failed to delete broker: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  });
+
+  const handleAddBroker = async (data: BrokerFormValues) => {
+    await createBrokerMutation.mutateAsync(data);
   };
 
-  const handleEditBroker = (id: string) => {
-    toast.info(`Edit broker with ID: ${id} - Coming soon`);
+  const handleEditBroker = async (data: BrokerFormValues) => {
+    if (!selectedBroker) return;
+    await updateBrokerMutation.mutateAsync({ id: selectedBroker.id, data });
   };
 
-  const handleDeleteBroker = (id: string) => {
-    toast.info(`Delete broker with ID: ${id} - Coming soon`);
+  const handleDeleteBroker = async () => {
+    if (!selectedBroker) return;
+    await deleteBrokerMutation.mutateAsync(selectedBroker.id);
+    setDeleteDialogOpen(false);
   };
 
-  const handleViewPermissions = (id: string) => {
-    toast.info(`View permissions for broker with ID: ${id} - Coming soon`);
+  const openEditDialog = (broker: MortgageBroker) => {
+    setSelectedBroker(broker);
+    setEditDialogOpen(true);
+  };
+
+  const openDeleteDialog = (broker: MortgageBroker) => {
+    setSelectedBroker(broker);
+    setDeleteDialogOpen(true);
+  };
+
+  const openPermissionsDialog = (broker: MortgageBroker) => {
+    setSelectedBroker(broker);
+    setPermissionsDialogOpen(true);
   };
 
   const filteredBrokers = brokers?.filter(broker => 
@@ -107,7 +109,7 @@ const MortgageBrokersPage: React.FC = () => {
               <Briefcase className="h-6 w-6" />
               <CardTitle>Mortgage Brokers Management</CardTitle>
             </div>
-            <Button onClick={handleAddBroker} className="flex items-center space-x-1">
+            <Button onClick={() => setAddDialogOpen(true)} className="flex items-center space-x-1">
               <Plus className="h-4 w-4" />
               <span>Add Broker</span>
             </Button>
@@ -131,7 +133,7 @@ const MortgageBrokersPage: React.FC = () => {
             <div className="text-center py-4">Loading brokers...</div>
           ) : error ? (
             <div className="text-center py-4 text-red-500">
-              Error loading brokers: {error.toString()}
+              Error loading brokers: {error instanceof Error ? error.message : 'Unknown error'}
             </div>
           ) : (
             <div className="rounded-md border">
@@ -177,7 +179,7 @@ const MortgageBrokersPage: React.FC = () => {
                             <Button 
                               variant="ghost" 
                               size="icon" 
-                              onClick={() => handleEditBroker(broker.id)}
+                              onClick={() => openEditDialog(broker)}
                               title="Edit broker"
                             >
                               <Pencil className="h-4 w-4" />
@@ -185,7 +187,7 @@ const MortgageBrokersPage: React.FC = () => {
                             <Button 
                               variant="ghost" 
                               size="icon" 
-                              onClick={() => handleDeleteBroker(broker.id)}
+                              onClick={() => openDeleteDialog(broker)}
                               title="Delete broker"
                             >
                               <Trash2 className="h-4 w-4" />
@@ -193,7 +195,7 @@ const MortgageBrokersPage: React.FC = () => {
                             <Button 
                               variant="ghost" 
                               size="icon" 
-                              onClick={() => handleViewPermissions(broker.id)}
+                              onClick={() => openPermissionsDialog(broker)}
                               title="Manage permissions"
                             >
                               <Shield className="h-4 w-4" />
@@ -209,6 +211,60 @@ const MortgageBrokersPage: React.FC = () => {
           )}
         </CardContent>
       </Card>
+
+      {/* Add Broker Dialog */}
+      <BrokerDialog
+        isOpen={addDialogOpen}
+        setIsOpen={setAddDialogOpen}
+        onSubmit={handleAddBroker}
+        isLoading={createBrokerMutation.isPending}
+        title="Add New Broker"
+      />
+
+      {/* Edit Broker Dialog */}
+      {selectedBroker && (
+        <BrokerDialog
+          isOpen={editDialogOpen}
+          setIsOpen={setEditDialogOpen}
+          onSubmit={handleEditBroker}
+          defaultValues={selectedBroker}
+          isLoading={updateBrokerMutation.isPending}
+          title="Edit Broker"
+        />
+      )}
+
+      {/* Broker Permissions Dialog */}
+      {selectedBroker && (
+        <BrokerPermissionsDialog
+          isOpen={permissionsDialogOpen}
+          setIsOpen={setPermissionsDialogOpen}
+          brokerId={selectedBroker.id}
+          brokerName={selectedBroker.name}
+        />
+      )}
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete the broker 
+              {selectedBroker && <span className="font-semibold"> {selectedBroker.name}</span>} 
+              and remove all associated data.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleDeleteBroker}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {deleteBrokerMutation.isPending ? 'Deleting...' : 'Delete'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
