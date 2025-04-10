@@ -14,7 +14,16 @@ export const createBroker = async (broker: BrokerFormValues): Promise<MortgageBr
     throw new Error(`Failed to create broker: ${error.message}`);
   }
 
-  return data;
+  return {
+    id: data.id,
+    name: data.name,
+    company: data.company,
+    license_number: data.license_number,
+    email: data.email,
+    phone: data.phone,
+    status: data.status as 'active' | 'pending' | 'inactive',
+    created_at: data.created_at
+  };
 };
 
 export const updateBroker = async (id: string, broker: BrokerFormValues): Promise<MortgageBroker> => {
@@ -30,7 +39,16 @@ export const updateBroker = async (id: string, broker: BrokerFormValues): Promis
     throw new Error(`Failed to update broker: ${error.message}`);
   }
 
-  return data;
+  return {
+    id: data.id,
+    name: data.name,
+    company: data.company,
+    license_number: data.license_number,
+    email: data.email,
+    phone: data.phone,
+    status: data.status as 'active' | 'pending' | 'inactive',
+    created_at: data.created_at
+  };
 };
 
 export const deleteBroker = async (id: string): Promise<void> => {

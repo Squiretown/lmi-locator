@@ -6,45 +6,45 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import BrokerForm, { BrokerFormValues } from './BrokerForm';
+import BrokerForm from './BrokerForm';
+import { BrokerFormValues } from '@/lib/api/types';
+import { MortgageBroker } from '@/lib/api/types';
 
 interface BrokerDialogProps {
   isOpen: boolean;
-  setIsOpen: (open: boolean) => void;
-  onSubmit: (data: BrokerFormValues) => Promise<void>;
-  defaultValues?: Partial<BrokerFormValues>;
-  isLoading?: boolean;
-  title: string;
+  onClose: () => void;
+  onSave: (data: BrokerFormValues) => Promise<void>;
+  isEditMode: boolean;
+  initialValues?: Partial<MortgageBroker> | null;
 }
 
 const BrokerDialog: React.FC<BrokerDialogProps> = ({
   isOpen,
-  setIsOpen,
-  onSubmit,
-  defaultValues,
-  isLoading,
-  title,
+  onClose,
+  onSave,
+  isEditMode,
+  initialValues,
 }) => {
   const handleFormSubmit = async (data: BrokerFormValues) => {
-    await onSubmit(data);
-    setIsOpen(false);
+    await onSave(data);
+    onClose();
   };
 
   const handleCancel = () => {
-    setIsOpen(false);
+    onClose();
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+    <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
-          <DialogTitle>{title}</DialogTitle>
+          <DialogTitle>{isEditMode ? 'Edit Broker' : 'Add New Broker'}</DialogTitle>
         </DialogHeader>
         <BrokerForm
-          defaultValues={defaultValues}
+          defaultValues={initialValues}
           onSubmit={handleFormSubmit}
           onCancel={handleCancel}
-          isLoading={isLoading}
+          isLoading={false}
         />
       </DialogContent>
     </Dialog>

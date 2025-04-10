@@ -3,11 +3,11 @@ import React from 'react';
 import { Search } from 'lucide-react';
 
 interface BrokerSearchProps {
-  searchQuery: string;
-  setSearchQuery: (query: string) => void;
+  value: string;
+  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
-const BrokerSearch: React.FC<BrokerSearchProps> = ({ searchQuery, setSearchQuery }) => {
+const BrokerSearch: React.FC<BrokerSearchProps> = ({ value, onChange }) => {
   return (
     <div className="mb-4">
       <div className="relative">
@@ -16,8 +16,8 @@ const BrokerSearch: React.FC<BrokerSearchProps> = ({ searchQuery, setSearchQuery
           type="text"
           placeholder="Search brokers..."
           className="pl-8 rounded-md border border-input bg-transparent px-3 py-2 text-sm ring-offset-background w-full"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
+          value={value}
+          onChange={onChange}
         />
       </div>
     </div>

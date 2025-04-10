@@ -1,46 +1,64 @@
 
 import React from 'react';
-import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { Pencil, Trash2, Shield } from 'lucide-react';
-import { MortgageBroker } from '@/lib/api/brokers';
+import { 
+  Table, 
+  TableHeader, 
+  TableBody, 
+  TableHead, 
+  TableRow, 
+  TableCell 
+} from '@/components/ui/table';
+import { 
+  Edit, 
+  Trash2, 
+  Shield, 
+  CheckCircle, 
+  Clock, 
+  XCircle 
+} from 'lucide-react';
+import type { MortgageBroker } from '@/lib/api/types';
 
 interface BrokerTableProps {
-  brokers: MortgageBroker[] | undefined;
-  isLoading: boolean;
-  error: Error | null;
+  brokers: MortgageBroker[];
   onEdit: (broker: MortgageBroker) => void;
-  onDelete: (broker: MortgageBroker) => void;
-  onManagePermissions: (broker: MortgageBroker) => void;
+  onDelete: (id: string) => void;
+  onOpenPermissions: (broker: MortgageBroker) => void;
 }
 
-const BrokerTable: React.FC<BrokerTableProps> = ({
+const BrokerTable: React.FC<BrokerTableProps> = ({ 
   brokers, 
-  isLoading, 
-  error, 
   onEdit, 
-  onDelete, 
-  onManagePermissions 
+  onDelete,
+  onOpenPermissions 
 }) => {
-  if (isLoading) {
-    return <div className="text-center py-4">Loading brokers...</div>;
-  }
-  
-  if (error) {
-    return (
-      <div className="text-center py-4 text-red-500">
-        Error loading brokers: {error instanceof Error ? error.message : 'Unknown error'}
-      </div>
-    );
-  }
-
-  if (!brokers || brokers.length === 0) {
-    return (
-      <div className="text-center py-4">
-        No brokers found
-      </div>
-    );
-  }
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'active':
+        return (
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+            <CheckCircle className="w-3 h-3 mr-1" />
+            Active
+          </span>
+        );
+      case 'pending':
+        return (
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+            <Clock className="w-3 h-3 mr-1" />
+            Pending
+          </span>
+        );
+      case 'inactive':
+        return (
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+            <XCircle className="w-3 h-3 mr-1" />
+            Inactive
+          </span>
+        );
+      default:
+        return null;
+    }
+  };
 
   return (
     <div className="rounded-md border">
@@ -49,61 +67,60 @@ const BrokerTable: React.FC<BrokerTableProps> = ({
           <TableRow>
             <TableHead>Name</TableHead>
             <TableHead>Company</TableHead>
-            <TableHead>License</TableHead>
-            <TableHead>Contact</TableHead>
+            <TableHead>License #</TableHead>
+            <TableHead>Email</TableHead>
+            <TableHead>Phone</TableHead>
             <TableHead>Status</TableHead>
-            <TableHead>Actions</TableHead>
+            <TableHead className="text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {brokers.map(broker => (
-            <TableRow key={broker.id}>
-              <TableCell className="font-medium">{broker.name}</TableCell>
-              <TableCell>{broker.company}</TableCell>
-              <TableCell>{broker.license_number}</TableCell>
-              <TableCell>
-                <div>{broker.email}</div>
-                <div className="text-xs text-muted-foreground">{broker.phone}</div>
-              </TableCell>
-              <TableCell>
-                <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                  broker.status === 'active' ? 'bg-green-100 text-green-800' :
-                  broker.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                  'bg-gray-100 text-gray-800'
-                }`}>
-                  {broker.status.charAt(0).toUpperCase() + broker.status.slice(1)}
-                </span>
-              </TableCell>
-              <TableCell>
-                <div className="flex items-center space-x-2">
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    onClick={() => onEdit(broker)}
-                    title="Edit broker"
-                  >
-                    <Pencil className="h-4 w-4" />
-                  </Button>
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    onClick={() => onDelete(broker)}
-                    title="Delete broker"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    onClick={() => onManagePermissions(broker)}
-                    title="Manage permissions"
-                  >
-                    <Shield className="h-4 w-4" />
-                  </Button>
-                </div>
+          {brokers.length === 0 ? (
+            <TableRow>
+              <TableCell colSpan={7} className="text-center py-6 text-muted-foreground">
+                No brokers found
               </TableCell>
             </TableRow>
-          ))}
+          ) : (
+            brokers.map((broker) => (
+              <TableRow key={broker.id}>
+                <TableCell>{broker.name}</TableCell>
+                <TableCell>{broker.company}</TableCell>
+                <TableCell>{broker.license_number}</TableCell>
+                <TableCell>{broker.email}</TableCell>
+                <TableCell>{broker.phone || 'N/A'}</TableCell>
+                <TableCell>{getStatusBadge(broker.status)}</TableCell>
+                <TableCell className="text-right">
+                  <div className="flex justify-end space-x-2">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => onEdit(broker)}
+                    >
+                      <Edit className="h-4 w-4" />
+                      <span className="sr-only">Edit</span>
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => onDelete(broker.id)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                      <span className="sr-only">Delete</span>
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => onOpenPermissions(broker)}
+                    >
+                      <Shield className="h-4 w-4" />
+                      <span className="sr-only">Permissions</span>
+                    </Button>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))
+          )}
         </TableBody>
       </Table>
     </div>

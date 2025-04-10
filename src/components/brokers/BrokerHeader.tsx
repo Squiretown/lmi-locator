@@ -5,10 +5,10 @@ import { Briefcase, Plus } from 'lucide-react';
 import { CardHeader, CardTitle } from '@/components/ui/card';
 
 interface BrokerHeaderProps {
-  onAddBroker: () => void;
+  onCreate: () => void;
 }
 
-const BrokerHeader: React.FC<BrokerHeaderProps> = ({ onAddBroker }) => {
+const BrokerHeader: React.FC<BrokerHeaderProps> = ({ onCreate }) => {
   return (
     <CardHeader>
       <div className="flex items-center justify-between">
@@ -16,7 +16,7 @@ const BrokerHeader: React.FC<BrokerHeaderProps> = ({ onAddBroker }) => {
           <Briefcase className="h-6 w-6" />
           <CardTitle>Mortgage Brokers Management</CardTitle>
         </div>
-        <Button onClick={onAddBroker} className="flex items-center space-x-1">
+        <Button onClick={onCreate} className="flex items-center space-x-1">
           <Plus className="h-4 w-4" />
           <span>Add Broker</span>
         </Button>

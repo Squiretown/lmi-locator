@@ -13,7 +13,16 @@ export const fetchBrokers = async (): Promise<MortgageBroker[]> => {
     throw new Error(`Failed to fetch brokers: ${error.message}`);
   }
 
-  return data || [];
+  return (data || []).map(broker => ({
+    id: broker.id,
+    name: broker.name,
+    company: broker.company,
+    license_number: broker.license_number,
+    email: broker.email,
+    phone: broker.phone,
+    status: broker.status as 'active' | 'pending' | 'inactive',
+    created_at: broker.created_at
+  }));
 };
 
 export const getBrokerPermissions = async (brokerId: string): Promise<string[]> => {
