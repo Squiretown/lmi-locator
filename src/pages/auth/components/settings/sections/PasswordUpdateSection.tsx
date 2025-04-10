@@ -10,6 +10,16 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import * as z from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import PasswordRequirements from '@/pages/auth/components/PasswordRequirements';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const passwordSchema = z.object({
   currentPassword: z.string().min(1, "Current password is required"),
@@ -31,6 +41,8 @@ type PasswordFormValues = z.infer<typeof passwordSchema>;
 const PasswordUpdateSection: React.FC = () => {
   const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [pendingPasswordData, setPendingPasswordData] = useState<PasswordFormValues | null>(null);
   
   const passwordForm = useForm<PasswordFormValues>({
     resolver: zodResolver(passwordSchema),
@@ -41,14 +53,22 @@ const PasswordUpdateSection: React.FC = () => {
     }
   });
 
-  const onPasswordSubmit = async (data: PasswordFormValues) => {
+  const handleFormSubmit = (data: PasswordFormValues) => {
+    // Store the data and open confirmation dialog
+    setPendingPasswordData(data);
+    setShowConfirmDialog(true);
+  };
+
+  const handleConfirmUpdate = async () => {
+    if (!pendingPasswordData) return;
+    
     setIsLoading(true);
     
     try {
       // First verify the current password is correct
       const { error: signInError } = await supabase.auth.signInWithPassword({
         email: user?.email || '',
-        password: data.currentPassword,
+        password: pendingPasswordData.currentPassword,
       });
       
       if (signInError) {
@@ -57,7 +77,7 @@ const PasswordUpdateSection: React.FC = () => {
       
       // Then update the password
       const { error } = await supabase.auth.updateUser({
-        password: data.newPassword,
+        password: pendingPasswordData.newPassword,
       });
       
       if (error) throw error;
@@ -69,7 +89,13 @@ const PasswordUpdateSection: React.FC = () => {
       toast.error(`Failed to update password: ${error.message}`);
     } finally {
       setIsLoading(false);
+      setShowConfirmDialog(false);
     }
+  };
+
+  const handleCancelUpdate = () => {
+    setShowConfirmDialog(false);
+    setPendingPasswordData(null);
   };
 
   return (
@@ -80,7 +106,7 @@ const PasswordUpdateSection: React.FC = () => {
       </p>
       
       <Form {...passwordForm}>
-        <form onSubmit={passwordForm.handleSubmit(onPasswordSubmit)} className="space-y-4">
+        <form onSubmit={passwordForm.handleSubmit(handleFormSubmit)} className="space-y-4">
           <FormField
             control={passwordForm.control}
             name="currentPassword"
@@ -129,6 +155,24 @@ const PasswordUpdateSection: React.FC = () => {
           </Button>
         </form>
       </Form>
+
+      {/* Confirmation Dialog */}
+      <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirm Password Update</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to change your password? 
+              <br /><br />
+              This action cannot be undone. After updating, you'll need to use your new password for all future logins.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={handleCancelUpdate}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmUpdate}>Yes, Update Password</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

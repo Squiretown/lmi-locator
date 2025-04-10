@@ -10,6 +10,16 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import * as z from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import FormErrorDisplay from '@/pages/auth/components/form-sections/FormErrorDisplay';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const emailSchema = z.object({
   email: z.string()
@@ -25,6 +35,8 @@ const EmailUpdateSection: React.FC = () => {
   const { user } = useAuth();
   const [isEmailLoading, setIsEmailLoading] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [pendingEmailData, setPendingEmailData] = useState<EmailFormValues | null>(null);
   
   const emailForm = useForm<EmailFormValues>({
     resolver: zodResolver(emailSchema),
@@ -34,22 +46,30 @@ const EmailUpdateSection: React.FC = () => {
     }
   });
 
-  const onEmailSubmit = async (data: EmailFormValues) => {
-    // Reset any previous errors
-    setFormError(null);
-    
+  const handleFormSubmit = (data: EmailFormValues) => {
+    // First check if email is the same as current
     if (data.email === user?.email) {
       toast.info('The email address is the same as your current one');
       return;
     }
     
+    // Store the data and open confirmation dialog
+    setPendingEmailData(data);
+    setShowConfirmDialog(true);
+  };
+
+  const handleConfirmUpdate = async () => {
+    if (!pendingEmailData) return;
+    
+    // Reset any previous errors
+    setFormError(null);
     setIsEmailLoading(true);
     
     try {
       // First verify the current password is correct
       const { error: signInError } = await supabase.auth.signInWithPassword({
         email: user?.email || '',
-        password: data.currentPassword,
+        password: pendingEmailData.currentPassword,
       });
       
       if (signInError) {
@@ -57,11 +77,11 @@ const EmailUpdateSection: React.FC = () => {
       }
       
       // Log the email we're trying to update to
-      console.log('Updating email from', user?.email, 'to', data.email);
+      console.log('Updating email from', user?.email, 'to', pendingEmailData.email);
       
       // Then update the email
       const { data: updateData, error } = await supabase.auth.updateUser({
-        email: data.email,
+        email: pendingEmailData.email,
       });
       
       if (error) throw error;
@@ -77,7 +97,13 @@ const EmailUpdateSection: React.FC = () => {
       toast.error(`Failed to update email: ${error.message}`);
     } finally {
       setIsEmailLoading(false);
+      setShowConfirmDialog(false);
     }
+  };
+
+  const handleCancelUpdate = () => {
+    setShowConfirmDialog(false);
+    setPendingEmailData(null);
   };
 
   return (
@@ -94,7 +120,7 @@ const EmailUpdateSection: React.FC = () => {
       )}
       
       <Form {...emailForm}>
-        <form onSubmit={emailForm.handleSubmit(onEmailSubmit)} className="space-y-4">
+        <form onSubmit={emailForm.handleSubmit(handleFormSubmit)} className="space-y-4">
           <FormField
             control={emailForm.control}
             name="email"
@@ -131,6 +157,24 @@ const EmailUpdateSection: React.FC = () => {
           </Button>
         </form>
       </Form>
+
+      {/* Confirmation Dialog */}
+      <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirm Email Update</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to change your email from <strong>{user?.email}</strong> to <strong>{pendingEmailData?.email}</strong>?
+              <br /><br />
+              You will need to verify your new email address after this change.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={handleCancelUpdate}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmUpdate}>Yes, Update Email</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
