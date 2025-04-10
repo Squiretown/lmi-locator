@@ -15,6 +15,11 @@ export interface Realtor {
   photo_url: string | null;
   created_at: string;
   user_id?: string;
+  // Optional additional fields
+  is_flagged?: boolean;
+  notes?: string | null;
+  social_media?: any;
+  last_updated?: string;
 }
 
 export interface RealtorFormValues {
@@ -54,7 +59,11 @@ export const fetchRealtors = async (): Promise<Realtor[]> => {
       bio: item.bio,
       photo_url: item.photo_url,
       created_at: item.created_at,
-      user_id: item.user_id
+      user_id: item.user_id,
+      is_flagged: item.is_flagged,
+      notes: item.notes,
+      social_media: item.social_media,
+      last_updated: item.last_updated
     };
     return realtor;
   });
@@ -114,7 +123,11 @@ export const createRealtor = async (realtor: RealtorFormValues): Promise<Realtor
       bio: data.bio,
       photo_url: data.photo_url,
       created_at: data.created_at,
-      user_id: data.user_id
+      user_id: data.user_id,
+      is_flagged: data.is_flagged,
+      notes: data.notes,
+      social_media: data.social_media,
+      last_updated: data.last_updated
     };
 
     return createdRealtor;
@@ -163,7 +176,11 @@ export const updateRealtor = async (id: string, realtor: RealtorFormValues): Pro
     bio: data.bio,
     photo_url: data.photo_url,
     created_at: data.created_at,
-    user_id: data.user_id
+    user_id: data.user_id,
+    is_flagged: data.is_flagged,
+    notes: data.notes,
+    social_media: data.social_media,
+    last_updated: data.last_updated
   };
 
   return updatedRealtor;
@@ -219,7 +236,11 @@ export const getRealtorByUserId = async (): Promise<Realtor | null> => {
       bio: data.bio,
       photo_url: data.photo_url,
       created_at: data.created_at,
-      user_id: data.user_id
+      user_id: data.user_id,
+      is_flagged: data.is_flagged,
+      notes: data.notes,
+      social_media: data.social_media,
+      last_updated: data.last_updated
     };
 
     return realtor;
