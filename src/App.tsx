@@ -1,4 +1,3 @@
-
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Header from './components/Header';
 import Footer from './components/Footer';
@@ -11,21 +10,16 @@ import CustomersPage from './pages/CustomersPage';
 import BlogPage from './pages/BlogPage';
 import ContactPage from './pages/ContactPage';
 import LoginPage from './pages/auth/LoginPage';
-
-// Admin components
 import { AdminLayout, AdminDashboard, MarketingDashboard } from './components/admin';
 import AdminTools from './pages/auth/AdminTools';
 import UserManagement from './pages/auth/UserManagement';
 import SettingsPage from './pages/auth/SettingsPage';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import { AuthProvider } from '@/providers/AuthProvider';
-
-// Client
 import ClientDashboard from './pages/dashboard/Client';
-
-// Professional dashboards
 import RealtorDashboard from './pages/dashboard/Realtor';
 import MortgageProfessionalDashboard from './pages/dashboard/MortgageProfessional';
+import MortgageBrokersPage from './pages/admin/MortgageBrokersPage';
 
 function App() {
   return (
@@ -35,7 +29,6 @@ function App() {
           <Header />
           <div className="flex-grow">
             <Routes>
-              {/* Public routes */}
               <Route path="/" element={<Index />} />
               <Route path="/product" element={<ProductPage />} />
               <Route path="/resources" element={<ResourcesPage />} />
@@ -45,7 +38,6 @@ function App() {
               <Route path="/contact" element={<ContactPage />} />
               <Route path="/login" element={<LoginPage />} />
 
-              {/* Admin routes */}
               <Route path="/admin" element={
                 <ProtectedRoute requiredUserType="admin">
                   <AdminLayout />
@@ -56,10 +48,10 @@ function App() {
                 <Route path="tools" element={<AdminTools />} />
                 <Route path="users" element={<UserManagement />} />
                 <Route path="settings" element={<SettingsPage />} />
+                <Route path="mortgage-brokers" element={<MortgageBrokersPage />} />
                 <Route path="*" element={<Navigate to="/admin" replace />} />
               </Route>
 
-              {/* User dashboard routes */}
               <Route path="/client" element={
                 <ProtectedRoute requiredUserType="client">
                   <ClientDashboard />
@@ -76,7 +68,6 @@ function App() {
                 </ProtectedRoute>
               } />
 
-              {/* Catch all */}
               <Route path="*" element={<NotFound />} />
             </Routes>
           </div>
