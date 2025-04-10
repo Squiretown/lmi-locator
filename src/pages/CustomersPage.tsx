@@ -64,7 +64,7 @@ const CustomersPage: React.FC = () => {
       name: 'Sarah Johnson',
       role: 'Mortgage Broker',
       company: 'Premier Mortgage',
-      testimonial: 'LMICHECK.COM has revolutionized how we match clients with down payment assistance programs. We've increased our closing rate by 35% since implementing this tool.',
+      testimonial: "LMICHECK.COM has revolutionized how we match clients with down payment assistance programs. We've increased our closing rate by 35% since implementing this tool.",
       avatar: '/placeholder.svg',
       stars: 5
     },
@@ -82,7 +82,7 @@ const CustomersPage: React.FC = () => {
       name: 'Jennifer Williams',
       role: 'First-time Homebuyer',
       company: '',
-      testimonial: 'Thanks to LMICHECK.COM, I discovered my dream home was in an LMI area. This saved me over $12,000 in down payment assistance that I wouldn't have known about otherwise!',
+      testimonial: "Thanks to LMICHECK.COM, I discovered my dream home was in an LMI area. This saved me over $12,000 in down payment assistance that I wouldn't have known about otherwise!",
       avatar: '/placeholder.svg',
       stars: 5
     },
@@ -91,7 +91,7 @@ const CustomersPage: React.FC = () => {
       name: 'David Chen',
       role: 'Loan Officer',
       company: 'Pacific Lending',
-      testimonial: 'The marketing lists feature has been a game-changer for our outreach efforts. We've seen a 40% increase in qualified leads since targeting LMI-eligible clients.',
+      testimonial: "The marketing lists feature has been a game-changer for our outreach efforts. We've seen a 40% increase in qualified leads since targeting LMI-eligible clients.",
       avatar: '/placeholder.svg',
       stars: 5
     },
@@ -100,7 +100,7 @@ const CustomersPage: React.FC = () => {
       name: 'Lisa Thompson',
       role: 'Branch Manager',
       company: 'HomeFirst Mortgage',
-      testimonial: 'We've integrated LMICHECK.COM's API into our internal systems, and the efficiency gains have been remarkable. Our loan officers can now serve clients better with instant eligibility information.',
+      testimonial: "We've integrated LMICHECK.COM's API into our internal systems, and the efficiency gains have been remarkable. Our loan officers can now serve clients better with instant eligibility information.",
       avatar: '/placeholder.svg',
       stars: 4
     },
