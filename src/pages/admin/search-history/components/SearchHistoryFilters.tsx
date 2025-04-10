@@ -5,7 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Calendar } from "lucide-react";
+import { Calendar } from "@/components/ui/calendar";
+import { CalendarIcon } from "lucide-react";
 import { DateRangeType } from '../types';
 
 interface SearchHistoryFiltersProps {
@@ -65,7 +66,7 @@ export default function SearchHistoryFilters({
             <Popover>
               <PopoverTrigger asChild>
                 <Button variant="outline" className="w-full justify-start">
-                  <Calendar className="mr-2 h-4 w-4" />
+                  <CalendarIcon className="mr-2 h-4 w-4" />
                   {dateRange.from ? (
                     dateRange.to ? (
                       <>
@@ -86,8 +87,7 @@ export default function SearchHistoryFilters({
                     from: dateRange.from,
                     to: dateRange.to
                   }}
-                  onSelect={(range) => {
-                    // Ensure both from and to are defined in DateRangeType
+                  onSelect={(range: any) => {
                     handleDateRangeChange({
                       from: range?.from,
                       to: range?.to
