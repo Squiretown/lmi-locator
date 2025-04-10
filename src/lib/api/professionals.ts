@@ -60,16 +60,13 @@ const transformProfessional = (item: ProfessionalTable): Professional => ({
 });
 
 export const fetchProfessionals = async (type?: 'realtor' | 'mortgage_broker'): Promise<Professional[]> => {
-  let query = supabase
-    .from('professionals');
+  let query = supabase.from('professionals').select();
   
   if (type) {
     query = query.eq('type', type);
   }
   
-  const { data, error } = await query
-    .select('*')
-    .order('created_at', { ascending: false });
+  const { data, error } = await query.order('created_at', { ascending: false });
 
   if (error) {
     console.error('Error fetching professionals:', error);
@@ -82,7 +79,7 @@ export const fetchProfessionals = async (type?: 'realtor' | 'mortgage_broker'): 
 export const fetchProfessionalById = async (id: string): Promise<Professional | null> => {
   const { data, error } = await supabase
     .from('professionals')
-    .select('*')
+    .select()
     .eq('id', id)
     .single();
 
@@ -196,16 +193,16 @@ export const getProfessionalByUserId = async (type?: 'realtor' | 'mortgage_broke
       return null;
     }
 
-    let query = supabase
-      .from('professionals');
+    let query = supabase.from('professionals').select();
     
+    // Apply filters
     query = query.eq('user_id', user.id);
     
     if (type) {
       query = query.eq('type', type);
     }
 
-    const { data, error } = await query.select().single();
+    const { data, error } = await query.single();
 
     if (error) {
       if (error.code === 'PGRST116') {
