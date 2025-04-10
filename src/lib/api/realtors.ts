@@ -2,7 +2,6 @@
 // This file is maintained for backward compatibility
 // It uses the new professionals API internally
 import { Professional, ProfessionalFormValues, fetchProfessionals, createProfessional, updateProfessional, deleteProfessional, getProfessionalByUserId } from './professionals';
-import { RealtorTable } from './database-types';
 
 export interface Realtor {
   id: string;
