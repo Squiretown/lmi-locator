@@ -18,7 +18,7 @@ export const fetchBrokers = async (): Promise<MortgageBroker[]> => {
   const { data, error } = await supabase
     .from('mortgage_brokers')
     .select('*')
-    .order('created_at', { ascending: false }) as { data: MortgageBrokerTable[] | null, error: any };
+    .order('created_at', { ascending: false });
 
   if (error) {
     console.error('Error fetching brokers:', error);
@@ -33,7 +33,7 @@ export const createBroker = async (broker: BrokerFormValues): Promise<MortgageBr
     .from('mortgage_brokers')
     .insert([broker])
     .select()
-    .single() as { data: MortgageBrokerTable | null, error: any };
+    .single();
 
   if (error) {
     console.error('Error creating broker:', error);
@@ -49,7 +49,7 @@ export const updateBroker = async (id: string, broker: BrokerFormValues): Promis
     .update(broker)
     .eq('id', id)
     .select()
-    .single() as { data: MortgageBrokerTable | null, error: any };
+    .single();
 
   if (error) {
     console.error('Error updating broker:', error);
@@ -75,12 +75,12 @@ export const getBrokerPermissions = async (brokerId: string): Promise<string[]> 
   const { data, error } = await supabase
     .from('broker_permissions')
     .select('permission_name')
-    .eq('broker_id', brokerId) as { data: { permission_name: string }[] | null, error: any };
+    .eq('broker_id', brokerId);
 
   if (error) {
     console.error('Error fetching broker permissions:', error);
     throw new Error(`Failed to fetch broker permissions: ${error.message}`);
   }
 
-  return data?.map(item => item.permission_name) || [];
+  return (data || []).map(item => item.permission_name as string);
 };

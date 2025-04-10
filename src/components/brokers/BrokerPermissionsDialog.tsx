@@ -11,7 +11,6 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Shield, Save } from 'lucide-react';
-import { BrokerPermissionTable } from '@/lib/api/database-types';
 
 interface Permission {
   name: string;
@@ -54,12 +53,12 @@ const BrokerPermissionsDialog: React.FC<BrokerPermissionsDialogProps> = ({
       const { data, error } = await supabase
         .from('broker_permissions')
         .select('permission_name')
-        .eq('broker_id', brokerId) as { data: { permission_name: string }[] | null, error: any };
+        .eq('broker_id', brokerId);
 
       if (error) throw error;
 
       // Update permissions state based on fetched data
-      const grantedPermissions = data?.map(p => p.permission_name) || [];
+      const grantedPermissions = data?.map(p => p.permission_name as string) || [];
       
       setPermissions(permissions.map(permission => ({
         ...permission,
