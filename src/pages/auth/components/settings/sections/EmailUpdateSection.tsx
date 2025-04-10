@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
@@ -8,10 +9,14 @@ import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import * as z from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
+import FormErrorDisplay from '@/pages/auth/components/form-sections/FormErrorDisplay';
 
 const emailSchema = z.object({
-  email: z.string().email({ message: "Please enter a valid email address." }),
-  currentPassword: z.string().min(1, { message: "Current password is required." }),
+  email: z.string()
+    .email({ message: "Please enter a valid email address" })
+    .min(1, { message: "Email is required" }),
+  currentPassword: z.string()
+    .min(1, { message: "Current password is required to verify this change" }),
 });
 
 type EmailFormValues = z.infer<typeof emailSchema>;
@@ -19,6 +24,7 @@ type EmailFormValues = z.infer<typeof emailSchema>;
 const EmailUpdateSection: React.FC = () => {
   const { user } = useAuth();
   const [isEmailLoading, setIsEmailLoading] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
   
   const emailForm = useForm<EmailFormValues>({
     resolver: zodResolver(emailSchema),
@@ -29,6 +35,9 @@ const EmailUpdateSection: React.FC = () => {
   });
 
   const onEmailSubmit = async (data: EmailFormValues) => {
+    // Reset any previous errors
+    setFormError(null);
+    
     if (data.email === user?.email) {
       toast.info('The email address is the same as your current one');
       return;
@@ -64,6 +73,7 @@ const EmailUpdateSection: React.FC = () => {
       emailForm.setValue('currentPassword', '');
     } catch (error: any) {
       console.error('Error updating email:', error);
+      setFormError(error.message);
       toast.error(`Failed to update email: ${error.message}`);
     } finally {
       setIsEmailLoading(false);
@@ -76,6 +86,12 @@ const EmailUpdateSection: React.FC = () => {
       <p className="text-sm text-muted-foreground mb-4">
         Update your email address. You will need to verify your new email.
       </p>
+      
+      {formError && (
+        <div className="mb-4">
+          <FormErrorDisplay error={formError} title="Email Update Error" />
+        </div>
+      )}
       
       <Form {...emailForm}>
         <form onSubmit={emailForm.handleSubmit(onEmailSubmit)} className="space-y-4">

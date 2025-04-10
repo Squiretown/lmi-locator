@@ -7,18 +7,33 @@ import { useAuth } from '@/hooks/useAuth';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import * as z from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import PasswordRequirements from '@/pages/auth/components/PasswordRequirements';
 
-interface PasswordFormValues {
-  currentPassword: string;
-  newPassword: string;
-  confirmPassword: string;
-}
+const passwordSchema = z.object({
+  currentPassword: z.string().min(1, "Current password is required"),
+  newPassword: z
+    .string()
+    .min(8, "Password must be at least 8 characters")
+    .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
+    .regex(/[a-z]/, "Password must contain at least one lowercase letter")
+    .regex(/[0-9]/, "Password must contain at least one number")
+    .regex(/[^A-Za-z0-9]/, "Password must contain at least one special character"),
+  confirmPassword: z.string().min(1, "Please confirm your password"),
+}).refine((data) => data.newPassword === data.confirmPassword, {
+  message: "Passwords do not match",
+  path: ["confirmPassword"],
+});
+
+type PasswordFormValues = z.infer<typeof passwordSchema>;
 
 const PasswordUpdateSection: React.FC = () => {
   const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   
   const passwordForm = useForm<PasswordFormValues>({
+    resolver: zodResolver(passwordSchema),
     defaultValues: {
       currentPassword: '',
       newPassword: '',
@@ -27,14 +42,6 @@ const PasswordUpdateSection: React.FC = () => {
   });
 
   const onPasswordSubmit = async (data: PasswordFormValues) => {
-    if (data.newPassword !== data.confirmPassword) {
-      passwordForm.setError('confirmPassword', {
-        type: 'manual',
-        message: 'Passwords do not match',
-      });
-      return;
-    }
-    
     setIsLoading(true);
     
     try {
@@ -97,6 +104,7 @@ const PasswordUpdateSection: React.FC = () => {
                 <FormControl>
                   <Input {...field} type="password" />
                 </FormControl>
+                <PasswordRequirements password={field.value} />
                 <FormMessage />
               </FormItem>
             )}
