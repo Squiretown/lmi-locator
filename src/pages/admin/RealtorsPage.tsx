@@ -2,10 +2,9 @@
 import React, { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { fetchRealtors, createRealtor, updateRealtor, deleteRealtor, Realtor } from '@/lib/api/realtors';
+import { fetchRealtors, createRealtor, updateRealtor, deleteRealtor, Realtor, RealtorFormValues } from '@/lib/api/realtors';
 import { toast } from 'sonner';
 import RealtorDialog from '@/components/realtors/RealtorDialog';
-import { RealtorFormValues } from '@/components/realtors/RealtorForm';
 import RealtorPermissionsDialog from '@/components/realtors/RealtorPermissionsDialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import RealtorTable from '@/components/realtors/RealtorTable';
@@ -136,7 +135,17 @@ const RealtorsPage: React.FC = () => {
           isOpen={editDialogOpen}
           setIsOpen={setEditDialogOpen}
           onSubmit={handleEditRealtor}
-          defaultValues={selectedRealtor}
+          defaultValues={{
+            name: selectedRealtor.name,
+            brokerage: selectedRealtor.brokerage,
+            license_number: selectedRealtor.license_number || undefined,
+            email: selectedRealtor.email || undefined,
+            phone: selectedRealtor.phone || undefined,
+            website: selectedRealtor.website || undefined,
+            bio: selectedRealtor.bio || undefined,
+            is_flagged: selectedRealtor.is_flagged,
+            notes: selectedRealtor.notes || undefined
+          }}
           isLoading={updateRealtorMutation.isPending}
           title="Edit Realtor"
         />
