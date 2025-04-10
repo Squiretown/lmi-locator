@@ -306,21 +306,39 @@ export type Database = {
           broker_id: string
           granted_at: string
           id: string
+          permission_id: string | null
           permission_name: string
         }
         Insert: {
           broker_id: string
           granted_at?: string
           id?: string
+          permission_id?: string | null
           permission_name: string
         }
         Update: {
           broker_id?: string
           granted_at?: string
           id?: string
+          permission_id?: string | null
           permission_name?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "broker_permissions_broker_id_fkey"
+            columns: ["broker_id"]
+            isOneToOne: false
+            referencedRelation: "mortgage_brokers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "broker_permissions_permission_id_fkey"
+            columns: ["permission_id"]
+            isOneToOne: false
+            referencedRelation: "permissions"
+            referencedColumns: ["permission_id"]
+          },
+        ]
       }
       census_cache: {
         Row: {
@@ -830,6 +848,27 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      permissions: {
+        Row: {
+          created_at: string
+          description: string | null
+          permission_id: string
+          permission_name: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          permission_id?: string
+          permission_name: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          permission_id?: string
+          permission_name?: string
+        }
+        Relationships: []
       }
       professional_leads: {
         Row: {

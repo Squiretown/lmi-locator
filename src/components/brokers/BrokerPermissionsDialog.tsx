@@ -10,10 +10,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
-import { 
-  addPermissionToBroker, 
-  removePermissionFromBroker 
-} from '@/lib/api/brokers';
+import { useBrokers } from '@/hooks/useBrokers';
 
 interface BrokerPermissionsDialogProps {
   isOpen: boolean;
@@ -29,7 +26,10 @@ const BrokerPermissionsDialog: React.FC<BrokerPermissionsDialogProps> = ({
   initialPermissions,
 }) => {
   const [permissions, setPermissions] = useState<Record<string, boolean>>({});
-  const [isLoading, setIsLoading] = useState(false);
+  const { useAddPermission, useRemovePermission } = useBrokers();
+  const { mutateAsync: addPermission, isPending: isAddingPermission } = useAddPermission();
+  const { mutateAsync: removePermission, isPending: isRemovingPermission } = useRemovePermission();
+  const isLoading = isAddingPermission || isRemovingPermission;
   const { toast } = useToast();
 
   // List of available permissions
@@ -61,16 +61,15 @@ const BrokerPermissionsDialog: React.FC<BrokerPermissionsDialogProps> = ({
   };
 
   const savePermissions = async () => {
-    setIsLoading(true);
     try {
       const promises = [];
       
       // Find permissions to add (currently true but not in initialPermissions)
       for (const [perm, isEnabled] of Object.entries(permissions)) {
         if (isEnabled && !initialPermissions.includes(perm)) {
-          promises.push(addPermissionToBroker(brokerId, perm));
+          promises.push(addPermission({ brokerId, permissionName: perm }));
         } else if (!isEnabled && initialPermissions.includes(perm)) {
-          promises.push(removePermissionFromBroker(brokerId, perm));
+          promises.push(removePermission({ brokerId, permissionName: perm }));
         }
       }
       
@@ -90,8 +89,6 @@ const BrokerPermissionsDialog: React.FC<BrokerPermissionsDialogProps> = ({
         description: error.message || 'Failed to update permissions',
         duration: 3000
       });
-    } finally {
-      setIsLoading(false);
     }
   };
 

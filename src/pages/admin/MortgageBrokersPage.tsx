@@ -1,40 +1,36 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { fetchBrokers, createBroker, updateBroker, deleteBroker, getBrokerPermissions } from '@/lib/api/brokers';
 import type { MortgageBroker, BrokerFormValues } from '@/lib/api/types';
 import BrokerDialog from '@/components/brokers/BrokerDialog';
 import BrokerTable from '@/components/brokers/BrokerTable';
 import BrokerHeader from '@/components/brokers/BrokerHeader';
 import BrokerSearch from '@/components/brokers/BrokerSearch';
 import BrokerPermissionsDialog from '@/components/brokers/BrokerPermissionsDialog';
+import { useBrokers } from '@/hooks/useBrokers';
 
 const MortgageBrokersPage: React.FC = () => {
-  const [brokers, setBrokers] = useState<MortgageBroker[]>([]);
   const [selectedBroker, setSelectedBroker] = useState<MortgageBroker | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [isPermissionsDialogOpen, setIsPermissionsDialogOpen] = useState(false);
-  const [brokerPermissions, setBrokerPermissions] = useState<string[]>([]);
+  
+  const { 
+    brokers, 
+    isLoadingBrokers, 
+    createBroker, 
+    updateBroker, 
+    deleteBroker, 
+    getBrokerPermissionsQuery 
+  } = useBrokers();
+  
   const { toast } = useToast();
 
-  useEffect(() => {
-    loadBrokers();
-  }, []);
-
-  const loadBrokers = async () => {
-    try {
-      const brokersData = await fetchBrokers();
-      setBrokers(brokersData);
-    } catch (error: any) {
-      toast({
-        title: 'Error loading brokers',
-        description: error.message,
-        variant: 'destructive'
-      });
-    }
-  };
+  // Get broker permissions when a broker is selected
+  const { data: brokerPermissions = [] } = getBrokerPermissionsQuery(
+    selectedBroker?.id || ''
+  );
 
   const handleCreateBroker = () => {
     setSelectedBroker(null);
@@ -51,7 +47,6 @@ const MortgageBrokersPage: React.FC = () => {
   const handleDeleteBroker = async (id: string) => {
     try {
       await deleteBroker(id);
-      setBrokers(brokers.filter((broker) => broker.id !== id));
       toast({
         title: 'Broker deleted',
         description: 'Broker successfully deleted.',
@@ -74,24 +69,12 @@ const MortgageBrokersPage: React.FC = () => {
   const handleSaveBroker = async (values: BrokerFormValues) => {
     try {
       if (isEditMode && selectedBroker) {
-        const updatedBroker = await updateBroker(selectedBroker.id, values);
-        setBrokers(brokers.map((broker) => (broker.id === updatedBroker.id ? updatedBroker : broker)));
-        toast({
-          title: 'Broker updated',
-          description: 'Broker successfully updated.',
-          duration: 3000
-        });
+        await updateBroker({ id: selectedBroker.id, broker: values });
       } else {
-        const newBroker = await createBroker(values);
-        setBrokers([...brokers, newBroker]);
-        toast({
-          title: 'Broker created',
-          description: 'Broker successfully created.',
-          duration: 3000
-        });
+        await createBroker(values);
       }
+      
       setIsDialogOpen(false);
-      loadBrokers();
     } catch (error: any) {
       toast({
         title: 'Error saving broker',
@@ -113,17 +96,7 @@ const MortgageBrokersPage: React.FC = () => {
 
   const handleOpenPermissionsDialog = async (broker: MortgageBroker) => {
     setSelectedBroker(broker);
-    try {
-      const permissions = await getBrokerPermissions(broker.id);
-      setBrokerPermissions(permissions);
-      setIsPermissionsDialogOpen(true);
-    } catch (error: any) {
-      toast({
-        title: 'Error fetching permissions',
-        description: error.message,
-        variant: 'destructive'
-      });
-    }
+    setIsPermissionsDialogOpen(true);
   };
 
   const handleClosePermissionsDialog = () => {
@@ -135,12 +108,18 @@ const MortgageBrokersPage: React.FC = () => {
     <div className="container mx-auto p-4">
       <BrokerHeader onCreate={handleCreateBroker} />
       <BrokerSearch value={searchQuery} onChange={handleSearchChange} />
-      <BrokerTable
-        brokers={filteredBrokers}
-        onEdit={handleEditBroker}
-        onDelete={handleDeleteBroker}
-        onOpenPermissions={handleOpenPermissionsDialog}
-      />
+      {isLoadingBrokers ? (
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+        </div>
+      ) : (
+        <BrokerTable
+          brokers={filteredBrokers}
+          onEdit={handleEditBroker}
+          onDelete={handleDeleteBroker}
+          onOpenPermissions={handleOpenPermissionsDialog}
+        />
+      )}
       <BrokerDialog
         isOpen={isDialogOpen}
         onClose={handleDialogClose}
