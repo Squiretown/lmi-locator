@@ -11,6 +11,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Shield, Save } from 'lucide-react';
+import { RealtorPermissionTable } from '@/lib/api/database-types';
 
 interface Permission {
   name: string;
@@ -51,10 +52,14 @@ const RealtorPermissionsDialog: React.FC<RealtorPermissionsDialogProps> = ({
   const fetchRealtorPermissions = async () => {
     try {
       setIsLoading(true);
+      // We're using a type assertion here since the table might not be in the Supabase types
       const { data, error } = await supabase
         .from('realtor_permissions')
         .select('permission_name')
-        .eq('realtor_id', realtorId);
+        .eq('realtor_id', realtorId) as unknown as { 
+          data: Pick<RealtorPermissionTable, 'permission_name'>[] | null; 
+          error: Error | null;
+        };
 
       if (error) throw error;
 
@@ -91,7 +96,7 @@ const RealtorPermissionsDialog: React.FC<RealtorPermissionsDialogProps> = ({
       const { error: deleteError } = await supabase
         .from('realtor_permissions')
         .delete()
-        .eq('realtor_id', realtorId);
+        .eq('realtor_id', realtorId) as unknown as { error: Error | null };
 
       if (deleteError) throw deleteError;
 
@@ -106,7 +111,7 @@ const RealtorPermissionsDialog: React.FC<RealtorPermissionsDialogProps> = ({
       if (grantedPermissions.length > 0) {
         const { error: insertError } = await supabase
           .from('realtor_permissions')
-          .insert(grantedPermissions);
+          .insert(grantedPermissions) as unknown as { error: Error | null };
 
         if (insertError) throw insertError;
       }
