@@ -1,6 +1,6 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { RealtorTable, RealtorPermissionTable } from './database-types';
+import { RealtorTable } from './database-types';
 
 export interface Realtor {
   id: string;
@@ -36,17 +36,14 @@ export const fetchRealtors = async (): Promise<Realtor[]> => {
   const { data, error } = await supabase
     .from('realtors')
     .select('*')
-    .order('created_at', { ascending: false }) as unknown as { 
-      data: RealtorTable[] | null; 
-      error: Error | null 
-    };
+    .order('created_at', { ascending: false });
 
   if (error) {
     console.error('Error fetching realtors:', error);
     throw new Error(`Failed to fetch realtors: ${error.message}`);
   }
 
-  return (data || []) as unknown as Realtor[];
+  return (data || []) as Realtor[];
 };
 
 export const createRealtor = async (realtor: RealtorFormValues): Promise<Realtor> => {
@@ -63,22 +60,18 @@ export const createRealtor = async (realtor: RealtorFormValues): Promise<Realtor
     notes: realtor.notes || null
   };
 
-  // Using type assertion since the table might not be in Supabase types
   const { data, error } = await supabase
     .from('realtors')
     .insert([realtorData])
     .select()
-    .single() as unknown as { 
-      data: RealtorTable | null; 
-      error: Error | null 
-    };
+    .single();
 
   if (error) {
     console.error('Error creating realtor:', error);
     throw new Error(`Failed to create realtor: ${error.message}`);
   }
 
-  return data as unknown as Realtor;
+  return data as Realtor;
 };
 
 export const updateRealtor = async (id: string, realtor: RealtorFormValues): Promise<Realtor> => {
@@ -95,33 +88,26 @@ export const updateRealtor = async (id: string, realtor: RealtorFormValues): Pro
     notes: realtor.notes || null
   };
 
-  // Using type assertion since the table might not be in Supabase types
   const { data, error } = await supabase
     .from('realtors')
     .update(realtorData)
     .eq('id', id)
     .select()
-    .single() as unknown as { 
-      data: RealtorTable | null; 
-      error: Error | null 
-    };
+    .single();
 
   if (error) {
     console.error('Error updating realtor:', error);
     throw new Error(`Failed to update realtor: ${error.message}`);
   }
 
-  return data as unknown as Realtor;
+  return data as Realtor;
 };
 
 export const deleteRealtor = async (id: string): Promise<void> => {
-  // Using type assertion since the table might not be in Supabase types
   const { error } = await supabase
     .from('realtors')
     .delete()
-    .eq('id', id) as unknown as { 
-      error: Error | null 
-    };
+    .eq('id', id);
 
   if (error) {
     console.error('Error deleting realtor:', error);
@@ -130,14 +116,11 @@ export const deleteRealtor = async (id: string): Promise<void> => {
 };
 
 export const getRealtorPermissions = async (realtorId: string): Promise<string[]> => {
-  // Using type assertion since the table might not be in Supabase types
+  // For now, we're using the broker_permissions table since we don't have a realtor_permissions table yet
   const { data, error } = await supabase
-    .from('realtor_permissions')
+    .from('broker_permissions')
     .select('permission_name')
-    .eq('realtor_id', realtorId) as unknown as { 
-      data: Pick<RealtorPermissionTable, 'permission_name'>[] | null; 
-      error: Error | null 
-    };
+    .eq('broker_id', realtorId);
 
   if (error) {
     console.error('Error fetching realtor permissions:', error);

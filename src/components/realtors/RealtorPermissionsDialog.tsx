@@ -11,7 +11,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Shield, Save } from 'lucide-react';
-import { RealtorPermissionTable } from '@/lib/api/database-types';
+import { getRealtorPermissions } from '@/lib/api/realtors';
 
 interface Permission {
   name: string;
@@ -52,19 +52,7 @@ const RealtorPermissionsDialog: React.FC<RealtorPermissionsDialogProps> = ({
   const fetchRealtorPermissions = async () => {
     try {
       setIsLoading(true);
-      // We're using a type assertion here since the table might not be in the Supabase types
-      const { data, error } = await supabase
-        .from('realtor_permissions')
-        .select('permission_name')
-        .eq('realtor_id', realtorId) as unknown as { 
-          data: Pick<RealtorPermissionTable, 'permission_name'>[] | null; 
-          error: Error | null;
-        };
-
-      if (error) throw error;
-
-      // Update permissions state based on fetched data
-      const grantedPermissions = data?.map(p => p.permission_name as string) || [];
+      const grantedPermissions = await getRealtorPermissions(realtorId);
       
       setPermissions(permissions.map(permission => ({
         ...permission,
@@ -94,9 +82,9 @@ const RealtorPermissionsDialog: React.FC<RealtorPermissionsDialogProps> = ({
 
       // First delete all existing permissions for this realtor
       const { error: deleteError } = await supabase
-        .from('realtor_permissions')
+        .from('broker_permissions')
         .delete()
-        .eq('realtor_id', realtorId) as unknown as { error: Error | null };
+        .eq('broker_id', realtorId);
 
       if (deleteError) throw deleteError;
 
@@ -104,14 +92,14 @@ const RealtorPermissionsDialog: React.FC<RealtorPermissionsDialogProps> = ({
       const grantedPermissions = permissions
         .filter(p => p.granted)
         .map(p => ({
-          realtor_id: realtorId,
+          broker_id: realtorId,
           permission_name: p.name,
         }));
 
       if (grantedPermissions.length > 0) {
         const { error: insertError } = await supabase
-          .from('realtor_permissions')
-          .insert(grantedPermissions) as unknown as { error: Error | null };
+          .from('broker_permissions')
+          .insert(grantedPermissions);
 
         if (insertError) throw insertError;
       }
