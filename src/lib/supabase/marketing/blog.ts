@@ -24,10 +24,17 @@ export const createBlogPost = async (blogPost: BlogPost) => {
       throw new Error('No user is logged in');
     }
 
+    // Transform the blogPost object to match the database column names
+    // The database uses 'imageurl' (lowercase) but our interface uses 'imageUrl'
     const { data, error } = await supabase
       .from('blog_posts')
       .insert({
-        ...blogPost,
+        title: blogPost.title,
+        excerpt: blogPost.excerpt,
+        content: blogPost.content,
+        category: blogPost.category,
+        imageurl: blogPost.imageUrl, // Convert imageUrl to imageurl
+        author: blogPost.author,
         user_id: userId
       })
       .select();
