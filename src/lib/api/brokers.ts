@@ -29,9 +29,19 @@ export const fetchBrokers = async (): Promise<MortgageBroker[]> => {
 };
 
 export const createBroker = async (broker: BrokerFormValues): Promise<MortgageBroker> => {
+  // Ensure all required fields are present
+  const brokerData = {
+    name: broker.name,
+    company: broker.company,
+    license_number: broker.license_number,
+    email: broker.email,
+    phone: broker.phone || null,
+    status: broker.status
+  };
+
   const { data, error } = await supabase
     .from('mortgage_brokers')
-    .insert([broker])
+    .insert([brokerData])
     .select()
     .single();
 
@@ -44,9 +54,19 @@ export const createBroker = async (broker: BrokerFormValues): Promise<MortgageBr
 };
 
 export const updateBroker = async (id: string, broker: BrokerFormValues): Promise<MortgageBroker> => {
+  // Ensure all required fields are present
+  const brokerData = {
+    name: broker.name,
+    company: broker.company,
+    license_number: broker.license_number,
+    email: broker.email,
+    phone: broker.phone || null,
+    status: broker.status
+  };
+
   const { data, error } = await supabase
     .from('mortgage_brokers')
-    .update(broker)
+    .update(brokerData)
     .eq('id', id)
     .select()
     .single();
