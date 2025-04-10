@@ -21,6 +21,7 @@ import ClientDashboard from './pages/dashboard/Client';
 import RealtorDashboard from './pages/dashboard/Realtor';
 import MortgageProfessionalDashboard from './pages/dashboard/MortgageProfessional';
 import MortgageBrokersPage from './pages/admin/MortgageBrokersPage';
+import RealtorsPage from './pages/admin/RealtorsPage';
 import SearchHistoryPage from './pages/admin/search-history';
 
 function App() {
@@ -51,6 +52,7 @@ function App() {
                 <Route path="users" element={<UserManagement />} />
                 <Route path="settings" element={<SettingsPage />} />
                 <Route path="mortgage-brokers" element={<MortgageBrokersPage />} />
+                <Route path="realtors" element={<RealtorsPage />} />
                 <Route path="search-history" element={<SearchHistoryPage />} />
                 <Route path="*" element={<Navigate to="/admin" replace />} />
               </Route>

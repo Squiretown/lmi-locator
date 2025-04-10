@@ -1,14 +1,76 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { Building, Users, Search, DollarSign, ListFilter, Plus } from 'lucide-react';
+import { Building, Users, Search, DollarSign, ListFilter, Plus, UserCog } from 'lucide-react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { getRealtorByUserId, createRealtor, updateRealtor, Realtor, RealtorFormValues } from '@/lib/api/realtors';
+import { toast } from 'sonner';
+import RealtorDialog from '@/components/realtors/RealtorDialog';
 
 const RealtorDashboard: React.FC = () => {
   const { user, signOut } = useAuth();
+  const [profileDialogOpen, setProfileDialogOpen] = useState(false);
+  const queryClient = useQueryClient();
+  
+  // Query to fetch realtor profile
+  const { data: realtorProfile, isLoading: isLoadingProfile } = useQuery({
+    queryKey: ['realtorProfile'],
+    queryFn: getRealtorByUserId
+  });
+
+  // Check if profile exists when the component mounts
+  useEffect(() => {
+    if (!isLoadingProfile && !realtorProfile && user) {
+      // If user is logged in but has no profile, suggest creating one
+      toast.info(
+        'Complete your realtor profile to access all features', 
+        {
+          action: {
+            label: 'Set up now',
+            onClick: () => setProfileDialogOpen(true)
+          },
+          duration: 8000
+        }
+      );
+    }
+  }, [realtorProfile, isLoadingProfile, user]);
+
+  // Mutations for realtor operations
+  const createRealtorMutation = useMutation({
+    mutationFn: createRealtor,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['realtorProfile'] });
+      toast.success('Profile created successfully');
+      setProfileDialogOpen(false);
+    },
+    onError: (error) => {
+      toast.error(`Failed to create profile: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  });
+
+  const updateRealtorMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string, data: RealtorFormValues }) => 
+      updateRealtor(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['realtorProfile'] });
+      toast.success('Profile updated successfully');
+      setProfileDialogOpen(false);
+    },
+    onError: (error) => {
+      toast.error(`Failed to update profile: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  });
+
+  const handleProfileSubmit = async (data: RealtorFormValues) => {
+    if (realtorProfile) {
+      await updateRealtorMutation.mutateAsync({ id: realtorProfile.id, data });
+    } else {
+      await createRealtorMutation.mutateAsync(data);
+    }
+  };
   
   const propertyData = [
     { name: 'Jan', searches: 4 },
@@ -30,8 +92,29 @@ const RealtorDashboard: React.FC = () => {
     <div className="container mx-auto px-4 py-6">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Real Estate Agent Dashboard</h1>
-        <Button variant="outline" onClick={() => signOut()}>Sign Out</Button>
+        <div className="flex gap-3">
+          <Button variant="outline" onClick={() => setProfileDialogOpen(true)}>
+            <UserCog className="mr-2 h-4 w-4" />
+            {realtorProfile ? 'Edit Profile' : 'Create Profile'}
+          </Button>
+          <Button variant="outline" onClick={() => signOut()}>Sign Out</Button>
+        </div>
       </div>
+      
+      {/* Profile Status Alert */}
+      {!realtorProfile && !isLoadingProfile && (
+        <Card className="mb-6 bg-amber-50 border-amber-200">
+          <CardContent className="py-4">
+            <div className="flex items-center text-amber-800">
+              <UserCog className="h-5 w-5 mr-2" />
+              <p>Please complete your realtor profile to unlock all features.</p>
+              <Button variant="outline" size="sm" className="ml-4" onClick={() => setProfileDialogOpen(true)}>
+                Create Profile
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
       
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
         <Card>
@@ -197,6 +280,16 @@ const RealtorDashboard: React.FC = () => {
           </div>
         </CardContent>
       </Card>
+
+      {/* Realtor Profile Dialog */}
+      <RealtorDialog 
+        isOpen={profileDialogOpen}
+        setIsOpen={setProfileDialogOpen}
+        onSubmit={handleProfileSubmit}
+        defaultValues={realtorProfile || undefined}
+        isLoading={createRealtorMutation.isPending || updateRealtorMutation.isPending}
+        title={realtorProfile ? "Edit Realtor Profile" : "Create Realtor Profile"}
+      />
     </div>
   );
 };

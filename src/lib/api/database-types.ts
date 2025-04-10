@@ -17,3 +17,18 @@ export interface BrokerPermissionTable {
   permission_name: string;
   granted_at: string;
 }
+
+export interface RealtorTable {
+  id: string;
+  name: string;
+  email: string;
+  phone: string | null;
+  brokerage: string;
+  license_number: string;
+  status: 'active' | 'pending' | 'inactive';
+  website: string | null;
+  bio: string | null;
+  photo_url: string | null;
+  created_at: string;
+  user_id: string;
+}
