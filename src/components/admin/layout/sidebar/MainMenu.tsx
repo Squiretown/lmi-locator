@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { 
@@ -113,11 +112,7 @@ export function AdminSidebarMainMenu() {
               >
                 <Kanban />
                 <span>Marketing</span>
-                {unreadNotifications > 0 && (
-                  <SidebarMenuBadge>
-                    {unreadNotifications}
-                  </SidebarMenuBadge>
-                )}
+                
               </NavLink>
             </SidebarMenuButton>
           </SidebarMenuItem>
