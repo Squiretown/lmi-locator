@@ -21,7 +21,7 @@ import ClientDashboard from './pages/dashboard/Client';
 import RealtorDashboard from './pages/dashboard/Realtor';
 import MortgageProfessionalDashboard from './pages/dashboard/MortgageProfessional';
 import MortgageBrokersPage from './pages/admin/MortgageBrokersPage';
-import SearchHistoryPage from './pages/admin/SearchHistoryPage';
+import SearchHistoryPage from './pages/admin/search-history';
 
 function App() {
   return (
