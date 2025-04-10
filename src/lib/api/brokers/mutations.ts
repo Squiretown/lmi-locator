@@ -16,15 +16,8 @@ export const createBroker = async (broker: BrokerFormValues): Promise<MortgageBr
       throw new Error('User must be authenticated to create broker profiles');
     }
 
-    // Disable RLS for this operation
-    const { data: rpcData, error: rpcError } = await supabase.rpc('temporarily_disable_rls');
-    
-    if (rpcError) {
-      console.error('Error disabling RLS:', rpcError);
-      throw new Error(`Failed to disable RLS: ${rpcError.message}`);
-    }
-
-    // Create the broker
+    // Create the broker - Note: We're relying on the server-side RLS policies
+    // or the user having the appropriate permissions
     const { data, error } = await supabase
       .from('mortgage_brokers')
       .insert([broker])
@@ -61,14 +54,7 @@ export const updateBroker = async (id: string, broker: BrokerFormValues): Promis
       throw new Error('Authentication required to update broker');
     }
 
-    // Disable RLS for this operation
-    const { error: rpcError } = await supabase.rpc('temporarily_disable_rls');
-    
-    if (rpcError) {
-      console.error('Error disabling RLS:', rpcError);
-      throw new Error(`Failed to disable RLS: ${rpcError.message}`);
-    }
-
+    // Update the broker
     const { data, error } = await supabase
       .from('mortgage_brokers')
       .update(broker)
@@ -104,14 +90,6 @@ export const deleteBroker = async (id: string): Promise<void> => {
     
     if (userError || !user) {
       throw new Error('Authentication required to delete broker');
-    }
-
-    // Disable RLS for this operation
-    const { error: rpcError } = await supabase.rpc('temporarily_disable_rls');
-    
-    if (rpcError) {
-      console.error('Error disabling RLS:', rpcError);
-      throw new Error(`Failed to disable RLS: ${rpcError.message}`);
     }
 
     const { error } = await supabase

@@ -18,14 +18,6 @@ export const createProfessional = async (professional: ProfessionalFormValues): 
       throw new Error('User must be authenticated to create professional profiles');
     }
 
-    // Disable RLS for this operation
-    const { error: rpcError } = await supabase.rpc('temporarily_disable_rls');
-    
-    if (rpcError) {
-      console.error('Error disabling RLS:', rpcError);
-      throw new Error(`Failed to disable RLS: ${rpcError.message}`);
-    }
-
     // Prepare the professional data
     const professionalData = {
       user_id: user.id,
@@ -68,14 +60,6 @@ export const updateProfessional = async (id: string, professional: ProfessionalF
       throw new Error('Authentication required to update professional');
     }
 
-    // Disable RLS for this operation
-    const { error: rpcError } = await supabase.rpc('temporarily_disable_rls');
-    
-    if (rpcError) {
-      console.error('Error disabling RLS:', rpcError);
-      throw new Error(`Failed to disable RLS: ${rpcError.message}`);
-    }
-
     // Prepare the professional data
     const professionalData = {
       name: professional.name,
@@ -115,14 +99,6 @@ export const deleteProfessional = async (id: string): Promise<void> => {
     
     if (userError || !user) {
       throw new Error('Authentication required to delete professional');
-    }
-
-    // Disable RLS for this operation
-    const { error: rpcError } = await supabase.rpc('temporarily_disable_rls');
-    
-    if (rpcError) {
-      console.error('Error disabling RLS:', rpcError);
-      throw new Error(`Failed to disable RLS: ${rpcError.message}`);
     }
 
     const { error } = await supabase

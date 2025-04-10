@@ -1,5 +1,4 @@
-
-import { SupabaseClient } from '@supabase/supabase-js';
+import { SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2.21.0';
 import { corsHeaders } from './index';
 import {
   handleCacheQuery,
