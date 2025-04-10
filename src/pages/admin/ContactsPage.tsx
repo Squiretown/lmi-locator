@@ -63,9 +63,13 @@ const ContactsPage: React.FC = () => {
     setEditDialogOpen(true);
   };
 
-  const openDeleteDialog = (contact: Contact) => {
-    setSelectedContact(contact);
-    setDeleteDialogOpen(true);
+  const openDeleteDialog = (id: string) => {
+    // Find the contact with the given id
+    const contact = contacts.find(c => c.id === id);
+    if (contact) {
+      setSelectedContact(contact);
+      setDeleteDialogOpen(true);
+    }
   };
 
   const filteredContacts = contacts.filter(contact => {
