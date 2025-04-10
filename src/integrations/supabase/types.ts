@@ -265,6 +265,35 @@ export type Database = {
         }
         Relationships: []
       }
+      broker_permissions: {
+        Row: {
+          broker_id: string
+          granted_at: string
+          id: string
+          permission_name: string
+        }
+        Insert: {
+          broker_id: string
+          granted_at?: string
+          id?: string
+          permission_name: string
+        }
+        Update: {
+          broker_id?: string
+          granted_at?: string
+          id?: string
+          permission_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "broker_permissions_broker_id_fkey"
+            columns: ["broker_id"]
+            isOneToOne: false
+            referencedRelation: "mortgage_brokers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       census_cache: {
         Row: {
           cached_at: string | null
@@ -554,6 +583,39 @@ export type Database = {
           status?: string | null
           total_addresses?: number | null
           user_id?: string
+        }
+        Relationships: []
+      }
+      mortgage_brokers: {
+        Row: {
+          company: string
+          created_at: string
+          email: string
+          id: string
+          license_number: string
+          name: string
+          phone: string | null
+          status: string
+        }
+        Insert: {
+          company: string
+          created_at?: string
+          email: string
+          id?: string
+          license_number: string
+          name: string
+          phone?: string | null
+          status?: string
+        }
+        Update: {
+          company?: string
+          created_at?: string
+          email?: string
+          id?: string
+          license_number?: string
+          name?: string
+          phone?: string | null
+          status?: string
         }
         Relationships: []
       }
