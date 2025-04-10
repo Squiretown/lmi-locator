@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -23,7 +22,8 @@ import {
   CheckCircle, 
   XCircle,
   FileText,
-  Terminal
+  Terminal,
+  Download
 } from "lucide-react";
 import { toast } from "sonner";
 import SignOutAllUsersButton from "@/components/admin/SignOutAllUsersButton";
