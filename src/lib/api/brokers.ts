@@ -1,14 +1,9 @@
 
 // This file now re-exports from the refactored broker module
-export { 
+export type { 
   MortgageBroker, 
   BrokerFormValues 
 } from './types';
 
-export {
-  fetchBrokers,
-  createBroker,
-  updateBroker,
-  deleteBroker,
-  getBrokerPermissions
-} from './brokers';
+// Import and re-export from brokers/index.ts instead of circular import
+export * from './brokers/index';

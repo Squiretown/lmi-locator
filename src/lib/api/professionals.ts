@@ -1,18 +1,9 @@
 
 // This file now re-exports from the refactored modules
-export { 
+export type { 
   Professional, 
   ProfessionalFormValues 
 } from './types';
 
-export { 
-  fetchProfessionals,
-  fetchProfessionalById,
-  getProfessionalByUserId,
-  createProfessional,
-  updateProfessional,
-  deleteProfessional,
-  getPermissionsForProfessional,
-  addPermissionToProfessional,
-  removePermissionFromProfessional
-} from './professionals';
+// Import and re-export from professionals/index.ts instead of circular import
+export * from './professionals/index';

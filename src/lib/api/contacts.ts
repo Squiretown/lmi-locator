@@ -1,19 +1,11 @@
 
 // This file now re-exports from the refactored modules
-export { 
+export type { 
   Contact, 
   ContactFormValues, 
   ContactInteraction, 
   ContactInteractionFormValues 
 } from './types';
 
-export {
-  fetchContacts,
-  fetchContactById,
-  fetchContactInteractions,
-  createContact,
-  updateContact,
-  deleteContact,
-  createContactInteraction,
-  deleteContactInteraction
-} from './contacts';
+// Import and re-export from contacts/index.ts instead of circular import
+export * from './contacts/index';
