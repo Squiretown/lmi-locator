@@ -230,9 +230,9 @@ export default function SearchHistoryPage() {
                       {record.is_eligible === null ? (
                         <Badge variant="outline">Unknown</Badge>
                       ) : record.is_eligible ? (
-                        <Badge variant="outline" className="bg-green-100 text-green-800">Eligible</Badge>
+                        <Badge variant="success">Eligible</Badge>
                       ) : (
-                        <Badge variant="outline" className="bg-red-100 text-red-800">Not Eligible</Badge>
+                        <Badge variant="destructive">Not Eligible</Badge>
                       )}
                     </TableCell>
                     <TableCell>{record.tract_id || '-'}</TableCell>
