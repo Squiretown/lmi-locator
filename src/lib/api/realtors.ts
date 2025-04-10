@@ -14,9 +14,9 @@ export interface Realtor {
   bio: string | null;
   photo_url: string | null;
   created_at: string;
-  user_id?: string;
+  user_id?: string | null;
   // Optional additional fields
-  is_flagged?: boolean;
+  is_flagged?: boolean | null;
   notes?: string | null;
   social_media?: any;
   last_updated?: string;
@@ -46,7 +46,7 @@ export const fetchRealtors = async (): Promise<Realtor[]> => {
   }
 
   // Transform the data to match our Realtor interface
-  const realtors = (data || []).map(item => {
+  const realtors = (data || []).map((item: RealtorTable) => {
     const realtor: Realtor = {
       id: item.id,
       name: item.name,
