@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
@@ -97,12 +98,17 @@ const SecuritySettings: React.FC = () => {
         throw new Error('Current password is incorrect');
       }
       
+      // Log the email we're trying to update to
+      console.log('Updating email from', user?.email, 'to', data.email);
+      
       // Then update the email
-      const { error } = await supabase.auth.updateUser({
+      const { data: updateData, error } = await supabase.auth.updateUser({
         email: data.email,
       });
       
       if (error) throw error;
+      
+      console.log('Email update response:', updateData);
       
       toast.success('Email update initiated. Please check your inbox for confirmation.');
       // Keep the new email in the form but clear the password
