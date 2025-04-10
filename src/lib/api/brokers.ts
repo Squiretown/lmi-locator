@@ -1,6 +1,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { BrokerFormValues } from '@/components/brokers/BrokerForm';
+import { MortgageBrokerTable, BrokerPermissionTable } from './database-types';
 
 export interface MortgageBroker {
   id: string;
@@ -24,13 +25,13 @@ export const fetchBrokers = async (): Promise<MortgageBroker[]> => {
     throw new Error(`Failed to fetch brokers: ${error.message}`);
   }
 
-  return data || [];
+  return (data || []) as MortgageBroker[];
 };
 
 export const createBroker = async (broker: BrokerFormValues): Promise<MortgageBroker> => {
   const { data, error } = await supabase
     .from('mortgage_brokers')
-    .insert([broker])
+    .insert([broker as any])
     .select()
     .single();
 
@@ -39,13 +40,13 @@ export const createBroker = async (broker: BrokerFormValues): Promise<MortgageBr
     throw new Error(`Failed to create broker: ${error.message}`);
   }
 
-  return data;
+  return data as MortgageBroker;
 };
 
 export const updateBroker = async (id: string, broker: BrokerFormValues): Promise<MortgageBroker> => {
   const { data, error } = await supabase
     .from('mortgage_brokers')
-    .update(broker)
+    .update(broker as any)
     .eq('id', id)
     .select()
     .single();
@@ -55,7 +56,7 @@ export const updateBroker = async (id: string, broker: BrokerFormValues): Promis
     throw new Error(`Failed to update broker: ${error.message}`);
   }
 
-  return data;
+  return data as MortgageBroker;
 };
 
 export const deleteBroker = async (id: string): Promise<void> => {
@@ -81,5 +82,5 @@ export const getBrokerPermissions = async (brokerId: string): Promise<string[]> 
     throw new Error(`Failed to fetch broker permissions: ${error.message}`);
   }
 
-  return data?.map(item => item.permission_name) || [];
+  return data?.map(item => item.permission_name as string) || [];
 };

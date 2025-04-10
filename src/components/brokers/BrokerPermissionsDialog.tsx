@@ -58,7 +58,7 @@ const BrokerPermissionsDialog: React.FC<BrokerPermissionsDialogProps> = ({
       if (error) throw error;
 
       // Update permissions state based on fetched data
-      const grantedPermissions = data?.map(p => p.permission_name) || [];
+      const grantedPermissions = data?.map(p => (p as any).permission_name) || [];
       
       setPermissions(permissions.map(permission => ({
         ...permission,
@@ -105,7 +105,7 @@ const BrokerPermissionsDialog: React.FC<BrokerPermissionsDialogProps> = ({
       if (grantedPermissions.length > 0) {
         const { error: insertError } = await supabase
           .from('broker_permissions')
-          .insert(grantedPermissions);
+          .insert(grantedPermissions as any);
 
         if (insertError) throw insertError;
       }
