@@ -43,18 +43,7 @@ const ProfileSettings: React.FC = () => {
     setIsLoading(true);
     
     try {
-      // Update email if changed
-      if (data.email !== user.email) {
-        const { error: emailError } = await supabase.auth.updateUser({
-          email: data.email,
-        });
-        
-        if (emailError) throw emailError;
-        
-        toast.success('Email update initiated. Please check your inbox for confirmation.');
-      }
-      
-      // Update user metadata
+      // Update user metadata first
       const { error: metadataError } = await supabase.auth.updateUser({
         data: {
           first_name: data.first_name,
@@ -63,6 +52,25 @@ const ProfileSettings: React.FC = () => {
       });
       
       if (metadataError) throw metadataError;
+      
+      // Only update email if it actually changed
+      if (data.email !== user.email) {
+        const { error: emailError } = await supabase.auth.updateUser({
+          email: data.email,
+        });
+        
+        if (emailError) {
+          console.error('Email update error:', emailError);
+          // Check for specific error types
+          if (emailError.message.includes('invalid')) {
+            toast.error('The email address is invalid or not allowed.');
+          } else {
+            toast.error(`Failed to update email: ${emailError.message}`);
+          }
+        } else {
+          toast.success('Email update initiated. Please check your inbox for confirmation.');
+        }
+      }
       
       toast.success('Profile updated successfully');
     } catch (error: any) {
