@@ -265,6 +265,42 @@ export type Database = {
         }
         Relationships: []
       }
+      blog_posts: {
+        Row: {
+          author: string
+          category: string
+          content: string
+          created_at: string
+          excerpt: string
+          id: string
+          imageurl: string
+          title: string
+          user_id: string
+        }
+        Insert: {
+          author: string
+          category: string
+          content: string
+          created_at?: string
+          excerpt: string
+          id?: string
+          imageurl: string
+          title: string
+          user_id: string
+        }
+        Update: {
+          author?: string
+          category?: string
+          content?: string
+          created_at?: string
+          excerpt?: string
+          id?: string
+          imageurl?: string
+          title?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       broker_permissions: {
         Row: {
           broker_id: string
@@ -1137,6 +1173,36 @@ export type Database = {
         }
         Relationships: []
       }
+      resources: {
+        Row: {
+          created_at: string
+          description: string
+          icon: string
+          id: string
+          title: string
+          url: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          icon: string
+          id?: string
+          title: string
+          url: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          icon?: string
+          id?: string
+          title?: string
+          url?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       saved_properties: {
         Row: {
           created_at: string
@@ -1273,6 +1339,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      testimonials: {
+        Row: {
+          avatar: string
+          company: string
+          created_at: string
+          id: string
+          name: string
+          role: string
+          stars: number
+          testimonial: string
+          user_id: string
+        }
+        Insert: {
+          avatar: string
+          company: string
+          created_at?: string
+          id?: string
+          name: string
+          role: string
+          stars: number
+          testimonial: string
+          user_id: string
+        }
+        Update: {
+          avatar?: string
+          company?: string
+          created_at?: string
+          id?: string
+          name?: string
+          role?: string
+          stars?: number
+          testimonial?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       tract_properties: {
         Row: {

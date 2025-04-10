@@ -114,7 +114,7 @@ export const createBlogPost = async (blogPost: BlogPost) => {
   }
 };
 
-export const getBlogPosts = async () => {
+export const getBlogPosts = async (): Promise<BlogPost[]> => {
   try {
     const { data, error } = await supabase
       .from('blog_posts')
@@ -122,7 +122,7 @@ export const getBlogPosts = async () => {
       .order('created_at', { ascending: false });
 
     if (error) throw error;
-    return data;
+    return data as BlogPost[];
   } catch (error) {
     console.error('Error retrieving blog posts:', error);
     return [];
@@ -168,7 +168,7 @@ export const createTestimonial = async (testimonial: Testimonial) => {
   }
 };
 
-export const getTestimonials = async () => {
+export const getTestimonials = async (): Promise<Testimonial[]> => {
   try {
     const { data, error } = await supabase
       .from('testimonials')
@@ -176,7 +176,7 @@ export const getTestimonials = async () => {
       .order('created_at', { ascending: false });
 
     if (error) throw error;
-    return data;
+    return data as Testimonial[];
   } catch (error) {
     console.error('Error retrieving testimonials:', error);
     return [];
@@ -220,7 +220,7 @@ export const createResource = async (resource: Resource) => {
   }
 };
 
-export const getResources = async () => {
+export const getResources = async (): Promise<Resource[]> => {
   try {
     const { data, error } = await supabase
       .from('resources')
@@ -228,7 +228,7 @@ export const getResources = async () => {
       .order('created_at', { ascending: false });
 
     if (error) throw error;
-    return data;
+    return data as Resource[];
   } catch (error) {
     console.error('Error retrieving resources:', error);
     return [];
