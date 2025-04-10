@@ -1,5 +1,4 @@
 
-
 // Define explicitly the necessary database types to use with Supabase
 export interface MortgageBrokerTable {
   id: string;
@@ -18,28 +17,3 @@ export interface BrokerPermissionTable {
   permission_name: string;
   granted_at: string;
 }
-
-export interface RealtorTable {
-  id: string;
-  name: string;
-  brokerage: string;
-  license_number: string | null;
-  email: string | null;
-  phone: string | null;
-  website: string | null;
-  bio: string | null;
-  photo_url: string | null;
-  created_at: string;
-  last_updated: string;
-  is_flagged: boolean;
-  notes: string | null;
-  social_media: Record<string, string> | null;
-}
-
-export interface RealtorPermissionTable {
-  id: string;
-  realtor_id: string;
-  permission_name: string;
-  granted_at: string;
-}
-
