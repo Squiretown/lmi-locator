@@ -320,15 +320,7 @@ export type Database = {
           id?: string
           permission_name?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "broker_permissions_broker_id_fkey"
-            columns: ["broker_id"]
-            isOneToOne: false
-            referencedRelation: "mortgage_brokers"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       census_cache: {
         Row: {
@@ -538,6 +530,97 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      contact_interactions: {
+        Row: {
+          contact_id: string
+          description: string | null
+          id: string
+          metadata: Json | null
+          timestamp: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          contact_id: string
+          description?: string | null
+          id?: string
+          metadata?: Json | null
+          timestamp?: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          contact_id?: string
+          description?: string | null
+          id?: string
+          metadata?: Json | null
+          timestamp?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contact_interactions_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contacts: {
+        Row: {
+          address: string | null
+          created_at: string
+          custom_fields: Json | null
+          email: string | null
+          first_name: string
+          id: string
+          last_name: string
+          last_updated: string
+          notes: string | null
+          owner_id: string
+          phone: string | null
+          status: string
+        }
+        Insert: {
+          address?: string | null
+          created_at?: string
+          custom_fields?: Json | null
+          email?: string | null
+          first_name: string
+          id?: string
+          last_name: string
+          last_updated?: string
+          notes?: string | null
+          owner_id: string
+          phone?: string | null
+          status?: string
+        }
+        Update: {
+          address?: string | null
+          created_at?: string
+          custom_fields?: Json | null
+          email?: string | null
+          first_name?: string
+          id?: string
+          last_name?: string
+          last_updated?: string
+          notes?: string | null
+          owner_id?: string
+          phone?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contacts_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "professionals"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       marketing_addresses: {
         Row: {
@@ -807,6 +890,98 @@ export type Database = {
           },
         ]
       }
+      professional_permissions: {
+        Row: {
+          granted_at: string
+          id: string
+          permission_name: string
+          professional_id: string
+        }
+        Insert: {
+          granted_at?: string
+          id?: string
+          permission_name: string
+          professional_id: string
+        }
+        Update: {
+          granted_at?: string
+          id?: string
+          permission_name?: string
+          professional_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "professional_permissions_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: false
+            referencedRelation: "professionals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      professionals: {
+        Row: {
+          address: string | null
+          bio: string | null
+          company: string
+          created_at: string
+          id: string
+          is_flagged: boolean | null
+          is_verified: boolean | null
+          last_updated: string
+          license_number: string
+          name: string
+          notes: string | null
+          phone: string | null
+          photo_url: string | null
+          social_media: Json | null
+          status: string
+          type: string
+          user_id: string
+          website: string | null
+        }
+        Insert: {
+          address?: string | null
+          bio?: string | null
+          company: string
+          created_at?: string
+          id?: string
+          is_flagged?: boolean | null
+          is_verified?: boolean | null
+          last_updated?: string
+          license_number: string
+          name: string
+          notes?: string | null
+          phone?: string | null
+          photo_url?: string | null
+          social_media?: Json | null
+          status?: string
+          type: string
+          user_id: string
+          website?: string | null
+        }
+        Update: {
+          address?: string | null
+          bio?: string | null
+          company?: string
+          created_at?: string
+          id?: string
+          is_flagged?: boolean | null
+          is_verified?: boolean | null
+          last_updated?: string
+          license_number?: string
+          name?: string
+          notes?: string | null
+          phone?: string | null
+          photo_url?: string | null
+          social_media?: Json | null
+          status?: string
+          type?: string
+          user_id?: string
+          website?: string | null
+        }
+        Relationships: []
+      }
       program_eligibility_checks: {
         Row: {
           created_at: string | null
@@ -993,15 +1168,7 @@ export type Database = {
           year_built?: number | null
           zip_code?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "properties_realtor_id_fkey"
-            columns: ["realtor_id"]
-            isOneToOne: false
-            referencedRelation: "realtors"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       property_matches: {
         Row: {
@@ -1552,6 +1719,36 @@ export type Database = {
           verification_date?: string | null
           verification_method?: string | null
           verification_status?: string | null
+        }
+        Relationships: []
+      }
+      users_profile: {
+        Row: {
+          account_settings: Json | null
+          created_at: string
+          email: string
+          id: string
+          is_active: boolean
+          last_login: string | null
+          role: string
+        }
+        Insert: {
+          account_settings?: Json | null
+          created_at?: string
+          email: string
+          id: string
+          is_active?: boolean
+          last_login?: string | null
+          role: string
+        }
+        Update: {
+          account_settings?: Json | null
+          created_at?: string
+          email?: string
+          id?: string
+          is_active?: boolean
+          last_login?: string | null
+          role?: string
         }
         Relationships: []
       }
