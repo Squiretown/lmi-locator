@@ -73,7 +73,7 @@ const CustomersPage: React.FC = () => {
       name: 'Michael Rodriguez',
       role: 'Real Estate Agent',
       company: 'Golden Gate Realty',
-      testimonial: 'Being able to quickly verify if a property is in an LMI tract gives me a competitive edge. My clients appreciate the extra value I provide by connecting them with assistance programs.',
+      testimonial: "Being able to quickly verify if a property is in an LMI tract gives me a competitive edge. My clients appreciate the extra value I provide by connecting them with assistance programs.",
       avatar: '/placeholder.svg',
       stars: 4
     },
@@ -109,7 +109,7 @@ const CustomersPage: React.FC = () => {
       name: 'Robert Miller',
       role: 'Housing Counselor',
       company: 'Community Housing Services',
-      testimonial: 'As a non-profit housing counselor, this tool has been invaluable for helping low-income families find affordable housing options with available assistance programs.',
+      testimonial: "As a non-profit housing counselor, this tool has been invaluable for helping low-income families find affordable housing options with available assistance programs.",
       avatar: '/placeholder.svg',
       stars: 5
     }
