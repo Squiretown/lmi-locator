@@ -2,8 +2,8 @@
 import React from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { UserManagement, ApiKeys, SystemLogs, DatabaseTools, MarketingContent } from "@/components/admin/tools";
-import { Database, FileText, Key, Users, PenTool } from "lucide-react";
+import { UserManagement, ApiKeys, SystemLogs, DatabaseTools } from "@/components/admin/tools";
+import { Database, FileText, Key, Users } from "lucide-react";
 
 const AdminTools: React.FC = () => {
   return (
@@ -35,10 +35,6 @@ const AdminTools: React.FC = () => {
                 <Database className="h-4 w-4" />
                 Database Tools
               </TabsTrigger>
-              <TabsTrigger value="marketing-content" className="flex items-center gap-1">
-                <PenTool className="h-4 w-4" />
-                Marketing Content
-              </TabsTrigger>
             </TabsList>
             
             {/* User Management Tab */}
@@ -59,11 +55,6 @@ const AdminTools: React.FC = () => {
             {/* Database Tools Tab */}
             <TabsContent value="database">
               <DatabaseTools />
-            </TabsContent>
-            
-            {/* Marketing Content Tab */}
-            <TabsContent value="marketing-content">
-              <MarketingContent />
             </TabsContent>
           </Tabs>
         </CardContent>
