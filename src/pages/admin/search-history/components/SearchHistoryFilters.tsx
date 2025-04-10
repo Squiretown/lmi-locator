@@ -1,91 +1,109 @@
 
 import React from 'react';
-import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Calendar } from "@/components/ui/calendar";
+import { Button } from "@/components/ui/button";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Calendar as CalendarIcon, Download, Search } from "lucide-react";
-import { format } from "date-fns";
+import { Calendar } from "lucide-react";
 import { DateRangeType } from '../types';
 
 interface SearchHistoryFiltersProps {
-  addressFilter: string;
-  setAddressFilter: (value: string) => void;
+  searchAddress: string;
+  setSearchAddress: (value: string) => void;
+  searchTractId: string;
+  setSearchTractId: (value: string) => void;
   dateRange: DateRangeType;
   setDateRange: (value: DateRangeType) => void;
-  handleExport: () => void;
+  showEligibleOnly: boolean;
+  setShowEligibleOnly: (value: boolean) => void;
+  applyFilters: () => void;
+  resetFilters: () => void;
 }
 
 export default function SearchHistoryFilters({
-  addressFilter, 
-  setAddressFilter,
+  searchAddress,
+  setSearchAddress,
+  searchTractId,
+  setSearchTractId,
   dateRange,
   setDateRange,
-  handleExport
+  showEligibleOnly,
+  setShowEligibleOnly,
+  applyFilters,
+  resetFilters
 }: SearchHistoryFiltersProps) {
+  // Helper function to handle date range selection
+  const handleDateRangeChange = (value: DateRangeType) => {
+    setDateRange(value);
+  };
+
   return (
-    <div className="flex items-center justify-between mb-4">
-      <div className="flex gap-2 items-center">
-        <div className="relative">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            type="text"
-            placeholder="Filter by address or tract ID"
-            className="pl-8 w-[250px] md:w-[300px]"
-            value={addressFilter}
-            onChange={(e) => setAddressFilter(e.target.value)}
-          />
-        </div>
-        
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button variant="outline" size="sm" className="h-10 gap-1">
-              <CalendarIcon className="h-4 w-4" />
-              {dateRange.from ? (
-                dateRange.to ? (
-                  <>
-                    {format(dateRange.from, "MM/dd/yyyy")} -{" "}
-                    {format(dateRange.to, "MM/dd/yyyy")}
-                  </>
-                ) : (
-                  format(dateRange.from, "MM/dd/yyyy")
-                )
-              ) : (
-                "Date Range"
-              )}
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-auto p-0" align="start">
-            <Calendar
-              initialFocus
-              mode="range"
-              selected={dateRange}
-              onSelect={(range) => {
-                if (range) {
-                  setDateRange(range);
-                } else {
-                  setDateRange({ from: undefined, to: undefined });
-                }
-              }}
-              numberOfMonths={2}
+    <Card className="mb-4">
+      <CardContent className="pt-6">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div>
+            <label className="text-sm font-medium mb-2 block">Address</label>
+            <Input
+              placeholder="Search by address"
+              value={searchAddress}
+              onChange={(e) => setSearchAddress(e.target.value)}
             />
-          </PopoverContent>
-        </Popover>
-        
-        {(addressFilter || dateRange.from) && (
-          <Button variant="ghost" size="sm" onClick={() => {
-            setAddressFilter('');
-            setDateRange({ from: undefined, to: undefined });
-          }}>
-            Clear filters
-          </Button>
-        )}
-      </div>
-      
-      <Button variant="outline" size="sm" onClick={handleExport} className="gap-1">
-        <Download className="h-4 w-4" />
-        Export CSV
-      </Button>
-    </div>
+          </div>
+          
+          <div>
+            <label className="text-sm font-medium mb-2 block">Tract ID</label>
+            <Input
+              placeholder="Search by tract ID"
+              value={searchTractId}
+              onChange={(e) => setSearchTractId(e.target.value)}
+            />
+          </div>
+          
+          <div>
+            <label className="text-sm font-medium mb-2 block">Date Range</label>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" className="w-full justify-start">
+                  <Calendar className="mr-2 h-4 w-4" />
+                  {dateRange.from ? (
+                    dateRange.to ? (
+                      <>
+                        {dateRange.from.toLocaleDateString()} - {dateRange.to.toLocaleDateString()}
+                      </>
+                    ) : (
+                      dateRange.from.toLocaleDateString()
+                    )
+                  ) : (
+                    <span>Select date range</span>
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="range"
+                  selected={{
+                    from: dateRange.from,
+                    to: dateRange.to
+                  }}
+                  onSelect={(range) => {
+                    // Ensure both from and to are defined in DateRangeType
+                    handleDateRangeChange({
+                      from: range?.from,
+                      to: range?.to
+                    });
+                  }}
+                />
+              </PopoverContent>
+            </Popover>
+          </div>
+          
+          <div className="flex items-end space-x-2">
+            <Button onClick={applyFilters} className="flex-1">Apply Filters</Button>
+            <Button variant="outline" onClick={resetFilters}>Reset</Button>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
