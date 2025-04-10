@@ -12,15 +12,11 @@ import { MarketingContent } from '../tools/MarketingContent';
 import { FileText, BarChart } from 'lucide-react';
 
 export const MarketingDashboard: React.FC = () => {
-  const { data, isLoading, error } = useMarketingDashboardData();
+  const { loading, userTypeCounts, marketingStats, recentActivity, notifications, verificationChallenges } = useMarketingDashboardData();
   const [activeTab, setActiveTab] = useState<string>("dashboard");
 
-  if (isLoading) {
+  if (loading) {
     return <div>Loading marketing dashboard data...</div>;
-  }
-
-  if (error) {
-    return <div className="text-red-500">Error loading dashboard data: {error.message}</div>;
   }
 
   return (
@@ -43,17 +39,17 @@ export const MarketingDashboard: React.FC = () => {
         </TabsList>
 
         <TabsContent value="dashboard" className="space-y-4">
-          <MarketingStatsCards data={data} />
+          <MarketingStatsCards marketingStats={marketingStats} />
           
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            <UserTypeCard data={data.userTypeStats} />
-            <MarketingJobStatusCard data={data.jobStatusData} />
-            <NotificationStatsCard data={data.notificationStats} />
+            <UserTypeCard userTypeCounts={userTypeCounts} />
+            <MarketingJobStatusCard marketingStats={marketingStats} />
+            <NotificationStatsCard notifications={notifications} />
           </div>
           
           <div className="grid gap-4 md:grid-cols-2">
-            <RecentActivityCard data={data.recentActivity} />
-            <VerificationChallengesCard data={data.verificationChallenges} />
+            <RecentActivityCard recentActivity={recentActivity} />
+            <VerificationChallengesCard challenges={verificationChallenges} />
           </div>
         </TabsContent>
 
