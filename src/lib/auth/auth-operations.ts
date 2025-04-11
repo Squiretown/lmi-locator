@@ -53,12 +53,12 @@ export async function signInWithMagicLink(email: string, redirectTo?: string) {
   }
 }
 
-export async function resetPassword(email: string) {
+export async function resetPassword(email: string, redirectTo?: string) {
   try {
     console.log('Attempting to send password reset to:', email);
     
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/reset-password`,
+      redirectTo: redirectTo || `${window.location.origin}/reset-password`,
     });
     
     if (error) {

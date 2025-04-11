@@ -10,10 +10,17 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { signInWithMagicLink } from '@/lib/auth/auth-operations';
 import FormErrorDisplay from './form-sections/FormErrorDisplay';
 
+// Improved email validation pattern
 const magicLinkSchema = z.object({
   email: z.string()
+    .min(1, { message: "Email is required" })
     .email({ message: "Please enter a valid email address" })
-    .min(1, { message: "Email is required" }),
+    // Additional RFC-compliant email validation
+    .refine(email => {
+      // Basic RFC 5322 compliant regex
+      const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+      return emailRegex.test(email);
+    }, { message: "Please enter a valid email address format" }),
 });
 
 type MagicLinkFormValues = z.infer<typeof magicLinkSchema>;
@@ -35,15 +42,22 @@ const MagicLinkForm: React.FC = () => {
     setIsLoading(true);
     
     try {
-      const { success, error } = await signInWithMagicLink(values.email);
+      // Get the current URL for proper redirect
+      const origin = window.location.origin;
+      const redirectUrl = `${origin}/login`;
+      console.log(`Using redirect URL: ${redirectUrl}`);
+      
+      const { success, error } = await signInWithMagicLink(values.email, redirectUrl);
       
       if (success) {
         setEmailSent(true);
         form.reset();
       } else if (error) {
+        console.error("Magic link error:", error);
         setFormError(error.message);
       }
     } catch (error: any) {
+      console.error("Exception sending magic link:", error);
       setFormError(error.message);
       toast.error('Failed to send magic link');
     } finally {

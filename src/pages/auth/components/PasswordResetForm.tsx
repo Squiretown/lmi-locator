@@ -10,10 +10,17 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { resetPassword } from '@/lib/auth/auth-operations';
 import FormErrorDisplay from './form-sections/FormErrorDisplay';
 
+// Improved email validation pattern
 const resetSchema = z.object({
   email: z.string()
+    .min(1, { message: "Email is required" })
     .email({ message: "Please enter a valid email address" })
-    .min(1, { message: "Email is required" }),
+    // Additional RFC-compliant email validation
+    .refine(email => {
+      // Basic RFC 5322 compliant regex
+      const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+      return emailRegex.test(email);
+    }, { message: "Please enter a valid email address format" }),
 });
 
 type ResetFormValues = z.infer<typeof resetSchema>;
@@ -35,15 +42,22 @@ const PasswordResetForm: React.FC = () => {
     setIsLoading(true);
     
     try {
-      const { success, error } = await resetPassword(values.email);
+      // Get the current URL for proper redirect
+      const origin = window.location.origin;
+      const redirectUrl = `${origin}/reset-password`;
+      console.log(`Using redirect URL: ${redirectUrl}`);
+      
+      const { success, error } = await resetPassword(values.email, redirectUrl);
       
       if (success) {
         setEmailSent(true);
         form.reset();
       } else if (error) {
+        console.error("Password reset error:", error);
         setFormError(error.message);
       }
     } catch (error: any) {
+      console.error("Exception sending reset email:", error);
       setFormError(error.message);
       toast.error('Failed to send password reset email');
     } finally {
