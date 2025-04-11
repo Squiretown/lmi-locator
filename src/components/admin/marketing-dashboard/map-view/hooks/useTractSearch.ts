@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -63,6 +64,40 @@ const COUNTIES_BY_STATE: Record<string, Array<{fips: string, name: string}>> = {
     { fips: '17097', name: 'Lake County' },
   ]
 };
+
+// Sample geometries for mock data
+const sampleGeometries = [
+  {
+    type: 'Polygon',
+    coordinates: [[
+      [-80.2, 25.8], [-80.1, 25.8], [-80.1, 25.9], [-80.2, 25.9], [-80.2, 25.8]
+    ]]
+  },
+  {
+    type: 'Polygon',
+    coordinates: [[
+      [-118.4, 34.0], [-118.3, 34.0], [-118.3, 34.1], [-118.4, 34.1], [-118.4, 34.0]
+    ]]
+  },
+  {
+    type: 'Polygon',
+    coordinates: [[
+      [-95.5, 29.7], [-95.4, 29.7], [-95.4, 29.8], [-95.5, 29.8], [-95.5, 29.7]
+    ]]
+  },
+  {
+    type: 'Polygon',
+    coordinates: [[
+      [-74.0, 40.7], [-73.9, 40.7], [-73.9, 40.8], [-74.0, 40.8], [-74.0, 40.7]
+    ]]
+  },
+  {
+    type: 'Polygon',
+    coordinates: [[
+      [-87.7, 41.8], [-87.6, 41.8], [-87.6, 41.9], [-87.7, 41.9], [-87.7, 41.8]
+    ]]
+  }
+];
 
 export const useTractSearch = () => {
   const { toast } = useToast();
@@ -202,7 +237,7 @@ export const useTractSearch = () => {
         toast({
           title: "Using mock data",
           description: "Couldn't retrieve real data, using simulated results instead",
-          variant: "warning",
+          variant: "default", // Changed from "warning" to "default"
         });
       }
       
