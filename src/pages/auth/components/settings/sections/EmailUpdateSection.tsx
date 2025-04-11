@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
@@ -10,6 +9,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import * as z from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import FormErrorDisplay from '@/pages/auth/components/form-sections/FormErrorDisplay';
+import { updateUserEmail } from '@/lib/auth/operations/email-auth';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -76,19 +76,11 @@ const EmailUpdateSection: React.FC = () => {
         throw new Error('Current password is incorrect');
       }
       
-      // Log the email we're trying to update to
-      console.log('Updating email from', user?.email, 'to', pendingEmailData.email);
-      
       // Then update the email
-      const { data: updateData, error } = await supabase.auth.updateUser({
-        email: pendingEmailData.email,
-      });
+      const { success, error } = await updateUserEmail(pendingEmailData.email);
       
-      if (error) throw error;
+      if (!success && error) throw error;
       
-      console.log('Email update response:', updateData);
-      
-      toast.success('Email update initiated. Please check your inbox for confirmation.');
       // Keep the new email in the form but clear the password
       emailForm.setValue('currentPassword', '');
     } catch (error: any) {
