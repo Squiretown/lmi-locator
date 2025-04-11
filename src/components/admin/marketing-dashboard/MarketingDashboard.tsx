@@ -11,7 +11,7 @@ import {
   VerificationChallengesCard 
 } from '.';
 import { ContentManagement } from './ContentManagement';
-import { MarketingContent } from '../tools/MarketingContent';
+import { MarketingContent } from '../tools/marketing/MarketingContent';
 import { useMarketingDashboardData } from './useMarketingDashboardData';
 
 export const MarketingDashboard: React.FC = () => {
@@ -35,16 +35,16 @@ export const MarketingDashboard: React.FC = () => {
         
         <TabsContent value="overview" className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <MarketingStatsCards stats={marketingStats} loading={loading} />
+            <MarketingStatsCards marketingStats={marketingStats} loading={loading} />
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <MarketingJobStatusCard stats={marketingStats} loading={loading} />
-            <UserTypeCard userTypeCounts={userTypeCounts} loading={loading} />
+            <MarketingJobStatusCard marketingStats={marketingStats} loading={loading} />
+            <UserTypeCard userTypeCounts={userTypeCounts} />
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <NotificationStatsCard notifications={notifications} loading={loading} />
+            <NotificationStatsCard notificationStats={notifications} />
             <RecentActivityCard recentActivity={recentActivity} />
           </div>
           
@@ -54,7 +54,7 @@ export const MarketingDashboard: React.FC = () => {
               <CardDescription>Manage verification challenges for user authentication</CardDescription>
             </CardHeader>
             <CardContent>
-              <VerificationChallengesCard challenges={verificationChallenges} loading={loading} />
+              <VerificationChallengesCard challenges={verificationChallenges} />
             </CardContent>
           </Card>
         </TabsContent>

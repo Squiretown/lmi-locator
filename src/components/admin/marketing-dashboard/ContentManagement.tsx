@@ -1,167 +1,141 @@
 
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { 
-  Trash, 
-  FileText, 
-  MessageSquare, 
-  BookOpen, 
-  RefreshCw,
-  AlertCircle
-} from "lucide-react";
-import { 
-  getBlogPosts, 
-  getTestimonials, 
-  getResources,
-  BlogPost,
-  Testimonial,
-  Resource
-} from "@/lib/supabase/marketing";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { Badge } from "@/components/ui/badge";
-import { supabase } from "@/integrations/supabase/client";
+import { Trash, FileText, MessageSquare, BookOpen, PenSquare } from "lucide-react";
+import { getBlogPosts, getTestimonials, getResources, deleteBlogPost, deleteTestimonial, deleteResource } from "@/lib/supabase/marketing";
+import { toast } from 'sonner';
+import { BlogPost, Testimonial, Resource } from '@/lib/supabase/marketing';
 
 export const ContentManagement: React.FC = () => {
   const [blogPosts, setBlogPosts] = useState<BlogPost[]>([]);
   const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
   const [resources, setResources] = useState<Resource[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const [itemToDelete, setItemToDelete] = useState<{
-    id: string;
-    type: 'blog' | 'testimonial' | 'resource';
-    title: string;
-  } | null>(null);
+  const [loading, setLoading] = useState({
+    blogs: false,
+    testimonials: false,
+    resources: false
+  });
+  const [deleting, setDeleting] = useState<Record<string, boolean>>({});
+
+  const fetchData = async () => {
+    // Fetch blog posts
+    setLoading(prev => ({ ...prev, blogs: true }));
+    try {
+      const posts = await getBlogPosts();
+      setBlogPosts(posts);
+    } catch (error) {
+      console.error('Error fetching blog posts:', error);
+      toast.error('Failed to load blog posts');
+    } finally {
+      setLoading(prev => ({ ...prev, blogs: false }));
+    }
+
+    // Fetch testimonials
+    setLoading(prev => ({ ...prev, testimonials: true }));
+    try {
+      const testims = await getTestimonials();
+      setTestimonials(testims);
+    } catch (error) {
+      console.error('Error fetching testimonials:', error);
+      toast.error('Failed to load testimonials');
+    } finally {
+      setLoading(prev => ({ ...prev, testimonials: false }));
+    }
+
+    // Fetch resources
+    setLoading(prev => ({ ...prev, resources: true }));
+    try {
+      const res = await getResources();
+      setResources(res);
+    } catch (error) {
+      console.error('Error fetching resources:', error);
+      toast.error('Failed to load resources');
+    } finally {
+      setLoading(prev => ({ ...prev, resources: false }));
+    }
+  };
 
   useEffect(() => {
-    fetchAllContent();
+    fetchData();
   }, []);
 
-  const fetchAllContent = async () => {
-    setLoading(true);
-    try {
-      const [blogData, testimonialData, resourceData] = await Promise.all([
-        getBlogPosts(),
-        getTestimonials(),
-        getResources(),
-      ]);
-      
-      setBlogPosts(blogData);
-      setTestimonials(testimonialData);
-      setResources(resourceData);
-    } catch (error) {
-      console.error('Error fetching content:', error);
-      toast.error('Failed to load content data');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleDelete = (type: 'blog' | 'testimonial' | 'resource', id: string, title: string) => {
-    setItemToDelete({ type, id, title });
-    setShowDeleteDialog(true);
-  };
-
-  const confirmDelete = async () => {
-    if (!itemToDelete) return;
+  const handleDeleteBlogPost = async (id: string) => {
+    if (!id) return;
     
+    setDeleting(prev => ({ ...prev, [`blog_${id}`]: true }));
     try {
-      const { type, id } = itemToDelete;
-      let tableName = '';
-      
-      switch (type) {
-        case 'blog':
-          tableName = 'blog_posts';
-          break;
-        case 'testimonial':
-          tableName = 'testimonials';
-          break;
-        case 'resource':
-          tableName = 'resources';
-          break;
+      const result = await deleteBlogPost(id);
+      if (result.success) {
+        toast.success('Blog post deleted successfully');
+        setBlogPosts(prev => prev.filter(post => post.id !== id));
+      } else {
+        toast.error('Failed to delete blog post');
       }
-      
-      const { error } = await supabase
-        .from(tableName)
-        .delete()
-        .eq('id', id);
-      
-      if (error) throw error;
-      
-      toast.success(`${type.charAt(0).toUpperCase() + type.slice(1)} deleted successfully`);
-      
-      // Refresh the content list
-      fetchAllContent();
     } catch (error) {
-      console.error('Error deleting item:', error);
-      toast.error('Failed to delete item');
+      console.error('Error deleting blog post:', error);
+      toast.error('An error occurred while deleting the blog post');
     } finally {
-      setShowDeleteDialog(false);
-      setItemToDelete(null);
+      setDeleting(prev => ({ ...prev, [`blog_${id}`]: false }));
     }
   };
 
-  const cancelDelete = () => {
-    setShowDeleteDialog(false);
-    setItemToDelete(null);
+  const handleDeleteTestimonial = async (id: string) => {
+    if (!id) return;
+    
+    setDeleting(prev => ({ ...prev, [`testimonial_${id}`]: true }));
+    try {
+      const result = await deleteTestimonial(id);
+      if (result.success) {
+        toast.success('Testimonial deleted successfully');
+        setTestimonials(prev => prev.filter(t => t.id !== id));
+      } else {
+        toast.error('Failed to delete testimonial');
+      }
+    } catch (error) {
+      console.error('Error deleting testimonial:', error);
+      toast.error('An error occurred while deleting the testimonial');
+    } finally {
+      setDeleting(prev => ({ ...prev, [`testimonial_${id}`]: false }));
+    }
   };
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString(undefined, {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    });
+  const handleDeleteResource = async (id: string) => {
+    if (!id) return;
+    
+    setDeleting(prev => ({ ...prev, [`resource_${id}`]: true }));
+    try {
+      const result = await deleteResource(id);
+      if (result.success) {
+        toast.success('Resource deleted successfully');
+        setResources(prev => prev.filter(r => r.id !== id));
+      } else {
+        toast.error('Failed to delete resource');
+      }
+    } catch (error) {
+      console.error('Error deleting resource:', error);
+      toast.error('An error occurred while deleting the resource');
+    } finally {
+      setDeleting(prev => ({ ...prev, [`resource_${id}`]: false }));
+    }
   };
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold">Content Management</h2>
-        <Button 
-          onClick={fetchAllContent} 
-          variant="outline" 
-          disabled={loading}
-        >
-          {loading ? (
-            <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-          ) : (
-            <RefreshCw className="h-4 w-4 mr-2" />
-          )}
-          Refresh
-        </Button>
-      </div>
-      
       <Tabs defaultValue="blog">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="blog" className="flex items-center gap-2">
+        <TabsList className="grid grid-cols-3 mb-4">
+          <TabsTrigger value="blog" className="flex items-center gap-1">
             <FileText className="h-4 w-4" />
             Blog Posts
-            <Badge variant="outline">{blogPosts.length}</Badge>
           </TabsTrigger>
-          <TabsTrigger value="testimonials" className="flex items-center gap-2">
+          <TabsTrigger value="testimonials" className="flex items-center gap-1">
             <MessageSquare className="h-4 w-4" />
             Testimonials
-            <Badge variant="outline">{testimonials.length}</Badge>
           </TabsTrigger>
-          <TabsTrigger value="resources" className="flex items-center gap-2">
+          <TabsTrigger value="resources" className="flex items-center gap-1">
             <BookOpen className="h-4 w-4" />
             Resources
-            <Badge variant="outline">{resources.length}</Badge>
           </TabsTrigger>
         </TabsList>
         
@@ -169,48 +143,37 @@ export const ContentManagement: React.FC = () => {
         <TabsContent value="blog">
           <Card>
             <CardHeader>
-              <CardTitle>Blog Posts Management</CardTitle>
+              <CardTitle className="text-xl">Blog Post Management</CardTitle>
+              <CardDescription>Manage existing blog posts</CardDescription>
             </CardHeader>
             <CardContent>
-              <ScrollArea className="h-[400px] pr-4">
-                {blogPosts.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
-                    <AlertCircle className="h-10 w-10 mb-2" />
-                    <p>No blog posts found</p>
-                  </div>
+              <div className="space-y-4">
+                {loading.blogs ? (
+                  <p className="text-center py-4">Loading blog posts...</p>
+                ) : blogPosts.length === 0 ? (
+                  <p className="text-center py-4">No blog posts found. Create your first post from the "Create Content" tab.</p>
                 ) : (
                   <div className="space-y-4">
-                    {blogPosts.map((post) => (
-                      <div key={post.id} className="p-4 border rounded-md">
-                        <div className="flex justify-between items-start">
-                          <div>
-                            <h3 className="font-medium">{post.title}</h3>
-                            <p className="text-sm text-muted-foreground">{post.excerpt.substring(0, 100)}...</p>
-                            <div className="flex mt-2 text-xs text-muted-foreground space-x-2">
-                              <span>{post.author}</span>
-                              <span>•</span>
-                              <span>{post.category}</span>
-                              {post.created_at && (
-                                <>
-                                  <span>•</span>
-                                  <span>{formatDate(post.created_at)}</span>
-                                </>
-                              )}
-                            </div>
-                          </div>
-                          <Button 
-                            variant="destructive" 
-                            size="icon"
-                            onClick={() => handleDelete('blog', post.id || '', post.title)}
-                          >
-                            <Trash className="h-4 w-4" />
-                          </Button>
+                    {blogPosts.map(post => (
+                      <div key={post.id} className="border rounded-md p-4 flex items-start justify-between">
+                        <div>
+                          <h3 className="font-medium text-lg">{post.title}</h3>
+                          <p className="text-muted-foreground text-sm">By {post.author} in {post.category}</p>
+                          <p className="mt-2 text-sm line-clamp-2">{post.excerpt}</p>
                         </div>
+                        <Button 
+                          variant="destructive" 
+                          size="sm" 
+                          onClick={() => handleDeleteBlogPost(post.id || '')}
+                          disabled={deleting[`blog_${post.id}`]}
+                        >
+                          <Trash className="h-4 w-4" />
+                        </Button>
                       </div>
                     ))}
                   </div>
                 )}
-              </ScrollArea>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
@@ -219,53 +182,40 @@ export const ContentManagement: React.FC = () => {
         <TabsContent value="testimonials">
           <Card>
             <CardHeader>
-              <CardTitle>Testimonials Management</CardTitle>
+              <CardTitle className="text-xl">Testimonial Management</CardTitle>
+              <CardDescription>Manage existing testimonials</CardDescription>
             </CardHeader>
             <CardContent>
-              <ScrollArea className="h-[400px] pr-4">
-                {testimonials.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
-                    <AlertCircle className="h-10 w-10 mb-2" />
-                    <p>No testimonials found</p>
-                  </div>
+              <div className="space-y-4">
+                {loading.testimonials ? (
+                  <p className="text-center py-4">Loading testimonials...</p>
+                ) : testimonials.length === 0 ? (
+                  <p className="text-center py-4">No testimonials found. Create your first testimonial from the "Create Content" tab.</p>
                 ) : (
                   <div className="space-y-4">
-                    {testimonials.map((testimonial) => (
-                      <div key={testimonial.id} className="p-4 border rounded-md">
-                        <div className="flex justify-between items-start">
-                          <div>
-                            <div className="flex items-center gap-2">
-                              <h3 className="font-medium">{testimonial.name}</h3>
-                              <div className="flex">
-                                {Array.from({ length: testimonial.stars }).map((_, i) => (
-                                  <span key={i} className="text-yellow-500">★</span>
-                                ))}
-                              </div>
-                            </div>
-                            <p className="text-sm">{testimonial.testimonial.substring(0, 100)}...</p>
-                            <div className="flex mt-2 text-xs text-muted-foreground">
-                              <span>{testimonial.role} at {testimonial.company}</span>
-                              {testimonial.created_at && (
-                                <>
-                                  <span className="mx-1">•</span>
-                                  <span>{formatDate(testimonial.created_at)}</span>
-                                </>
-                              )}
-                            </div>
+                    {testimonials.map(testimonial => (
+                      <div key={testimonial.id} className="border rounded-md p-4 flex items-start justify-between">
+                        <div>
+                          <h3 className="font-medium text-lg">{testimonial.name}</h3>
+                          <p className="text-muted-foreground text-sm">{testimonial.role} at {testimonial.company}</p>
+                          <div className="mt-1 mb-2">
+                            {"★".repeat(testimonial.stars)}{"☆".repeat(5 - testimonial.stars)}
                           </div>
-                          <Button 
-                            variant="destructive" 
-                            size="icon"
-                            onClick={() => handleDelete('testimonial', testimonial.id || '', testimonial.name)}
-                          >
-                            <Trash className="h-4 w-4" />
-                          </Button>
+                          <p className="mt-2 text-sm line-clamp-2">{testimonial.testimonial}</p>
                         </div>
+                        <Button 
+                          variant="destructive" 
+                          size="sm" 
+                          onClick={() => handleDeleteTestimonial(testimonial.id || '')}
+                          disabled={deleting[`testimonial_${testimonial.id}`]}
+                        >
+                          <Trash className="h-4 w-4" />
+                        </Button>
                       </div>
                     ))}
                   </div>
                 )}
-              </ScrollArea>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
@@ -274,80 +224,43 @@ export const ContentManagement: React.FC = () => {
         <TabsContent value="resources">
           <Card>
             <CardHeader>
-              <CardTitle>Resources Management</CardTitle>
+              <CardTitle className="text-xl">Resource Management</CardTitle>
+              <CardDescription>Manage existing resources</CardDescription>
             </CardHeader>
             <CardContent>
-              <ScrollArea className="h-[400px] pr-4">
-                {resources.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
-                    <AlertCircle className="h-10 w-10 mb-2" />
-                    <p>No resources found</p>
-                  </div>
+              <div className="space-y-4">
+                {loading.resources ? (
+                  <p className="text-center py-4">Loading resources...</p>
+                ) : resources.length === 0 ? (
+                  <p className="text-center py-4">No resources found. Create your first resource from the "Create Content" tab.</p>
                 ) : (
                   <div className="space-y-4">
-                    {resources.map((resource) => (
-                      <div key={resource.id} className="p-4 border rounded-md">
-                        <div className="flex justify-between items-start">
-                          <div>
-                            <h3 className="font-medium">{resource.title}</h3>
-                            <p className="text-sm">{resource.description.substring(0, 100)}...</p>
-                            <div className="flex mt-2 text-xs text-muted-foreground">
-                              <a 
-                                href={resource.url} 
-                                target="_blank" 
-                                rel="noopener noreferrer"
-                                className="text-blue-500 hover:underline"
-                              >
-                                {resource.url.substring(0, 40)}{resource.url.length > 40 ? '...' : ''}
-                              </a>
-                              {resource.created_at && (
-                                <>
-                                  <span className="mx-1">•</span>
-                                  <span>{formatDate(resource.created_at)}</span>
-                                </>
-                              )}
-                            </div>
-                          </div>
-                          <Button 
-                            variant="destructive" 
-                            size="icon"
-                            onClick={() => handleDelete('resource', resource.id || '', resource.title)}
-                          >
-                            <Trash className="h-4 w-4" />
-                          </Button>
+                    {resources.map(resource => (
+                      <div key={resource.id} className="border rounded-md p-4 flex items-start justify-between">
+                        <div>
+                          <h3 className="font-medium text-lg">{resource.title}</h3>
+                          <p className="text-blue-600 hover:underline text-sm">
+                            <a href={resource.url} target="_blank" rel="noopener noreferrer">{resource.url}</a>
+                          </p>
+                          <p className="mt-2 text-sm line-clamp-2">{resource.description}</p>
                         </div>
+                        <Button 
+                          variant="destructive" 
+                          size="sm" 
+                          onClick={() => handleDeleteResource(resource.id || '')}
+                          disabled={deleting[`resource_${resource.id}`]}
+                        >
+                          <Trash className="h-4 w-4" />
+                        </Button>
                       </div>
                     ))}
                   </div>
                 )}
-              </ScrollArea>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
       </Tabs>
-      
-      {/* Delete Confirmation Dialog */}
-      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Confirm Deletion</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to delete "{itemToDelete?.title}"?
-              <br /><br />
-              This action cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={cancelDelete}>Cancel</AlertDialogCancel>
-            <AlertDialogAction 
-              onClick={confirmDelete}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 };
