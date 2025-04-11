@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
-import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -59,25 +58,19 @@ const EmailUpdateSection: React.FC = () => {
   };
 
   const handleConfirmUpdate = async () => {
-    if (!pendingEmailData) return;
+    if (!pendingEmailData || !user?.email) return;
     
     // Reset any previous errors
     setFormError(null);
     setIsEmailLoading(true);
     
     try {
-      // First verify the current password is correct
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email: user?.email || '',
-        password: pendingEmailData.currentPassword,
-      });
-      
-      if (signInError) {
-        throw new Error('Current password is incorrect');
-      }
-      
-      // Then update the email
-      const { success, error } = await updateUserEmail(pendingEmailData.email);
+      // Use the updated function with current email, new email and password
+      const { success, error } = await updateUserEmail(
+        user.email,
+        pendingEmailData.email,
+        pendingEmailData.currentPassword
+      );
       
       if (!success && error) throw error;
       

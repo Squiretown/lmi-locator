@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from 'sonner';
 import { UserMetadata } from "@/types/auth";
@@ -73,10 +72,22 @@ export async function signUpWithEmail(email: string, password: string, metadata:
   }
 }
 
-export async function updateUserEmail(newEmail: string) {
+export async function updateUserEmail(currentEmail: string, newEmail: string, password: string) {
   try {
-    console.log('Attempting to update email to:', newEmail);
+    console.log('Attempting to update email from:', currentEmail, 'to:', newEmail);
     
+    // First verify the current password is correct
+    const { error: signInError } = await supabase.auth.signInWithPassword({
+      email: currentEmail,
+      password: password,
+    });
+    
+    if (signInError) {
+      console.error('Password verification error:', signInError);
+      return { success: false, error: new Error('Current password is incorrect') };
+    }
+    
+    // Then update the email
     const { data, error } = await supabase.auth.updateUser({
       email: newEmail,
     });
