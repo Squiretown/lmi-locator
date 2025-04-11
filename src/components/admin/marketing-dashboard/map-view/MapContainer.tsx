@@ -19,7 +19,7 @@ interface MapContainerProps {
 
 export interface MapRef {
   fitBounds: (bounds: mapboxgl.LngLatBoundsLike) => void;
-  flyTo: (options: mapboxgl.EaseToOptions) => void;
+  flyTo: (options: mapboxgl.CameraOptions & mapboxgl.AnimationOptions) => void;
 }
 
 const MapContainer = forwardRef<MapRef, MapContainerProps>(
@@ -38,7 +38,7 @@ const MapContainer = forwardRef<MapRef, MapContainerProps>(
           });
         }
       },
-      flyTo: (options: mapboxgl.EaseToOptions) => {
+      flyTo: (options: mapboxgl.CameraOptions & mapboxgl.AnimationOptions) => {
         if (map.current) {
           map.current.flyTo(options);
         }
