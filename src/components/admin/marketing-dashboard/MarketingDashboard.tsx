@@ -1,6 +1,7 @@
 
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   UserTypeCard, 
   MarketingJobStatusCard, 
@@ -10,6 +11,7 @@ import {
   VerificationChallengesCard,
   ContentManagement 
 } from '.';
+import { MapView } from './map-view';
 import { MarketingContent } from '../tools/marketing/MarketingContent';
 import { useMarketingDashboardData } from './useMarketingDashboardData';
 import { MarketingSidebar } from './MarketingSidebar';
@@ -76,6 +78,8 @@ export const MarketingDashboard: React.FC = () => {
         return <OverviewSection {...dashboardData} />;
       case 'search':
         return <BulkAddressSearch />;
+      case 'map':
+        return <MapView />;
       case 'content':
         return <ContentManagement />;
       case 'create':
@@ -99,4 +103,3 @@ export const MarketingDashboard: React.FC = () => {
     </div>
   );
 };
-

@@ -9,7 +9,8 @@ import {
   Search, 
   MapPin, 
   FileSpreadsheet, 
-  List 
+  List,
+  Map
 } from 'lucide-react';
 import { cn } from "@/lib/utils";
 
@@ -49,6 +50,7 @@ export const MarketingSidebar: React.FC<MarketingSidebarProps> = ({
   const menuItems = [
     { id: 'overview', label: 'Dashboard Overview', icon: BarChart3 },
     { id: 'search', label: 'Bulk Address Search', icon: Search },
+    { id: 'map', label: 'LMI Tract Map', icon: Map },
     { id: 'jobs', label: 'Marketing Jobs', icon: Clock },
     { id: 'lists', label: 'Saved Lists', icon: FileSpreadsheet },
     { id: 'users', label: 'User Analysis', icon: Users },
