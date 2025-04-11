@@ -35,16 +35,16 @@ export const MarketingDashboard: React.FC = () => {
         
         <TabsContent value="overview" className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <MarketingStatsCards marketingStats={marketingStats} loading={loading} />
+            <MarketingStatsCards marketingStats={marketingStats} />
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <MarketingJobStatusCard marketingStats={marketingStats} loading={loading} />
+            <MarketingJobStatusCard marketingStats={marketingStats} />
             <UserTypeCard userTypeCounts={userTypeCounts} />
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <NotificationStatsCard notificationStats={notifications} />
+            <NotificationStatsCard notifications={notifications} />
             <RecentActivityCard recentActivity={recentActivity} />
           </div>
           

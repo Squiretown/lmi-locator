@@ -1,21 +1,15 @@
 
 import { useEffect, useState } from 'react';
 import { supabase } from "@/integrations/supabase/client";
+import { NotificationStats } from './NotificationStatsCard';
 
-interface MarketingStats {
+export interface MarketingStats {
   pendingJobs: number;
   processingJobs: number;
   completedJobs: number;
   totalJobs: number;
   totalAddresses: number;
   eligibleAddresses: number;
-}
-
-interface NotificationStats {
-  total: number;
-  read: number;
-  unread: number;
-  byType: Record<string, number>;
 }
 
 export function useMarketingDashboardData() {
@@ -115,6 +109,13 @@ export function useMarketingDashboardData() {
         }
       } catch (error) {
         console.error('Error fetching marketing dashboard data:', error);
+        // Even if there's an error, provide default values
+        setNotifications({
+          total: 0,
+          read: 0,
+          unread: 0,
+          byType: { 'error': 0 }
+        });
       } finally {
         setLoading(false);
       }

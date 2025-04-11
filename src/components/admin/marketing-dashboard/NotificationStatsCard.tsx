@@ -3,18 +3,35 @@ import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Chart } from "@/components/ui/chart";
 
-interface NotificationStats {
+export interface NotificationStats {
   total: number;
   read: number;
   unread: number;
   byType: Record<string, number>;
 }
 
-interface NotificationStatsCardProps {
+export interface NotificationStatsCardProps {
   notifications: NotificationStats;
 }
 
 export const NotificationStatsCard: React.FC<NotificationStatsCardProps> = ({ notifications }) => {
+  // Check if notifications is defined before accessing properties
+  if (!notifications) {
+    return (
+      <Card className="col-span-1">
+        <CardHeader>
+          <CardTitle>Notification Statistics</CardTitle>
+          <CardDescription>Overview of system notifications</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center p-4">
+            <p className="text-gray-500">Loading notification data...</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   const notificationTypeChartData = Object.keys(notifications.byType).map(key => ({
     name: key,
     data: notifications.byType[key]
