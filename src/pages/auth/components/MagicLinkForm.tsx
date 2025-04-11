@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import * as z from "zod";
@@ -29,6 +29,8 @@ const MagicLinkForm: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [emailSent, setEmailSent] = useState(false);
+  const [rateLimited, setRateLimited] = useState(false);
+  const [retryCountdown, setRetryCountdown] = useState(0);
   
   const form = useForm<MagicLinkFormValues>({
     resolver: zodResolver(magicLinkSchema),
@@ -37,11 +39,45 @@ const MagicLinkForm: React.FC = () => {
     }
   });
 
+  // Countdown timer for rate limiting
+  useEffect(() => {
+    if (retryCountdown <= 0) {
+      setRateLimited(false);
+      return;
+    }
+    
+    const timer = setTimeout(() => {
+      setRetryCountdown(prev => prev - 1);
+    }, 1000);
+    
+    return () => clearTimeout(timer);
+  }, [retryCountdown]);
+
   const onSubmit = async (values: MagicLinkFormValues) => {
+    // Don't submit if rate limited
+    if (rateLimited) {
+      toast.error(`Please wait ${retryCountdown} seconds before trying again`);
+      return;
+    }
+    
     setFormError(null);
     setIsLoading(true);
     
     try {
+      // Check for common typos
+      const email = values.email.trim();
+      const knownTypos: Record<string, string> = {
+        'squrietown.co': 'squiretown.co'
+      };
+      
+      // Correcting common typos
+      const domain = email.split('@')[1];
+      if (domain && knownTypos[domain]) {
+        const correctedEmail = email.replace(domain, knownTypos[domain]);
+        toast.info(`Using corrected email: ${correctedEmail}`);
+        values.email = correctedEmail;
+      }
+      
       // Get the current URL for proper redirect
       const origin = window.location.origin;
       const redirectUrl = `${origin}/login`;
@@ -54,6 +90,17 @@ const MagicLinkForm: React.FC = () => {
         form.reset();
       } else if (error) {
         console.error("Magic link error:", error);
+        
+        // Handle rate limiting
+        if ('isRateLimited' in error && error.isRateLimited) {
+          setRateLimited(true);
+          if ('retryAfter' in error && typeof error.retryAfter === 'number') {
+            setRetryCountdown(error.retryAfter);
+          } else {
+            setRetryCountdown(60); // Default 60 seconds
+          }
+        }
+        
         setFormError(error.message);
       }
     } catch (error: any) {
@@ -76,6 +123,15 @@ const MagicLinkForm: React.FC = () => {
       
       {formError && (
         <FormErrorDisplay error={formError} title="Magic Link Error" />
+      )}
+      
+      {rateLimited && (
+        <div className="bg-amber-50 border border-amber-200 rounded-md p-4 text-center">
+          <h3 className="font-medium text-amber-800">Rate Limit Reached</h3>
+          <p className="text-amber-700 mt-2">
+            Please wait {retryCountdown} seconds before requesting another magic link.
+          </p>
+        </div>
       )}
       
       {emailSent ? (
@@ -102,8 +158,8 @@ const MagicLinkForm: React.FC = () => {
               )}
             />
             
-            <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? 'Sending...' : 'Send Magic Link'}
+            <Button type="submit" className="w-full" disabled={isLoading || rateLimited}>
+              {isLoading ? 'Sending...' : rateLimited ? `Wait ${retryCountdown}s` : 'Send Magic Link'}
             </Button>
           </form>
         </Form>

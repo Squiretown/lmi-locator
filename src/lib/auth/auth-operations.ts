@@ -41,6 +41,19 @@ export async function signInWithMagicLink(email: string, redirectTo?: string) {
     
     if (error) {
       console.error('Magic link error:', error.message);
+      
+      // Special handling for rate limit errors
+      if (error.message.includes('security purposes') || error.message.includes('rate limit')) {
+        return { 
+          success: false, 
+          error: {
+            message: 'Please wait before requesting another magic link (rate limit reached)',
+            isRateLimited: true,
+            retryAfter: extractRetrySeconds(error.message)
+          } 
+        };
+      }
+      
       return { success: false, error };
     }
     
@@ -63,6 +76,19 @@ export async function resetPassword(email: string, redirectTo?: string) {
     
     if (error) {
       console.error('Password reset error:', error.message);
+      
+      // Special handling for rate limit errors
+      if (error.message.includes('security purposes') || error.message.includes('rate limit')) {
+        return { 
+          success: false, 
+          error: {
+            message: 'Please wait before requesting another password reset (rate limit reached)',
+            isRateLimited: true,
+            retryAfter: extractRetrySeconds(error.message)
+          } 
+        };
+      }
+      
       return { success: false, error };
     }
     
@@ -240,4 +266,10 @@ export async function createInitialAdminUser() {
     toast.error('An unexpected error occurred');
     return null;
   }
+}
+
+// Helper function to extract wait time from error messages
+function extractRetrySeconds(errorMessage: string): number {
+  const match = errorMessage.match(/after (\d+) seconds/);
+  return match ? parseInt(match[1], 10) : 60; // Default to 60 seconds if we can't parse
 }
