@@ -4,9 +4,7 @@ import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { Card } from "@/components/ui/card";
 import { useToast } from '@/hooks/use-toast';
-
-// We'll update to use environment variable or a config instead of hardcoding
-const MAPBOX_TOKEN = 'pk.eyJ1IjoibG92YWJsZWRldiIsImEiOiJjbHQwZHBtam4wbzI2MnFueGVrYTJhOTNrIn0.o49OpQnTnzw_51CEtbFmFQ';
+import { useMapboxToken } from '@/hooks/useMapboxToken';
 
 interface MapContainerProps {
   tracts: any[];
@@ -28,6 +26,7 @@ const MapContainer = forwardRef<MapRef, MapContainerProps>(
     const [mapLoaded, setMapLoaded] = useState(false);
     const [mapError, setMapError] = useState<string | null>(null);
     const { toast } = useToast();
+    const { token: mapboxToken, isLoading: isLoadingToken, error: tokenError } = useMapboxToken();
 
     // Expose methods to parent component
     useImperativeHandle(ref, () => ({
@@ -46,13 +45,13 @@ const MapContainer = forwardRef<MapRef, MapContainerProps>(
       }
     }));
 
-    // Initialize map
+    // Initialize map when token is available
     useEffect(() => {
-      if (!mapContainer.current || map.current) return;
+      if (!mapContainer.current || map.current || !mapboxToken || isLoadingToken) return;
       
       try {
         // Set token before creating map
-        mapboxgl.accessToken = MAPBOX_TOKEN;
+        mapboxgl.accessToken = mapboxToken;
 
         map.current = new mapboxgl.Map({
           container: mapContainer.current,
@@ -87,7 +86,14 @@ const MapContainer = forwardRef<MapRef, MapContainerProps>(
           map.current = null;
         }
       };
-    }, [toast]);
+    }, [mapboxToken, isLoadingToken, toast]);
+
+    // Handle token error
+    useEffect(() => {
+      if (tokenError) {
+        setMapError(`Failed to load Mapbox token: ${tokenError}`);
+      }
+    }, [tokenError]);
 
     // Add tract data sources and layers when tracts or map changes
     useEffect(() => {
@@ -246,7 +252,7 @@ const MapContainer = forwardRef<MapRef, MapContainerProps>(
     return (
       <div className="h-full w-full relative">
         <div ref={mapContainer} className="h-full w-full" />
-        {!mapLoaded && !mapError && (
+        {(isLoadingToken || (!mapLoaded && !mapError)) && (
           <div className="absolute inset-0 flex items-center justify-center bg-background/50">
             <div className="text-lg">Loading map...</div>
           </div>
