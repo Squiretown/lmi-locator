@@ -1,103 +1,10 @@
 
-import { useState, useEffect, useCallback } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { useState, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
-
-// Define a simple type for a census tract
-interface CensusTract {
-  tractId: string;
-  isLmiEligible: boolean;
-  amiPercentage: number;
-  medianIncome: number;
-  incomeCategory: string;
-  propertyCount: number;
-  geometry: any;
-}
-
-// Define search parameters
-interface SearchParams {
-  state?: string;
-  county?: string;
-  zipCode?: string;
-  radius?: number;
-}
-
-// Mock state and county data for demo purposes
-const STATES = [
-  { code: 'FL', name: 'Florida' },
-  { code: 'CA', name: 'California' },
-  { code: 'TX', name: 'Texas' },
-  { code: 'NY', name: 'New York' },
-  { code: 'IL', name: 'Illinois' },
-];
-
-const COUNTIES_BY_STATE: Record<string, Array<{fips: string, name: string}>> = {
-  'FL': [
-    { fips: '12086', name: 'Miami-Dade County' },
-    { fips: '12011', name: 'Broward County' },
-    { fips: '12099', name: 'Palm Beach County' },
-    { fips: '12057', name: 'Hillsborough County' },
-    { fips: '12095', name: 'Orange County' },
-  ],
-  'CA': [
-    { fips: '06037', name: 'Los Angeles County' },
-    { fips: '06073', name: 'San Diego County' },
-    { fips: '06059', name: 'Orange County' },
-    { fips: '06085', name: 'Santa Clara County' },
-  ],
-  'TX': [
-    { fips: '48201', name: 'Harris County' },
-    { fips: '48113', name: 'Dallas County' },
-    { fips: '48029', name: 'Bexar County' },
-    { fips: '48439', name: 'Tarrant County' },
-  ],
-  'NY': [
-    { fips: '36061', name: 'New York County' },
-    { fips: '36047', name: 'Kings County' },
-    { fips: '36059', name: 'Nassau County' },
-    { fips: '36103', name: 'Suffolk County' },
-  ],
-  'IL': [
-    { fips: '17031', name: 'Cook County' },
-    { fips: '17043', name: 'DuPage County' },
-    { fips: '17089', name: 'Kane County' },
-    { fips: '17097', name: 'Lake County' },
-  ]
-};
-
-// Sample geometries for mock data
-const sampleGeometries = [
-  {
-    type: 'Polygon',
-    coordinates: [[
-      [-80.2, 25.8], [-80.1, 25.8], [-80.1, 25.9], [-80.2, 25.9], [-80.2, 25.8]
-    ]]
-  },
-  {
-    type: 'Polygon',
-    coordinates: [[
-      [-118.4, 34.0], [-118.3, 34.0], [-118.3, 34.1], [-118.4, 34.1], [-118.4, 34.0]
-    ]]
-  },
-  {
-    type: 'Polygon',
-    coordinates: [[
-      [-95.5, 29.7], [-95.4, 29.7], [-95.4, 29.8], [-95.5, 29.8], [-95.5, 29.7]
-    ]]
-  },
-  {
-    type: 'Polygon',
-    coordinates: [[
-      [-74.0, 40.7], [-73.9, 40.7], [-73.9, 40.8], [-74.0, 40.8], [-74.0, 40.7]
-    ]]
-  },
-  {
-    type: 'Polygon',
-    coordinates: [[
-      [-87.7, 41.8], [-87.6, 41.8], [-87.6, 41.9], [-87.7, 41.9], [-87.7, 41.8]
-    ]]
-  }
-];
+import { CensusTract, SearchParams, StatsData, SearchResults } from './types/census-tract';
+import { COUNTIES_BY_STATE, STATES } from './data/mock-data';
+import { fetchRealData } from './services/census-api';
+import { generateMockTracts } from './services/mock-data-generator';
 
 export const useTractSearch = () => {
   const { toast } = useToast();
@@ -105,92 +12,14 @@ export const useTractSearch = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedTracts, setSelectedTracts] = useState<CensusTract[]>([]);
-  const [searchResults, setSearchResults] = useState<any | null>(null);
-  const [statsData, setStatsData] = useState<any | null>(null);
+  const [searchResults, setSearchResults] = useState<SearchResults | null>(null);
+  const [statsData, setStatsData] = useState<StatsData | null>(null);
   const [useRealData, setUseRealData] = useState(true);
 
   // Function to get counties for a state - safely handling potential undefined values
   const getCountiesForState = useCallback((stateCode: string) => {
     return COUNTIES_BY_STATE[stateCode] || [];
   }, []);
-
-  // Fetch real data from Supabase
-  const fetchRealData = async (params: SearchParams) => {
-    try {
-      // Check if we have a Supabase connection
-      if (!supabase) {
-        console.log('Supabase client not available, falling back to mock data');
-        return null;
-      }
-
-      console.log('Attempting to fetch real tract data for:', params);
-      
-      // Call census-db edge function
-      const { data, error } = await supabase.functions.invoke('census-db', {
-        body: { 
-          action: 'searchBatch',
-          params: {
-            state: params.state,
-            county: params.county,
-            zipCode: params.zipCode,
-            radius: params.radius
-          }
-        }
-      });
-
-      if (error) {
-        console.error('Error calling census-db function:', error);
-        return null;
-      }
-
-      console.log('Real data response:', data);
-      
-      if (data && data.tracts && Array.isArray(data.tracts)) {
-        return {
-          tracts: data.tracts,
-          stats: data.summary || {
-            totalTracts: data.tracts.length,
-            lmiTracts: data.tracts.filter((t: any) => t.isLmiEligible).length,
-            propertyCount: data.tracts.reduce((sum: number, t: any) => sum + (t.propertyCount || 0), 0),
-            lmiPercentage: Math.round((data.tracts.filter((t: any) => t.isLmiEligible).length / data.tracts.length) * 100)
-          }
-        };
-      }
-      return null;
-    } catch (err) {
-      console.error('Error fetching real data:', err);
-      return null;
-    }
-  };
-
-  // Generate a random geometry near the state's approximate location
-  const generateRandomGeometry = (stateCode: string) => {
-    // Approximate center points for states
-    const stateCenters: Record<string, [number, number]> = {
-      'FL': [-81.5, 28.1],
-      'CA': [-119.4, 37.8],
-      'TX': [-99.3, 31.4],
-      'NY': [-75.5, 42.9],
-      'IL': [-89.3, 40.0]
-    };
-
-    const center = stateCenters[stateCode] || [-95.7, 39.8]; // Default to center of US
-    
-    // Generate random polygon near center
-    const offsetX = (Math.random() - 0.5) * 0.4;
-    const offsetY = (Math.random() - 0.5) * 0.4;
-    
-    return {
-      type: 'Polygon',
-      coordinates: [[
-        [center[0] + offsetX - 0.05, center[1] + offsetY - 0.05],
-        [center[0] + offsetX + 0.05, center[1] + offsetY - 0.05],
-        [center[0] + offsetX + 0.05, center[1] + offsetY + 0.05],
-        [center[0] + offsetX - 0.05, center[1] + offsetY + 0.05],
-        [center[0] + offsetX - 0.05, center[1] + offsetY - 0.05]
-      ]]
-    };
-  };
 
   // Perform the search using real or mock data
   const performSearch = async (params: SearchParams) => {
@@ -237,7 +66,7 @@ export const useTractSearch = () => {
         toast({
           title: "Using mock data",
           description: "Couldn't retrieve real data, using simulated results instead",
-          variant: "default", // Changed from "warning" to "default"
+          variant: "default",
         });
       }
       
@@ -245,67 +74,15 @@ export const useTractSearch = () => {
       // Simulate API delay
       await new Promise(resolve => setTimeout(resolve, 1000));
       
-      // Generate some random tracts based on search parameters
-      const mockTracts: CensusTract[] = [];
+      // Generate mock data
+      const mockData = generateMockTracts(params);
       
-      // Create 20 mock tracts
-      for (let i = 0; i < 20; i++) {
-        const tractId = `${params.county || '12086'}${100000 + i}`;
-        const isLmiEligible = Math.random() > 0.4; // 60% are LMI eligible
-        const amiPercentage = isLmiEligible 
-          ? Math.floor(Math.random() * 30) + 50 // 50-80% for eligible
-          : Math.floor(Math.random() * 40) + 81; // 81-120% for non-eligible
-        
-        const medianIncome = amiPercentage * 1000;
-        
-        let incomeCategory;
-        if (amiPercentage <= 30) incomeCategory = 'Extremely Low';
-        else if (amiPercentage <= 50) incomeCategory = 'Very Low';
-        else if (amiPercentage <= 80) incomeCategory = 'Low';
-        else if (amiPercentage <= 120) incomeCategory = 'Moderate';
-        else incomeCategory = 'Above Moderate';
-        
-        const propertyCount = Math.floor(Math.random() * 5000) + 1000;
-        
-        // Use one of our sample geometries, adding small random offset
-        const baseGeometry = sampleGeometries[i % sampleGeometries.length];
-        const offsetX = (Math.random() - 0.5) * 0.2;
-        const offsetY = (Math.random() - 0.5) * 0.2;
-        
-        const geometry = {
-          type: baseGeometry.type,
-          coordinates: baseGeometry.coordinates.map(ring => 
-            ring.map(([x, y]) => [x + offsetX, y + offsetY])
-          )
-        };
-        
-        mockTracts.push({
-          tractId,
-          isLmiEligible,
-          amiPercentage,
-          medianIncome,
-          incomeCategory,
-          propertyCount,
-          geometry
-        });
-      }
-      
-      setTracts(mockTracts);
-      
-      // Calculate statistics
-      const lmiTracts = mockTracts.filter(t => t.isLmiEligible).length;
-      const totalPropertyCount = mockTracts.reduce((sum, t) => sum + t.propertyCount, 0);
-      
-      setStatsData({
-        totalTracts: mockTracts.length,
-        lmiTracts,
-        propertyCount: totalPropertyCount,
-        lmiPercentage: Math.round((lmiTracts / mockTracts.length) * 100)
-      });
+      setTracts(mockData.tracts);
+      setStatsData(mockData.stats);
       
       setSearchResults({
         params,
-        resultCount: mockTracts.length
+        resultCount: mockData.tracts.length
       });
       
     } catch (err) {
