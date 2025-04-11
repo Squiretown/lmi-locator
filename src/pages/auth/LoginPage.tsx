@@ -6,7 +6,7 @@ import LoginForm from './components/LoginForm';
 import SignupForm from './components/SignupForm';
 import MagicLinkForm from './components/MagicLinkForm';
 import PasswordResetForm from './components/PasswordResetForm';
-import { createInitialAdminUser } from '@/lib/auth/auth-operations';
+import { createInitialAdminUser } from '@/lib/auth/operations';
 import { toast } from 'sonner';
 import { useLocation, useNavigate } from 'react-router-dom';
 

@@ -9,7 +9,7 @@ import {
   signUpWithEmail, 
   signOutUser,
   deleteUserWithPassword
-} from '@/lib/auth/auth-operations';
+} from '@/lib/auth/operations';
 import AuthContext from '@/contexts/AuthContext';
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {

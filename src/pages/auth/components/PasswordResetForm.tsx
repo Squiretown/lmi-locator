@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
@@ -7,17 +6,14 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { resetPassword } from '@/lib/auth/auth-operations';
+import { resetPassword } from '@/lib/auth/operations';
 import FormErrorDisplay from './form-sections/FormErrorDisplay';
 
-// Improved email validation pattern
 const resetSchema = z.object({
   email: z.string()
     .min(1, { message: "Email is required" })
     .email({ message: "Please enter a valid email address" })
-    // Additional RFC-compliant email validation
     .refine(email => {
-      // Basic RFC 5322 compliant regex
       const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
       return emailRegex.test(email);
     }, { message: "Please enter a valid email address format" }),
@@ -39,7 +35,6 @@ const PasswordResetForm: React.FC = () => {
     }
   });
 
-  // Countdown timer for rate limiting
   useEffect(() => {
     if (retryCountdown <= 0) {
       setRateLimited(false);
@@ -54,7 +49,6 @@ const PasswordResetForm: React.FC = () => {
   }, [retryCountdown]);
 
   const onSubmit = async (values: ResetFormValues) => {
-    // Don't submit if rate limited
     if (rateLimited) {
       toast.error(`Please wait ${retryCountdown} seconds before trying again`);
       return;
@@ -64,13 +58,11 @@ const PasswordResetForm: React.FC = () => {
     setIsLoading(true);
     
     try {
-      // Check for common typos
       const email = values.email.trim();
       const knownTypos: Record<string, string> = {
         'squrietown.co': 'squiretown.co'
       };
       
-      // Correcting common typos
       const domain = email.split('@')[1];
       if (domain && knownTypos[domain]) {
         const correctedEmail = email.replace(domain, knownTypos[domain]);
@@ -78,7 +70,6 @@ const PasswordResetForm: React.FC = () => {
         values.email = correctedEmail;
       }
       
-      // Get the current URL for proper redirect
       const origin = window.location.origin;
       const redirectUrl = `${origin}/reset-password`;
       console.log(`Using redirect URL: ${redirectUrl}`);
@@ -91,13 +82,12 @@ const PasswordResetForm: React.FC = () => {
       } else if (error) {
         console.error("Password reset error:", error);
         
-        // Handle rate limiting
         if ('isRateLimited' in error && error.isRateLimited) {
           setRateLimited(true);
           if ('retryAfter' in error && typeof error.retryAfter === 'number') {
             setRetryCountdown(error.retryAfter);
           } else {
-            setRetryCountdown(60); // Default 60 seconds
+            setRetryCountdown(60);
           }
         }
         

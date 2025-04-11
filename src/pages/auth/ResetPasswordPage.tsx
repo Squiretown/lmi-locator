@@ -8,7 +8,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { updatePasswordWithToken } from '@/lib/auth/auth-operations';
+import { updatePasswordWithToken } from '@/lib/auth/operations';
 import { supabase } from '@/integrations/supabase/client';
 import FormErrorDisplay from './components/form-sections/FormErrorDisplay';
 import PasswordRequirements from './components/PasswordRequirements';
