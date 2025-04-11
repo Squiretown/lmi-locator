@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 
 /**
@@ -67,5 +66,20 @@ export const getBlogPosts = async (): Promise<BlogPost[]> => {
   } catch (error) {
     console.error('Error retrieving blog posts:', error);
     return [];
+  }
+};
+
+export const deleteBlogPost = async (id: string) => {
+  try {
+    const { error } = await supabase
+      .from('blog_posts')
+      .delete()
+      .eq('id', id);
+
+    if (error) throw error;
+    return { success: true };
+  } catch (error) {
+    console.error('Error deleting blog post:', error);
+    return { success: false, error };
   }
 };

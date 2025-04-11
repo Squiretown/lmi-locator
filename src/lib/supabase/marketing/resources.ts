@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 
 /**
@@ -50,5 +49,20 @@ export const getResources = async (): Promise<Resource[]> => {
   } catch (error) {
     console.error('Error retrieving resources:', error);
     return [];
+  }
+};
+
+export const deleteResource = async (id: string) => {
+  try {
+    const { error } = await supabase
+      .from('resources')
+      .delete()
+      .eq('id', id);
+
+    if (error) throw error;
+    return { success: true };
+  } catch (error) {
+    console.error('Error deleting resource:', error);
+    return { success: false, error };
   }
 };

@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 
 /**
@@ -52,5 +51,20 @@ export const getTestimonials = async (): Promise<Testimonial[]> => {
   } catch (error) {
     console.error('Error retrieving testimonials:', error);
     return [];
+  }
+};
+
+export const deleteTestimonial = async (id: string) => {
+  try {
+    const { error } = await supabase
+      .from('testimonials')
+      .delete()
+      .eq('id', id);
+
+    if (error) throw error;
+    return { success: true };
+  } catch (error) {
+    console.error('Error deleting testimonial:', error);
+    return { success: false, error };
   }
 };
