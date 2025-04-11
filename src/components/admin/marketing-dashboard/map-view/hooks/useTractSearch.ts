@@ -83,7 +83,6 @@ export const useTractSearch = () => {
   const [tracts, setTracts] = useState<CensusTract[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [counties, setCounties] = useState<Array<{fips: string, name: string}>>([]);
   const [selectedTracts, setSelectedTracts] = useState<CensusTract[]>([]);
   const [searchResults, setSearchResults] = useState<any | null>(null);
   const [statsData, setStatsData] = useState<any | null>(null);
@@ -201,13 +200,6 @@ export const useTractSearch = () => {
       throw new Error('Failed to export selected tracts');
     }
   };
-
-  // Update counties when state changes
-  useEffect(() => {
-    if (COUNTIES_BY_STATE[counties]) {
-      setCounties(COUNTIES_BY_STATE[counties] || []);
-    }
-  }, [counties]);
 
   return {
     tracts,

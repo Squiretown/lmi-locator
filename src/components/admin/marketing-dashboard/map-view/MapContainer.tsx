@@ -19,7 +19,7 @@ interface MapContainerProps {
 
 export interface MapRef {
   fitBounds: (bounds: mapboxgl.LngLatBoundsLike) => void;
-  flyTo: (options: mapboxgl.FlyToOptions) => void;
+  flyTo: (options: mapboxgl.EaseToOptions) => void;
 }
 
 const MapContainer = forwardRef<MapRef, MapContainerProps>(
@@ -38,7 +38,7 @@ const MapContainer = forwardRef<MapRef, MapContainerProps>(
           });
         }
       },
-      flyTo: (options: mapboxgl.FlyToOptions) => {
+      flyTo: (options: mapboxgl.EaseToOptions) => {
         if (map.current) {
           map.current.flyTo(options);
         }
@@ -83,9 +83,9 @@ const MapContainer = forwardRef<MapRef, MapContainerProps>(
 
       // Create GeoJSON feature collection from tracts
       const geojson = {
-        type: 'FeatureCollection',
+        type: 'FeatureCollection' as const,
         features: tracts.map(tract => ({
-          type: 'Feature',
+          type: 'Feature' as const,
           geometry: tract.geometry,
           properties: {
             tractId: tract.tractId,
@@ -189,23 +189,29 @@ const MapContainer = forwardRef<MapRef, MapContainerProps>(
       if (!map.current || !mapLoaded || !map.current.getSource('census-tracts')) return;
 
       // Update the 'selected' property in the GeoJSON source
-      const data = map.current.getSource('census-tracts')._data;
-      if (!data) return;
+      const source = map.current.getSource('census-tracts') as mapboxgl.GeoJSONSource;
+      if (!source) return;
 
-      data.features = data.features.map((feature: any) => {
-        const isSelected = selectedTracts.some(t => t.tractId === feature.properties.tractId);
-        return {
-          ...feature,
+      // Create a new GeoJSON data object with updated selection states
+      const updatedGeoJson = {
+        type: 'FeatureCollection' as const,
+        features: tracts.map(tract => ({
+          type: 'Feature' as const,
+          geometry: tract.geometry,
           properties: {
-            ...feature.properties,
-            selected: isSelected
+            tractId: tract.tractId,
+            isLmiEligible: tract.isLmiEligible,
+            amiPercentage: tract.amiPercentage,
+            incomeCategory: tract.incomeCategory,
+            propertyCount: tract.propertyCount,
+            selected: selectedTracts.some(t => t.tractId === tract.tractId)
           }
-        };
-      });
+        }))
+      };
 
-      (map.current.getSource('census-tracts') as mapboxgl.GeoJSONSource).setData(data);
+      source.setData(updatedGeoJson);
 
-    }, [selectedTract, selectedTracts, mapLoaded]);
+    }, [selectedTract, selectedTracts, mapLoaded, tracts]);
 
     return (
       <div className="h-full w-full">

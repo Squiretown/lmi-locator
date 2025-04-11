@@ -101,6 +101,9 @@ const MapView: React.FC<MapViewProps> = ({ onExportResults }) => {
     }
   };
 
+  // Safely get counties for the selected state
+  const countiesForState = selectedState && counties[selectedState] ? counties[selectedState] : [];
+
   return (
     <div className="flex h-full">
       {/* Sidebar */}
@@ -158,7 +161,7 @@ const MapView: React.FC<MapViewProps> = ({ onExportResults }) => {
                       <SelectValue placeholder="Select county" />
                     </SelectTrigger>
                     <SelectContent>
-                      {counties.map(county => (
+                      {countiesForState.map(county => (
                         <SelectItem key={county.fips} value={county.fips}>
                           {county.name}
                         </SelectItem>
