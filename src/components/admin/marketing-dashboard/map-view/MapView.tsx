@@ -11,7 +11,8 @@ import {
   MapPin, 
   List,
   Search,
-  Info
+  Info,
+  Database
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { 
@@ -24,7 +25,7 @@ import {
 import { Toggle } from "@/components/ui/toggle";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
-import MapContainer from './MapContainer';
+import MapContainer, { MapRef } from './MapContainer';
 import TractInfoPanel from './TractInfoPanel';
 import { useTractSearch } from './hooks/useTractSearch';
 
@@ -42,19 +43,21 @@ const MapView: React.FC<MapViewProps> = ({ onExportResults }) => {
   const [selectedCounty, setSelectedCounty] = useState<string>("");
   const [selectedZip, setSelectedZip] = useState<string>("");
   const [showLmiOnly, setShowLmiOnly] = useState(true);
-  const mapRef = useRef(null);
+  const mapRef = useRef<MapRef>(null);
   
   const { 
     tracts, 
     loading, 
-    counties, 
     states,
     searchResults,
     selectedTracts,
     setSelectedTracts,
     performSearch,
     exportSelectedTracts,
-    statsData
+    statsData,
+    getCountiesForState,
+    useRealData,
+    toggleDataSource
   } = useTractSearch();
 
   useEffect(() => {
@@ -102,7 +105,7 @@ const MapView: React.FC<MapViewProps> = ({ onExportResults }) => {
   };
 
   // Safely get counties for the selected state
-  const countiesForState = selectedState && counties[selectedState] ? counties[selectedState] : [];
+  const countiesForState = selectedState ? getCountiesForState(selectedState) : [];
 
   return (
     <div className="flex h-full">
@@ -112,7 +115,18 @@ const MapView: React.FC<MapViewProps> = ({ onExportResults }) => {
       }`}>
         {!sidebarCollapsed && (
           <div className="p-4 h-full flex flex-col">
-            <h3 className="text-lg font-semibold mb-4">LMI Census Tract Search</h3>
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold">LMI Census Tract Search</h3>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={toggleDataSource}
+                title={useRealData ? "Using real data (click to switch to mock)" : "Using mock data (click to switch to real)"}
+              >
+                <Database className="h-4 w-4 mr-2" />
+                {useRealData ? "Real" : "Mock"}
+              </Button>
+            </div>
             
             <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1">
               <TabsList className="grid w-full grid-cols-3">
@@ -135,7 +149,10 @@ const MapView: React.FC<MapViewProps> = ({ onExportResults }) => {
                   <label className="text-sm text-muted-foreground">State</label>
                   <Select 
                     value={selectedState} 
-                    onValueChange={setSelectedState}
+                    onValueChange={(value) => {
+                      setSelectedState(value);
+                      setSelectedCounty(""); // Reset county when state changes
+                    }}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Select state" />
@@ -279,6 +296,23 @@ const MapView: React.FC<MapViewProps> = ({ onExportResults }) => {
                     </div>
                   </div>
                 </div>
+
+                {useRealData && (
+                  <div className="bg-muted p-3 rounded-md">
+                    <h4 className="text-sm font-medium mb-2">Data Source</h4>
+                    <p className="text-xs text-muted-foreground">
+                      Currently using real data from the census database. If no real data is available for a search, mock data will be used as a fallback.
+                    </p>
+                  </div>
+                )}
+                {!useRealData && (
+                  <div className="bg-muted p-3 rounded-md">
+                    <h4 className="text-sm font-medium mb-2">Data Source</h4>
+                    <p className="text-xs text-muted-foreground">
+                      Currently using mock data for demonstration purposes. Click the "Mock" button at the top to switch to real data.
+                    </p>
+                  </div>
+                )}
               </TabsContent>
 
               <TabsContent value="results" className="flex flex-col space-y-4 mt-4">

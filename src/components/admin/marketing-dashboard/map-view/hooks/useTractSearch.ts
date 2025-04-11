@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
@@ -50,6 +50,18 @@ const COUNTIES_BY_STATE: Record<string, Array<{fips: string, name: string}>> = {
     { fips: '48113', name: 'Dallas County' },
     { fips: '48029', name: 'Bexar County' },
     { fips: '48439', name: 'Tarrant County' },
+  ],
+  'NY': [
+    { fips: '36061', name: 'New York County' },
+    { fips: '36047', name: 'Kings County' },
+    { fips: '36059', name: 'Nassau County' },
+    { fips: '36103', name: 'Suffolk County' },
+  ],
+  'IL': [
+    { fips: '17031', name: 'Cook County' },
+    { fips: '17043', name: 'DuPage County' },
+    { fips: '17089', name: 'Kane County' },
+    { fips: '17097', name: 'Lake County' },
   ]
 };
 
@@ -86,9 +98,101 @@ export const useTractSearch = () => {
   const [selectedTracts, setSelectedTracts] = useState<CensusTract[]>([]);
   const [searchResults, setSearchResults] = useState<any | null>(null);
   const [statsData, setStatsData] = useState<any | null>(null);
+  const [useRealData, setUseRealData] = useState(true);
+
+  // Function to get counties for a state - safely handling potential undefined values
+  const getCountiesForState = useCallback((stateCode: string) => {
+    return COUNTIES_BY_STATE[stateCode] || [];
+  }, []);
+
+  // Try to fetch real data from Supabase or the LMI API endpoint
+  const fetchRealData = async (params: SearchParams) => {
+    try {
+      // Check if we have a Supabase connection
+      if (!supabase) {
+        console.log('Supabase client not available, falling back to mock data');
+        return null;
+      }
+
+      console.log('Attempting to fetch real tract data for:', params);
+      
+      // Attempt to call census-db edge function
+      const { data, error } = await supabase.functions.invoke('census-db', {
+        body: { 
+          action: 'searchBatch',
+          params: {
+            state: params.state,
+            county: params.county,
+            zipCode: params.zipCode,
+            radius: params.radius
+          }
+        }
+      });
+
+      if (error) {
+        console.error('Error calling census-db function:', error);
+        return null;
+      }
+
+      console.log('Real data response:', data);
+      
+      if (data && data.tracts && Array.isArray(data.tracts)) {
+        return {
+          tracts: data.tracts.map((tract: any) => ({
+            tractId: tract.tract_id || tract.geoid || `tract-${Math.random().toString(36).substr(2, 9)}`,
+            isLmiEligible: tract.is_lmi_eligible || tract.lmi_status || false,
+            amiPercentage: tract.ami_percentage || tract.percentage_of_ami || 75,
+            medianIncome: tract.median_income || 50000,
+            incomeCategory: tract.income_category || 'Moderate',
+            propertyCount: tract.property_count || Math.floor(Math.random() * 3000) + 500,
+            geometry: tract.geometry || generateRandomGeometry(params.state || 'FL')
+          })),
+          stats: data.summary || {
+            totalTracts: data.tracts.length,
+            lmiTracts: data.tracts.filter((t: any) => t.is_lmi_eligible || t.lmi_status).length,
+            propertyCount: data.tracts.reduce((sum: number, t: any) => sum + (t.property_count || 0), 0),
+            lmiPercentage: Math.round((data.tracts.filter((t: any) => t.is_lmi_eligible || t.lmi_status).length / data.tracts.length) * 100)
+          }
+        };
+      }
+      return null;
+    } catch (err) {
+      console.error('Error fetching real data:', err);
+      return null;
+    }
+  };
+
+  // Generate a random geometry near the state's approximate location
+  const generateRandomGeometry = (stateCode: string) => {
+    // Approximate center points for states
+    const stateCenters: Record<string, [number, number]> = {
+      'FL': [-81.5, 28.1],
+      'CA': [-119.4, 37.8],
+      'TX': [-99.3, 31.4],
+      'NY': [-75.5, 42.9],
+      'IL': [-89.3, 40.0]
+    };
+
+    const center = stateCenters[stateCode] || [-95.7, 39.8]; // Default to center of US
+    
+    // Generate random polygon near center
+    const offsetX = (Math.random() - 0.5) * 0.4;
+    const offsetY = (Math.random() - 0.5) * 0.4;
+    
+    return {
+      type: 'Polygon',
+      coordinates: [[
+        [center[0] + offsetX - 0.05, center[1] + offsetY - 0.05],
+        [center[0] + offsetX + 0.05, center[1] + offsetY - 0.05],
+        [center[0] + offsetX + 0.05, center[1] + offsetY + 0.05],
+        [center[0] + offsetX - 0.05, center[1] + offsetY + 0.05],
+        [center[0] + offsetX - 0.05, center[1] + offsetY - 0.05]
+      ]]
+    };
+  };
 
   // In a real implementation, this would call a Supabase function or API
-  // For demo purposes, we'll use mock data
+  // For demo purposes, we'll use mock data if real data is not available
   const performSearch = async (params: SearchParams) => {
     setLoading(true);
     setError(null);
@@ -96,11 +200,25 @@ export const useTractSearch = () => {
     try {
       console.log('Searching with params:', params);
       
-      // In a real implementation, this would make an API call to get tract data
-      // For demo, we'll create some sample data based on the search params
+      // Try to get real data first
+      if (useRealData) {
+        const realData = await fetchRealData(params);
+        if (realData) {
+          setTracts(realData.tracts);
+          setStatsData(realData.stats);
+          setSearchResults({
+            params,
+            resultCount: realData.tracts.length
+          });
+          setLoading(false);
+          return;
+        }
+        console.log('No real data available, falling back to mock data');
+      }
       
+      // Fallback to mock data
       // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      await new Promise(resolve => setTimeout(resolve, 1000));
       
       // Generate some random tracts based on search parameters
       const mockTracts: CensusTract[] = [];
@@ -201,6 +319,15 @@ export const useTractSearch = () => {
     }
   };
 
+  // Toggle between real and mock data
+  const toggleDataSource = () => {
+    setUseRealData(!useRealData);
+    toast({
+      title: `Using ${!useRealData ? 'Real' : 'Mock'} Data`,
+      description: `Switched to ${!useRealData ? 'real' : 'mock'} data source for tract searches.`,
+    });
+  };
+
   return {
     tracts,
     loading,
@@ -212,6 +339,9 @@ export const useTractSearch = () => {
     searchResults,
     performSearch,
     exportSelectedTracts,
-    statsData
+    statsData,
+    getCountiesForState,
+    useRealData,
+    toggleDataSource
   };
 };
