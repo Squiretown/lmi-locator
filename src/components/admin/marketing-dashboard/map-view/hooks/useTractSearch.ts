@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -65,31 +64,6 @@ const COUNTIES_BY_STATE: Record<string, Array<{fips: string, name: string}>> = {
   ]
 };
 
-// Sample geometric data for visualizing tracts
-const sampleGeometries = [
-  {
-    // Miami-Dade sample tract
-    coordinates: [[
-      [-80.2, 25.8], [-80.1, 25.8], [-80.1, 25.9], [-80.2, 25.9], [-80.2, 25.8]
-    ]],
-    type: 'Polygon'
-  },
-  {
-    // Another Miami-Dade tract
-    coordinates: [[
-      [-80.3, 25.7], [-80.2, 25.7], [-80.2, 25.8], [-80.3, 25.8], [-80.3, 25.7]
-    ]],
-    type: 'Polygon'
-  },
-  {
-    // Broward County sample tract
-    coordinates: [[
-      [-80.4, 26.1], [-80.3, 26.1], [-80.3, 26.2], [-80.4, 26.2], [-80.4, 26.1]
-    ]],
-    type: 'Polygon'
-  }
-];
-
 export const useTractSearch = () => {
   const { toast } = useToast();
   const [tracts, setTracts] = useState<CensusTract[]>([]);
@@ -105,7 +79,7 @@ export const useTractSearch = () => {
     return COUNTIES_BY_STATE[stateCode] || [];
   }, []);
 
-  // Try to fetch real data from Supabase or the LMI API endpoint
+  // Fetch real data from Supabase
   const fetchRealData = async (params: SearchParams) => {
     try {
       // Check if we have a Supabase connection
@@ -116,7 +90,7 @@ export const useTractSearch = () => {
 
       console.log('Attempting to fetch real tract data for:', params);
       
-      // Attempt to call census-db edge function
+      // Call census-db edge function
       const { data, error } = await supabase.functions.invoke('census-db', {
         body: { 
           action: 'searchBatch',
@@ -138,20 +112,12 @@ export const useTractSearch = () => {
       
       if (data && data.tracts && Array.isArray(data.tracts)) {
         return {
-          tracts: data.tracts.map((tract: any) => ({
-            tractId: tract.tract_id || tract.geoid || `tract-${Math.random().toString(36).substr(2, 9)}`,
-            isLmiEligible: tract.is_lmi_eligible || tract.lmi_status || false,
-            amiPercentage: tract.ami_percentage || tract.percentage_of_ami || 75,
-            medianIncome: tract.median_income || 50000,
-            incomeCategory: tract.income_category || 'Moderate',
-            propertyCount: tract.property_count || Math.floor(Math.random() * 3000) + 500,
-            geometry: tract.geometry || generateRandomGeometry(params.state || 'FL')
-          })),
+          tracts: data.tracts,
           stats: data.summary || {
             totalTracts: data.tracts.length,
-            lmiTracts: data.tracts.filter((t: any) => t.is_lmi_eligible || t.lmi_status).length,
-            propertyCount: data.tracts.reduce((sum: number, t: any) => sum + (t.property_count || 0), 0),
-            lmiPercentage: Math.round((data.tracts.filter((t: any) => t.is_lmi_eligible || t.lmi_status).length / data.tracts.length) * 100)
+            lmiTracts: data.tracts.filter((t: any) => t.isLmiEligible).length,
+            propertyCount: data.tracts.reduce((sum: number, t: any) => sum + (t.propertyCount || 0), 0),
+            lmiPercentage: Math.round((data.tracts.filter((t: any) => t.isLmiEligible).length / data.tracts.length) * 100)
           }
         };
       }
@@ -191,8 +157,7 @@ export const useTractSearch = () => {
     };
   };
 
-  // In a real implementation, this would call a Supabase function or API
-  // For demo purposes, we'll use mock data if real data is not available
+  // Perform the search using real or mock data
   const performSearch = async (params: SearchParams) => {
     setLoading(true);
     setError(null);
@@ -200,23 +165,48 @@ export const useTractSearch = () => {
     try {
       console.log('Searching with params:', params);
       
-      // Try to get real data first
-      if (useRealData) {
-        const realData = await fetchRealData(params);
-        if (realData) {
-          setTracts(realData.tracts);
-          setStatsData(realData.stats);
-          setSearchResults({
-            params,
-            resultCount: realData.tracts.length
+      // Always try to get real data first regardless of useRealData flag
+      const realData = await fetchRealData(params);
+      
+      if (realData) {
+        // If we got real data, use it
+        setTracts(realData.tracts);
+        setStatsData(realData.stats);
+        setSearchResults({
+          params,
+          resultCount: realData.tracts.length,
+          dataSource: 'real'
+        });
+        
+        toast({
+          title: "Search Complete",
+          description: `Found ${realData.tracts.length} census tracts using real data`,
+        });
+        
+        setLoading(false);
+        return;
+      } else if (useRealData) {
+        // If we want real data but didn't get any, show an error
+        console.warn('No real data available, falling back to mock data');
+        
+        if (!params.state && !params.county && !params.zipCode) {
+          toast({
+            title: "Search parameters required",
+            description: "Please enter at least one search parameter",
+            variant: "destructive",
           });
           setLoading(false);
           return;
         }
-        console.log('No real data available, falling back to mock data');
+        
+        toast({
+          title: "Using mock data",
+          description: "Couldn't retrieve real data, using simulated results instead",
+          variant: "warning",
+        });
       }
       
-      // Fallback to mock data
+      // Fall back to mock data
       // Simulate API delay
       await new Promise(resolve => setTimeout(resolve, 1000));
       
@@ -319,7 +309,7 @@ export const useTractSearch = () => {
     }
   };
 
-  // Toggle between real and mock data
+  // Toggle between real and mock data sources
   const toggleDataSource = () => {
     setUseRealData(!useRealData);
     toast({

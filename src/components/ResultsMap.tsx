@@ -11,13 +11,15 @@ interface MapProps {
   lat: number;
   lon: number;
   isEligible: boolean;
+  tractId?: string;
 }
 
-const ResultsMap: React.FC<MapProps> = ({ lat, lon, isEligible }) => {
+const ResultsMap: React.FC<MapProps> = ({ lat, lon, isEligible, tractId }) => {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstance = useRef<mapboxgl.Map | null>(null);
   const [mapError, setMapError] = useState<string | null>(null);
   const { token: mapboxToken, isLoading: isLoadingToken, error: tokenError } = useMapboxToken();
+  const [hasLoadedTractBoundaries, setHasLoadedTractBoundaries] = useState(false);
 
   useEffect(() => {
     if (tokenError) {
@@ -45,7 +47,12 @@ const ResultsMap: React.FC<MapProps> = ({ lat, lon, isEligible }) => {
       });
       
       // Add navigation controls
-      mapInstance.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
+      mapInstance.current.addControl(
+        new mapboxgl.NavigationControl({
+          visualizePitch: true,
+        }),
+        'top-right'
+      );
       
       // Wait for map to load before adding markers
       mapInstance.current.on('load', () => {
@@ -58,8 +65,10 @@ const ResultsMap: React.FC<MapProps> = ({ lat, lon, isEligible }) => {
           .setLngLat([lon, lat])
           .addTo(mapInstance.current);
           
-        // Try to add census tract boundaries if available
-        // This would be a separate API call to get tract boundaries in a real implementation
+        // Try to load tract boundaries if we have a tract ID
+        if (tractId) {
+          loadTractBoundary(tractId, mapInstance.current);
+        }
       });
       
       // Handle map errors
@@ -80,7 +89,67 @@ const ResultsMap: React.FC<MapProps> = ({ lat, lon, isEligible }) => {
         mapInstance.current = null;
       }
     };
-  }, [lat, lon, isEligible, mapboxToken, isLoadingToken, tokenError]);
+  }, [lat, lon, isEligible, mapboxToken, isLoadingToken, tokenError, tractId]);
+  
+  // Function to load census tract boundary
+  const loadTractBoundary = async (tractId: string, map: mapboxgl.Map) => {
+    if (hasLoadedTractBoundaries) return;
+    
+    try {
+      // Try to fetch tract boundary from Supabase or public API
+      const response = await fetch(`https://api.census.gov/data/reference/tigerweb/v1/tract?fips=${tractId}`);
+      
+      if (response.ok) {
+        const data = await response.json();
+        
+        if (data && data.features && data.features.length > 0) {
+          // Add source and layer for census tract boundary
+          map.addSource('tract-boundary', {
+            type: 'geojson',
+            data: data
+          });
+          
+          map.addLayer({
+            id: 'tract-boundary-line',
+            type: 'line',
+            source: 'tract-boundary',
+            layout: {},
+            paint: {
+              'line-color': isEligible ? '#22c55e' : '#ef4444',
+              'line-width': 2
+            }
+          });
+          
+          map.addLayer({
+            id: 'tract-boundary-fill',
+            type: 'fill',
+            source: 'tract-boundary',
+            layout: {},
+            paint: {
+              'fill-color': isEligible ? '#22c55e' : '#ef4444',
+              'fill-opacity': 0.2
+            }
+          });
+          
+          setHasLoadedTractBoundaries(true);
+          
+          // Fit map to the tract boundary
+          const bounds = new mapboxgl.LngLatBounds();
+          data.features[0].geometry.coordinates[0].forEach((coord: number[]) => {
+            bounds.extend([coord[0], coord[1]]);
+          });
+          
+          map.fitBounds(bounds, { padding: 40 });
+        } else {
+          console.log('No boundary data found for tract ID:', tractId);
+        }
+      } else {
+        console.log('Failed to fetch tract boundary:', response.statusText);
+      }
+    } catch (error) {
+      console.error('Error loading tract boundary:', error);
+    }
+  };
   
   return (
     <motion.div
@@ -118,6 +187,7 @@ const ResultsMap: React.FC<MapProps> = ({ lat, lon, isEligible }) => {
                   <p className="text-muted-foreground mb-2">{mapError}</p>
                   <p className="text-sm text-muted-foreground">
                     Coordinates: {lat.toFixed(6)}, {lon.toFixed(6)}
+                    {tractId && <><br />Tract ID: {tractId}</>}
                   </p>
                 </Card>
               </div>
@@ -129,6 +199,7 @@ const ResultsMap: React.FC<MapProps> = ({ lat, lon, isEligible }) => {
               <div className={`w-3 h-3 rounded-full ${isEligible ? 'bg-eligible' : 'bg-ineligible'}`}></div>
               <span>
                 {isEligible ? 'LMI Eligible' : 'Not LMI Eligible'} Census Tract
+                {tractId && <> ({tractId})</>}
               </span>
             </div>
           </div>
