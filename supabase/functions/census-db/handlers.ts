@@ -1,21 +1,22 @@
+
 import { SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2.21.0';
-import { corsHeaders } from './index';
+import { corsHeaders } from './index.ts';
 import {
   handleCacheQuery,
   handleCacheSave,
   handleCacheStatus
-} from './cacheOperations';
+} from './cacheOperations.ts';
 import {
   handleSearchBatch,
   handleSearchCreate,
   handleSearchResults,
   handleSearchStatus
-} from './searchOperations';
+} from './searchOperations.ts';
 import {
   handleQueryAddress,
   handleQueryCoordinates,
   handleQueryTract
-} from './queryOperations';
+} from './queryOperations.ts';
 
 /**
  * Get dashboard statistics for the admin dashboard
