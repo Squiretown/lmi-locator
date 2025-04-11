@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from 'sonner';
 import { getUserTypeName } from '@/lib/supabase/user';
@@ -26,6 +25,75 @@ export async function signInWithEmail(email: string, password: string) {
     console.error('Exception during sign in:', err);
     toast.error('An unexpected error occurred during login');
     return { userType: null, error: err as Error };
+  }
+}
+
+export async function signInWithMagicLink(email: string, redirectTo?: string) {
+  try {
+    console.log('Attempting to send magic link to:', email);
+    
+    const { data, error } = await supabase.auth.signInWithOtp({
+      email,
+      options: {
+        emailRedirectTo: redirectTo || `${window.location.origin}/login`
+      }
+    });
+    
+    if (error) {
+      console.error('Magic link error:', error.message);
+      return { success: false, error };
+    }
+    
+    toast.success('Magic link sent! Please check your email.');
+    return { success: true, error: null };
+  } catch (err) {
+    console.error('Exception during magic link send:', err);
+    toast.error('An unexpected error occurred');
+    return { success: false, error: err as Error };
+  }
+}
+
+export async function resetPassword(email: string) {
+  try {
+    console.log('Attempting to send password reset to:', email);
+    
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+    
+    if (error) {
+      console.error('Password reset error:', error.message);
+      return { success: false, error };
+    }
+    
+    toast.success('Password reset instructions sent! Please check your email.');
+    return { success: true, error: null };
+  } catch (err) {
+    console.error('Exception during password reset:', err);
+    toast.error('An unexpected error occurred');
+    return { success: false, error: err as Error };
+  }
+}
+
+export async function updatePasswordWithToken(newPassword: string) {
+  try {
+    console.log('Attempting to update password with token');
+    
+    const { error } = await supabase.auth.updateUser({
+      password: newPassword
+    });
+    
+    if (error) {
+      console.error('Password update error:', error.message);
+      return { success: false, error };
+    }
+    
+    toast.success('Password updated successfully! You can now log in with your new password.');
+    return { success: true, error: null };
+  } catch (err) {
+    console.error('Exception during password update:', err);
+    toast.error('An unexpected error occurred');
+    return { success: false, error: err as Error };
   }
 }
 

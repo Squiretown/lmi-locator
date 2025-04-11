@@ -11,6 +11,7 @@ import CustomersPage from './pages/CustomersPage';
 import BlogPage from './pages/BlogPage';
 import ContactPage from './pages/ContactPage';
 import LoginPage from './pages/auth/LoginPage';
+import ResetPasswordPage from './pages/auth/ResetPasswordPage';
 import { AdminLayout, AdminDashboard, MarketingDashboard } from './components/admin';
 import AdminTools from './pages/auth/AdminTools';
 import UserManagement from './pages/auth/UserManagement';
@@ -40,6 +41,7 @@ function App() {
               <Route path="/blog" element={<BlogPage />} />
               <Route path="/contact" element={<ContactPage />} />
               <Route path="/login" element={<LoginPage />} />
+              <Route path="/reset-password" element={<ResetPasswordPage />} />
 
               <Route path="/admin" element={
                 <ProtectedRoute requiredUserType="admin">
