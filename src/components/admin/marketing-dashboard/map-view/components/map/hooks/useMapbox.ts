@@ -29,16 +29,18 @@ export function useMapbox({
     
     try {
       // Set the access token either from props or environment variable
-      mapboxgl.accessToken = accessToken || process.env.MAPBOX_TOKEN || '';
+      const token = accessToken || process.env.MAPBOX_TOKEN || '';
       
-      if (!mapboxgl.accessToken) {
+      if (!token) {
         throw new Error('Mapbox access token is required');
       }
+      
+      mapboxgl.accessToken = token;
       
       const mapInstance = new mapboxgl.Map({
         container: mapContainer.current,
         style: MAP_STYLE,
-        center: DEFAULT_CENTER,
+        center: DEFAULT_CENTER as mapboxgl.LngLatLike,
         zoom: DEFAULT_ZOOM
       });
       

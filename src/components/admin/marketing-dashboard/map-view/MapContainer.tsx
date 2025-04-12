@@ -25,16 +25,15 @@ export interface MapRef {
 
 const MapContainer = forwardRef<MapRef, MapContainerProps>(
   ({ tracts, onTractClick, selectedTract, selectedTracts, onSelectTract }, ref) => {
-    const mapContainerRef = useRef<HTMLDivElement>(null);
     const { token: mapboxToken, isLoading: isLoadingToken, error: tokenError } = useMapboxToken();
     
     const { 
       mapContainer, 
       map, 
       isLoaded, 
-      error, 
+      error: mapError,
       flyTo, 
-      fitBounds 
+      fitBounds: fitBoundsToTracts
     } = useMapbox({
       accessToken: mapboxToken,
       onMapError: (err) => console.error("Map error:", err)
@@ -50,7 +49,7 @@ const MapContainer = forwardRef<MapRef, MapContainerProps>(
     useImperativeHandle(ref, () => ({
       fitBounds: (bounds: mapboxgl.LngLatBoundsLike) => {
         if (map) {
-          map.fitBounds(bounds as mapboxgl.LngLatBoundsLike);
+          map.fitBounds(bounds);
         }
       },
       flyTo: (options) => {
@@ -69,7 +68,10 @@ const MapContainer = forwardRef<MapRef, MapContainerProps>(
         addTractLayers(map);
         
         // Update tract data
-        updateTractData(map, tracts);
+        updateTractData(map, tracts.map(tract => ({
+          ...tract,
+          isSelected: selectedTracts.some(t => t.tractId === tract.tractId)
+        })));
         
         // Set up click handler and selection
         setupTractSelection(map, (tract, selected) => {
@@ -77,32 +79,12 @@ const MapContainer = forwardRef<MapRef, MapContainerProps>(
         });
         
         // Fit map to show all tracts
-        const bounds = new mapboxgl.LngLatBounds();
+        fitBoundsToTracts(tracts);
         
-        tracts.forEach(tract => {
-          if (tract.geometry.type === 'Polygon') {
-            tract.geometry.coordinates[0].forEach((coord: [number, number]) => {
-              bounds.extend(coord as mapboxgl.LngLatLike);
-            });
-          } else if (tract.geometry.type === 'MultiPolygon') {
-            tract.geometry.coordinates.forEach((polygon: [number, number][][]) => {
-              polygon[0].forEach((coord: [number, number]) => {
-                bounds.extend(coord as mapboxgl.LngLatLike);
-              });
-            });
-          }
-        });
-        
-        if (!bounds.isEmpty()) {
-          map.fitBounds(bounds, {
-            padding: 50,
-            maxZoom: 12
-          });
-        }
       } catch (error) {
         console.error('Error adding tract data to map:', error);
       }
-    }, [tracts, isLoaded, map, addTractLayers, updateTractData, setupTractSelection, onTractClick]);
+    }, [tracts, isLoaded, map, addTractLayers, updateTractData, setupTractSelection, onTractClick, fitBoundsToTracts, selectedTracts]);
 
     // Update source when selected tracts change
     useEffect(() => {
@@ -122,8 +104,8 @@ const MapContainer = forwardRef<MapRef, MapContainerProps>(
     return (
       <div className="h-full w-full relative">
         <div ref={mapContainer} className="h-full w-full" />
-        {(isLoadingToken || (!isLoaded && !error)) && <MapLoading />}
-        {(error || tokenError) && <MapError errorMessage={error?.message || tokenError || 'Unknown map error'} />}
+        {(isLoadingToken || (!isLoaded && !mapError)) && <MapLoading />}
+        {(mapError || tokenError) && <MapError errorMessage={mapError?.message || tokenError || 'Unknown map error'} />}
       </div>
     );
   }

@@ -29,6 +29,7 @@ serve(async (req) => {
     const mapboxToken = Deno.env.get("MAPBOX_TOKEN");
     
     if (!mapboxToken) {
+      console.error("MAPBOX_TOKEN is not configured in Supabase Edge Function Secrets");
       throw new Error("MAPBOX_TOKEN is not configured in Supabase Edge Function Secrets");
     }
     

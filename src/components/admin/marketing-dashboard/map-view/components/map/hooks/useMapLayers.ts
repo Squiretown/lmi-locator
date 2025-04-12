@@ -108,26 +108,22 @@ export function useMapLayers() {
       
       // Update the source data with new selection state
       const source = map.getSource('tracts') as mapboxgl.GeoJSONSource;
-      const currentData = (source as any)._data || { features: [] };
       
-      // Update the 'selected' property for the clicked feature
-      const updatedFeatures = currentData.features.map((f: any) => {
-        if (f.properties.tractId === tractId) {
-          return {
-            ...f,
-            properties: {
-              ...f.properties,
-              selected: isSelected
-            }
-          };
-        }
-        return f;
-      });
-      
-      // Set the updated data
+      // Get current features and update the selected property
       source.setData({
         type: 'FeatureCollection',
-        features: updatedFeatures
+        features: (source as any)._data?.features.map((f: any) => {
+          if (f.properties.tractId === tractId) {
+            return {
+              ...f,
+              properties: {
+                ...f.properties,
+                selected: isSelected
+              }
+            };
+          }
+          return f;
+        }) || []
       });
       
       // Notify about selection change
@@ -138,7 +134,7 @@ export function useMapLayers() {
         medianIncome: properties.medianIncome,
         incomeCategory: properties.incomeCategory,
         propertyCount: properties.propertyCount,
-        geometry: feature.geometry
+        geometry: feature.geometry as any
       };
       
       onSelectTract(tractData, isSelected);
