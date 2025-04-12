@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -9,8 +9,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Download, Search, Upload, FileSpreadsheet, MapPin, Filter } from 'lucide-react';
+import { Download, Search, Upload, FileSpreadsheet, MapPin, Filter, RefreshCw } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import { Progress } from "@/components/ui/progress";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 
 type SearchType = 'tract_id' | 'zip_code' | 'city' | 'county' | 'bulk';
 type SearchResult = {
@@ -33,6 +36,91 @@ export const BulkAddressSearch: React.FC = () => {
   const [searchCount, setSearchCount] = useState(0);
   const [filteredResults, setFilteredResults] = useState<SearchResult[]>([]);
   const [showOnlyEligible, setShowOnlyEligible] = useState(false);
+  const [searchId, setSearchId] = useState<string | null>(null);
+  const [progress, setProgress] = useState(0);
+  const [statusMessage, setStatusMessage] = useState('');
+  const [jobStatus, setJobStatus] = useState<'pending' | 'processing' | 'completed' | 'error'>('pending');
+  const [isPolling, setIsPolling] = useState(false);
+
+  // Reset filtered results when main results change
+  useEffect(() => {
+    setFilteredResults(results);
+  }, [results]);
+
+  // Poll for job status
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    
+    if (isPolling && searchId) {
+      interval = setInterval(async () => {
+        try {
+          const { data, error } = await supabase.functions.invoke('census-db', {
+            body: {
+              action: 'searchStatus',
+              params: { searchId }
+            }
+          });
+          
+          if (error) throw error;
+          
+          setJobStatus(data.status);
+          setProgress(Math.round((data.resultCount / data.totalCount) * 100) || 0);
+          setStatusMessage(`Processing ${data.resultCount} of ${data.totalCount} addresses`);
+          
+          if (data.status === 'completed') {
+            setIsPolling(false);
+            fetchJobResults(searchId);
+            toast({
+              title: 'Search completed',
+              description: `Found ${data.resultCount} properties`,
+            });
+          } else if (data.status === 'error') {
+            setIsPolling(false);
+            setIsLoading(false);
+            toast({
+              title: 'Search failed',
+              description: data.errorMessage || 'An error occurred during search processing',
+              variant: 'destructive',
+            });
+          }
+        } catch (error) {
+          console.error('Error polling job status:', error);
+        }
+      }, 2000);
+    }
+    
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [isPolling, searchId, toast]);
+  
+  const fetchJobResults = async (jobId: string) => {
+    try {
+      const { data, error } = await supabase.functions.invoke('census-db', {
+        body: {
+          action: 'searchResults',
+          params: { searchId: jobId }
+        }
+      });
+      
+      if (error) throw error;
+      
+      setResults(data.results);
+      setFilteredResults(data.results);
+      setIsLoading(false);
+      setIsPolling(false);
+      
+    } catch (error) {
+      console.error('Error fetching job results:', error);
+      toast({
+        title: 'Failed to fetch results',
+        description: 'Unable to retrieve search results. Please try again.',
+        variant: 'destructive',
+      });
+      setIsLoading(false);
+      setIsPolling(false);
+    }
+  };
 
   const handleSearch = async () => {
     if (!user) {
@@ -45,9 +133,12 @@ export const BulkAddressSearch: React.FC = () => {
     }
 
     setIsLoading(true);
+    setProgress(0);
+    setJobStatus('pending');
+    setResults([]);
+    setFilteredResults([]);
+    
     try {
-      let searchResults: SearchResult[] = [];
-
       if (searchType === 'bulk') {
         // Handle bulk address search
         const addresses = bulkAddresses
@@ -95,22 +186,16 @@ export const BulkAddressSearch: React.FC = () => {
           }
         });
 
+        setSearchId(jobData.marketing_id);
+        setIsPolling(true);
+        setJobStatus('processing');
+        setStatusMessage(`Processing ${addresses.length} addresses...`);
+        
         toast({
           title: 'Bulk processing started',
           description: `${addresses.length} addresses submitted for processing.`,
         });
 
-        // Provide some immediate feedback
-        searchResults = addresses.map(address => {
-          const parts = address.split(',');
-          return {
-            address: parts[0] || address,
-            city: parts[1]?.trim() || '',
-            state: parts[2]?.trim() || '',
-            zip_code: parts[3]?.trim() || '',
-            is_eligible: undefined // Will be determined during processing
-          };
-        });
       } else {
         // Handle single search criteria (zip, city, tract, county)
         const { data, error } = await supabase.functions.invoke('lmi-tract-search', {
@@ -123,17 +208,25 @@ export const BulkAddressSearch: React.FC = () => {
         });
 
         if (error) throw error;
-        searchResults = data.results;
         
-        toast({
-          title: 'Search completed',
-          description: `Found ${data.results.length} properties`,
-        });
+        if (data.searchId) {
+          setSearchId(data.searchId);
+          setIsPolling(true);
+          setJobStatus('processing');
+          setStatusMessage(`Starting search for properties in ${searchValue}...`);
+        } else {
+          // If results are returned immediately
+          setResults(data.results || []);
+          setFilteredResults(data.results || []);
+          setIsLoading(false);
+          setSearchCount(prev => prev + 1);
+          
+          toast({
+            title: 'Search completed',
+            description: `Found ${data.results?.length || 0} properties`,
+          });
+        }
       }
-
-      setResults(searchResults);
-      setFilteredResults(searchResults);
-      setSearchCount(prev => prev + 1);
     } catch (error) {
       console.error('Search error:', error);
       toast({
@@ -141,8 +234,8 @@ export const BulkAddressSearch: React.FC = () => {
         description: error.message || 'Unable to complete the search. Please try again.',
         variant: 'destructive',
       });
-    } finally {
       setIsLoading(false);
+      setIsPolling(false);
     }
   };
 
@@ -183,6 +276,20 @@ export const BulkAddressSearch: React.FC = () => {
     a.click();
     document.body.removeChild(a);
     
+    // Update download count if we have a searchId
+    if (searchId) {
+      try {
+        await supabase.functions.invoke('census-db', {
+          body: {
+            action: 'updateDownloadCount',
+            params: { searchId }
+          }
+        });
+      } catch (error) {
+        console.error('Error updating download count:', error);
+      }
+    }
+    
     toast({
       title: 'Export successful',
       description: 'Your marketing list has been downloaded',
@@ -195,6 +302,35 @@ export const BulkAddressSearch: React.FC = () => {
       setFilteredResults(results.filter(r => r.is_eligible === true));
     } else {
       setFilteredResults(results);
+    }
+  };
+
+  const cancelSearch = async () => {
+    if (!searchId) return;
+    
+    try {
+      await supabase.functions.invoke('census-db', {
+        body: {
+          action: 'cancelSearch',
+          params: { searchId }
+        }
+      });
+      
+      setIsPolling(false);
+      setIsLoading(false);
+      setJobStatus('pending');
+      
+      toast({
+        title: 'Search cancelled',
+        description: 'The search operation has been cancelled',
+      });
+    } catch (error) {
+      console.error('Error cancelling search:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to cancel the search operation',
+        variant: 'destructive',
+      });
     }
   };
 
@@ -271,6 +407,32 @@ export const BulkAddressSearch: React.FC = () => {
           )}
         </Tabs>
         
+        {isLoading && isPolling && (
+          <div className="my-6 space-y-2">
+            <div className="flex justify-between items-center">
+              <div className="text-sm font-medium">{statusMessage}</div>
+              <Badge variant={
+                jobStatus === 'completed' ? 'default' : 
+                jobStatus === 'processing' ? 'secondary' : 
+                jobStatus === 'error' ? 'destructive' : 
+                'outline'
+              }>
+                {jobStatus.charAt(0).toUpperCase() + jobStatus.slice(1)}
+              </Badge>
+            </div>
+            <Progress value={progress} className="h-2" />
+            <div className="flex justify-end">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={cancelSearch}
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
+        )}
+        
         <div className="flex justify-between mt-6 gap-2">
           <Button 
             onClick={handleSearch} 
@@ -280,8 +442,17 @@ export const BulkAddressSearch: React.FC = () => {
             }
             className="flex-1"
           >
-            <Search className="mr-2 h-4 w-4" />
-            {isLoading ? 'Searching...' : 'Search Properties'}
+            {isLoading ? (
+              <>
+                <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                Searching...
+              </>
+            ) : (
+              <>
+                <Search className="mr-2 h-4 w-4" />
+                Search Properties
+              </>
+            )}
           </Button>
           
           <Button 
@@ -329,29 +500,47 @@ export const BulkAddressSearch: React.FC = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredResults.slice(0, 50).map((prop, index) => (
-                    <TableRow key={index}>
-                      <TableCell>{prop.address}</TableCell>
-                      <TableCell>{prop.city}</TableCell>
-                      <TableCell>{prop.state}</TableCell>
-                      <TableCell>{prop.zip_code}</TableCell>
-                      <TableCell>
-                        {prop.is_eligible === undefined ? (
-                          <span className="text-yellow-500">Pending</span>
-                        ) : prop.is_eligible ? (
-                          <span className="text-green-500">Yes</span>
+                  {filteredResults.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={5} className="h-24 text-center">
+                        {isLoading ? (
+                          <div className="space-y-2">
+                            <Skeleton className="h-4 w-full" />
+                            <Skeleton className="h-4 w-full" />
+                            <Skeleton className="h-4 w-full" />
+                          </div>
                         ) : (
-                          <span className="text-red-500">No</span>
+                          <span className="text-muted-foreground">No results found</span>
                         )}
                       </TableCell>
                     </TableRow>
-                  ))}
-                  {filteredResults.length > 50 && (
-                    <TableRow>
-                      <TableCell colSpan={5} className="text-center text-muted-foreground">
-                        Showing 50 of {filteredResults.length} results. Export to CSV to view all.
-                      </TableCell>
-                    </TableRow>
+                  ) : (
+                    <>
+                      {filteredResults.slice(0, 50).map((prop, index) => (
+                        <TableRow key={index}>
+                          <TableCell>{prop.address}</TableCell>
+                          <TableCell>{prop.city}</TableCell>
+                          <TableCell>{prop.state}</TableCell>
+                          <TableCell>{prop.zip_code}</TableCell>
+                          <TableCell>
+                            {prop.is_eligible === undefined ? (
+                              <span className="text-yellow-500">Pending</span>
+                            ) : prop.is_eligible ? (
+                              <span className="text-green-500">Yes</span>
+                            ) : (
+                              <span className="text-red-500">No</span>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                      {filteredResults.length > 50 && (
+                        <TableRow>
+                          <TableCell colSpan={5} className="text-center text-muted-foreground">
+                            Showing 50 of {filteredResults.length} results. Export to CSV to view all.
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </>
                   )}
                 </TableBody>
               </Table>
