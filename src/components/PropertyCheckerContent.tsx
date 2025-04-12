@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { CheckLmiStatusResponse, AssistanceProgram } from '@/lib/types';
 import AddressSearchForm from './AddressSearchForm';
@@ -8,6 +7,7 @@ import ProgramResults from './ProgramResults';
 import SpecialistConnect from './SpecialistConnect';
 import { formSchema } from '@/hooks/usePropertySearch';
 import { DisplayMode } from '@/hooks/usePropertyWorkflow';
+import { ResultsMap } from '@/components';
 
 interface PropertyCheckerContentProps {
   displayMode: DisplayMode;
