@@ -1,28 +1,85 @@
+
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Check, ChevronsUpDown, MapPin, Search } from 'lucide-react';
+import { Check, ChevronsUpDown, MapPin } from 'lucide-react';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { usePropertySearch, formSchema } from '@/hooks/usePropertySearch';
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import { ResultsMap } from '@/components';
+import { CheckLmiStatusResponse } from '@/lib/types';
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from 'zod'; // Import zod correctly
+import { formSchema, usePropertySearch } from '@/hooks/usePropertySearch';
 
 interface ResultViewProps {
-  states: { value: string; label: string }[];
+  data: CheckLmiStatusResponse;
+  onContinue: () => void;
+  onReset: () => void;
 }
 
-const ResultView: React.FC<ResultViewProps> = ({ states }) => {
-  const { lmiStatus, isLoading, submitPropertySearch } = usePropertySearch();
+const ResultView: React.FC<ResultViewProps> = ({ data, onContinue, onReset }) => {
+  const { isLoading, submitPropertySearch } = usePropertySearch();
   const [open, setOpen] = React.useState(false);
+
+  const states = [
+    { value: "AL", label: "Alabama" },
+    { value: "AK", label: "Alaska" },
+    { value: "AZ", label: "Arizona" },
+    { value: "AR", label: "Arkansas" },
+    { value: "CA", label: "California" },
+    { value: "CO", label: "Colorado" },
+    { value: "CT", label: "Connecticut" },
+    { value: "DE", label: "Delaware" },
+    { value: "FL", label: "Florida" },
+    { value: "GA", label: "Georgia" },
+    { value: "HI", label: "Hawaii" },
+    { value: "ID", label: "Idaho" },
+    { value: "IL", label: "Illinois" },
+    { value: "IN", label: "Indiana" },
+    { value: "IA", label: "Iowa" },
+    { value: "KS", label: "Kansas" },
+    { value: "KY", label: "Kentucky" },
+    { value: "LA", label: "Louisiana" },
+    { value: "ME", label: "Maine" },
+    { value: "MD", label: "Maryland" },
+    { value: "MA", label: "Massachusetts" },
+    { value: "MI", label: "Michigan" },
+    { value: "MN", label: "Minnesota" },
+    { value: "MS", label: "Mississippi" },
+    { value: "MO", label: "Missouri" },
+    { value: "MT", label: "Montana" },
+    { value: "NE", label: "Nebraska" },
+    { value: "NV", label: "Nevada" },
+    { value: "NH", label: "New Hampshire" },
+    { value: "NJ", label: "New Jersey" },
+    { value: "NM", label: "New Mexico" },
+    { value: "NY", label: "New York" },
+    { value: "NC", label: "North Carolina" },
+    { value: "ND", label: "North Dakota" },
+    { value: "OH", label: "Ohio" },
+    { value: "OK", label: "Oklahoma" },
+    { value: "OR", label: "Oregon" },
+    { value: "PA", label: "Pennsylvania" },
+    { value: "RI", label: "Rhode Island" },
+    { value: "SC", label: "South Carolina" },
+    { value: "SD", label: "South Dakota" },
+    { value: "TN", label: "Tennessee" },
+    { value: "TX", label: "Texas" },
+    { value: "UT", label: "Utah" },
+    { value: "VT", label: "Vermont" },
+    { value: "VA", label: "Virginia" },
+    { value: "WA", label: "Washington" },
+    { value: "WV", label: "West Virginia" },
+    { value: "WI", label: "Wisconsin" },
+    { value: "WY", label: "Wyoming" }
+  ];
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -162,7 +219,7 @@ const ResultView: React.FC<ResultViewProps> = ({ states }) => {
         </CardContent>
       </Card>
 
-      {lmiStatus && (
+      {data && (
         <div className="mt-8">
           <Card>
             <CardHeader>
@@ -172,42 +229,53 @@ const ResultView: React.FC<ResultViewProps> = ({ states }) => {
             <CardContent className="space-y-4">
               <div className="flex items-center space-x-2">
                 <MapPin className="h-4 w-4 text-muted-foreground" />
-                <p className="text-sm font-medium">Address: {lmiStatus.address}</p>
+                <p className="text-sm font-medium">Address: {data.address}</p>
               </div>
               <div className="flex items-center space-x-2">
                 <Label className="text-sm font-medium">LMI Status:</Label>
-                <Badge variant={lmiStatus.is_approved ? "success" : "destructive"}>
-                  {lmiStatus.lmi_status}
+                <Badge variant={data.is_approved ? "success" : "destructive"}>
+                  {data.lmi_status}
                 </Badge>
               </div>
               <Separator />
               <div className="space-y-2">
                 <div className="flex items-center space-x-2">
                   <Label className="text-sm text-muted-foreground">Tract ID:</Label>
-                  <p className="text-sm font-medium">{lmiStatus.tract_id}</p>
+                  <p className="text-sm font-medium">{data.tract_id}</p>
                 </div>
                 <div className="flex items-center space-x-2">
                   <Label className="text-sm text-muted-foreground">Median Income:</Label>
-                  <p className="text-sm font-medium">${lmiStatus.median_income?.toLocaleString()}</p>
+                  <p className="text-sm font-medium">${data.median_income?.toLocaleString()}</p>
                 </div>
                 <div className="flex items-center space-x-2">
                   <Label className="text-sm text-muted-foreground">AMI Percentage:</Label>
-                  <p className="text-sm font-medium">{lmiStatus.percentage_of_ami}%</p>
+                  <p className="text-sm font-medium">{data.percentage_of_ami}%</p>
                 </div>
                 <div className="flex items-center space-x-2">
                   <Label className="text-sm text-muted-foreground">Income Category:</Label>
-                  <p className="text-sm font-medium">{lmiStatus.income_category}</p>
+                  <p className="text-sm font-medium">{data.income_category}</p>
                 </div>
+              </div>
+              
+              <div className="flex justify-between mt-4 pt-2">
+                <Button variant="outline" onClick={onReset}>
+                  Search Again
+                </Button>
+                <Button onClick={onContinue}>
+                  Continue
+                </Button>
               </div>
             </CardContent>
           </Card>
 
-          <ResultsMap
-            lat={34.052235}
-            lon={-118.243683}
-            isEligible={lmiStatus.is_approved}
-            tractId={lmiStatus.tract_id}
-          />
+          <div className="mt-4">
+            <ResultsMap
+              lat={34.052235}
+              lon={-118.243683}
+              isEligible={data.is_approved}
+              tractId={data.tract_id}
+            />
+          </div>
         </div>
       )}
     </div>

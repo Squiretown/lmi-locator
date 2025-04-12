@@ -7,7 +7,6 @@ import EligibilityScreener from './EligibilityScreener';
 import ProgramResults from './ProgramResults';
 import SpecialistConnect from './SpecialistConnect';
 import { DisplayMode } from '@/hooks/usePropertyWorkflow';
-import { ResultsMap } from '@/components';
 
 interface PropertyCheckerContentProps {
   displayMode: DisplayMode;
