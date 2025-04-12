@@ -1,7 +1,9 @@
 
 // Map style constants and utility functions
+import mapboxgl from 'mapbox-gl';
+
 export const MAP_STYLE = 'mapbox://styles/mapbox/light-v11';
-export const DEFAULT_CENTER = [-95.7129, 37.0902]; // Center of US
+export const DEFAULT_CENTER: [number, number] = [-95.7129, 37.0902]; // Center of US
 export const DEFAULT_ZOOM = 3;
 
 export const tractFillColors = {
@@ -16,22 +18,25 @@ export const tractLineColors = {
   nonEligible: '#dc2626' // red for non-eligible
 };
 
-export const getTractFillColor = () => [
+// Expression for fill color based on tract properties
+export const getTractFillColor = (): mapboxgl.Expression => [
   'case',
   ['==', ['get', 'selected'], true], tractFillColors.selected,
   ['==', ['get', 'isLmiEligible'], true], tractFillColors.eligible,
   tractFillColors.nonEligible
-];
+] as mapboxgl.Expression;
 
-export const getTractLineColor = () => [
+// Expression for line color based on tract properties
+export const getTractLineColor = (): mapboxgl.Expression => [
   'case',
   ['==', ['get', 'selected'], true], tractLineColors.selected,
   ['==', ['get', 'isLmiEligible'], true], tractLineColors.eligible,
   tractLineColors.nonEligible
-];
+] as mapboxgl.Expression;
 
-export const getTractLineWidth = () => [
+// Expression for line width based on selection state
+export const getTractLineWidth = (): mapboxgl.Expression => [
   'case',
   ['==', ['get', 'selected'], true], 2,
   1
-];
+] as mapboxgl.Expression;
