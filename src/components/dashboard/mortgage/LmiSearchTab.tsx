@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
 import { MapView } from '@/components/admin/marketing-dashboard/map-view';
@@ -25,9 +24,7 @@ export const LmiSearchTab: React.FC<LmiSearchTabProps> = ({ onExportResults }) =
   const [states, setStates] = useState<Array<{code: string, name: string}>>([]);
   const [selectedState, setSelectedState] = useState<string>('');
 
-  // Load states list on component mount
   useEffect(() => {
-    // This would typically come from an API or database
     setStates([
       { code: 'AL', name: 'Alabama' },
       { code: 'AK', name: 'Alaska' },
@@ -36,11 +33,9 @@ export const LmiSearchTab: React.FC<LmiSearchTabProps> = ({ onExportResults }) =
       { code: 'CA', name: 'California' },
       { code: 'CO', name: 'Colorado' },
       { code: 'CT', name: 'Connecticut' },
-      // ... add more states as needed
     ]);
   }, []);
 
-  // Load counties when state is selected
   useEffect(() => {
     if (!selectedState) {
       setCounties([]);
@@ -49,8 +44,6 @@ export const LmiSearchTab: React.FC<LmiSearchTabProps> = ({ onExportResults }) =
 
     const fetchCounties = async () => {
       try {
-        // In a real implementation, this would be an API call
-        // For demo purposes, we'll generate some mock counties
         const mockCounties = [
           { fips: `${selectedState}001`, name: `${selectedState} County 1` },
           { fips: `${selectedState}002`, name: `${selectedState} County 2` },
@@ -82,7 +75,6 @@ export const LmiSearchTab: React.FC<LmiSearchTabProps> = ({ onExportResults }) =
 
     setIsSearching(true);
     try {
-      // Call the appropriate Supabase function based on search type
       const { data, error } = await supabase.functions.invoke('census-db', {
         body: {
           action: 'searchBatch',
@@ -187,7 +179,7 @@ export const LmiSearchTab: React.FC<LmiSearchTabProps> = ({ onExportResults }) =
         </Tabs>
       </CardContent>
       <CardFooter className="border-t px-6 py-4">
-        <Alert variant="outline" className="w-full">
+        <Alert className="w-full">
           <InfoIcon className="h-4 w-4" />
           <AlertDescription>
             Search results are estimates based on Census data and may not reflect current market conditions.
