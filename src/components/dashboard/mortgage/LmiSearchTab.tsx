@@ -180,6 +180,7 @@ export const LmiSearchTab: React.FC<LmiSearchTabProps> = ({ onExportResults }) =
               <SearchResults
                 searchResults={searchResults}
                 onExport={handleExport}
+                isLoading={isSearching}
               />
             )}
           </TabsContent>
