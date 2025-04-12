@@ -1,8 +1,11 @@
-
 import { useCallback } from 'react';
 import mapboxgl from 'mapbox-gl';
 import { getTractFillColor, getTractLineColor, getTractLineWidth } from '../MapStyles';
 import { CensusTract } from '../../../hooks/types/census-tract';
+
+interface TractWithSelection extends CensusTract {
+  isSelected?: boolean;
+}
 
 /**
  * Hook for managing map layers
@@ -23,7 +26,7 @@ export function useMapLayers() {
       });
     }
 
-    // Add fill layer
+    // Add fill layer if it doesn't exist
     if (!map.getLayer('tract-fills')) {
       map.addLayer({
         id: 'tract-fills',
@@ -36,7 +39,7 @@ export function useMapLayers() {
       });
     }
 
-    // Add line layer
+    // Add line layer if it doesn't exist
     if (!map.getLayer('tract-lines')) {
       map.addLayer({
         id: 'tract-lines',
@@ -53,7 +56,7 @@ export function useMapLayers() {
   /**
    * Update the tracts source with new data
    */
-  const updateTractData = useCallback((map: mapboxgl.Map, tracts: CensusTract[]) => {
+  const updateTractData = useCallback((map: mapboxgl.Map, tracts: TractWithSelection[]) => {
     if (!map || !map.getSource('tracts')) return;
 
     const features = tracts.map(tract => ({
@@ -65,16 +68,20 @@ export function useMapLayers() {
         medianIncome: tract.medianIncome,
         incomeCategory: tract.incomeCategory,
         propertyCount: tract.propertyCount,
-        selected: false
+        selected: tract.isSelected || selectedTracts.has(tract.tractId)
       },
       geometry: tract.geometry
     }));
 
-    (map.getSource('tracts') as mapboxgl.GeoJSONSource).setData({
+    const source = map.getSource('tracts') as mapboxgl.GeoJSONSource;
+    source.setData({
       type: 'FeatureCollection',
       features
     });
   }, []);
+
+  // Keep track of selected tracts
+  const selectedTracts = new Set<string>();
 
   /**
    * Add a click handler to the map for tract selection
@@ -83,68 +90,48 @@ export function useMapLayers() {
     map: mapboxgl.Map, 
     onSelectTract: (tract: CensusTract, selected: boolean) => void
   ) => {
-    // Store the selected feature id
-    let selectedTractId: string | null = null;
-
     map.on('click', 'tract-fills', (e) => {
       if (!e.features || e.features.length === 0) return;
       
       const feature = e.features[0];
       const properties = feature.properties as any;
+      const tractId = properties.tractId;
       
-      // Deselect previous tract if there was one
-      if (selectedTractId) {
-        const prevFeatures = map.querySourceFeatures('tracts', {
-          filter: ['==', ['get', 'tractId'], selectedTractId]
-        });
-        
-        if (prevFeatures.length > 0) {
-          const isDeselecting = selectedTractId === properties.tractId;
-          
-          // Update the 'selected' property to false for the previously selected tract
-          prevFeatures.forEach(prevFeature => {
-            if (prevFeature.properties) {
-              prevFeature.properties.selected = false;
+      // Toggle selection
+      const isSelected = !selectedTracts.has(tractId);
+      
+      if (isSelected) {
+        selectedTracts.add(tractId);
+      } else {
+        selectedTracts.delete(tractId);
+      }
+      
+      // Update the source data with new selection state
+      const source = map.getSource('tracts') as mapboxgl.GeoJSONSource;
+      const currentData = (source as any)._data || { features: [] };
+      
+      // Update the 'selected' property for the clicked feature
+      const updatedFeatures = currentData.features.map((f: any) => {
+        if (f.properties.tractId === tractId) {
+          return {
+            ...f,
+            properties: {
+              ...f.properties,
+              selected: isSelected
             }
-          });
-          
-          // If we're deselecting the same tract, don't select a new one
-          if (isDeselecting) {
-            // Notify about deselection
-            onSelectTract({
-              tractId: properties.tractId,
-              isLmiEligible: properties.isLmiEligible,
-              amiPercentage: properties.amiPercentage,
-              medianIncome: properties.medianIncome,
-              incomeCategory: properties.incomeCategory,
-              propertyCount: properties.propertyCount,
-              geometry: feature.geometry
-            }, false);
-            
-            selectedTractId = null;
-            (map.getSource('tracts') as mapboxgl.GeoJSONSource).setData(
-              map.getSource('tracts')._data as GeoJSON.FeatureCollection
-            );
-            return;
-          }
+          };
         }
-      }
+        return f;
+      });
       
-      // Select the new tract
-      selectedTractId = properties.tractId;
+      // Set the updated data
+      source.setData({
+        type: 'FeatureCollection',
+        features: updatedFeatures
+      });
       
-      // Update the 'selected' property to true for the newly selected tract
-      if (feature.properties) {
-        feature.properties.selected = true;
-      }
-      
-      // Update the source data to reflect the selection state
-      (map.getSource('tracts') as mapboxgl.GeoJSONSource).setData(
-        map.getSource('tracts')._data as GeoJSON.FeatureCollection
-      );
-      
-      // Notify about selection
-      onSelectTract({
+      // Notify about selection change
+      const tractData: CensusTract = {
         tractId: properties.tractId,
         isLmiEligible: properties.isLmiEligible,
         amiPercentage: properties.amiPercentage,
@@ -152,7 +139,9 @@ export function useMapLayers() {
         incomeCategory: properties.incomeCategory,
         propertyCount: properties.propertyCount,
         geometry: feature.geometry
-      }, true);
+      };
+      
+      onSelectTract(tractData, isSelected);
     });
     
     // Change cursor on hover

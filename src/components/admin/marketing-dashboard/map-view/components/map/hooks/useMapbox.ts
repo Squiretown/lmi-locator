@@ -4,7 +4,7 @@ import mapboxgl from 'mapbox-gl';
 import { DEFAULT_CENTER, DEFAULT_ZOOM, MAP_STYLE } from '../MapStyles';
 import { CensusTract } from '../../../hooks/types/census-tract';
 
-interface UseMapboxOptions {
+export interface UseMapboxOptions {
   onMapLoaded?: (map: mapboxgl.Map) => void;
   onMapError?: (error: Error) => void;
   accessToken?: string;

@@ -19,24 +19,30 @@ export const tractLineColors = {
 };
 
 // Expression for fill color based on tract properties
-export const getTractFillColor = (): mapboxgl.Expression => [
-  'case',
-  ['==', ['get', 'selected'], true], tractFillColors.selected,
-  ['==', ['get', 'isLmiEligible'], true], tractFillColors.eligible,
-  tractFillColors.nonEligible
-] as mapboxgl.Expression;
+export const getTractFillColor = (): mapboxgl.Expression => {
+  return [
+    'case',
+    ['==', ['get', 'selected'], true], tractFillColors.selected,
+    ['==', ['get', 'isLmiEligible'], true], tractFillColors.eligible,
+    tractFillColors.nonEligible
+  ] as mapboxgl.Expression;
+};
 
 // Expression for line color based on tract properties
-export const getTractLineColor = (): mapboxgl.Expression => [
-  'case',
-  ['==', ['get', 'selected'], true], tractLineColors.selected,
-  ['==', ['get', 'isLmiEligible'], true], tractLineColors.eligible,
-  tractLineColors.nonEligible
-] as mapboxgl.Expression;
+export const getTractLineColor = (): mapboxgl.Expression => {
+  return [
+    'case',
+    ['==', ['get', 'selected'], true], tractLineColors.selected,
+    ['==', ['get', 'isLmiEligible'], true], tractLineColors.eligible,
+    tractLineColors.nonEligible
+  ] as mapboxgl.Expression;
+};
 
 // Expression for line width based on selection state
-export const getTractLineWidth = (): mapboxgl.Expression => [
-  'case',
-  ['==', ['get', 'selected'], true], 2,
-  1
-] as mapboxgl.Expression;
+export const getTractLineWidth = (): mapboxgl.Expression => {
+  return [
+    'case',
+    ['==', ['get', 'selected'], true], 2,
+    1
+  ] as mapboxgl.Expression;
+};
