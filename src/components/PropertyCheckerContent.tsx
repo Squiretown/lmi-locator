@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { CheckLmiStatusResponse, AssistanceProgram } from '@/lib/types';
 import AddressSearchForm from './AddressSearchForm';
@@ -5,7 +6,6 @@ import ResultView from './ResultView';
 import EligibilityScreener from './EligibilityScreener';
 import ProgramResults from './ProgramResults';
 import SpecialistConnect from './SpecialistConnect';
-import { formSchema } from '@/hooks/usePropertySearch';
 import { DisplayMode } from '@/hooks/usePropertyWorkflow';
 import { ResultsMap } from '@/components';
 
@@ -41,7 +41,7 @@ const PropertyCheckerContent: React.FC<PropertyCheckerContentProps> = ({
     case 'result':
       return lmiStatus ? (
         <ResultView 
-          lmiStatus={lmiStatus}
+          data={lmiStatus}
           onContinue={onContinue}
           onReset={onReset}
         />
