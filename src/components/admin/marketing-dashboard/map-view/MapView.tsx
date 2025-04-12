@@ -1,33 +1,12 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Slider } from "@/components/ui/slider";
-import { 
-  ChevronLeft, 
-  ChevronRight, 
-  Download, 
-  Layers, 
-  MapPin, 
-  List,
-  Search,
-  Info,
-  Database
-} from 'lucide-react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { 
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Toggle } from "@/components/ui/toggle";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Switch } from "@/components/ui/switch";
 import MapContainer, { MapRef } from './MapContainer';
 import TractInfoPanel from './TractInfoPanel';
-import { useTractSearch } from './hooks/useTractSearch';
+import MapSidebar from './components/MapSidebar';
+import { useTractSearch } from './hooks';
 
 interface MapViewProps {
   onExportResults?: (results: any[]) => void;
@@ -36,7 +15,6 @@ interface MapViewProps {
 const MapView: React.FC<MapViewProps> = ({ onExportResults }) => {
   const { toast } = useToast();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [activeTab, setActiveTab] = useState("search");
   const [selectedTract, setSelectedTract] = useState<any>(null);
   const [searchRadius, setSearchRadius] = useState([25]); // miles
   const [selectedState, setSelectedState] = useState<string>("");
@@ -113,247 +91,29 @@ const MapView: React.FC<MapViewProps> = ({ onExportResults }) => {
       <div className={`transition-all duration-300 bg-background border-r ${
         sidebarCollapsed ? 'w-0 overflow-hidden' : 'w-80'
       }`}>
-        {!sidebarCollapsed && (
-          <div className="p-4 h-full flex flex-col">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-semibold">LMI Census Tract Search</h3>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={toggleDataSource}
-                title={useRealData ? "Using real data (click to switch to mock)" : "Using mock data (click to switch to real)"}
-              >
-                <Database className="h-4 w-4 mr-2" />
-                {useRealData ? "Real" : "Mock"}
-              </Button>
-            </div>
-            
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1">
-              <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="search">
-                  <Search className="h-4 w-4 mr-2" />
-                  Search
-                </TabsTrigger>
-                <TabsTrigger value="layers">
-                  <Layers className="h-4 w-4 mr-2" />
-                  Layers
-                </TabsTrigger>
-                <TabsTrigger value="results">
-                  <List className="h-4 w-4 mr-2" />
-                  Results
-                </TabsTrigger>
-              </TabsList>
-
-              <TabsContent value="search" className="flex flex-col space-y-4 mt-4">
-                <div>
-                  <label className="text-sm text-muted-foreground">State</label>
-                  <Select 
-                    value={selectedState} 
-                    onValueChange={(value) => {
-                      setSelectedState(value);
-                      setSelectedCounty(""); // Reset county when state changes
-                    }}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select state" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {states.map(state => (
-                        <SelectItem key={state.code} value={state.code}>
-                          {state.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <label className="text-sm text-muted-foreground">County</label>
-                  <Select 
-                    value={selectedCounty} 
-                    onValueChange={setSelectedCounty}
-                    disabled={!selectedState}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select county" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {countiesForState.map(county => (
-                        <SelectItem key={county.fips} value={county.fips}>
-                          {county.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <label className="text-sm text-muted-foreground">ZIP Code (Optional)</label>
-                  <input
-                    type="text"
-                    value={selectedZip}
-                    onChange={(e) => setSelectedZip(e.target.value)}
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                    placeholder="Enter ZIP code"
-                  />
-                </div>
-
-                <div>
-                  <label className="text-sm text-muted-foreground">
-                    Search Radius: {searchRadius[0]} miles
-                  </label>
-                  <Slider
-                    value={searchRadius}
-                    onValueChange={setSearchRadius}
-                    max={50}
-                    min={5}
-                    step={5}
-                    className="mt-2"
-                  />
-                </div>
-
-                <div className="flex items-center space-x-2">
-                  <Switch
-                    checked={showLmiOnly}
-                    onCheckedChange={setShowLmiOnly}
-                    id="lmi-only"
-                  />
-                  <label htmlFor="lmi-only" className="text-sm font-medium">
-                    Show LMI eligible tracts only
-                  </label>
-                </div>
-
-                <Button 
-                  onClick={handleSearch}
-                  disabled={loading || !selectedState}
-                  className="mt-2"
-                >
-                  {loading ? "Searching..." : "Search Census Tracts"}
-                </Button>
-
-                {statsData && (
-                  <div className="bg-muted p-3 rounded-md mt-2">
-                    <h4 className="text-sm font-medium mb-2">Search Results</h4>
-                    <div className="text-sm">
-                      <div className="flex justify-between">
-                        <span>Total Tracts:</span>
-                        <span className="font-medium">{statsData.totalTracts}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>LMI Eligible:</span>
-                        <span className="font-medium text-green-600">{statsData.lmiTracts}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Properties:</span>
-                        <span className="font-medium">{statsData.propertyCount.toLocaleString()}</span>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </TabsContent>
-
-              <TabsContent value="layers" className="flex flex-col space-y-4 mt-4">
-                <div className="bg-muted p-3 rounded-md">
-                  <h4 className="text-sm font-medium mb-2">Map Layers</h4>
-                  
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm">Census Tract Boundaries</span>
-                      <Toggle pressed aria-label="Toggle census tracts" />
-                    </div>
-                    
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm">LMI Status Colors</span>
-                      <Toggle pressed aria-label="Toggle LMI colors" />
-                    </div>
-                    
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm">Property Markers</span>
-                      <Toggle aria-label="Toggle property markers" />
-                    </div>
-                    
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm">County Boundaries</span>
-                      <Toggle aria-label="Toggle county boundaries" />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="bg-muted p-3 rounded-md">
-                  <h4 className="text-sm font-medium mb-2">Legend</h4>
-                  <div className="space-y-2">
-                    <div className="flex items-center">
-                      <div className="w-4 h-4 bg-green-500 mr-2 rounded-sm"></div>
-                      <span className="text-sm">LMI Eligible Tract</span>
-                    </div>
-                    <div className="flex items-center">
-                      <div className="w-4 h-4 bg-red-400 mr-2 rounded-sm"></div>
-                      <span className="text-sm">Non-Eligible Tract</span>
-                    </div>
-                    <div className="flex items-center">
-                      <div className="w-4 h-4 bg-blue-500 mr-2 rounded-sm"></div>
-                      <span className="text-sm">Selected Tract</span>
-                    </div>
-                  </div>
-                </div>
-
-                {useRealData && (
-                  <div className="bg-muted p-3 rounded-md">
-                    <h4 className="text-sm font-medium mb-2">Data Source</h4>
-                    <p className="text-xs text-muted-foreground">
-                      Currently using real data from the census database. If no real data is available for a search, mock data will be used as a fallback.
-                    </p>
-                  </div>
-                )}
-                {!useRealData && (
-                  <div className="bg-muted p-3 rounded-md">
-                    <h4 className="text-sm font-medium mb-2">Data Source</h4>
-                    <p className="text-xs text-muted-foreground">
-                      Currently using mock data for demonstration purposes. Click the "Mock" button at the top to switch to real data.
-                    </p>
-                  </div>
-                )}
-              </TabsContent>
-
-              <TabsContent value="results" className="flex flex-col space-y-4 mt-4">
-                <div className="bg-muted p-3 rounded-md">
-                  <h4 className="text-sm font-medium mb-2">Selected Tracts</h4>
-                  {selectedTracts.length === 0 ? (
-                    <p className="text-sm text-muted-foreground">
-                      No tracts selected. Click on tracts on the map to select them.
-                    </p>
-                  ) : (
-                    <div className="max-h-[300px] overflow-y-auto">
-                      {selectedTracts.map(tract => (
-                        <div key={tract.tractId} className="flex justify-between items-center py-1 border-b border-border last:border-0">
-                          <span className="text-sm">{tract.tractId}</span>
-                          <Button 
-                            variant="ghost" 
-                            size="sm"
-                            onClick={() => {
-                              setSelectedTracts(selectedTracts.filter(t => t.tractId !== tract.tractId));
-                            }}
-                          >
-                            Remove
-                          </Button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                <Button
-                  onClick={handleExport}
-                  disabled={selectedTracts.length === 0}
-                  className="w-full"
-                >
-                  <Download className="mr-2 h-4 w-4" />
-                  Export Selected Tracts
-                </Button>
-              </TabsContent>
-            </Tabs>
-          </div>
-        )}
+        <MapSidebar 
+          sidebarCollapsed={sidebarCollapsed}
+          states={states}
+          countiesForState={countiesForState}
+          selectedState={selectedState}
+          setSelectedState={setSelectedState}
+          selectedCounty={selectedCounty}
+          setSelectedCounty={setSelectedCounty}
+          selectedZip={selectedZip}
+          setSelectedZip={setSelectedZip}
+          searchRadius={searchRadius}
+          setSearchRadius={setSearchRadius}
+          showLmiOnly={showLmiOnly}
+          setShowLmiOnly={setShowLmiOnly}
+          loading={loading}
+          handleSearch={handleSearch}
+          statsData={statsData}
+          selectedTracts={selectedTracts}
+          setSelectedTracts={setSelectedTracts}
+          handleExport={handleExport}
+          useRealData={useRealData}
+          toggleDataSource={toggleDataSource}
+        />
       </div>
 
       {/* Main Content with Map and Button to toggle sidebar */}
