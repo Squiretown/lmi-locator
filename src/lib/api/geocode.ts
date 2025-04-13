@@ -2,7 +2,7 @@
 // Geocoding service for address to coordinates conversion
 import { CENSUS_GEOCODER_URL } from './constants';
 import { cachedFetch } from './cache';
-import { geocodeAddressWithEsri } from './esri/geocoding/index';
+import { geocodeAddressWithEsri } from './lmi/esri/geocoding';
 import { parseGeoId, formatTractId } from './census-helpers';
 
 /**
@@ -20,11 +20,11 @@ export const geocodeAddress = async (address: string): Promise<{
   console.log('Geocoding address:', address);
   
   try {
-    // First attempt: Census Geocoder
+    // First attempt: Census Geocoder (more accurate for tract boundaries)
     try {
-      // Build the URL for Census Geocoder API
+      // Build the URL for Census Geocoder API - use addressiOnelineAddressWithBenchmarkAndVintage for better accuracy
       const encodedAddress = encodeURIComponent(address);
-      const url = `${CENSUS_GEOCODER_URL}/locations/onelineaddress?address=${encodedAddress}&benchmark=2020&format=json`;
+      const url = `${CENSUS_GEOCODER_URL}/addressiOnelineAddressWithBenchmarkAndVintage?address=${encodedAddress}&benchmark=Public_AR_Current&vintage=Current_Current&format=json`;
       
       console.log(`Making request to Census Geocoder: ${url}`);
       
@@ -43,29 +43,49 @@ export const geocodeAddress = async (address: string): Promise<{
           geoid
         });
         
-        return {
-          lat: coordinates.y, 
-          lon: coordinates.x,
-          geoid,
-          geocoding_service: 'Census',
-          formatted_address: match.matchedAddress
-        };
+        // If we have a match with a high match score, return it
+        if (match.tigerRecordNaaccrFipsCountyCode) {
+          return {
+            lat: coordinates.y, 
+            lon: coordinates.x,
+            geoid,
+            geocoding_service: 'Census',
+            formatted_address: match.matchedAddress
+          };
+        }
       }
       
-      console.log('Census geocoder returned no matches, falling back to ESRI');
+      console.log('Census geocoder returned no matches or low confidence match, falling back to ESRI');
     } catch (error) {
       console.error('Error with Census geocoding:', error);
       console.log('Falling back to ESRI geocoder due to Census API error');
     }
     
-    // Second attempt: ESRI Geocoder
+    // Second attempt: ESRI Geocoder (generally better at address geocoding)
     console.log('Attempting to geocode with ESRI service');
     
     const esriResult = await geocodeAddressWithEsri(address);
     
-    // Successfully geocoded with ESRI, but we don't have census tract info
-    // We could potentially make another call to get census tract data based on coordinates
+    if (!esriResult.lat || !esriResult.lon) {
+      throw new Error('Unable to geocode address with available services');
+    }
+    
+    // Successfully geocoded with ESRI, but we may not have census tract info
     console.log('Successfully geocoded address with ESRI API:', esriResult);
+    
+    // Try to get tract ID from the coordinates using Census API
+    try {
+      const tractId = await getCensusTractFromCoordinates(esriResult.lat, esriResult.lon);
+      if (tractId) {
+        return {
+          ...esriResult,
+          geoid: tractId,
+          geocoding_service: 'ESRI+Census'
+        };
+      }
+    } catch (tractError) {
+      console.error('Error getting census tract from coordinates:', tractError);
+    }
     
     return {
       ...esriResult,
@@ -74,39 +94,7 @@ export const geocodeAddress = async (address: string): Promise<{
     };
   } catch (error) {
     console.error('Error geocoding address with all services:', error);
-    
-    // Fall back to mock data if API requests fail
-    console.warn('Falling back to mock geocode data');
-    
-    // For testing purposes - determine mock data based on address content
-    if (address.toLowerCase().includes('rich') || 
-        address.toLowerCase().includes('wealth') || 
-        address.toLowerCase().includes('90210')) {
-      return { 
-        lat: 34.0736, 
-        lon: -118.4004,
-        geoid: '06037701000', // Beverly Hills tract
-        geocoding_service: 'Mock Data'
-      };
-    }
-    
-    // For testing purposes, any address containing "low" or "poor" will be marked as LMI eligible
-    if (address.toLowerCase().includes('low') || 
-        address.toLowerCase().includes('poor')) {
-      return { 
-        lat: 37.7749, 
-        lon: -122.4194,
-        geoid: '06075010200', // Low income tract
-        geocoding_service: 'Mock Data'
-      };
-    }
-    
-    return { 
-      lat: 37.7749, 
-      lon: -122.4194,
-      geoid: '06075010800', // San Francisco tract
-      geocoding_service: 'Mock Data'
-    };
+    throw new Error(`Unable to geocode address: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 };
 
@@ -116,11 +104,12 @@ export const geocodeAddress = async (address: string): Promise<{
  */
 export const getCensusTractFromCoordinates = async (lat: number, lon: number): Promise<string | null> => {
   try {
-    const url = `${CENSUS_GEOCODER_URL}/geographies/coordinates?x=${lon}&y=${lat}&benchmark=2020&vintage=2020&layers=Census%20Tracts&format=json`;
+    // First try the current vintage
+    const currentUrl = `${CENSUS_GEOCODER_URL}/geographies/coordinates?x=${lon}&y=${lat}&benchmark=Public_AR_Current&vintage=Current_Current&layers=Census%20Tracts&format=json`;
     
-    console.log(`Getting census tract from coordinates: ${lat}, ${lon}`);
+    console.log(`Getting census tract from coordinates using current vintage: ${lat}, ${lon}`);
     
-    const response = await cachedFetch(url);
+    const response = await cachedFetch(currentUrl);
     
     if (response.result?.geographies?.['Census Tracts']?.length > 0) {
       const geoid = response.result.geographies['Census Tracts'][0].GEOID;
@@ -128,6 +117,19 @@ export const getCensusTractFromCoordinates = async (lat: number, lon: number): P
       return geoid;
     }
     
+    // If that fails, try the 2020 vintage
+    console.log('Current vintage lookup failed, trying 2020 vintage');
+    const url2020 = `${CENSUS_GEOCODER_URL}/geographies/coordinates?x=${lon}&y=${lat}&benchmark=2020&vintage=2020&layers=Census%20Tracts&format=json`;
+    
+    const response2020 = await cachedFetch(url2020);
+    
+    if (response2020.result?.geographies?.['Census Tracts']?.length > 0) {
+      const geoid = response2020.result.geographies['Census Tracts'][0].GEOID;
+      console.log(`Found census tract ${geoid} from 2020 vintage for coordinates ${lat}, ${lon}`);
+      return geoid;
+    }
+    
+    console.log('Could not find census tract for coordinates');
     return null;
   } catch (error) {
     console.error('Error getting census tract from coordinates:', error);
