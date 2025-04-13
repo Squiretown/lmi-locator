@@ -85,7 +85,7 @@ export const LmiSearchTab: React.FC<LmiSearchTabProps> = ({ onExportResults }) =
       } else if (searchType === 'zip') {
         searchParams.zipCode = searchValue;
       } else if (searchType === 'tract') {
-        searchParams.tractId = searchValue;
+        searchParams.tractId = searchValue.trim();
       }
       
       console.log("Search parameters:", searchParams);
@@ -102,20 +102,38 @@ export const LmiSearchTab: React.FC<LmiSearchTabProps> = ({ onExportResults }) =
       console.log("Search results:", data);
       
       if (data) {
+        // Make sure we have a valid response structure
+        const tracts = data.tracts || [];
+        const summary = data.summary || {
+          totalTracts: tracts.length || 0,
+          lmiTracts: tracts.filter((t: any) => t.isLmiEligible).length || 0,
+          propertyCount: tracts.reduce((sum: number, t: any) => sum + (t.propertyCount || 0), 0) || 0
+        };
+
         setSearchResults({
-          summary: data.summary || {
-            totalTracts: data.tracts?.length || 0,
-            lmiTracts: data.tracts?.filter((t: any) => t.isLmiEligible).length || 0,
-            propertyCount: data.tracts?.reduce((sum: number, t: any) => sum + (t.propertyCount || 0), 0) || 0
-          },
-          tracts: data.tracts || [],
+          summary,
+          tracts,
           searchType,
           searchValue
         });
 
+        if (tracts.length > 0) {
+          toast({
+            title: "Search completed",
+            description: `Found ${tracts.length} census tracts`,
+          });
+        } else {
+          toast({
+            title: "No results found",
+            description: "Try another search criteria or check your input",
+            variant: "destructive"
+          });
+        }
+      } else {
         toast({
-          title: "Search completed",
-          description: `Found ${data.tracts?.length || 0} census tracts`,
+          title: "No results",
+          description: "No results returned from search",
+          variant: "destructive"
         });
       }
     } catch (error) {
