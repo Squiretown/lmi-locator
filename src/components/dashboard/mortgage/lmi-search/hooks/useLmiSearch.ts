@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { logLmiSearchError, notifyAdminsOfLmiError } from '@/lib/api/lmi/error-logger';
 
 export function useLmiSearch() {
   const { toast } = useToast();
@@ -48,6 +49,14 @@ export function useLmiSearch() {
           description: "Failed to load counties. Please try again.",
           variant: "destructive"
         });
+        
+        // Log the counties fetch error
+        await logLmiSearchError(
+          'county', 
+          selectedState, 
+          error, 
+          { action: 'fetchCounties', stateCode: selectedState }
+        );
       }
     };
 
@@ -87,7 +96,22 @@ export function useLmiSearch() {
         }
       });
 
-      if (error) throw error;
+      if (error) {
+        // Log the search error
+        const errorLogResult = await logLmiSearchError(
+          searchType, 
+          searchValue, 
+          error, 
+          searchParams
+        );
+        
+        // If it's a serious error, notify admins
+        if (errorLogResult.success && errorLogResult.id) {
+          await notifyAdminsOfLmiError(errorLogResult.id, 'medium');
+        }
+        
+        throw error;
+      }
 
       console.log("Search results:", data);
       
@@ -118,6 +142,14 @@ export function useLmiSearch() {
             description: "Try another search criteria or check your input",
             variant: "destructive"
           });
+          
+          // Log the "no results" case (not an error but worth tracking)
+          await logLmiSearchError(
+            searchType, 
+            searchValue, 
+            new Error("No results found"), 
+            { ...searchParams, isNoResultsCase: true }
+          );
         }
       } else {
         toast({
@@ -125,6 +157,14 @@ export function useLmiSearch() {
           description: "No results returned from search",
           variant: "destructive"
         });
+        
+        // Log the empty response case
+        await logLmiSearchError(
+          searchType, 
+          searchValue, 
+          new Error("Empty response from search function"), 
+          searchParams
+        );
       }
     } catch (error) {
       console.error("Search error:", error);
@@ -133,6 +173,9 @@ export function useLmiSearch() {
         description: "Unable to complete the search. Please try again.",
         variant: "destructive"
       });
+      
+      // Log the general search error
+      await logLmiSearchError(searchType, searchValue, error, { searchTypeDetails: searchType });
     } finally {
       setIsSearching(false);
     }

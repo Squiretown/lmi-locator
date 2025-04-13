@@ -118,3 +118,17 @@ export interface VerificationChallenge {
   is_active: boolean;
   created_at: string;
 }
+
+export interface LmiSearchErrorLog {
+  id: string;
+  user_id?: string;
+  search_type: 'county' | 'zip' | 'tract';
+  search_value: string;
+  error_message: string;
+  error_stack?: string;
+  search_params?: Record<string, any>;
+  created_at: string;
+  browser_info?: string;
+  resolved: boolean;
+  resolution_notes?: string;
+}

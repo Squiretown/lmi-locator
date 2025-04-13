@@ -1,103 +1,74 @@
 
 import React from 'react';
-import { Button } from '@/components/ui/button';
-import { DownloadIcon, LoaderCircle, AlertCircle } from 'lucide-react';
 import { SearchSummary } from './SearchSummary';
 import { CensusTractsTable } from './CensusTractsTable';
-import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { AlertTriangleIcon, Loader2 } from 'lucide-react';
 
 interface SearchResultsProps {
-  searchResults: {
+  results: {
     summary: {
       totalTracts: number;
       lmiTracts: number;
       propertyCount: number;
+      lmiPercentage?: number;
     };
-    tracts: Array<{
-      tractId: string;
-      isLmiEligible: boolean;
-      amiPercentage: number;
-      propertyCount: number;
-    }>;
+    tracts: any[];
     searchType: string;
     searchValue: string;
-  };
-  onExport: () => void;
-  isLoading?: boolean;
+  } | null;
+  isLoading: boolean;
+  onReportProblem?: () => void;
 }
 
 export const SearchResults: React.FC<SearchResultsProps> = ({ 
-  searchResults, 
-  onExport,
-  isLoading = false
+  results, 
+  isLoading,
+  onReportProblem
 }) => {
   if (isLoading) {
     return (
-      <div className="mt-8 space-y-6">
-        <div className="p-6 bg-background border rounded-lg">
-          <div className="flex justify-between mb-4">
-            <Skeleton className="h-8 w-1/3" />
-            <Skeleton className="h-8 w-1/4" />
-          </div>
-          <div className="grid grid-cols-3 gap-4">
-            <Skeleton className="h-16 w-full" />
-            <Skeleton className="h-16 w-full" />
-            <Skeleton className="h-16 w-full" />
-          </div>
-        </div>
-        
-        <div className="rounded-md border">
-          <div className="p-4">
-            <Skeleton className="h-8 w-full mb-4" />
-            <Skeleton className="h-12 w-full mb-2" />
-            <Skeleton className="h-12 w-full mb-2" />
-            <Skeleton className="h-12 w-full" />
-          </div>
-        </div>
-        
-        <Button disabled className="w-full">
-          <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
-          Loading results...
-        </Button>
+      <div className="flex flex-col items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin text-gray-400 mb-4" />
+        <p className="text-gray-500">Searching for census tracts...</p>
       </div>
     );
   }
 
-  const hasResults = searchResults.tracts && searchResults.tracts.length > 0;
+  if (!results) {
+    return null;
+  }
+
+  const { summary, tracts } = results;
+
+  if (!tracts || tracts.length === 0) {
+    return (
+      <div className="space-y-4">
+        <Alert variant="destructive">
+          <AlertTriangleIcon className="h-4 w-4" />
+          <AlertDescription className="flex justify-between items-center">
+            <span>No census tracts found matching your search criteria.</span>
+            {onReportProblem && (
+              <button 
+                onClick={onReportProblem}
+                className="text-xs underline hover:text-red-700"
+              >
+                Report this issue
+              </button>
+            )}
+          </AlertDescription>
+        </Alert>
+        <p className="text-sm text-gray-500">
+          Try adjusting your search parameters or verify that the information provided is correct.
+        </p>
+      </div>
+    );
+  }
 
   return (
-    <div className="mt-8 space-y-6">
-      {hasResults ? (
-        <>
-          <SearchSummary summary={searchResults.summary} />
-          
-          <CensusTractsTable tracts={searchResults.tracts} />
-          
-          <Button onClick={onExport} className="w-full">
-            Export Results <DownloadIcon className="ml-2 h-4 w-4" />
-          </Button>
-        </>
-      ) : (
-        <div className="space-y-6">
-          <Alert variant="destructive">
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>
-              No results found for "{searchResults.searchValue}" in {searchResults.searchType} search. 
-              Please try with a different value or search type.
-            </AlertDescription>
-          </Alert>
-          
-          <div className="p-8 text-center text-muted-foreground border rounded-lg">
-            <p className="mb-4">Possible reasons for no results:</p>
-            <ul className="list-disc text-left ml-8">
-              <li>The census tract ID may be incorrect</li>
-              <li>The tract may not exist in our database</li>
-              <li>There may be a formatting issue with the input</li>
-            </ul>
-          </div>
-        </div>
-      )}
+    <div className="space-y-6">
+      <SearchSummary summary={summary} searchType={results.searchType} searchValue={results.searchValue} />
+      <CensusTractsTable tracts={tracts} />
     </div>
   );
 };

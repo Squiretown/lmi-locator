@@ -1,137 +1,92 @@
 
-import { SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2.21.0';
-import { corsHeaders } from './index.ts';
-import {
-  handleCacheQuery,
-  handleCacheSave,
-  handleCacheStatus
-} from './cacheOperations.ts';
-import {
-  handleSearchBatch,
-  handleSearchCreate,
-  handleSearchResults,
-  handleSearchStatus
-} from './searchOperations.ts';
-import {
-  handleQueryAddress,
-  handleQueryCoordinates,
-  handleQueryTract
-} from './queryOperations.ts';
+import { corsHeaders } from "./cors.ts";
+import { handleSearchBatch } from "./searchOperations.ts";
+import { handleGetCachedData, handleSetCachedData } from "./cacheOperations.ts";
 
-/**
- * Get dashboard statistics for the admin dashboard
- */
-async function handleGetDashboardStats(
-  supabase: SupabaseClient,
-  params: any
-) {
+// Main handler function for the census-db edge function
+export async function handleRequest(req: Request, supabase: any) {
+  // Parse request body
   try {
-    // Get user count
-    const { count: userCount, error: userError } = await supabase
-      .from('user_profiles')
-      .select('*', { count: 'exact', head: true });
-
-    if (userError) throw userError;
-
-    // Get property count
-    const { count: propertyCount, error: propertyError } = await supabase
-      .from('properties')
-      .select('*', { count: 'exact', head: true });
-
-    if (propertyError) throw propertyError;
-
-    // Get realtor count
-    const { count: realtorCount, error: realtorError } = await supabase
-      .from('user_profiles')
-      .select('*', { count: 'exact', head: true })
-      .eq('user_type', 'realtor');
-
-    if (realtorError) throw realtorError;
-
-    // Get recent search history
-    const { data: searchHistory, error: searchError } = await supabase
-      .from('search_history')
-      .select('*')
-      .order('searched_at', { ascending: false })
-      .limit(10);
-
-    if (searchError) throw searchError;
-
-    return {
-      userCount: userCount || 0,
-      propertyCount: propertyCount || 0,
-      realtorCount: realtorCount || 0,
-      searchHistory: searchHistory || []
-    };
-  } catch (error) {
-    console.error('Error fetching dashboard stats:', error);
-    return { 
-      success: false, 
-      error: error.message || 'Failed to fetch dashboard statistics' 
-    };
-  }
-}
-
-/**
- * Handle API requests for the census-db edge function
- */
-export async function handleApiRequest(
-  supabase: SupabaseClient,
-  action: string,
-  params: any
-) {
-  // Query operations
-  if (action === 'queryTract') {
-    return await handleQueryTract(supabase, params);
-  } else if (action === 'queryAddress') {
-    return await handleQueryAddress(supabase, params);
-  } else if (action === 'queryCoordinates') {
-    return await handleQueryCoordinates(supabase, params);
-  }
-  
-  // Cache operations
-  else if (action === 'cacheQuery') {
-    return await handleCacheQuery(supabase, params);
-  } else if (action === 'cacheSave') {
-    return await handleCacheSave(supabase, params);
-  } else if (action === 'cacheStatus') {
-    return await handleCacheStatus(supabase, params);
-  } 
-  
-  // Search operations
-  else if (action === 'searchCreate') {
-    return await handleSearchCreate(supabase, params);
-  } else if (action === 'searchStatus') {
-    return await handleSearchStatus(supabase, params);
-  } else if (action === 'searchResults') {
-    return await handleSearchResults(supabase, params);
-  } else if (action === 'searchBatch') {
-    return await handleSearchBatch(supabase, params);
-  }
-  
-  // Dashboard operations
-  else if (action === 'getDashboardStats') {
-    return await handleGetDashboardStats(supabase, params);
-  }
-  
-  // Unknown action
-  else {
-    throw new Error(`Unknown action: ${action}`);
-  }
-}
-
-/**
- * Build a response with the appropriate CORS headers
- */
-export function buildResponse(data: any, status = 200) {
-  return new Response(
-    JSON.stringify(data),
-    {
-      status,
-      headers: {
-        ...corsHeaders,
-        'Content-Type': 'application/json',
-      },
+    const body = await req.json();
+    const { action, params } = body;
+    
+    console.log(`Processing action: ${action}`, params);
+    
+    // Route the request to the appropriate handler based on the action
+    let result;
+    let error = null;
+    try {
+      switch (action) {
+        case 'searchBatch':
+          result = await handleSearchBatch(supabase, params);
+          break;
+        case 'getCachedData':
+          result = await handleGetCachedData(supabase, params);
+          break;
+        case 'setCachedData':
+          result = await handleSetCachedData(supabase, params);
+          break;
+        default:
+          throw new Error(`Unknown action: ${action}`);
+      }
+    } catch (handlingError) {
+      console.error(`Error handling ${action}:`, handlingError);
+      
+      // Log the error to the database
+      try {
+        const errorData = {
+          action,
+          params: JSON.stringify(params),
+          error_message: handlingError instanceof Error ? handlingError.message : String(handlingError),
+          error_stack: handlingError instanceof Error ? handlingError.stack : undefined,
+          created_at: new Date().toISOString()
+        };
+        
+        await supabase
+          .from('edge_function_error_logs')
+          .insert(errorData);
+        
+        console.log("Error logged to database");
+      } catch (loggingError) {
+        console.error("Failed to log error to database:", loggingError);
+      }
+      
+      error = {
+        message: handlingError instanceof Error ? handlingError.message : String(handlingError),
+        details: handlingError instanceof Error ? handlingError.stack : undefined
+      };
     }
-  );
+    
+    // Return the result
+    return new Response(
+      JSON.stringify(result || { success: false, error }),
+      {
+        status: error ? 500 : 200,
+        headers: {
+          ...corsHeaders,
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+  } catch (error) {
+    console.error("Error processing request:", error);
+    
+    // Handle parsing errors
+    return new Response(
+      JSON.stringify({
+        success: false,
+        error: {
+          message: 'Invalid request format',
+          details: error instanceof Error ? error.message : String(error)
+        }
+      }),
+      {
+        status: 400,
+        headers: {
+          ...corsHeaders,
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+  }
 }
