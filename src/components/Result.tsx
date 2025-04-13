@@ -32,13 +32,13 @@ const ResultCard: React.FC<ResultProps> = ({ data }) => {
     <div
       className="w-full max-w-3xl mx-auto animate-in fade-in slide-in-from-bottom-5 duration-300"
     >
-      <Card className={`border-2 overflow-hidden ${isEligible ? 'border-eligible' : 'border-ineligible'}`}>
-        <div className={`${isEligible ? 'bg-eligible/10' : 'bg-ineligible/10'} p-4 relative overflow-hidden`}>
+      <Card className={`border-2 overflow-hidden ${isEligible ? 'border-green-600' : 'border-red-600'}`}>
+        <div className={`${isEligible ? 'bg-green-100' : 'bg-red-100'} p-4 relative overflow-hidden`}>
           <div className="absolute right-0 top-0 p-4">
             {isEligible ? (
-              <CheckCircle2Icon className="h-8 w-8 text-eligible" />
+              <CheckCircle2Icon className="h-8 w-8 text-green-600" />
             ) : (
-              <XCircleIcon className="h-8 w-8 text-ineligible" />
+              <XCircleIcon className="h-8 w-8 text-red-600" />
             )}
           </div>
           
@@ -46,24 +46,28 @@ const ResultCard: React.FC<ResultProps> = ({ data }) => {
             <div className="flex items-center gap-2">
               <Badge 
                 variant="outline" 
-                className={`${isEligible ? 'bg-eligible/20 text-eligible-dark' : 'bg-ineligible/20 text-ineligible-dark'} rounded-md`}
+                className={`${isEligible ? 'bg-green-200 text-green-800' : 'bg-red-200 text-red-800'} rounded-md`}
               >
-                {data.lmi_status}
+                {data.lmi_status || (isEligible ? 'LMI Eligible' : 'Not Eligible')}
               </Badge>
-              <Badge 
-                variant="outline" 
-                className="bg-primary/10 text-primary rounded-md"
-              >
-                {data.income_category}
-              </Badge>
+              {data.income_category && data.income_category !== 'Unknown' && (
+                <Badge 
+                  variant="outline" 
+                  className="bg-primary/10 text-primary rounded-md"
+                >
+                  {data.income_category}
+                </Badge>
+              )}
             </div>
-            <CardTitle className="text-xl md:text-2xl font-semibold mt-2">{data.approval_message}</CardTitle>
+            <CardTitle className="text-xl md:text-2xl font-semibold mt-2">
+              {data.approval_message || (isEligible ? 'Property is in an LMI area' : 'Property is not in an LMI area')}
+            </CardTitle>
           </CardHeader>
           
           <CardContent className="p-0 mt-4">
             <div className="flex items-center text-muted-foreground">
               <MapPinIcon className="h-4 w-4 mr-2 flex-shrink-0" />
-              <p className="text-sm truncate">{data.address}</p>
+              <p className="text-sm truncate">{data.address || 'Address unavailable'}</p>
             </div>
           </CardContent>
         </div>
@@ -73,29 +77,35 @@ const ResultCard: React.FC<ResultProps> = ({ data }) => {
         <div className="p-4 grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="space-y-1">
             <p className="text-sm text-muted-foreground">Census Tract</p>
-            <p className="font-medium">{data.tract_id}</p>
+            <p className="font-medium">{data.tract_id || 'Unknown'}</p>
           </div>
           
-          <div className="space-y-1">
-            <div className="flex items-center gap-1 text-sm text-muted-foreground">
-              <DollarSignIcon className="h-3.5 w-3.5" />
-              <p>Median Income</p>
+          {medianIncome > 0 && (
+            <div className="space-y-1">
+              <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                <DollarSignIcon className="h-3.5 w-3.5" />
+                <p>Median Income</p>
+              </div>
+              <p className="font-medium">${medianIncome.toLocaleString()}</p>
             </div>
-            <p className="font-medium">${medianIncome.toLocaleString()}</p>
-          </div>
+          )}
           
-          <div className="space-y-1">
-            <div className="flex items-center gap-1 text-sm text-muted-foreground">
-              <PercentIcon className="h-3.5 w-3.5" />
-              <p>Percentage of AMI</p>
+          {percentageOfAmi > 0 && (
+            <div className="space-y-1">
+              <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                <PercentIcon className="h-3.5 w-3.5" />
+                <p>Percentage of AMI</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <p className="font-medium">{percentageOfAmi}%</p>
+                {ami > 0 && (
+                  <span className="text-xs text-muted-foreground">
+                    (AMI: ${ami.toLocaleString()})
+                  </span>
+                )}
+              </div>
             </div>
-            <div className="flex items-center gap-2">
-              <p className="font-medium">{percentageOfAmi}%</p>
-              <span className="text-xs text-muted-foreground">
-                (AMI: ${ami.toLocaleString()})
-              </span>
-            </div>
-          </div>
+          )}
         </div>
       </Card>
     </div>

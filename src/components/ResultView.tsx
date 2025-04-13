@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Check, ChevronsUpDown, MapPin } from 'lucide-react';
@@ -15,8 +14,9 @@ import { ResultsMap } from '@/components';
 import { CheckLmiStatusResponse } from '@/lib/types';
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from 'zod'; // Import zod correctly
+import * as z from 'zod';
 import { formSchema, usePropertySearch } from '@/hooks/usePropertySearch';
+import EligibilityIndicator from './map/EligibilityIndicator';
 
 interface ResultViewProps {
   data: CheckLmiStatusResponse;
@@ -94,6 +94,12 @@ const ResultView: React.FC<ResultViewProps> = ({ data, onContinue, onReset }) =>
   function onSubmit(values: z.infer<typeof formSchema>) {
     submitPropertySearch(values);
   }
+
+  const displayAddress = data.address || 'Address unavailable';
+  const tractId = data.tract_id || 'Unknown';
+  const medianIncome = data.median_income || 0;
+  const amiPercentage = data.percentage_of_ami || 0;
+  const incomeCategory = data.income_category || 'Unknown';
 
   return (
     <div className="container relative mx-auto max-w-2xl p-4">
@@ -220,63 +226,29 @@ const ResultView: React.FC<ResultViewProps> = ({ data, onContinue, onReset }) =>
       </Card>
 
       {data && (
-        <div className="mt-8">
-          <Card>
-            <CardHeader>
-              <CardTitle>LMI Eligibility Result</CardTitle>
-              <CardDescription>Details of the LMI eligibility check</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center space-x-2">
-                <MapPin className="h-4 w-4 text-muted-foreground" />
-                <p className="text-sm font-medium">Address: {data.address}</p>
-              </div>
-              <div className="flex items-center space-x-2">
-                <Label className="text-sm font-medium">LMI Status:</Label>
-                <Badge variant={data.is_approved ? "success" : "destructive"}>
-                  {data.lmi_status}
-                </Badge>
-              </div>
-              <Separator />
-              <div className="space-y-2">
-                <div className="flex items-center space-x-2">
-                  <Label className="text-sm text-muted-foreground">Tract ID:</Label>
-                  <p className="text-sm font-medium">{data.tract_id}</p>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Label className="text-sm text-muted-foreground">Median Income:</Label>
-                  <p className="text-sm font-medium">${data.median_income?.toLocaleString()}</p>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Label className="text-sm text-muted-foreground">AMI Percentage:</Label>
-                  <p className="text-sm font-medium">{data.percentage_of_ami}%</p>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Label className="text-sm text-muted-foreground">Income Category:</Label>
-                  <p className="text-sm font-medium">{data.income_category}</p>
-                </div>
-              </div>
-              
-              <div className="flex justify-between mt-4 pt-2">
-                <Button variant="outline" onClick={onReset}>
-                  Search Again
-                </Button>
-                <Button onClick={onContinue}>
-                  Continue
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-
-          <div className="mt-4">
-            <ResultsMap
-              lat={34.052235}
-              lon={-118.243683}
-              isEligible={data.is_approved}
-              tractId={data.tract_id}
-            />
+        <>
+          <EligibilityIndicator isEligible={data.is_approved} />
+          
+          <div className="mt-8">
+            <div className="flex justify-between mt-4">
+              <Button variant="outline" onClick={onReset}>
+                Search Again
+              </Button>
+              <Button onClick={onContinue}>
+                Continue
+              </Button>
+            </div>
+            
+            <div className="mt-4">
+              <ResultsMap
+                lat={34.052235}
+                lon={-118.243683}
+                isEligible={data.is_approved}
+                tractId={tractId}
+              />
+            </div>
           </div>
-        </div>
+        </>
       )}
     </div>
   );
