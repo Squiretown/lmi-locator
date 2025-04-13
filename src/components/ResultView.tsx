@@ -227,15 +227,15 @@ const ResultView: React.FC<ResultViewProps> = ({ data, onContinue, onReset }) =>
 
       {data && (
         <>
-          <EligibilityIndicator isEligible={data.is_approved} />
+          <EligibilityIndicator 
+            isEligible={data.is_approved} 
+            onGetMoreInfo={onContinue} 
+          />
           
           <div className="mt-8">
             <div className="flex justify-between mt-4">
               <Button variant="outline" onClick={onReset}>
                 Search Again
-              </Button>
-              <Button onClick={onContinue}>
-                Continue
               </Button>
             </div>
             
