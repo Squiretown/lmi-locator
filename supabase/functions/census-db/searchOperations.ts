@@ -7,7 +7,7 @@ export async function handleSearchBatch(supabase: any, params: any) {
     console.log("Processing batch search request:", params);
     
     // Extract search parameters
-    const { state, county, zipCode, radius } = params;
+    const { state, county, zipCode, tractId } = params;
     
     // Prepare query based on available parameters
     let query = supabase.from("census_tract_results").select("*");
@@ -44,6 +44,12 @@ export async function handleSearchBatch(supabase: any, params: any) {
           query = query.in("tract_id", tractIds);
         }
       }
+    }
+    
+    if (tractId) {
+      console.log(`Filtering by tract ID: ${tractId}`);
+      // Direct tract ID search
+      query = query.eq("tract_id", tractId);
     }
     
     // Execute the query

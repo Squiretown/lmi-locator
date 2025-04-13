@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
 import { MapView } from '@/components/admin/marketing-dashboard/map-view';
@@ -75,20 +76,31 @@ export const LmiSearchTab: React.FC<LmiSearchTabProps> = ({ onExportResults }) =
 
     setIsSearching(true);
     try {
+      // Prepare search parameters based on search type
+      const searchParams: any = {};
+      
+      if (searchType === 'county') {
+        searchParams.state = selectedState;
+        searchParams.county = searchValue;
+      } else if (searchType === 'zip') {
+        searchParams.zipCode = searchValue;
+      } else if (searchType === 'tract') {
+        searchParams.tractId = searchValue;
+      }
+      
+      console.log("Search parameters:", searchParams);
+      
       const { data, error } = await supabase.functions.invoke('census-db', {
         body: {
           action: 'searchBatch',
-          params: {
-            state: searchType === 'county' ? selectedState : undefined,
-            county: searchType === 'county' ? searchValue : undefined,
-            zipCode: searchType === 'zip' ? searchValue : undefined,
-            tractId: searchType === 'tract' ? searchValue : undefined
-          }
+          params: searchParams
         }
       });
 
       if (error) throw error;
 
+      console.log("Search results:", data);
+      
       if (data) {
         setSearchResults({
           summary: data.summary || {
