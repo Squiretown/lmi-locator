@@ -29,11 +29,15 @@ export const logLmiSearchError = async (
       platform: navigator.platform
     };
     
+    // Get current user (if authenticated)
+    const { data: userData } = await supabase.auth.getUser();
+    const userId = userData?.user?.id;
+    
     // Create the error log entry
     const { data, error: dbError } = await supabase
       .from('lmi_search_error_logs')
       .insert({
-        user_id: supabase.auth.getUser()?.data?.user?.id,
+        user_id: userId,
         search_type: searchType,
         search_value: searchValue,
         error_message: errorMessage,

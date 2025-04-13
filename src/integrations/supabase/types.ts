@@ -640,6 +640,48 @@ export type Database = {
           },
         ]
       }
+      lmi_search_error_logs: {
+        Row: {
+          browser_info: string | null
+          created_at: string
+          error_message: string
+          error_stack: string | null
+          id: string
+          resolution_notes: string | null
+          resolved: boolean | null
+          search_params: Json | null
+          search_type: string
+          search_value: string
+          user_id: string | null
+        }
+        Insert: {
+          browser_info?: string | null
+          created_at?: string
+          error_message: string
+          error_stack?: string | null
+          id?: string
+          resolution_notes?: string | null
+          resolved?: boolean | null
+          search_params?: Json | null
+          search_type: string
+          search_value: string
+          user_id?: string | null
+        }
+        Update: {
+          browser_info?: string | null
+          created_at?: string
+          error_message?: string
+          error_stack?: string | null
+          id?: string
+          resolution_notes?: string | null
+          resolved?: boolean | null
+          search_params?: Json | null
+          search_type?: string
+          search_value?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       marketing_addresses: {
         Row: {
           address: string
