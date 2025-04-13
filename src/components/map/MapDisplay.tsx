@@ -98,32 +98,61 @@ const MapDisplay: React.FC<MapDisplayProps> = ({ lat, lon, isEligible, tractId }
       setTractBoundaryError(null);
       console.log(`Attempting to load boundary for tract: ${tractId}`);
       
-      // Try first API endpoint for tract boundary
-      let response = await fetch(`https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/tigerWMS_Current/MapServer/2/query?where=GEOID='${tractId}'&outFields=*&outSR=4326&f=geojson`);
+      // Convert tractId to correct format if needed (some APIs expect slightly different formats)
+      const formattedTractId = tractId.padStart(11, '0');
+      console.log(`Using formatted tract ID: ${formattedTractId} (original: ${tractId})`);
       
-      // If that fails, try the secondary API
-      if (!response.ok) {
-        console.log(`Primary API failed, trying secondary API for tract: ${tractId}`);
-        response = await fetch(`https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/tigerWMS_ACS2019/MapServer/8/query?where=GEOID='${tractId}'&outFields=*&outSR=4326&f=geojson`);
+      // Try multiple sources for tract boundary data - this improves our chances of finding the right data
+      const apiEndpoints = [
+        // Try the original API with the original tract ID
+        `https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/tigerWMS_Current/MapServer/2/query?where=GEOID='${tractId}'&outFields=*&outSR=4326&f=geojson`,
+        // Try with formatted tract ID
+        `https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/tigerWMS_Current/MapServer/2/query?where=GEOID='${formattedTractId}'&outFields=*&outSR=4326&f=geojson`,
+        // Try the ACS2019 service
+        `https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/tigerWMS_ACS2019/MapServer/8/query?where=GEOID='${tractId}'&outFields=*&outSR=4326&f=geojson`,
+        // Try the Census2020 service
+        `https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/tigerWMS_Census2020/MapServer/10/query?where=GEOID='${tractId}'&outFields=*&outSR=4326&f=geojson`,
+        // Try with a different parameter - using TRACT instead of GEOID
+        `https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/tigerWMS_Census2020/MapServer/10/query?where=TRACT='${tractId.slice(-6)}'&outFields=*&outSR=4326&f=geojson`,
+        // Try the FedGIS service which might have more comprehensive data
+        `https://services.arcgis.com/P3ePLMYs2RVChkJx/ArcGIS/rest/services/USA_Census_Tract_Boundaries_Current/FeatureServer/0/query?where=GEOID='${tractId}'&outFields=*&outSR=4326&f=geojson`,
+      ];
+      
+      let data;
+      let boundaryFound = false;
+      
+      // Try each API endpoint until we find data
+      for (const endpoint of apiEndpoints) {
+        try {
+          console.log(`Trying to fetch tract boundary from: ${endpoint}`);
+          const response = await fetch(endpoint);
+          
+          if (!response.ok) {
+            console.log(`API endpoint failed with status: ${response.status}`);
+            continue; // Try the next endpoint
+          }
+          
+          const responseData = await response.json();
+          
+          if (responseData.features && responseData.features.length > 0) {
+            console.log(`Successfully loaded tract boundary from: ${endpoint}`);
+            data = responseData;
+            boundaryFound = true;
+            break; // We found data, exit the loop
+          } else {
+            console.log(`No features found in response from: ${endpoint}`);
+          }
+        } catch (endpointError) {
+          console.error(`Error with endpoint ${endpoint}:`, endpointError);
+          // Continue to next endpoint
+        }
       }
       
-      // If both fail, try the third option
-      if (!response.ok) {
-        console.log(`Secondary API failed, trying third API for tract: ${tractId}`);
-        response = await fetch(`https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/tigerWMS_Census2020/MapServer/10/query?where=GEOID='${tractId}'&outFields=*&outSR=4326&f=geojson`);
+      if (!boundaryFound || !data) {
+        throw new Error('No boundary data found for this tract ID after trying multiple sources');
       }
       
-      if (!response.ok) {
-        throw new Error(`Failed to fetch tract boundary data: ${response.status} ${response.statusText}`);
-      }
-      
-      const data = await response.json();
-      
-      if (!data.features || data.features.length === 0) {
-        throw new Error('No boundary data found for this tract ID');
-      }
-      
-      console.log('Successfully loaded tract boundary data:', data);
+      console.log('Successfully loaded tract boundary data');
       
       // Add source and layer for census tract boundary
       map.addSource('tract-boundary', {

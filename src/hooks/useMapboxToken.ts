@@ -41,7 +41,8 @@ export function useMapboxToken() {
         toast({
           title: "Map Loading Warning",
           description: "Using fallback map configuration. Some features might be limited.",
-          variant: "warning",
+          // Fix the type error by using a valid variant
+          variant: "default", 
         });
       } finally {
         setIsLoading(false);
