@@ -29,7 +29,7 @@ export function useMapbox({
     
     try {
       // Set the access token either from props or environment variable
-      const token = accessToken || process.env.MAPBOX_TOKEN || '';
+      const token = accessToken;
       
       if (!token) {
         throw new Error('Mapbox access token is required');
