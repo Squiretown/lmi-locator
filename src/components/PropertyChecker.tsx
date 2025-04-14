@@ -6,6 +6,8 @@ import PropertyCheckerContent from './PropertyCheckerContent';
 import { useClientActivity } from '@/hooks/useClientActivity';
 import { useSavedAddresses } from '@/hooks/useSavedAddresses';
 import { toast } from 'sonner';
+import { saveSearch } from '@/lib/supabase/search';
+import { useAuth } from '@/hooks/useAuth';
 
 const PropertyChecker: React.FC = () => {
   // Initialize hooks outside of any conditional logic
@@ -13,6 +15,7 @@ const PropertyChecker: React.FC = () => {
   const workflowHook = usePropertyWorkflow();
   const { addActivity } = useClientActivity();
   const { saveAddress } = useSavedAddresses();
+  const { user } = useAuth();
   
   // Destructure the values from the hooks
   const { lmiStatus, isLoading, submitPropertySearch } = searchHook;
@@ -33,6 +36,15 @@ const PropertyChecker: React.FC = () => {
     if (result) {
       // Show results in the workflow
       showResults(result);
+      
+      // Save search to database if user is logged in
+      if (user) {
+        try {
+          await saveSearch(result.address, result, user.id);
+        } catch (error) {
+          console.warn('Error saving search to database:', error);
+        }
+      }
       
       // Add to recent activity
       addActivity({

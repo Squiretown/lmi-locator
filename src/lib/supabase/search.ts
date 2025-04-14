@@ -29,9 +29,15 @@ export const saveSearch = async (address, result = null, userId = null) => {
         result: validatedData.result,
         user_id: validatedData.userId,
         is_eligible: result?.is_approved || false,
+        tract_id: result?.tract_id,
+        income_category: result?.income_category,
+        search_params: result ? { address: validatedData.address } : null
       });
       
-    if (error) throw error;
+    if (error) {
+      console.error('Database error saving search:', error);
+      return { success: false, error: error.message };
+    }
     
     return { success: true, data };
   } catch (error) {

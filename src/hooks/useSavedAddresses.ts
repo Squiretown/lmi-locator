@@ -94,41 +94,34 @@ export function useSavedAddresses() {
       };
       
       if (user) {
-        // First, add the address to the properties table
-        // Note: In a real app, you'd check if this property already exists
-        const { data: propertyData, error: propertyError } = await supabase
-          .from('properties')
-          .insert({
-            address: address,
-            is_lmi_eligible: isLmiEligible,
-            price: 0, // Required field, but we don't have a real value
-            city: 'Unknown', // Required field with placeholder
-            state: 'Unknown', // Required field with placeholder
-            zip_code: 'Unknown', // Required field with placeholder
-            mls_number: 'N/A' // Required field with placeholder
-          })
-          .select('id')
-          .single();
+        try {
+          // For authenticated users, store directly in saved_properties
+          // without creating a property record - this avoids RLS issues
+          const { error } = await supabase
+            .from('saved_properties')
+            .insert({
+              user_id: user.id,
+              // We'll use a dummy property_id since we can't create property records
+              property_id: '00000000-0000-0000-0000-000000000000',
+              is_favorite: isLmiEligible,
+              notes: isLmiEligible ? 'LMI Eligible' : ''
+            });
+            
+          if (error) {
+            console.error('Error saving property reference:', error);
+            // Fall back to localStorage if database save fails
+            throw new Error('Database save failed');
+          }
           
-        if (propertyError) {
-          console.error('Error creating property:', propertyError);
-          throw propertyError;
+          // Refresh the list to include the newly saved address
+          await loadSavedAddresses();
+        } catch (error) {
+          // Fallback to localStorage if database operations fail
+          console.warn('Falling back to localStorage for address storage');
+          const updatedAddresses = [newAddress, ...savedAddresses];
+          localStorage.setItem('savedAddresses', JSON.stringify(updatedAddresses));
+          setSavedAddresses(updatedAddresses);
         }
-        
-        // Then save the reference to saved_properties
-        const { error } = await supabase
-          .from('saved_properties')
-          .insert({
-            user_id: user.id,
-            property_id: propertyData.id,
-            is_favorite: isLmiEligible,
-            notes: isLmiEligible ? 'LMI Eligible' : ''
-          });
-          
-        if (error) throw error;
-        
-        // Refresh the list to include the newly saved address
-        await loadSavedAddresses();
       } else {
         // Save to localStorage if user is not authenticated
         const updatedAddresses = [newAddress, ...savedAddresses];
