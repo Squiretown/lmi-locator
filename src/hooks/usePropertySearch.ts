@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { CheckLmiStatusResponse } from '@/lib/types';
@@ -22,21 +21,18 @@ export function usePropertySearch() {
   const submitPropertySearch = async (values: FormValues) => {
     setIsLoading(true);
     try {
-      // Format the address for the API call
       const formattedAddress = `${values.address}, ${values.city}, ${values.state} ${values.zipCode}`;
       
-      // Show toast to indicate search is in progress
-      toast.info(`Checking status for ${values.address}...`);
+      console.log('Formatted Address:', formattedAddress);
       
-      // Use the direct ArcGIS service which is working correctly
       const result = await checkDirectLmiStatus(formattedAddress);
+      
+      console.log('Full Result Object:', JSON.stringify(result, null, 2));
       
       if (result.status === "error") {
         throw new Error(result.message || "Failed to check property status");
       }
       
-      // Transform the result to match the CheckLmiStatusResponse type
-      // Ensure all numeric values have fallbacks to prevent undefined errors
       const lmiResponse: CheckLmiStatusResponse = {
         is_approved: result.is_approved,
         address: result.address || formattedAddress,
@@ -50,9 +46,10 @@ export function usePropertySearch() {
         lmi_status: result.lmi_status || (result.is_approved ? 'LMI Eligible' : 'Not Eligible')
       };
       
+      console.log('Processed LMI Response:', JSON.stringify(lmiResponse, null, 2));
+      
       setLmiStatus(lmiResponse);
       
-      // Show appropriate toast based on result
       if (result.is_approved) {
         toast.success(`This property is LMI eligible`);
       } else {
