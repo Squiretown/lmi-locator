@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { CheckLmiStatusResponse } from '@/lib/types';
@@ -21,6 +22,14 @@ export function usePropertySearch() {
   const submitPropertySearch = async (values: FormValues) => {
     setIsLoading(true);
     try {
+      // Detailed logging of input values
+      console.log('Search Input Values:', {
+        address: values.address,
+        city: values.city,
+        state: values.state,
+        zipCode: values.zipCode
+      });
+      
       const formattedAddress = `${values.address}, ${values.city}, ${values.state} ${values.zipCode}`;
       
       console.log('Formatted Address:', formattedAddress);
@@ -32,6 +41,19 @@ export function usePropertySearch() {
       if (result.status === "error") {
         throw new Error(result.message || "Failed to check property status");
       }
+      
+      // Log each property of the result to see what might be undefined
+      console.log('Result Properties:', {
+        is_approved: result.is_approved,
+        address: result.address,
+        tract_id: result.tract_id,
+        median_income: result.median_income,
+        ami: result.ami,
+        income_category: result.income_category,
+        percentage_of_ami: result.percentage_of_ami,
+        eligibility: result.eligibility,
+        lmi_status: result.lmi_status
+      });
       
       const lmiResponse: CheckLmiStatusResponse = {
         is_approved: result.is_approved,
