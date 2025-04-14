@@ -41,3 +41,8 @@ export * from "@/components/ui/tooltip"
 
 // Map components
 export { default as ResultsMap } from './map/ResultsMap';
+
+// Property Search Components
+export { default as PropertySearchCard } from './property-form/PropertySearchCard';
+export { default as PropertySearchForm } from './property-form/PropertySearchForm';
+export { default as ResultsSection } from './property-results/ResultsSection';
