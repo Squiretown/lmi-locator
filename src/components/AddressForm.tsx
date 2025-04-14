@@ -1,14 +1,16 @@
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { SearchIcon, XCircleIcon, BookmarkIcon } from 'lucide-react';
+import { SearchIcon, XCircleIcon, BookmarkIcon, CheckIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
-import { saveSearch } from '@/lib/supabase-api';
+import { saveSearch } from '@/lib/supabase/index';
 import LoadingSpinner from './LoadingSpinner';
 import { toast } from 'sonner';
 import { z } from 'zod';
 import { formSchema } from '@/hooks/usePropertySearch';
+import { useSavedAddresses } from '@/hooks/useSavedAddresses';
 
 interface AddressFormProps {
   onResultReceived: (result: any) => void;
@@ -25,10 +27,7 @@ const AddressForm: React.FC<AddressFormProps> = ({
   const [city, setCity] = useState('');
   const [state, setState] = useState('');
   const [zipCode, setZipCode] = useState('');
-  const [savedAddresses, setSavedAddresses] = useState<string[]>(() => {
-    const saved = localStorage.getItem('savedAddresses');
-    return saved ? JSON.parse(saved) : [];
-  });
+  const { savedAddresses, saveAddress } = useSavedAddresses();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -72,17 +71,13 @@ const AddressForm: React.FC<AddressFormProps> = ({
     }
   };
 
-  const saveProperty = () => {
-    if (!address.trim() || savedAddresses.includes(address)) {
+  const handleSaveProperty = () => {
+    if (!address.trim()) {
       return;
     }
     
-    const updatedAddresses = [...savedAddresses, address];
-    setSavedAddresses(updatedAddresses);
-    
-    localStorage.setItem('savedAddresses', JSON.stringify(updatedAddresses));
-    
-    toast.success('Property saved to your collection');
+    const fullAddress = `${address}, ${city}, ${state} ${zipCode}`;
+    saveAddress(fullAddress);
   };
 
   const clearForm = () => {
@@ -92,7 +87,11 @@ const AddressForm: React.FC<AddressFormProps> = ({
     setZipCode('');
   };
 
-  const isAddressSaved = savedAddresses.includes(address);
+  const isAddressSaved = savedAddresses.some(item => {
+    const fullAddress = `${address}, ${city}, ${state} ${zipCode}`;
+    return item.address === fullAddress;
+  });
+  
   const isFormComplete = address.trim() && city.trim() && state.trim() && zipCode.trim();
 
   return (
@@ -186,7 +185,7 @@ const AddressForm: React.FC<AddressFormProps> = ({
             {address.trim() && (
               <Button
                 type="button"
-                variant="secondary"
+                variant="ghost"
                 className="px-3 transition-all"
                 onClick={clearForm}
                 disabled={isLoading}
@@ -196,16 +195,16 @@ const AddressForm: React.FC<AddressFormProps> = ({
               </Button>
             )}
             
-            {address.trim() && (
+            {isFormComplete && (
               <Button
                 type="button"
                 variant={isAddressSaved ? "secondary" : "outline"}
                 className={`px-3 transition-all ${isAddressSaved ? 'bg-primary/10 text-primary' : ''}`}
-                onClick={saveProperty}
+                onClick={handleSaveProperty}
                 disabled={isLoading || isAddressSaved}
                 title={isAddressSaved ? "Property already saved" : "Save property"}
               >
-                <BookmarkIcon className="h-4 w-4" />
+                {isAddressSaved ? <CheckIcon className="h-4 w-4" /> : <BookmarkIcon className="h-4 w-4" />}
               </Button>
             )}
           </div>

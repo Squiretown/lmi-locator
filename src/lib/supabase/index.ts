@@ -36,7 +36,10 @@ export {
 // Clients
 export { 
   addClient, 
-  getProfessionalClients 
+  getProfessionalClients,
+  getSavedProperties,
+  saveProperty,
+  removeSavedProperty
 } from './clients';
 
 // User permissions and types

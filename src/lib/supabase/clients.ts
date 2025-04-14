@@ -1,48 +1,42 @@
 
-import { supabase } from "@/integrations/supabase/client";
-import { z } from "zod";
-import { Client } from "@/lib/types/user-models";
+import { supabase } from '@/integrations/supabase/client';
+import { z } from 'zod';
 
 // Define validation schema for addClient parameters
-const addClientSchema = z.object({
-  professionalId: z.string().uuid("Invalid professional ID"),
+const clientSchema = z.object({
+  professionalId: z.string().uuid(),
   firstName: z.string().min(1, "First name is required"),
   lastName: z.string().min(1, "Last name is required"),
-  email: z.string().email("Invalid email").optional(),
+  email: z.string().email().optional(),
   phone: z.string().optional(),
+  status: z.string().optional().default('active'),
   notes: z.string().optional()
 });
 
 /**
- * Adds a new client to a professional's client list
+ * Adds a new client for a professional
  * 
- * @param {Object} clientData - Client data including first name, last name, etc.
- * @param {string} professionalId - ID of the professional adding the client
- * @returns {Promise<Object>} - Result of the add operation
+ * @param {Object} clientData - Client information
+ * @returns {Promise<Object>} - Result of the operation
  */
-export const addClient = async (clientData, professionalId) => {
+export const addClient = async (clientData) => {
   try {
     // Validate inputs
-    const validated = addClientSchema.parse({
-      professionalId,
-      firstName: clientData.firstName,
-      lastName: clientData.lastName,
-      email: clientData.email,
-      phone: clientData.phone,
-      notes: clientData.notes
-    });
+    const validatedData = clientSchema.parse(clientData);
     
     const { data, error } = await supabase
-      .from('clients')
+      .from('client_profiles')
       .insert({
-        professional_id: validated.professionalId,
-        first_name: validated.firstName,
-        last_name: validated.lastName,
-        email: validated.email,
-        phone: validated.phone,
-        notes: validated.notes,
-        status: 'active'
-      });
+        professional_id: validatedData.professionalId,
+        first_name: validatedData.firstName,
+        last_name: validatedData.lastName,
+        email: validatedData.email,
+        phone: validatedData.phone,
+        status: validatedData.status,
+        notes: validatedData.notes
+      })
+      .select()
+      .single();
       
     if (error) throw error;
     
@@ -56,39 +50,129 @@ export const addClient = async (clientData, professionalId) => {
   }
 };
 
-// Define validation schema for getProfessionalClients parameter
-const getProfessionalClientsSchema = z.object({
-  professionalId: z.string().uuid("Invalid professional ID"),
-  limit: z.number().int().positive().optional().default(50)
-});
-
 /**
- * Retrieves all clients for a specific professional
+ * Gets clients for a professional
  * 
- * @param {string} professionalId - ID of the professional
- * @param {number} limit - Maximum number of clients to return
- * @returns {Promise<Object>} - List of clients
+ * @param {string} professionalId - The professional's ID
+ * @param {Object} options - Query options (limit, filter, etc.)
+ * @returns {Promise<Object>} - Result with client data
  */
-export const getProfessionalClients = async (professionalId, limit = 50) => {
+export const getProfessionalClients = async (professionalId, options = {}) => {
   try {
-    // Validate inputs
-    const validated = getProfessionalClientsSchema.parse({ professionalId, limit });
+    const { limit = 100, status = null } = options;
     
-    const { data, error } = await supabase
-      .from('clients')
+    let query = supabase
+      .from('client_profiles')
       .select('*')
-      .eq('professional_id', validated.professionalId)
-      .order('last_name', { ascending: true })
-      .limit(validated.limit);
+      .eq('professional_id', professionalId)
+      .order('created_at', { ascending: false })
+      .limit(limit);
+      
+    if (status) {
+      query = query.eq('status', status);
+    }
+    
+    const { data, error } = await query;
       
     if (error) throw error;
     
     return { success: true, data };
   } catch (error) {
-    console.error('Error retrieving professional clients:', error);
-    if (error.name === 'ZodError') {
-      return { success: false, error: 'Invalid input data', details: error.errors };
-    }
+    console.error('Error getting clients:', error);
+    return { success: false, error: error.message };
+  }
+};
+
+/**
+ * Gets saved properties for a user
+ * 
+ * @param {string} userId - The user's ID
+ * @returns {Promise<Object>} - Result with saved properties data
+ */
+export const getSavedProperties = async (userId) => {
+  try {
+    const { data, error } = await supabase
+      .from('saved_properties')
+      .select(`
+        id,
+        address,
+        notes,
+        created_at,
+        is_favorite,
+        folder,
+        property_id,
+        properties:property_id (
+          address,
+          price,
+          bedrooms,
+          bathrooms,
+          square_feet,
+          is_lmi_eligible,
+          lmi_data
+        )
+      `)
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false });
+      
+    if (error) throw error;
+    
+    return { success: true, data };
+  } catch (error) {
+    console.error('Error getting saved properties:', error);
+    return { success: false, error: error.message };
+  }
+};
+
+/**
+ * Saves a property for a user
+ * 
+ * @param {Object} propertyData - Property information
+ * @returns {Promise<Object>} - Result of the operation
+ */
+export const saveProperty = async (propertyData) => {
+  try {
+    const { userId, address, propertyId = null, isFavorite = false, notes = '', folder = 'default' } = propertyData;
+    
+    const { data, error } = await supabase
+      .from('saved_properties')
+      .insert({
+        user_id: userId,
+        address,
+        property_id: propertyId,
+        is_favorite: isFavorite,
+        notes,
+        folder
+      })
+      .select()
+      .single();
+      
+    if (error) throw error;
+    
+    return { success: true, data };
+  } catch (error) {
+    console.error('Error saving property:', error);
+    return { success: false, error: error.message };
+  }
+};
+
+/**
+ * Removes a saved property
+ * 
+ * @param {string} propertyId - The saved property ID to remove
+ * @returns {Promise<Object>} - Result of the operation
+ */
+export const removeSavedProperty = async (propertyId) => {
+  try {
+    const { error } = await supabase
+      .from('saved_properties')
+      .delete()
+      .eq('id', propertyId);
+      
+    if (error) throw error;
+    
+    return { success: true };
+  } catch (error) {
+    console.error('Error removing saved property:', error);
     return { success: false, error: error.message };
   }
 };

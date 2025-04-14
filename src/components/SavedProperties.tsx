@@ -3,34 +3,26 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { MapPinIcon, BookmarkIcon, XIcon } from 'lucide-react';
+import { MapPinIcon, BookmarkIcon, XIcon, CheckCircleIcon } from 'lucide-react';
 import { toast } from 'sonner';
+import { useSavedAddresses, type SavedAddress } from '@/hooks/useSavedAddresses';
+import { useAuth } from '@/hooks/useAuth';
 
 interface SavedPropertiesProps {
   onAddressSelect: (address: string) => void;
 }
 
 const SavedProperties: React.FC<SavedPropertiesProps> = ({ onAddressSelect }) => {
-  const [savedAddresses, setSavedAddresses] = useState<string[]>([]);
+  const { savedAddresses, removeAddress, isLoading } = useSavedAddresses();
   const [isVisible, setIsVisible] = useState(false);
-
-  useEffect(() => {
-    // Load saved addresses from localStorage
-    const saved = localStorage.getItem('savedAddresses');
-    if (saved) {
-      setSavedAddresses(JSON.parse(saved));
-    }
-  }, []);
+  const { user } = useAuth();
 
   const toggleVisibility = () => {
     setIsVisible(!isVisible);
   };
 
-  const removeAddress = (addressToRemove: string) => {
-    const updatedAddresses = savedAddresses.filter(address => address !== addressToRemove);
-    setSavedAddresses(updatedAddresses);
-    localStorage.setItem('savedAddresses', JSON.stringify(updatedAddresses));
-    toast.success('Property removed from collection');
+  const handleRemoveAddress = (id: string) => {
+    removeAddress(id);
   };
 
   const selectAddress = (address: string) => {
@@ -38,7 +30,7 @@ const SavedProperties: React.FC<SavedPropertiesProps> = ({ onAddressSelect }) =>
     setIsVisible(false);
   };
 
-  if (savedAddresses.length === 0) {
+  if (savedAddresses.length === 0 && !isLoading) {
     return null;
   }
 
@@ -69,31 +61,51 @@ const SavedProperties: React.FC<SavedPropertiesProps> = ({ onAddressSelect }) =>
         >
           <Card className="shadow-xl">
             <CardHeader className="pb-2">
-              <CardTitle className="text-base">Saved Properties</CardTitle>
+              <CardTitle className="text-base flex justify-between items-center">
+                <span>Saved Properties</span>
+                {user ? (
+                  <span className="text-xs text-muted-foreground">Synced to your account</span>
+                ) : (
+                  <span className="text-xs text-muted-foreground">Saved locally</span>
+                )}
+              </CardTitle>
             </CardHeader>
             <CardContent className="max-h-60 overflow-y-auto pb-1">
-              <ul className="space-y-2">
-                {savedAddresses.map((address) => (
-                  <li key={address} className="flex items-center gap-2 group">
-                    <Button 
-                      variant="ghost" 
-                      className="h-auto py-2 px-2 justify-start text-sm font-normal flex-grow text-left"
-                      onClick={() => selectAddress(address)}
-                    >
-                      <MapPinIcon className="h-3.5 w-3.5 mr-2 flex-shrink-0" />
-                      <span className="truncate">{address}</span>
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-6 w-6 p-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                      onClick={() => removeAddress(address)}
-                    >
-                      <XIcon className="h-4 w-4" />
-                    </Button>
-                  </li>
-                ))}
-              </ul>
+              {isLoading ? (
+                <div className="py-4 text-center text-muted-foreground">Loading saved properties...</div>
+              ) : (
+                <ul className="space-y-2">
+                  {savedAddresses.map((item) => (
+                    <li key={item.id} className="flex items-center gap-2 group">
+                      <Button 
+                        variant="ghost" 
+                        className="h-auto py-2 px-2 justify-start text-sm font-normal flex-grow text-left"
+                        onClick={() => selectAddress(item.address)}
+                      >
+                        <div className="flex items-start">
+                          <MapPinIcon className="h-3.5 w-3.5 mr-2 flex-shrink-0 mt-0.5" />
+                          <div>
+                            <span className="truncate block">{item.address}</span>
+                            {item.isLmiEligible && (
+                              <span className="text-xs text-green-600 flex items-center mt-0.5">
+                                <CheckCircleIcon className="h-3 w-3 mr-1" /> LMI Eligible
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6 p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                        onClick={() => handleRemoveAddress(item.id)}
+                      >
+                        <XIcon className="h-4 w-4" />
+                      </Button>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </CardContent>
           </Card>
         </motion.div>
