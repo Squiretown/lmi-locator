@@ -16,6 +16,15 @@ const ResultsSection: React.FC<ResultsSectionProps> = ({
   onContinue, 
   onReset
 }) => {
+  // Format address to avoid undefined values
+  const formatAddress = () => {
+    // Use address from data if available, but ensure no undefined parts are displayed
+    if (!data.address) return "Address unavailable";
+    
+    // Clean up the address to remove any UNDEFINED values that might be in the string
+    return data.address.replace(/undefined/gi, "").replace(/,\s*,/g, ",").replace(/\s+/g, " ").trim();
+  };
+  
   const tractId = data.tract_id || 'Unknown';
 
   return (

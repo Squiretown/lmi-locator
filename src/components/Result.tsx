@@ -28,6 +28,18 @@ const ResultCard: React.FC<ResultProps> = ({ data }) => {
   const ami = data.ami ?? 0;
   const percentageOfAmi = data.percentage_of_ami ?? 0;
   
+  // Format address to avoid undefined values
+  const formatAddress = () => {
+    if (!data.address) return "Address unavailable";
+    
+    // Clean up the address to remove any UNDEFINED values that might be in the string
+    return data.address
+      .replace(/undefined/gi, "")
+      .replace(/,\s*,/g, ",")
+      .replace(/\s+/g, " ")
+      .trim();
+  };
+  
   return (
     <div
       className="w-full max-w-3xl mx-auto animate-in fade-in slide-in-from-bottom-5 duration-300"
@@ -67,7 +79,7 @@ const ResultCard: React.FC<ResultProps> = ({ data }) => {
           <CardContent className="p-0 mt-4">
             <div className="flex items-center text-muted-foreground">
               <MapPinIcon className="h-4 w-4 mr-2 flex-shrink-0" />
-              <p className="text-sm truncate">{data.address || 'Address unavailable'}</p>
+              <p className="text-sm truncate">{formatAddress()}</p>
             </div>
           </CardContent>
         </div>
