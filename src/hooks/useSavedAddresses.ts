@@ -37,15 +37,17 @@ export function useSavedAddresses() {
           
         if (error) throw error;
         
-        setSavedAddresses(
-          data.map(item => ({
-            id: item.id,
-            address: item.address,
-            createdAt: item.created_at,
-            isLmiEligible: false, // We'll update this when we fetch property details
-            notes: item.notes
-          }))
-        );
+        if (data) {
+          setSavedAddresses(
+            data.map(item => ({
+              id: item.id,
+              address: item.address,
+              createdAt: item.created_at,
+              isLmiEligible: item.is_favorite || false, // Using is_favorite to indicate LMI eligibility
+              notes: item.notes
+            }))
+          );
+        }
       } else {
         // Load from localStorage if user is not authenticated
         const saved = localStorage.getItem('savedAddresses');

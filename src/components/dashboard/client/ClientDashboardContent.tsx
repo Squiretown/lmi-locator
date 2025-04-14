@@ -6,7 +6,7 @@ import { useClientActivity, type ActivityItem } from '@/hooks/useClientActivity'
 import PropertyChecker from '@/components/PropertyChecker';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Search, PlusCircle } from 'lucide-react';
+import { Search, PlusCircle, CheckCircle } from 'lucide-react';
 
 export function ClientDashboardContent() {
   const { activities, isLoading, addActivity } = useClientActivity();
@@ -60,14 +60,14 @@ export function ClientDashboardContent() {
                 <h3 className="font-medium text-green-800 mb-2">Programs You May Qualify For</h3>
                 <ul className="space-y-2">
                   <li className="text-sm flex items-start gap-2">
-                    <CheckCircleIcon className="h-4 w-4 text-green-600 mt-0.5" />
+                    <CheckCircle className="h-4 w-4 text-green-600 mt-0.5" />
                     <div>
                       <p className="font-medium">First-Time Homebuyer Assistance</p>
                       <p className="text-muted-foreground">Up to $10,000 in down payment assistance</p>
                     </div>
                   </li>
                   <li className="text-sm flex items-start gap-2">
-                    <CheckCircleIcon className="h-4 w-4 text-green-600 mt-0.5" />
+                    <CheckCircle className="h-4 w-4 text-green-600 mt-0.5" />
                     <div>
                       <p className="font-medium">Low-Interest Rate Mortgage</p>
                       <p className="text-muted-foreground">Below-market interest rates for eligible properties</p>

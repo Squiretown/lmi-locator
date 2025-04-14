@@ -59,7 +59,8 @@ export const addClient = async (clientData) => {
  */
 export const getProfessionalClients = async (professionalId, options = {}) => {
   try {
-    const { limit = 100, status = null } = options;
+    const limit = options.limit || 100;
+    const status = options.status || null;
     
     let query = supabase
       .from('client_profiles')
