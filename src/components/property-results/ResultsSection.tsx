@@ -49,10 +49,8 @@ const ResultsSection: React.FC<ResultsSectionProps> = ({
         
         <div className="mt-4">
           <ResultsMap
-            lat={34.052235}
-            lon={-118.243683}
-            isEligible={data.is_approved}
             tractId={tractId}
+            address={cleanAddress}
           />
         </div>
       </div>
