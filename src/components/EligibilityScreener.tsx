@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { useToast } from '@/components/ui/use-toast';
 import EligibilityForm from './eligibility/EligibilityForm';
 import { useProgramEligibilityCheck } from './eligibility/useProgramEligibilityCheck';
-// Remove framer-motion import
+import { formatAddress } from './specialist-connect/utils/addressUtils';
 
 interface EligibilityScreenerProps {
   propertyId?: string;
@@ -21,19 +21,6 @@ const EligibilityScreener: React.FC<EligibilityScreenerProps> = ({
 }) => {
   const { toast } = useToast();
   const { checkEligibility } = useProgramEligibilityCheck();
-  
-  // Format address to clean up any undefined values
-  const formatAddress = (addressString: string): string => {
-    if (!addressString) return "Property Address";
-    
-    // Replace 'undefined' (case insensitive) with empty string
-    return addressString
-      .replace(/undefined/gi, "")
-      .replace(/,\s*,/g, ",") // Fix double commas
-      .replace(/,\s*$/g, "") // Remove trailing comma
-      .replace(/\s+/g, " ")  // Normalize spaces
-      .trim();
-  };
   
   const cleanAddress = formatAddress(address);
   
