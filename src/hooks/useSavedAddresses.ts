@@ -31,8 +31,7 @@ export function useSavedAddresses() {
         // Load from Supabase if user is authenticated
         const { data, error } = await supabase
           .from('saved_properties')
-          .select('id, address, created_at, is_favorite, notes, property_id, folder')
-          .eq('user_id', user.id)
+          .select('id, property_id, notes, created_at, is_favorite, properties(address)')
           .order('created_at', { ascending: false });
           
         if (error) throw error;
@@ -41,9 +40,9 @@ export function useSavedAddresses() {
           setSavedAddresses(
             data.map(item => ({
               id: item.id,
-              address: item.address,
+              address: item.properties?.address || 'Unknown address',
               createdAt: item.created_at,
-              isLmiEligible: item.is_favorite || false, // Using is_favorite to indicate LMI eligibility
+              isLmiEligible: item.is_favorite || false,
               notes: item.notes
             }))
           );
@@ -84,7 +83,7 @@ export function useSavedAddresses() {
       // Don't save if it's already in the list
       if (savedAddresses.some(saved => saved.address === address)) {
         toast.info('This address is already saved');
-        return;
+        return true;
       }
       
       const newAddress: SavedAddress = {
@@ -95,14 +94,34 @@ export function useSavedAddresses() {
       };
       
       if (user) {
-        // Save to Supabase if user is authenticated
+        // First, add the address to the properties table
+        // Note: In a real app, you'd check if this property already exists
+        const { data: propertyData, error: propertyError } = await supabase
+          .from('properties')
+          .insert({
+            address: address,
+            is_lmi_eligible: isLmiEligible,
+            price: 0, // Required field, but we don't have a real value
+            city: 'Unknown', // Required field with placeholder
+            state: 'Unknown', // Required field with placeholder
+            zip_code: 'Unknown', // Required field with placeholder
+            mls_number: 'N/A' // Required field with placeholder
+          })
+          .select('id')
+          .single();
+          
+        if (propertyError) {
+          console.error('Error creating property:', propertyError);
+          throw propertyError;
+        }
+        
+        // Then save the reference to saved_properties
         const { error } = await supabase
           .from('saved_properties')
           .insert({
             user_id: user.id,
-            address,
-            property_id: null, // We don't have a property_id yet
-            is_favorite: isLmiEligible, // Mark eligible properties as favorites by default
+            property_id: propertyData.id,
+            is_favorite: isLmiEligible,
             notes: isLmiEligible ? 'LMI Eligible' : ''
           });
           

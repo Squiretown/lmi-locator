@@ -19,6 +19,7 @@ interface PropertyCheckerContentProps {
   onEligibilityComplete: (data: any) => void;
   onConnectSpecialist: () => void;
   onSpecialistComplete: () => void;
+  onSaveProperty?: () => void;
 }
 
 const PropertyCheckerContent: React.FC<PropertyCheckerContentProps> = ({
@@ -32,6 +33,7 @@ const PropertyCheckerContent: React.FC<PropertyCheckerContentProps> = ({
   onEligibilityComplete,
   onConnectSpecialist,
   onSpecialistComplete,
+  onSaveProperty,
 }) => {
   switch (displayMode) {
     case 'form':
@@ -43,6 +45,7 @@ const PropertyCheckerContent: React.FC<PropertyCheckerContentProps> = ({
           data={lmiStatus}
           onContinue={onContinue}
           onReset={onReset}
+          onSaveProperty={onSaveProperty}
         />
       ) : null;
       
