@@ -107,6 +107,9 @@ export function useSavedAddresses() {
           });
           
         if (error) throw error;
+        
+        // Refresh the list to include the newly saved address
+        await loadSavedAddresses();
       } else {
         // Save to localStorage if user is not authenticated
         const updatedAddresses = [newAddress, ...savedAddresses];
@@ -134,13 +137,13 @@ export function useSavedAddresses() {
           .eq('id', id);
           
         if (error) throw error;
-      }
-      
-      // Update state and localStorage
-      const updatedAddresses = savedAddresses.filter(address => address.id !== id);
-      setSavedAddresses(updatedAddresses);
-      
-      if (!user) {
+        
+        // Update the state after successful deletion
+        setSavedAddresses(prevAddresses => prevAddresses.filter(address => address.id !== id));
+      } else {
+        // Update state and localStorage
+        const updatedAddresses = savedAddresses.filter(address => address.id !== id);
+        setSavedAddresses(updatedAddresses);
         localStorage.setItem('savedAddresses', JSON.stringify(updatedAddresses));
       }
       

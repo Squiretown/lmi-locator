@@ -13,6 +13,12 @@ const clientSchema = z.object({
   notes: z.string().optional()
 });
 
+// Define type for options parameter
+interface QueryOptions {
+  limit?: number;
+  status?: string;
+}
+
 /**
  * Adds a new client for a professional
  * 
@@ -54,10 +60,10 @@ export const addClient = async (clientData) => {
  * Gets clients for a professional
  * 
  * @param {string} professionalId - The professional's ID
- * @param {Object} options - Query options (limit, filter, etc.)
+ * @param {QueryOptions} options - Query options (limit, filter, etc.)
  * @returns {Promise<Object>} - Result with client data
  */
-export const getProfessionalClients = async (professionalId, options = {}) => {
+export const getProfessionalClients = async (professionalId, options: QueryOptions = {}) => {
   try {
     const limit = options.limit || 100;
     const status = options.status || null;
