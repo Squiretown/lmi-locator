@@ -31,7 +31,7 @@ export function useSavedAddresses() {
         // Load from Supabase if user is authenticated
         const { data, error } = await supabase
           .from('saved_properties')
-          .select('id, address, created_at, is_favorite, notes')
+          .select('id, address, created_at, is_favorite, notes, property_id, folder')
           .eq('user_id', user.id)
           .order('created_at', { ascending: false });
           
