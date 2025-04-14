@@ -101,7 +101,10 @@ const ResultView: React.FC<ResultViewProps> = ({ data, onContinue, onReset, onSa
             <CardTitle>Tract Map</CardTitle>
           </CardHeader>
           <CardContent className="h-[300px] pt-0">
-            <ResultsMap tractId={data.tract_id} address={data.address} />
+            <ResultsMap 
+              tractId={data.tract_id} 
+              address={data.address} 
+            />
           </CardContent>
         </Card>
       )}

@@ -6,8 +6,8 @@ import { Card } from '@/components/ui/card';
 interface MapStatusProps {
   isLoadingToken: boolean;
   mapError: string | null;
-  lat: number;
-  lon: number;
+  lat?: number;
+  lon?: number;
   tractId?: string;
 }
 
@@ -35,7 +35,11 @@ const MapStatus: React.FC<MapStatusProps> = ({
           <AlertTriangle className="h-6 w-6 mx-auto mb-2 text-amber-500" />
           <p className="text-muted-foreground mb-2">{mapError}</p>
           <p className="text-sm text-muted-foreground">
-            Coordinates: {lat.toFixed(6)}, {lon.toFixed(6)}
+            {lat !== undefined && lon !== undefined ? (
+              <>Coordinates: {lat.toFixed(6)}, {lon.toFixed(6)}</>
+            ) : (
+              <>Coordinates: Unavailable</>
+            )}
             {tractId && <><br />Tract ID: {tractId}</>}
           </p>
         </Card>
