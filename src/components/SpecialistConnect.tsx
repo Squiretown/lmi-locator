@@ -35,13 +35,28 @@ const SpecialistConnect: React.FC<SpecialistConnectProps> = ({
   const { toast } = useToast();
   const [isSubmitted, setIsSubmitted] = useState(false);
   
+  // Clean up the address to remove any UNDEFINED values
+  const formatAddress = (addressString: string): string => {
+    if (!addressString) return "Property Address";
+    
+    // Replace 'undefined' (case insensitive) with empty string
+    return addressString
+      .replace(/undefined/gi, "")
+      .replace(/,\s*,/g, ",") // Fix double commas
+      .replace(/,\s*$/g, "") // Remove trailing comma
+      .replace(/\s+/g, " ")  // Normalize spaces
+      .trim();
+  };
+  
+  const cleanAddress = formatAddress(address);
+  
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: "",
       email: "",
       phone: "",
-      message: `I'm interested in learning more about down payment assistance programs for ${address}.`,
+      message: `I'm interested in learning more about down payment assistance programs for ${cleanAddress}.`,
     },
   });
 
@@ -58,7 +73,7 @@ const SpecialistConnect: React.FC<SpecialistConnectProps> = ({
           client_name: data.name,
           email: data.email,
           phone: data.phone,
-          property_address: address,
+          property_address: cleanAddress,
           property_id: propertyId,
           status: 'new',
           source: 'connect_specialist_form',
@@ -120,7 +135,7 @@ const SpecialistConnect: React.FC<SpecialistConnectProps> = ({
         <CardHeader>
           <CardTitle>Connect with a Specialist</CardTitle>
           <CardDescription>
-            Get personalized help with down payment assistance programs for {address}.
+            Get personalized help with down payment assistance programs for {cleanAddress}.
           </CardDescription>
         </CardHeader>
         <CardContent>
