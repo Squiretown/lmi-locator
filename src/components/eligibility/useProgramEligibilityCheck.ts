@@ -2,6 +2,18 @@
 import { supabase } from '@/integrations/supabase/client';
 
 export const useProgramEligibilityCheck = () => {
+  // Helper function to clean address strings
+  const formatAddress = (addressString: string): string => {
+    if (!addressString) return "Unknown Address";
+    
+    return addressString
+      .replace(/undefined/gi, "")
+      .replace(/,\s*,/g, ",") 
+      .replace(/,\s*$/g, "") 
+      .replace(/\s+/g, " ")  
+      .trim();
+  };
+
   const checkEligibility = async (
     formData: any, 
     propertyId?: string, 
@@ -12,6 +24,9 @@ export const useProgramEligibilityCheck = () => {
       const { data: { session } } = await supabase.auth.getSession();
       const userId = session?.user?.id;
       
+      // Clean any address that might be stored with the eligibility check
+      const propertyAddress = formData.property_address ? formatAddress(formData.property_address) : undefined;
+      
       // Save eligibility check to database
       const { data: eligibilityCheck, error } = await supabase
         .from('program_eligibility_checks')
@@ -19,6 +34,7 @@ export const useProgramEligibilityCheck = () => {
           user_id: userId,
           search_id: searchId,
           property_id: propertyId,
+          property_address: propertyAddress,
           first_time_buyer: formData.first_time_buyer,
           military_status: formData.military_status,
           residence_intent: formData.residence_intent,

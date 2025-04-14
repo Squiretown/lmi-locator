@@ -22,9 +22,15 @@ const ResultsSection: React.FC<ResultsSectionProps> = ({
     if (!data.address) return "Address unavailable";
     
     // Clean up the address to remove any UNDEFINED values that might be in the string
-    return data.address.replace(/undefined/gi, "").replace(/,\s*,/g, ",").replace(/\s+/g, " ").trim();
+    return data.address
+      .replace(/undefined/gi, "")
+      .replace(/,\s*,/g, ",")
+      .replace(/,\s*$/g, "")
+      .replace(/\s+/g, " ")
+      .trim();
   };
   
+  const cleanAddress = formatAddress();
   const tractId = data.tract_id || 'Unknown';
 
   return (

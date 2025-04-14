@@ -22,6 +22,21 @@ const EligibilityScreener: React.FC<EligibilityScreenerProps> = ({
   const { toast } = useToast();
   const { checkEligibility } = useProgramEligibilityCheck();
   
+  // Format address to clean up any undefined values
+  const formatAddress = (addressString: string): string => {
+    if (!addressString) return "Property Address";
+    
+    // Replace 'undefined' (case insensitive) with empty string
+    return addressString
+      .replace(/undefined/gi, "")
+      .replace(/,\s*,/g, ",") // Fix double commas
+      .replace(/,\s*$/g, "") // Remove trailing comma
+      .replace(/\s+/g, " ")  // Normalize spaces
+      .trim();
+  };
+  
+  const cleanAddress = formatAddress(address);
+  
   const handleSubmit = async (data: any) => {
     try {
       const result = await checkEligibility(data, propertyId, searchId);
@@ -45,7 +60,7 @@ const EligibilityScreener: React.FC<EligibilityScreenerProps> = ({
         <CardHeader>
           <CardTitle>Down Payment Assistance Eligibility</CardTitle>
           <CardDescription>
-            Answer a few quick questions to see which assistance programs you might qualify for at {address}.
+            Answer a few quick questions to see which assistance programs you might qualify for at {cleanAddress}.
           </CardDescription>
         </CardHeader>
         <CardContent>
