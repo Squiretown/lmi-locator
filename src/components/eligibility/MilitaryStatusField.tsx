@@ -6,18 +6,24 @@ import { Control } from 'react-hook-form';
 
 interface MilitaryStatusFieldProps {
   control: Control<any>;
+  label?: string;
+  description?: string;
 }
 
-const MilitaryStatusField: React.FC<MilitaryStatusFieldProps> = ({ control }) => {
+const MilitaryStatusField: React.FC<MilitaryStatusFieldProps> = ({ 
+  control, 
+  label = "Military Status", 
+  description = "Please select your current military status." 
+}) => {
   return (
     <FormField
       control={control}
       name="military_status"
       render={({ field }) => (
         <FormItem className="space-y-3">
-          <FormLabel>Military Status</FormLabel>
+          <FormLabel>{label}</FormLabel>
           <FormDescription>
-            Please select your current military status.
+            {description}
           </FormDescription>
           <FormControl>
             <RadioGroup

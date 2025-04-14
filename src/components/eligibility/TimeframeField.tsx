@@ -6,18 +6,24 @@ import { Control } from 'react-hook-form';
 
 interface TimeframeFieldProps {
   control: Control<any>;
+  label?: string;
+  description?: string;
 }
 
-const TimeframeField: React.FC<TimeframeFieldProps> = ({ control }) => {
+const TimeframeField: React.FC<TimeframeFieldProps> = ({ 
+  control, 
+  label = "Purchase Timeframe", 
+  description = "When do you plan to purchase a home?" 
+}) => {
   return (
     <FormField
       control={control}
       name="timeframe"
       render={({ field }) => (
         <FormItem className="space-y-3">
-          <FormLabel>Purchase Timeframe</FormLabel>
+          <FormLabel>{label}</FormLabel>
           <FormDescription>
-            When do you plan to purchase a home?
+            {description}
           </FormDescription>
           <FormControl>
             <RadioGroup

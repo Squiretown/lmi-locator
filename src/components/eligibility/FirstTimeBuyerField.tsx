@@ -6,9 +6,15 @@ import { Control } from 'react-hook-form';
 
 interface FirstTimeBuyerFieldProps {
   control: Control<any>;
+  label?: string;
+  description?: string;
 }
 
-const FirstTimeBuyerField: React.FC<FirstTimeBuyerFieldProps> = ({ control }) => {
+const FirstTimeBuyerField: React.FC<FirstTimeBuyerFieldProps> = ({ 
+  control, 
+  label = "First-Time Homebuyer", 
+  description = "Are you a first-time homebuyer? (Generally defined as not having owned a home in the past 3 years)" 
+}) => {
   return (
     <FormField
       control={control}
@@ -22,9 +28,9 @@ const FirstTimeBuyerField: React.FC<FirstTimeBuyerFieldProps> = ({ control }) =>
             />
           </FormControl>
           <div className="space-y-1 leading-none">
-            <FormLabel>First-Time Homebuyer</FormLabel>
+            <FormLabel>{label}</FormLabel>
             <FormDescription>
-              Are you a first-time homebuyer? (Generally defined as not having owned a home in the past 3 years)
+              {description}
             </FormDescription>
           </div>
         </FormItem>

@@ -6,9 +6,15 @@ import { Control } from 'react-hook-form';
 
 interface ResidenceIntentFieldProps {
   control: Control<any>;
+  label?: string;
+  description?: string;
 }
 
-const ResidenceIntentField: React.FC<ResidenceIntentFieldProps> = ({ control }) => {
+const ResidenceIntentField: React.FC<ResidenceIntentFieldProps> = ({ 
+  control, 
+  label = "Primary Residence", 
+  description = "Do you intend to use this property as your primary residence?" 
+}) => {
   return (
     <FormField
       control={control}
@@ -22,9 +28,9 @@ const ResidenceIntentField: React.FC<ResidenceIntentFieldProps> = ({ control }) 
             />
           </FormControl>
           <div className="space-y-1 leading-none">
-            <FormLabel>Primary Residence</FormLabel>
+            <FormLabel>{label}</FormLabel>
             <FormDescription>
-              Do you intend to use this property as your primary residence?
+              {description}
             </FormDescription>
           </div>
         </FormItem>
