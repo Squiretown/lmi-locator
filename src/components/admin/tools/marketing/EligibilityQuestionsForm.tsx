@@ -11,7 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
-import { ReloadIcon, SaveIcon } from 'lucide-react';
+import { LoaderIcon, SaveIcon } from 'lucide-react';
 
 // Form schema for eligibility questions
 const formSchema = z.object({
@@ -300,7 +300,7 @@ export const EligibilityQuestionsForm: React.FC = () => {
               <Button type="submit" disabled={isLoading} className="ml-auto">
                 {isLoading ? (
                   <>
-                    <ReloadIcon className="mr-2 h-4 w-4 animate-spin" />
+                    <LoaderIcon className="mr-2 h-4 w-4 animate-spin" />
                     Saving...
                   </>
                 ) : (
