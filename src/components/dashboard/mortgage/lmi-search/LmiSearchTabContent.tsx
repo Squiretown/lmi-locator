@@ -28,10 +28,7 @@ export const LmiSearchTabContent: React.FC<LmiSearchTabContentProps> = ({ onExpo
 
   const handleExport = async () => {
     if (!searchResults?.tracts?.length) {
-      toast({
-        description: "Please perform a search first to generate results",
-        variant: "destructive"
-      });
+      toast.error("Please perform a search first to generate results");
       return;
     }
 
@@ -49,15 +46,10 @@ export const LmiSearchTabContent: React.FC<LmiSearchTabContentProps> = ({ onExpo
       // Call the parent component's export function
       onExportResults(processedResults);
       
-      toast({
-        description: `Exported ${processedResults.length} census tracts`
-      });
+      toast.success(`Exported ${processedResults.length} census tracts`);
     } catch (error) {
       console.error('Export error:', error);
-      toast({
-        description: "Unable to export data. Please try again.",
-        variant: "destructive"
-      });
+      toast.error("Unable to export data. Please try again.");
     } finally {
       setExportLoading(false);
     }
@@ -78,15 +70,10 @@ export const LmiSearchTabContent: React.FC<LmiSearchTabContentProps> = ({ onExpo
         }
       });
       
-      toast({
-        description: "Thank you for helping us improve our data. We'll investigate this issue."
-      });
+      toast.success("Thank you for helping us improve our data. We'll investigate this issue.");
     } catch (error) {
       console.error('Error reporting issue:', error);
-      toast({
-        description: "There was a problem submitting your report. Please try again later.",
-        variant: "destructive"
-      });
+      toast.error("There was a problem submitting your report. Please try again later.");
     }
   };
 
