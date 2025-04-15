@@ -8,7 +8,8 @@ export function useMortgageDashboard() {
   const [activeTab, setActiveTab] = useState('overview');
   
   const handleExportResults = (results: any[]) => {
-    toast({
+    // Use the toast function that now accepts arguments
+    toast.success({
       title: "Export successful",
       description: `${results.length} properties exported to your marketing list.`,
     });

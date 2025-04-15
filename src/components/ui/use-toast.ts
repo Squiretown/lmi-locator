@@ -1,15 +1,14 @@
 
-// Provide empty implementations to prevent errors
+// Provide empty implementations to prevent errors, but accept arguments
 export const useToast = () => ({
-  toast: () => {},
-  dismiss: () => {},
+  toast: (args?: any) => {},
+  dismiss: (toastId?: string) => {},
   toasts: []
 });
 
 export const toast = {
-  success: () => {},
-  error: () => {},
-  info: () => {},
-  warning: () => {},
+  success: (args?: any) => {},
+  error: (args?: any) => {},
+  info: (args?: any) => {},
+  warning: (args?: any) => {},
 };
-
