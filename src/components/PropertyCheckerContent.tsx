@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { PropertyChecker } from '@/components/PropertyChecker';
 import { CheckLmiStatusResponse } from '@/lib/types';
 import { usePropertyWorkflow } from '@/hooks/usePropertyWorkflow';
 import ResultsSection from './property-results/ResultsSection';
@@ -7,13 +6,14 @@ import { toast } from 'sonner';
 import { useSavedAddresses } from '@/hooks/useSavedAddresses';
 
 const PropertyCheckerContent: React.FC = () => {
-  const { currentStep, moveToStep, currentData, setCurrentData, resetWorkflow } = usePropertyWorkflow();
+  const { displayMode, showResults, showScreener, resetProcess } = usePropertyWorkflow();
+  const [currentData, setCurrentData] = useState<CheckLmiStatusResponse | null>(null);
   const { saveAddress } = useSavedAddresses();
   const [error, setError] = useState<string | null>(null);
 
   const handleCheckProperty = (data: CheckLmiStatusResponse) => {
     setCurrentData(data);
-    moveToStep('results');
+    showResults(data);
     setError(null);
   };
 
@@ -26,12 +26,11 @@ const PropertyCheckerContent: React.FC = () => {
     if (!currentData) {
       return;
     }
-    moveToStep('eligibility');
+    showScreener();
   };
 
   const handleReset = () => {
-    resetWorkflow();
-    moveToStep('search');
+    resetProcess();
   };
 
   const handleSaveProperty = () => {
@@ -50,15 +49,14 @@ const PropertyCheckerContent: React.FC = () => {
 
   return (
     <div className="w-full max-w-4xl mx-auto">
-      {currentStep === 'search' && (
-        <PropertyChecker
-          onSuccess={handleCheckProperty}
-          onError={handleError}
-          errorMessage={error}
-        />
+      {displayMode === 'form' && (
+        <div>
+          {/* Form will be rendered by PropertyChecker.tsx */}
+          {error && <div className="text-red-500 mb-4">{error}</div>}
+        </div>
       )}
 
-      {currentStep === 'results' && currentData && (
+      {displayMode === 'results' && currentData && (
         <ResultsSection
           data={currentData}
           onContinue={handleContinue}

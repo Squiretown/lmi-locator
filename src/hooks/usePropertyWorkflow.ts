@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import { CheckLmiStatusResponse, AssistanceProgram } from '@/lib/types';
 
-// Updated to match PropertyCheckerContent.tsx
+// Define the display modes for property workflow
 export type DisplayMode = 'form' | 'result' | 'screener' | 'programs' | 'specialist' | 'search' | 'results';
 
 export function usePropertyWorkflow() {
