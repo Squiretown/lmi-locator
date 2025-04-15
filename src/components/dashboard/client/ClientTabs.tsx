@@ -1,9 +1,6 @@
 
 import React from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ClientDashboardContent } from '@/components/dashboard/client/ClientDashboardContent';
-import { JourneyTrackerContent } from '@/components/dashboard/client/JourneyTrackerContent';
-import { TeamContent } from '@/components/dashboard/client/TeamContent';
 
 interface ClientTabsProps {
   activeTab: string;
@@ -18,18 +15,6 @@ export const ClientTabs: React.FC<ClientTabsProps> = ({ activeTab, setActiveTab 
         <TabsTrigger value="journey">Journey Tracker</TabsTrigger>
         <TabsTrigger value="team">Your Team</TabsTrigger>
       </TabsList>
-      
-      <TabsContent value="dashboard">
-        <ClientDashboardContent />
-      </TabsContent>
-      
-      <TabsContent value="journey">
-        <JourneyTrackerContent />
-      </TabsContent>
-      
-      <TabsContent value="team">
-        <TeamContent />
-      </TabsContent>
     </Tabs>
   );
 };

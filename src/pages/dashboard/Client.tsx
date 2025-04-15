@@ -1,7 +1,6 @@
 
 import React, { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
-import PropertyChecker from '@/components/PropertyChecker';
 import { ClientHeader } from '@/components/dashboard/client/ClientHeader';
 import { ClientTabs } from '@/components/dashboard/client/ClientTabs';
 import { ClientDashboardContent } from '@/components/dashboard/client/ClientDashboardContent';
@@ -18,16 +17,6 @@ import {
 const ClientDashboard: React.FC = () => {
   const { user, signOut } = useAuth();
   const [activeTab, setActiveTab] = useState('dashboard');
-  
-  const handleAddressSelect = (address: string) => {
-    // Extract address components
-    const parts = address.split(',').map(part => part.trim());
-    
-    if (parts.length >= 3) {
-      // Handle address selection
-      console.log("Selected address with parts:", parts);
-    }
-  };
   
   return (
     <div className="relative">
@@ -70,16 +59,16 @@ const ClientDashboard: React.FC = () => {
         
         <div className="mt-6">
           {activeTab === 'dashboard' && <ClientDashboardContent />}
-          {activeTab === 'saved' && (
+          {activeTab === 'journey' && (
             <Card className="p-6">
-              <h2 className="text-2xl font-bold mb-4">Saved Properties</h2>
-              <ClientDashboardContent />
+              <h2 className="text-2xl font-bold mb-4">Your Journey Tracker</h2>
+              {/* Content for journey tab */}
             </Card>
           )}
-          {activeTab === 'programs' && (
+          {activeTab === 'team' && (
             <Card className="p-6">
-              <h2 className="text-2xl font-bold mb-4">Available Programs</h2>
-              <p>This section will show all programs you may be eligible for.</p>
+              <h2 className="text-2xl font-bold mb-4">Your Team</h2>
+              {/* Content for team tab */}
             </Card>
           )}
         </div>
