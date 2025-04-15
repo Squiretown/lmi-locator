@@ -1,8 +1,9 @@
 
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
 
-export interface SearchSummaryProps {
+interface SearchSummaryProps {
   summary: {
     totalTracts: number;
     lmiTracts: number;
@@ -13,41 +14,53 @@ export interface SearchSummaryProps {
   searchValue: string;
 }
 
-export const SearchSummary: React.FC<SearchSummaryProps> = ({ 
-  summary, 
-  searchType,
-  searchValue
-}) => {
-  const { totalTracts, lmiTracts, propertyCount, lmiPercentage = 0 } = summary;
-  const formattedPercentage = lmiPercentage ? 
-    (typeof lmiPercentage === 'number' ? lmiPercentage.toFixed(1) : lmiPercentage) : 
-    ((lmiTracts / totalTracts) * 100).toFixed(1);
+export const SearchSummary: React.FC<SearchSummaryProps> = ({ summary, searchType, searchValue }) => {
+  const lmiPercentage = summary.lmiPercentage || 
+    (summary.totalTracts > 0 ? Math.round((summary.lmiTracts / summary.totalTracts) * 100) : 0);
+  
+  const formatSearchType = (type: string): string => {
+    switch (type) {
+      case 'county': return 'County';
+      case 'zip': return 'ZIP Code';
+      case 'tract': return 'Census Tract';
+      default: return type;
+    }
+  };
   
   return (
     <Card>
       <CardContent className="pt-6">
-        <div className="space-y-2">
-          <h3 className="text-lg font-medium">Search Results Summary</h3>
-          <p className="text-sm text-gray-500">
-            {searchType === 'county' ? 'County' : searchType === 'zip' ? 'ZIP Code' : 'Census Tract'}: <span className="font-medium text-gray-700">{searchValue}</span>
-          </p>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
-            <div className="bg-gray-50 p-3 rounded-lg">
-              <div className="text-sm text-gray-500">Total Tracts</div>
-              <div className="text-2xl font-bold">{totalTracts}</div>
+        <div className="space-y-4">
+          <div className="flex flex-col gap-2">
+            <span className="text-sm text-muted-foreground">Search Results for {formatSearchType(searchType)}: <span className="font-medium text-foreground">{searchValue}</span></span>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-2">
+              <div className="bg-background p-4 rounded-lg border shadow-sm">
+                <div className="text-2xl font-bold">{summary.totalTracts.toLocaleString()}</div>
+                <div className="text-sm text-muted-foreground">Total Tracts</div>
+              </div>
+              
+              <div className="bg-background p-4 rounded-lg border shadow-sm">
+                <div className="text-2xl font-bold text-green-600">{summary.lmiTracts.toLocaleString()}</div>
+                <div className="text-sm text-muted-foreground">LMI Eligible Tracts</div>
+              </div>
+              
+              <div className="bg-background p-4 rounded-lg border shadow-sm">
+                <div className="text-2xl font-bold">{summary.propertyCount.toLocaleString()}</div>
+                <div className="text-sm text-muted-foreground">Total Properties</div>
+              </div>
             </div>
-            <div className="bg-blue-50 p-3 rounded-lg">
-              <div className="text-sm text-blue-500">LMI Tracts</div>
-              <div className="text-2xl font-bold text-blue-600">{lmiTracts}</div>
+          </div>
+          
+          <div className="space-y-2">
+            <div className="flex justify-between items-center">
+              <span className="text-sm font-medium">LMI Percentage</span>
+              <span className="text-sm font-medium">{lmiPercentage}%</span>
             </div>
-            <div className="bg-green-50 p-3 rounded-lg">
-              <div className="text-sm text-green-500">LMI Percentage</div>
-              <div className="text-2xl font-bold text-green-600">{formattedPercentage}%</div>
-            </div>
-            <div className="bg-purple-50 p-3 rounded-lg">
-              <div className="text-sm text-purple-500">Properties</div>
-              <div className="text-2xl font-bold text-purple-600">{propertyCount}</div>
-            </div>
+            <Progress value={lmiPercentage} className="h-2" />
+            <p className="text-xs text-muted-foreground mt-1">
+              {lmiPercentage}% of census tracts in this area qualify as Low-to-Moderate Income
+            </p>
           </div>
         </div>
       </CardContent>

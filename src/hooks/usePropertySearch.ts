@@ -65,7 +65,9 @@ export function usePropertySearch() {
         income_category: result.income_category || 'Unknown',
         percentage_of_ami: result.percentage_of_ami || 0,
         eligibility: result.eligibility || result.status || 'Unknown',
-        lmi_status: result.lmi_status || (result.is_approved ? 'LMI Eligible' : 'Not Eligible')
+        lmi_status: result.lmi_status || (result.is_approved ? 'LMI Eligible' : 'Not Eligible'),
+        lat: result.lat,
+        lon: result.lon
       };
       
       console.log('Processed LMI Response:', JSON.stringify(lmiResponse, null, 2));

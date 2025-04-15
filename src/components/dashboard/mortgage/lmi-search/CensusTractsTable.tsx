@@ -1,69 +1,83 @@
 
-import React from 'react';
+import React, { useState } from 'react';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-
-interface Tract {
-  tractId: string;
-  isLmiEligible: boolean;
-  amiPercentage: number;
-  propertyCount: number;
-}
+import { CensusTract } from './hooks/types/census-tract';
+import { CheckCircle, XCircle, Search } from 'lucide-react';
 
 interface CensusTractsTableProps {
-  tracts: Tract[];
+  tracts: CensusTract[];
 }
 
 export const CensusTractsTable: React.FC<CensusTractsTableProps> = ({ tracts }) => {
+  const [searchQuery, setSearchQuery] = useState('');
+  
+  const filteredTracts = tracts.filter(tract => 
+    tract.tractId.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+  
   return (
-    <div>
-      <h3 className="text-lg font-medium mb-4">Census Tracts</h3>
-      <div className="border rounded-md overflow-hidden">
-        <table className="min-w-full divide-y divide-border">
-          <thead className="bg-muted">
-            <tr>
-              <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                Tract ID
-              </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                LMI Status
-              </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                AMI %
-              </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                Properties
-              </th>
-            </tr>
-          </thead>
-          <tbody className="bg-card divide-y divide-border">
-            {tracts.length === 0 ? (
-              <tr>
-                <td colSpan={4} className="px-4 py-4 text-center text-muted-foreground">
-                  No tracts found for this search
-                </td>
-              </tr>
-            ) : (
-              tracts.map((tract, index) => (
-                <tr key={index} className={tract.isLmiEligible ? "bg-green-50" : ""}>
-                  <td className="px-4 py-3 text-sm font-medium">
-                    {tract.tractId}
-                  </td>
-                  <td className="px-4 py-3">
-                    <Badge variant={tract.isLmiEligible ? "success" : "outline"}>
-                      {tract.isLmiEligible ? "LMI" : "Non-LMI"}
+    <div className="space-y-4">
+      <div className="relative">
+        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+        <Input
+          placeholder="Search by tract ID..."
+          className="pl-8"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+        />
+      </div>
+      
+      <div className="border rounded-md">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Tract ID</TableHead>
+              <TableHead>LMI Status</TableHead>
+              <TableHead>AMI %</TableHead>
+              <TableHead>Median Income</TableHead>
+              <TableHead className="text-right">Properties</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {filteredTracts.length > 0 ? (
+              filteredTracts.map((tract, index) => (
+                <TableRow key={index}>
+                  <TableCell className="font-medium">{tract.tractId}</TableCell>
+                  <TableCell>
+                    <Badge variant={tract.isLmiEligible ? "success" : "destructive"} className="gap-1">
+                      {tract.isLmiEligible ? 
+                        <><CheckCircle className="h-3 w-3" /> Eligible</> : 
+                        <><XCircle className="h-3 w-3" /> Not Eligible</>
+                      }
                     </Badge>
-                  </td>
-                  <td className="px-4 py-3 text-sm">
-                    {tract.amiPercentage}%
-                  </td>
-                  <td className="px-4 py-3 text-sm">
-                    {tract.propertyCount.toLocaleString()}
-                  </td>
-                </tr>
+                  </TableCell>
+                  <TableCell>{tract.amiPercentage}%</TableCell>
+                  <TableCell>${tract.medianIncome.toLocaleString()}</TableCell>
+                  <TableCell className="text-right">{tract.propertyCount.toLocaleString()}</TableCell>
+                </TableRow>
               ))
+            ) : (
+              <TableRow>
+                <TableCell colSpan={5} className="text-center py-6 text-muted-foreground">
+                  {searchQuery ? 'No matching tracts found' : 'No census tracts available'}
+                </TableCell>
+              </TableRow>
             )}
-          </tbody>
-        </table>
+          </TableBody>
+        </Table>
+      </div>
+      
+      <div className="text-xs text-muted-foreground">
+        Showing {filteredTracts.length} of {tracts.length} census tracts
       </div>
     </div>
   );
