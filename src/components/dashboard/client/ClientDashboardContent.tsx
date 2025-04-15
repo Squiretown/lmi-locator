@@ -7,16 +7,11 @@ import PropertyChecker from '@/components/PropertyChecker';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Search, PlusCircle, CheckCircle } from 'lucide-react';
-import SavedProperties from '@/components/SavedProperties';
+import { TeamContent } from './TeamContent';
 
 export function ClientDashboardContent() {
   const { activities } = useClientActivity();
   const [showPropertyChecker, setShowPropertyChecker] = useState(false);
-  
-  const handleAddressSelect = (address: string) => {
-    // TODO: Implement address selection functionality
-    console.log("Selected address:", address);
-  };
   
   return (
     <div className="space-y-6">
@@ -53,7 +48,8 @@ export function ClientDashboardContent() {
         </Card>
       )}
       
-      <SavedProperties onAddressSelect={handleAddressSelect} />
+      {/* Replace SavedProperties with TeamContent */}
+      <TeamContent />
       
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>

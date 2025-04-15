@@ -13,6 +13,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { TeamContent } from '@/components/dashboard/client/TeamContent';
+import { JourneyTrackerContent } from '@/components/dashboard/client/JourneyTrackerContent';
 
 const ClientDashboard: React.FC = () => {
   const { user, signOut } = useAuth();
@@ -59,18 +61,8 @@ const ClientDashboard: React.FC = () => {
         
         <div className="mt-6">
           {activeTab === 'dashboard' && <ClientDashboardContent />}
-          {activeTab === 'journey' && (
-            <Card className="p-6">
-              <h2 className="text-2xl font-bold mb-4">Your Journey Tracker</h2>
-              {/* Content for journey tab */}
-            </Card>
-          )}
-          {activeTab === 'team' && (
-            <Card className="p-6">
-              <h2 className="text-2xl font-bold mb-4">Your Team</h2>
-              {/* Content for team tab */}
-            </Card>
-          )}
+          {activeTab === 'journey' && <JourneyTrackerContent />}
+          {activeTab === 'team' && <TeamContent />}
         </div>
       </div>
     </div>
