@@ -50,6 +50,10 @@ const ResultView: React.FC<ResultViewProps> = ({ data, onContinue, onReset, onSa
       onSaveProperty();
     }
   };
+
+  // Extract lat/lon from the data - add compatibility for both formats
+  const lat = 'lat' in data ? data.lat : undefined;
+  const lon = 'lon' in data ? data.lon : undefined;
   
   return (
     <div className="space-y-6">
@@ -136,8 +140,8 @@ const ResultView: React.FC<ResultViewProps> = ({ data, onContinue, onReset, onSa
             <ResultsMap 
               tractId={data.tract_id} 
               address={cleanAddress}
-              lat={data.lat}
-              lon={data.lon}
+              lat={lat}
+              lon={lon}
             />
           </CardContent>
         </Card>

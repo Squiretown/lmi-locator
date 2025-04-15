@@ -3,7 +3,8 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import { CheckLmiStatusResponse, AssistanceProgram } from '@/lib/types';
 
-export type DisplayMode = 'form' | 'result' | 'screener' | 'programs' | 'specialist';
+// Updated to match PropertyCheckerContent.tsx
+export type DisplayMode = 'form' | 'result' | 'screener' | 'programs' | 'specialist' | 'search' | 'results';
 
 export function usePropertyWorkflow() {
   const [displayMode, setDisplayMode] = useState<DisplayMode>('form');
@@ -33,7 +34,7 @@ export function usePropertyWorkflow() {
 
   const showResults = (lmiStatus: CheckLmiStatusResponse | null) => {
     if (lmiStatus) {
-      setDisplayMode('result');
+      setDisplayMode('results');
     }
   };
 

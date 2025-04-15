@@ -14,7 +14,7 @@ const formSchema = z.object({
   })
 });
 
-interface AddressSearchFormProps {
+export interface AddressSearchFormProps {
   onSubmit: (values: z.infer<typeof formSchema>) => void;
   isLoading: boolean;
 }

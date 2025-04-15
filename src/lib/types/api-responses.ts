@@ -1,5 +1,4 @@
 
-
 // API Response Types
 export interface CheckLmiStatusResponse {
   is_approved: boolean;
@@ -22,6 +21,8 @@ export interface CheckLmiStatusResponse {
     additional_info?: string;
   } | null;
   geocoding_service?: string;
+  lat?: number;
+  lon?: number;
 }
 
 // Form submission types

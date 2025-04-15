@@ -11,8 +11,8 @@ import { AssistanceProgram } from '@/lib/types/assistance-programs';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 
-// Property Checker display modes
-export type DisplayMode = 'search' | 'results' | 'screener' | 'programs' | 'specialist';
+// Property Checker display modes - updated to match usePropertyWorkflow
+export type DisplayMode = 'form' | 'result' | 'screener' | 'programs' | 'specialist' | 'search' | 'results';
 
 interface PropertyCheckerContentProps {
   displayMode: DisplayMode;
@@ -71,6 +71,7 @@ const PropertyCheckerContent: React.FC<PropertyCheckerContentProps> = ({
   // Render the appropriate component based on the current display mode
   switch (displayMode) {
     case 'results':
+    case 'result':
       return lmiStatus ? (
         <ResultView 
           data={lmiStatus} 
@@ -81,14 +82,17 @@ const PropertyCheckerContent: React.FC<PropertyCheckerContentProps> = ({
       ) : null;
       
     case 'screener':
-      return <EligibilityScreener onSubmit={onEligibilityComplete} onCancel={onReset} />;
+      return <EligibilityScreener 
+               address={lmiStatus?.address || ''}
+               onComplete={onEligibilityComplete} 
+             />;
       
     case 'programs':
       return (
         <ProgramResults 
           programs={matchingPrograms} 
+          address={lmiStatus?.address || ''}
           onConnectSpecialist={onConnectSpecialist}
-          onReset={onReset}
         />
       );
       
@@ -96,13 +100,14 @@ const PropertyCheckerContent: React.FC<PropertyCheckerContentProps> = ({
       return (
         <SpecialistConnect 
           onComplete={onSpecialistComplete} 
-          property={lmiStatus?.address || ''}
+          address={lmiStatus?.address || ''}
         />
       );
       
     case 'search':
+    case 'form':
     default:
-      return <AddressSearchForm onSubmit={onSubmit} />;
+      return <AddressSearchForm onSubmit={onSubmit} isLoading={isLoading} />;
   }
 };
 

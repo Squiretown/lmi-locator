@@ -3,7 +3,13 @@ import React from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { AssistanceProgram, ProgramResultsProps } from '@/lib/types';
+import { AssistanceProgram } from '@/lib/types/assistance-programs';
+
+export interface ProgramResultsProps {
+  programs: AssistanceProgram[];
+  address: string;
+  onConnectSpecialist: () => void;
+}
 
 const ProgramResults: React.FC<ProgramResultsProps> = ({ programs, address, onConnectSpecialist }) => {
   if (!programs || programs.length === 0) {
