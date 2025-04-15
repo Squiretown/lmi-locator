@@ -18,23 +18,19 @@ const Toaster = ({ ...props }: ToasterProps) => {
           title: "text-lg font-semibold",
           description: "text-sm",
         },
-        // Define styles for different toast types
-        success: {
-          style: { 
+        // Use styles instead of specific variant properties
+        styles: {
+          success: {
             backgroundColor: '#F2FCE2', 
             color: '#198754',
             border: '1px solid #C6E9C3'
-          }
-        },
-        error: {
-          style: { 
+          },
+          error: {
             backgroundColor: '#FEE2E2', 
             color: '#DC2626',
             border: '1px solid #F5C6C6'
-          }
-        },
-        info: {
-          style: { 
+          },
+          info: {
             backgroundColor: '#EFF6FF', 
             color: '#2563EB',
             border: '1px solid #C6DCEE'
