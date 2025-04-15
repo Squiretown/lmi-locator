@@ -104,7 +104,7 @@ const MapDisplay: React.FC<MapDisplayProps> = ({ lat, lon, isEligible, tractId, 
     toast({
       title: 'Tract Boundary Warning',
       description: 'Could not load census tract boundary. The map will still show the property location.',
-      variant: 'warning',
+      variant: 'default',
     });
   };
   
@@ -131,7 +131,7 @@ const MapDisplay: React.FC<MapDisplayProps> = ({ lat, lon, isEligible, tractId, 
       
       {tractError && !mapError && (
         <div className="absolute bottom-2 left-2 right-2">
-          <Alert variant="warning" className="bg-opacity-90 text-xs p-2">
+          <Alert variant="default" className="bg-opacity-90 text-xs p-2">
             <AlertCircle className="h-3 w-3" />
             <AlertDescription className="text-xs">
               {tractError}
