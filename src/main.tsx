@@ -5,7 +5,7 @@ import './index.css'
 import { AuthProvider } from '@/hooks/useAuth'
 import { MotionConfig } from 'framer-motion'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { Toaster } from '@/components/ui/sonner'
+// Removed Toaster import
 
 // Create a client
 const queryClient = new QueryClient({
@@ -22,8 +22,9 @@ createRoot(document.getElementById("root")!).render(
     <QueryClientProvider client={queryClient}>
       <MotionConfig reducedMotion="user">
         <App />
-        <Toaster />
+        {/* Removed Toaster component */}
       </MotionConfig>
     </QueryClientProvider>
   </AuthProvider>
 );
+
