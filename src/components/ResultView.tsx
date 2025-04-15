@@ -17,6 +17,16 @@ const ResultView: React.FC<ResultViewProps> = ({ data, onContinue, onReset, onSa
   // Determine if the property is eligible
   const isEligible = data.is_approved;
   
+  // Clean up address to remove UNDEFINED and extra commas
+  const cleanAddress = data.address
+    ? data.address
+        .replace(/undefined/gi, '')
+        .replace(/,\s*,/g, ',')
+        .replace(/,\s*$/g, '')
+        .replace(/\s+/g, ' ')
+        .trim()
+    : 'Address not available';
+  
   return (
     <div className="space-y-6">
       <Card className={`border-l-4 ${isEligible ? 'border-l-green-500' : 'border-l-red-500'}`}>
@@ -41,7 +51,7 @@ const ResultView: React.FC<ResultViewProps> = ({ data, onContinue, onReset, onSa
               <MapPin className="h-4 w-4 mt-1 flex-shrink-0" />
               <div>
                 <p className="font-medium">Property Address</p>
-                <p className="text-sm text-muted-foreground">{data.address}</p>
+                <p className="text-sm text-muted-foreground">{cleanAddress}</p>
               </div>
             </div>
             
@@ -49,30 +59,30 @@ const ResultView: React.FC<ResultViewProps> = ({ data, onContinue, onReset, onSa
               <Home className="h-4 w-4 mt-1 flex-shrink-0" />
               <div>
                 <p className="font-medium">Census Tract</p>
-                <p className="text-sm text-muted-foreground">{data.tract_id}</p>
+                <p className="text-sm text-muted-foreground">{data.tract_id || 'Unknown'}</p>
               </div>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <p className="font-medium">Income Category</p>
-                <p className="text-sm text-muted-foreground">{data.income_category}</p>
+                <p className="text-sm text-muted-foreground">{data.income_category || 'Unknown'}</p>
               </div>
               <div>
                 <p className="font-medium">Median Income</p>
                 <p className="text-sm text-muted-foreground">
-                  ${data.median_income.toLocaleString()}
+                  ${(data.median_income || 0).toLocaleString()}
                 </p>
               </div>
               <div>
                 <p className="font-medium">AMI Percentage</p>
                 <p className="text-sm text-muted-foreground">
-                  {data.percentage_of_ami}%
+                  {data.percentage_of_ami || 0}%
                 </p>
               </div>
               <div>
                 <p className="font-medium">Status</p>
-                <p className="text-sm text-muted-foreground">{data.lmi_status}</p>
+                <p className="text-sm text-muted-foreground">{data.lmi_status || 'Unknown'}</p>
               </div>
             </div>
           </div>
@@ -103,7 +113,7 @@ const ResultView: React.FC<ResultViewProps> = ({ data, onContinue, onReset, onSa
           <CardContent className="h-[300px] pt-0">
             <ResultsMap 
               tractId={data.tract_id} 
-              address={data.address} 
+              address={cleanAddress} 
             />
           </CardContent>
         </Card>

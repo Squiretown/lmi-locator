@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { CheckCircle2Icon, XCircleIcon, MapPinIcon, DollarSignIcon, PercentIcon } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -28,17 +27,19 @@ const ResultCard: React.FC<ResultProps> = ({ data }) => {
   const ami = data.ami ?? 0;
   const percentageOfAmi = data.percentage_of_ami ?? 0;
   
-  // Format address to avoid undefined values
+  // Format address to remove UNDEFINED values
   const formatAddress = () => {
     if (!data.address) return "Address unavailable";
     
-    // Clean up the address to remove any UNDEFINED values that might be in the string
     return data.address
       .replace(/undefined/gi, "")
       .replace(/,\s*,/g, ",")
+      .replace(/,\s*$/g, "")
       .replace(/\s+/g, " ")
       .trim();
   };
+  
+  const cleanAddress = formatAddress();
   
   return (
     <div
@@ -79,7 +80,7 @@ const ResultCard: React.FC<ResultProps> = ({ data }) => {
           <CardContent className="p-0 mt-4">
             <div className="flex items-center text-muted-foreground">
               <MapPinIcon className="h-4 w-4 mr-2 flex-shrink-0" />
-              <p className="text-sm truncate">{formatAddress()}</p>
+              <p className="text-sm truncate">{cleanAddress}</p>
             </div>
           </CardContent>
         </div>
