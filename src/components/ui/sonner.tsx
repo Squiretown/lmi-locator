@@ -17,20 +17,28 @@ const Toaster = ({ ...props }: ToasterProps) => {
           toast: "group toast group-[.toaster]:px-6 group-[.toaster]:py-4 group-[.toaster]:rounded-lg group-[.toaster]:shadow-lg",
           title: "text-lg font-semibold",
           description: "text-sm",
-          successToast: "bg-green-50 text-green-800 border-green-200",
-          errorToast: "bg-red-50 text-red-800 border-red-200",
-          infoToast: "bg-blue-50 text-blue-800 border-blue-200",
-          warningToast: "bg-orange-50 text-orange-800 border-orange-200"
         },
         variants: {
           success: {
-            style: { backgroundColor: '#F2FCE2', color: '#198754' }
+            style: { 
+              backgroundColor: '#F2FCE2', 
+              color: '#198754',
+              border: '1px solid #C6E9C3'
+            }
           },
           error: {
-            style: { backgroundColor: '#FEE2E2', color: '#DC2626' }
+            style: { 
+              backgroundColor: '#FEE2E2', 
+              color: '#DC2626',
+              border: '1px solid #F5C6C6'
+            }
           },
           info: {
-            style: { backgroundColor: '#EFF6FF', color: '#2563EB' }
+            style: { 
+              backgroundColor: '#EFF6FF', 
+              color: '#2563EB',
+              border: '1px solid #C6DCEE'
+            }
           }
         }
       }}
