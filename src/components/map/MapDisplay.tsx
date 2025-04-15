@@ -26,11 +26,11 @@ const MapDisplay: React.FC<MapDisplayProps> = ({ lat, lon, isEligible, tractId, 
     lat: lat || defaultLat, 
     lon: lon || defaultLon 
   });
-  const [geocodingCompleted, setGeocodingCompleted] = useState(false);
+  const [geocodingCompleted, setGeocodingCompleted] = useState(!!lat && !!lon);
 
   // Update coordinates when props change
   useEffect(() => {
-    if (lat && lon) {
+    if (lat !== undefined && lon !== undefined) {
       setCoordinates({ lat, lon });
       setGeocodingCompleted(true);
     }
@@ -39,7 +39,7 @@ const MapDisplay: React.FC<MapDisplayProps> = ({ lat, lon, isEligible, tractId, 
   // If an address is provided but no valid coordinates, attempt to geocode the address
   useEffect(() => {
     const attemptGeocoding = async () => {
-      if (address && !geocodingCompleted && (!lat || !lon)) {
+      if (address && !geocodingCompleted && (lat === undefined || lon === undefined)) {
         try {
           // This is a placeholder for a geocoding implementation
           // In a real application, you would call a geocoding service here

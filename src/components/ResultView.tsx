@@ -52,8 +52,8 @@ const ResultView: React.FC<ResultViewProps> = ({ data, onContinue, onReset, onSa
   };
 
   // Extract lat/lon from the data - add compatibility for both formats
-  const lat = 'lat' in data ? data.lat : undefined;
-  const lon = 'lon' in data ? data.lon : undefined;
+  const lat = data.lat !== undefined ? data.lat : undefined;
+  const lon = data.lon !== undefined ? data.lon : undefined;
   
   return (
     <div className="space-y-6">

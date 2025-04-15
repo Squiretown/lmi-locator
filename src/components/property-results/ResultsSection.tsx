@@ -36,6 +36,8 @@ const ResultsSection: React.FC<ResultsSectionProps> = ({
   
   const cleanAddress = formatAddress();
   const tractId = data.tract_id || 'Unknown';
+  const lat = data.lat !== undefined ? data.lat : undefined;
+  const lon = data.lon !== undefined ? data.lon : undefined;
 
   return (
     <>
@@ -82,6 +84,8 @@ const ResultsSection: React.FC<ResultsSectionProps> = ({
           <ResultsMap
             tractId={tractId}
             address={cleanAddress}
+            lat={lat}
+            lon={lon}
           />
         </div>
       </div>
