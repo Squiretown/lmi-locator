@@ -5,7 +5,7 @@ import { ResultsMap } from '@/components';
 import { CheckLmiStatusResponse } from '@/lib/types';
 import EligibilityIndicator from '../map/EligibilityIndicator';
 import { Badge } from '@/components/ui/badge';
-import { CheckCircle, Clock } from 'lucide-react';
+import { CheckCircle, Clock, MapPin } from 'lucide-react';
 
 interface ResultsSectionProps {
   data: CheckLmiStatusResponse;
@@ -47,22 +47,24 @@ const ResultsSection: React.FC<ResultsSectionProps> = ({
       <div className="mt-8">
         <div className="flex flex-col sm:flex-row justify-between items-start gap-4 mb-4">
           <div>
-            <h3 className="font-medium text-lg">{cleanAddress}</h3>
-            <div className="flex items-center gap-2 mt-1">
-              <Badge className={data.is_approved ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}>
-                {data.is_approved ? <CheckCircle className="h-3 w-3 mr-1 inline" /> : null}
-                {data.is_approved ? "LMI Eligible" : "Not Eligible"}
-              </Badge>
-              <span className="text-sm text-muted-foreground">
-                <Clock className="h-3 w-3 inline mr-1" />
-                Checked on {new Date().toLocaleDateString()}
-              </span>
-            </div>
-            {data.is_approved && (
-              <div className="mt-2 text-sm text-green-700">
-                5 Programs Available
+            <div className="flex items-start gap-2">
+              <div className={`p-2 rounded-full mt-1 ${data.is_approved ? 'bg-green-100' : 'bg-red-100'}`}>
+                <MapPin className={`h-4 w-4 ${data.is_approved ? 'text-green-600' : 'text-red-600'}`} />
               </div>
-            )}
+              <div>
+                <h3 className="font-medium text-lg">{cleanAddress}</h3>
+                <div className="flex items-center gap-2 mt-1">
+                  <Badge className={data.is_approved ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}>
+                    {data.is_approved ? <CheckCircle className="h-3 w-3 mr-1 inline" /> : null}
+                    {data.is_approved ? "LMI Eligible" : "Not Eligible"}
+                  </Badge>
+                  <span className="text-xs text-muted-foreground">
+                    <Clock className="h-3 w-3 inline mr-1" />
+                    Checked on {new Date().toLocaleDateString()}
+                  </span>
+                </div>
+              </div>
+            </div>
           </div>
           <div className="flex gap-2">
             {onSaveProperty && (

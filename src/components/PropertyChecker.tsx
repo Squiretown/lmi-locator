@@ -46,7 +46,7 @@ const PropertyChecker: React.FC = () => {
         }
       }
       
-      // Add to recent activity
+      // We only need to add activity when a new search is performed
       addActivity({
         type: 'search',
         timestamp: new Date().toISOString(),
@@ -66,12 +66,14 @@ const PropertyChecker: React.FC = () => {
         lmiStatus.is_approved
       ).then((success) => {
         if (success) {
+          // Only add activity if the property was saved successfully
           addActivity({
             type: 'save',
             timestamp: new Date().toISOString(),
             address: lmiStatus.address,
             details: `Saved property to your collection`
           });
+          toast.success('Property saved successfully');
         }
       });
     }

@@ -1,18 +1,18 @@
 
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { DashboardStats } from './DashboardStats';
 import { RecentActivity } from './RecentActivity';
-import { useClientActivity, type ActivityItem } from '@/hooks/useClientActivity';
+import { useClientActivity } from '@/hooks/useClientActivity';
 import PropertyChecker from '@/components/PropertyChecker';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Search, PlusCircle, CheckCircle, Calendar, Clock, User, Star, Phone, Mail } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Search, PlusCircle, CheckCircle } from 'lucide-react';
 import SavedProperties from '@/components/SavedProperties';
 import { JourneyTrackerContent } from './JourneyTrackerContent';
 import { TeamContent } from './TeamContent';
 
 export function ClientDashboardContent() {
-  const { activities, isLoading, addActivity } = useClientActivity();
+  const { activities } = useClientActivity();
   const [showPropertyChecker, setShowPropertyChecker] = useState(false);
   
   const handleAddressSelect = (address: string) => {

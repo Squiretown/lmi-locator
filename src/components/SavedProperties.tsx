@@ -1,10 +1,8 @@
 
 import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { MapPin, Bookmark, X, CheckCircle, Clock, Calendar } from 'lucide-react';
-import { toast } from 'sonner';
+import { MapPin, X, CheckCircle, Calendar } from 'lucide-react';
 import { useSavedAddresses, type SavedAddress } from '@/hooks/useSavedAddresses';
 import { useAuth } from '@/hooks/useAuth';
 import { Badge } from '@/components/ui/badge';
@@ -15,7 +13,6 @@ interface SavedPropertiesProps {
 
 const SavedProperties: React.FC<SavedPropertiesProps> = ({ onAddressSelect }) => {
   const { savedAddresses, removeAddress, isLoading, refreshAddresses } = useSavedAddresses();
-  const [isExpanded, setIsExpanded] = useState(true);
   const { user } = useAuth();
 
   useEffect(() => {
@@ -53,12 +50,14 @@ const SavedProperties: React.FC<SavedPropertiesProps> = ({ onAddressSelect }) =>
         <CardTitle className="text-lg flex justify-between items-center">
           <span>Your Saved Properties</span>
           <div className="flex items-center gap-2">
-            <Badge variant="outline" className="ml-2 text-xs">
+            <Badge variant="outline" className="text-xs">
               {savedAddresses.length} Saved
             </Badge>
-            <Badge variant="secondary" className="ml-2 text-xs bg-green-100 text-green-800 hover:bg-green-200">
-              {savedAddresses.filter(a => a.isLmiEligible).length} LMI Eligible
-            </Badge>
+            {savedAddresses.filter(a => a.isLmiEligible).length > 0 && (
+              <Badge variant="secondary" className="text-xs bg-green-100 text-green-800 hover:bg-green-200">
+                {savedAddresses.filter(a => a.isLmiEligible).length} LMI Eligible
+              </Badge>
+            )}
           </div>
         </CardTitle>
       </CardHeader>
@@ -98,11 +97,6 @@ const SavedProperties: React.FC<SavedPropertiesProps> = ({ onAddressSelect }) =>
                           {new Date(item.createdAt).toLocaleDateString()}
                         </div>
                       </div>
-                      {item.isLmiEligible && (
-                        <div className="mt-1 text-xs text-green-700">
-                          5 Programs Available
-                        </div>
-                      )}
                     </div>
                   </div>
                   <Button
@@ -119,8 +113,8 @@ const SavedProperties: React.FC<SavedPropertiesProps> = ({ onAddressSelect }) =>
           </ul>
         )}
         <div className="mt-4 flex justify-center">
-          <Button variant="outline" size="sm" className="w-full" onClick={() => setIsExpanded(!isExpanded)}>
-            {savedAddresses.length > 0 ? 'Check Another Property' : 'Check Property Eligibility'}
+          <Button variant="outline" size="sm" className="w-full">
+            Check Another Property
           </Button>
         </div>
       </CardContent>

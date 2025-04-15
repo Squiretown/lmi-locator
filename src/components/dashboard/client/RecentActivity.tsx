@@ -35,6 +35,20 @@ export const RecentActivity: React.FC<RecentActivityProps> = ({ activities }) =>
     );
   }
   
+  // Deduplicate activities with the same address and type within a 1-minute window
+  const deduplicatedActivities = activities.reduce((acc: ActivityItem[], curr) => {
+    const isDuplicate = acc.some(item => 
+      item.type === curr.type && 
+      item.address === curr.address &&
+      Math.abs(new Date(item.timestamp).getTime() - new Date(curr.timestamp).getTime()) < 60000
+    );
+    
+    if (!isDuplicate) {
+      acc.push(curr);
+    }
+    return acc;
+  }, []);
+  
   return (
     <Card>
       <CardHeader>
@@ -42,7 +56,7 @@ export const RecentActivity: React.FC<RecentActivityProps> = ({ activities }) =>
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          {activities.map((activity) => (
+          {deduplicatedActivities.map((activity) => (
             <div key={activity.id} className="border-b pb-3 last:border-0">
               <div className="flex items-start justify-between">
                 <div>
@@ -87,4 +101,4 @@ export const RecentActivity: React.FC<RecentActivityProps> = ({ activities }) =>
       </CardContent>
     </Card>
   );
-};
+}
