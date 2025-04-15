@@ -7,6 +7,7 @@ import { useSavedAddresses } from '@/hooks/useSavedAddresses';
 import { toast } from 'sonner';
 import { saveSearch } from '@/lib/supabase/search';
 import { useAuth } from '@/hooks/useAuth';
+import PropertySearchCard from './property-form/PropertySearchCard';
 
 const PropertyChecker: React.FC = () => {
   // Initialize hooks outside of any conditional logic
@@ -44,28 +45,14 @@ const PropertyChecker: React.FC = () => {
     }
   };
 
-  const handleSaveProperty = () => {
-    if (lmiStatus) {
-      saveAddress(
-        lmiStatus.address, 
-        lmiStatus.is_approved
-      ).then((success) => {
-        if (success) {
-          // Only add activity if the property was saved successfully
-          addActivity({
-            type: 'save',
-            timestamp: new Date().toISOString(),
-            address: lmiStatus.address,
-            details: `Saved property to your collection`
-          });
-          toast.success('Property saved successfully');
-        }
-      });
-    }
-  };
-
   return (
     <div className="bg-blue-50/50 rounded-lg p-6 shadow-sm mb-8">
+      {searchHook.lmiStatus === null && (
+        <PropertySearchCard 
+          onSubmit={onSubmit}
+          isLoading={isLoading}
+        />
+      )}
       <PropertyCheckerContent />
     </div>
   );

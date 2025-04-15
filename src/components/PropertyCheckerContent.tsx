@@ -1,15 +1,26 @@
+
 import React, { useState } from 'react';
 import { CheckLmiStatusResponse } from '@/lib/types';
 import { usePropertyWorkflow } from '@/hooks/usePropertyWorkflow';
 import ResultsSection from './property-results/ResultsSection';
 import { toast } from 'sonner';
 import { useSavedAddresses } from '@/hooks/useSavedAddresses';
+import { usePropertySearch } from '@/hooks/usePropertySearch';
 
 const PropertyCheckerContent: React.FC = () => {
   const { displayMode, showResults, showScreener, resetProcess } = usePropertyWorkflow();
   const [currentData, setCurrentData] = useState<CheckLmiStatusResponse | null>(null);
   const { saveAddress } = useSavedAddresses();
   const [error, setError] = useState<string | null>(null);
+  const { lmiStatus } = usePropertySearch();
+
+  // Use lmiStatus from usePropertySearch if available
+  React.useEffect(() => {
+    if (lmiStatus && !currentData) {
+      setCurrentData(lmiStatus);
+      showResults(lmiStatus);
+    }
+  }, [lmiStatus, currentData, showResults]);
 
   const handleCheckProperty = (data: CheckLmiStatusResponse) => {
     setCurrentData(data);
@@ -31,6 +42,7 @@ const PropertyCheckerContent: React.FC = () => {
 
   const handleReset = () => {
     resetProcess();
+    setCurrentData(null);
   };
 
   const handleSaveProperty = () => {
@@ -56,9 +68,9 @@ const PropertyCheckerContent: React.FC = () => {
         </div>
       )}
 
-      {displayMode === 'results' && currentData && (
+      {displayMode === 'results' && (currentData || lmiStatus) && (
         <ResultsSection
-          data={currentData}
+          data={currentData || lmiStatus}
           onContinue={handleContinue}
           onReset={handleReset}
           onSaveProperty={handleSaveProperty}

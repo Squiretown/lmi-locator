@@ -28,7 +28,8 @@ export function usePropertyWorkflow() {
   };
 
   const resetProcess = () => {
-    setMatchingPrograms([]);
+    matchingPrograms.length = 0;
+    setMatchingPrograms([...matchingPrograms]);
     setDisplayMode('form');
   };
 
