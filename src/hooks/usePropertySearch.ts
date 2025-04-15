@@ -75,16 +75,22 @@ export function usePropertySearch() {
       setLmiStatus(lmiResponse);
       
       if (result.is_approved) {
-        toast.success(`This property is LMI eligible`);
+        toast.success('Property is LMI Eligible', {
+          description: 'This property is located in a Low to Moderate Income area.'
+        });
       } else {
-        toast.info(`This property is not in an LMI area`);
+        toast.error('Not LMI Eligible', {
+          description: 'This property is not in an LMI eligible area.'
+        });
       }
       
       return lmiResponse;
     } catch (error) {
       console.error("Error checking property status:", error);
       
-      toast.error(error instanceof Error ? error.message : "Failed to check property status. Please try again.");
+      toast.error('Search Failed', {
+        description: error instanceof Error ? error.message : "Unable to check property status"
+      });
       
       return null;
     } finally {
