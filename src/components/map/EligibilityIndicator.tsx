@@ -18,10 +18,10 @@ const EligibilityIndicator: React.FC<EligibilityIndicatorProps> = ({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
-      className={`fixed inset-0 flex items-center justify-center z-50 p-4 pointer-events-none`}
+      className="w-full rounded-lg mb-4 pointer-events-auto"
     >
       <div 
-        className={`max-w-md w-full p-6 rounded-lg shadow-lg pointer-events-auto
+        className={`w-full p-6 rounded-lg shadow-md
                    ${isEligible ? 'bg-green-100 border-2 border-green-600' : 'bg-red-100 border-2 border-red-600'}`}
       >
         <div className="flex flex-col items-center text-center space-y-3">

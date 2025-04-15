@@ -42,13 +42,13 @@ const ResultsSection: React.FC<ResultsSectionProps> = ({
   console.log("Rendering ResultsSection with data:", data);
 
   return (
-    <>
+    <div className="w-full">
       <EligibilityIndicator 
         isEligible={data.is_approved} 
         onGetMoreInfo={onContinue} 
       />
       
-      <div className="mt-8">
+      <div className="mt-4">
         <div className="flex flex-col sm:flex-row justify-between items-start gap-4 mb-4">
           <div>
             <div className="flex items-start gap-2">
@@ -91,7 +91,7 @@ const ResultsSection: React.FC<ResultsSectionProps> = ({
           />
         </div>
       </div>
-    </>
+    </div>
   );
 };
 
