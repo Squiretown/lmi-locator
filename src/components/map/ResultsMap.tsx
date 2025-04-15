@@ -3,20 +3,16 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { InfoIcon } from 'lucide-react';
 import MapDisplay from './MapDisplay';
-import MapStatus from './MapStatus';
 import TractInfoPanel from './TractInfoPanel';
 
 interface ResultsMapProps {
   tractId?: string;
   address: string;
+  lat?: number;
+  lon?: number;
 }
 
-const ResultsMap: React.FC<ResultsMapProps> = ({ tractId, address }) => {
-  // Default coordinates for when geocoding hasn't completed
-  // These will be replaced by actual coordinates from the geocoding process in MapDisplay
-  const defaultLat = 40.73; // Default latitude (approximate center of US)
-  const defaultLon = -73.93; // Default longitude
-  
+const ResultsMap: React.FC<ResultsMapProps> = ({ tractId, address, lat, lon }) => {
   // Determine eligibility based on tractId existence
   // This is a simplification - in a real app, you'd want to pass this explicitly
   const isEligible = !!tractId;
@@ -38,8 +34,8 @@ const ResultsMap: React.FC<ResultsMapProps> = ({ tractId, address }) => {
         </div>
         
         <MapDisplay 
-          lat={defaultLat} 
-          lon={defaultLon} 
+          lat={lat} 
+          lon={lon} 
           isEligible={isEligible} 
           tractId={tractId}
           address={address}

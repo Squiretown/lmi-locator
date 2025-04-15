@@ -5,6 +5,8 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/componen
 import { CheckCircle, XCircle, MapPin, Home, Save } from 'lucide-react';
 import { CheckLmiStatusResponse } from '@/lib/types';
 import ResultsMap from './map/ResultsMap';
+import { useAuth } from '@/hooks/useAuth';
+import { toast } from 'sonner';
 
 interface ResultViewProps {
   data: CheckLmiStatusResponse;
@@ -14,6 +16,9 @@ interface ResultViewProps {
 }
 
 const ResultView: React.FC<ResultViewProps> = ({ data, onContinue, onReset, onSaveProperty }) => {
+  // Get authentication status
+  const { user } = useAuth();
+  
   // Determine if the property is eligible
   const isEligible = data.is_approved;
   
@@ -26,6 +31,25 @@ const ResultView: React.FC<ResultViewProps> = ({ data, onContinue, onReset, onSa
         .replace(/\s+/g, ' ')
         .trim()
     : 'Address not available';
+  
+  // Handler for save property button when user is not logged in
+  const handleSaveClick = () => {
+    if (!user && !onSaveProperty) {
+      // Redirect to login/signup page or show a toast message
+      toast.error('Please sign in to save properties', {
+        description: 'Create an account to save and track properties',
+        action: {
+          label: 'Sign In',
+          onClick: () => window.location.href = '/login'
+        }
+      });
+      return;
+    }
+    
+    if (onSaveProperty) {
+      onSaveProperty();
+    }
+  };
   
   return (
     <div className="space-y-6">
@@ -90,12 +114,10 @@ const ResultView: React.FC<ResultViewProps> = ({ data, onContinue, onReset, onSa
         <CardFooter className="flex flex-col sm:flex-row gap-2 justify-between">
           <div className="flex gap-2">
             <Button onClick={onReset} variant="outline">Start New Search</Button>
-            {onSaveProperty && (
-              <Button onClick={onSaveProperty} className="gap-2">
-                <Save className="h-4 w-4" />
-                Save Property
-              </Button>
-            )}
+            <Button onClick={handleSaveClick} className="gap-2">
+              <Save className="h-4 w-4" />
+              Save Property
+            </Button>
           </div>
           {isEligible && (
             <Button onClick={onContinue}>
@@ -113,7 +135,9 @@ const ResultView: React.FC<ResultViewProps> = ({ data, onContinue, onReset, onSa
           <CardContent className="h-[300px] pt-0">
             <ResultsMap 
               tractId={data.tract_id} 
-              address={cleanAddress} 
+              address={cleanAddress}
+              lat={data.lat}
+              lon={data.lon}
             />
           </CardContent>
         </Card>
