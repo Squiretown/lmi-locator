@@ -28,13 +28,13 @@ export function usePropertyWorkflow() {
   };
 
   const resetProcess = () => {
-    matchingPrograms.length = 0;
-    setMatchingPrograms([...matchingPrograms]);
+    setMatchingPrograms([]);
     setDisplayMode('form');
   };
 
   const showResults = (lmiStatus: CheckLmiStatusResponse | null) => {
     if (lmiStatus) {
+      console.log("Setting display mode to results");
       setDisplayMode('results');
     }
   };

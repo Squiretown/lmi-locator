@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { CheckLmiStatusResponse } from '@/lib/types';
 import { usePropertyWorkflow } from '@/hooks/usePropertyWorkflow';
 import ResultsSection from './property-results/ResultsSection';
@@ -15,12 +15,12 @@ const PropertyCheckerContent: React.FC = () => {
   const { lmiStatus } = usePropertySearch();
 
   // Use lmiStatus from usePropertySearch if available
-  React.useEffect(() => {
-    if (lmiStatus && !currentData) {
+  useEffect(() => {
+    if (lmiStatus) {
       setCurrentData(lmiStatus);
       showResults(lmiStatus);
     }
-  }, [lmiStatus, currentData, showResults]);
+  }, [lmiStatus, showResults]);
 
   const handleCheckProperty = (data: CheckLmiStatusResponse) => {
     setCurrentData(data);
@@ -34,7 +34,7 @@ const PropertyCheckerContent: React.FC = () => {
   };
 
   const handleContinue = () => {
-    if (!currentData) {
+    if (!currentData && !lmiStatus) {
       return;
     }
     showScreener();
@@ -46,11 +46,12 @@ const PropertyCheckerContent: React.FC = () => {
   };
 
   const handleSaveProperty = () => {
-    if (currentData) {
+    if (currentData || lmiStatus) {
+      const dataToSave = currentData || lmiStatus;
       // Save the property using the useSavedAddresses hook, passing the LMI eligibility status
       const success = saveAddress(
-        currentData.address || 'Unknown address', 
-        currentData.is_approved === true
+        dataToSave.address || 'Unknown address', 
+        dataToSave.is_approved === true
       );
       
       if (success) {

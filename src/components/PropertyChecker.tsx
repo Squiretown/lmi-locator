@@ -47,13 +47,13 @@ const PropertyChecker: React.FC = () => {
 
   return (
     <div className="bg-blue-50/50 rounded-lg p-6 shadow-sm mb-8">
-      {searchHook.lmiStatus === null && (
+      {!lmiStatus && (
         <PropertySearchCard 
           onSubmit={onSubmit}
           isLoading={isLoading}
         />
       )}
-      <PropertyCheckerContent />
+      {lmiStatus && <PropertyCheckerContent />}
     </div>
   );
 };
