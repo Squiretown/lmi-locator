@@ -15,9 +15,10 @@ const SavedProperties: React.FC<SavedPropertiesProps> = ({ onAddressSelect }) =>
   const { savedAddresses, removeAddress, isLoading, refreshAddresses } = useSavedAddresses();
   const { user } = useAuth();
 
+  // Refresh addresses when component mounts or user changes
   useEffect(() => {
     refreshAddresses();
-  }, []);
+  }, [user]);
 
   const handleRemoveAddress = (id: string) => {
     removeAddress(id);
@@ -27,6 +28,7 @@ const SavedProperties: React.FC<SavedPropertiesProps> = ({ onAddressSelect }) =>
     onAddressSelect(address);
   };
 
+  // No saved properties state
   if (savedAddresses.length === 0 && !isLoading) {
     return (
       <Card className="shadow-sm border border-gray-200 mb-6">

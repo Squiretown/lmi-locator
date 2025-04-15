@@ -17,7 +17,7 @@ export function useSavedAddresses() {
   const [isLoading, setIsLoading] = useState(false);
   const { user } = useAuth();
 
-  // Load saved addresses on mount
+  // Load saved addresses on mount and when user changes
   useEffect(() => {
     loadSavedAddresses();
   }, [user]);
@@ -96,14 +96,13 @@ export function useSavedAddresses() {
       if (user) {
         try {
           // For authenticated users, store directly in saved_properties
-          // without creating a property record - this avoids RLS issues
           const { error } = await supabase
             .from('saved_properties')
             .insert({
               user_id: user.id,
               // We'll use a dummy property_id since we can't create property records
               property_id: '00000000-0000-0000-0000-000000000000',
-              is_favorite: isLmiEligible,
+              is_favorite: isLmiEligible, // Store LMI eligibility in is_favorite field
               notes: isLmiEligible ? 'LMI Eligible' : ''
             });
             

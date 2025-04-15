@@ -7,6 +7,15 @@ import { useSavedAddresses } from '@/hooks/useSavedAddresses';
 export const DashboardStats: React.FC = () => {
   const { savedAddresses } = useSavedAddresses();
   
+  // Count LMI eligible properties
+  const lmiEligibleCount = savedAddresses.filter(a => a.isLmiEligible).length;
+  
+  // Calculate days active (for now using a placeholder of 30 days)
+  const daysActive = 30;
+  
+  // Program matches (using 3 as a placeholder, will be updated in future)
+  const programMatches = 3;
+  
   const stats = [
     {
       label: 'Saved Properties',
@@ -16,19 +25,19 @@ export const DashboardStats: React.FC = () => {
     },
     {
       label: 'LMI Eligible',
-      value: savedAddresses.filter(a => a.isLmiEligible).length,
+      value: lmiEligibleCount,
       icon: <CheckCircle className="h-5 w-5 text-green-500" />,
       color: 'bg-green-50'
     },
     {
       label: 'Days Active',
-      value: 30,
+      value: daysActive,
       icon: <Calendar className="h-5 w-5 text-purple-500" />,
       color: 'bg-purple-50'
     },
     {
       label: 'Program Matches',
-      value: 3,
+      value: programMatches,
       icon: <CheckCircle className="h-5 w-5 text-amber-500" />,
       color: 'bg-amber-50'
     }

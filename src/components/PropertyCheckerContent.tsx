@@ -1,114 +1,75 @@
-
-import React from 'react';
-import ResultView from './ResultView';
-import AddressSearchForm from './AddressSearchForm';
-import ProgramResults from './ProgramResults';
-import EligibilityScreener from './EligibilityScreener';
-import SpecialistConnect from './SpecialistConnect';
-import LoadingSpinner from './LoadingSpinner';
+import React, { useState } from 'react';
+import { PropertyChecker } from '@/components/PropertyChecker';
 import { CheckLmiStatusResponse } from '@/lib/types';
-import { AssistanceProgram } from '@/lib/types/assistance-programs';
-import { useAuth } from '@/hooks/useAuth';
+import { usePropertyWorkflow } from '@/hooks/usePropertyWorkflow';
+import ResultsSection from './property-results/ResultsSection';
 import { toast } from 'sonner';
+import { useSavedAddresses } from '@/hooks/useSavedAddresses';
 
-// Property Checker display modes - updated to match usePropertyWorkflow
-export type DisplayMode = 'form' | 'result' | 'screener' | 'programs' | 'specialist' | 'search' | 'results';
+const PropertyCheckerContent: React.FC = () => {
+  const { currentStep, moveToStep, currentData, setCurrentData, resetWorkflow } = usePropertyWorkflow();
+  const { saveAddress } = useSavedAddresses();
+  const [error, setError] = useState<string | null>(null);
 
-interface PropertyCheckerContentProps {
-  displayMode: DisplayMode;
-  lmiStatus: CheckLmiStatusResponse | null;
-  isLoading: boolean;
-  matchingPrograms: AssistanceProgram[];
-  onSubmit: (values: any) => void;
-  onContinue: () => void;
-  onReset: () => void;
-  onEligibilityComplete: (formData: any) => void;
-  onConnectSpecialist: () => void;
-  onSpecialistComplete: () => void;
-  onSaveProperty?: () => void;
-}
+  const handleCheckProperty = (data: CheckLmiStatusResponse) => {
+    setCurrentData(data);
+    moveToStep('results');
+    setError(null);
+  };
 
-// Component to display the appropriate content based on the current display mode
-const PropertyCheckerContent: React.FC<PropertyCheckerContentProps> = ({
-  displayMode,
-  lmiStatus,
-  isLoading,
-  matchingPrograms,
-  onSubmit,
-  onContinue,
-  onReset,
-  onEligibilityComplete,
-  onConnectSpecialist,
-  onSpecialistComplete,
-  onSaveProperty,
-}) => {
-  const { user } = useAuth();
+  const handleError = (message: string) => {
+    setError(message);
+    // Don't change step when there's an error
+  };
 
-  // Handler for save property when user is not logged in
-  const handleSaveProperty = () => {
-    if (!user) {
-      // Redirect to login/signup page or show a toast message
-      toast.error('Please sign in to save properties', {
-        description: 'Create an account to save and track properties',
-        action: {
-          label: 'Sign In',
-          onClick: () => window.location.href = '/login'
-        }
-      });
+  const handleContinue = () => {
+    if (!currentData) {
       return;
     }
-    
-    if (onSaveProperty) {
-      onSaveProperty();
+    moveToStep('eligibility');
+  };
+
+  const handleReset = () => {
+    resetWorkflow();
+    moveToStep('search');
+  };
+
+  const handleSaveProperty = () => {
+    if (currentData) {
+      // Save the property using the useSavedAddresses hook, passing the LMI eligibility status
+      const success = saveAddress(
+        currentData.address || 'Unknown address', 
+        currentData.is_approved === true
+      );
+      
+      if (success) {
+        toast.success('Property saved successfully!');
+      }
     }
   };
 
-  // Display loading state during API requests
-  if (isLoading) {
-    return <LoadingSpinner />;
-  }
+  return (
+    <div className="w-full max-w-4xl mx-auto">
+      {currentStep === 'search' && (
+        <PropertyChecker
+          onSuccess={handleCheckProperty}
+          onError={handleError}
+          errorMessage={error}
+        />
+      )}
 
-  // Render the appropriate component based on the current display mode
-  switch (displayMode) {
-    case 'results':
-    case 'result':
-      return lmiStatus ? (
-        <ResultView 
-          data={lmiStatus} 
-          onContinue={onContinue} 
-          onReset={onReset}
+      {currentStep === 'results' && currentData && (
+        <ResultsSection
+          data={currentData}
+          onContinue={handleContinue}
+          onReset={handleReset}
           onSaveProperty={handleSaveProperty}
         />
-      ) : null;
-      
-    case 'screener':
-      return <EligibilityScreener 
-               address={lmiStatus?.address || ''}
-               onComplete={onEligibilityComplete} 
-             />;
-      
-    case 'programs':
-      return (
-        <ProgramResults 
-          programs={matchingPrograms} 
-          address={lmiStatus?.address || ''}
-          onConnectSpecialist={onConnectSpecialist}
-        />
-      );
-      
-    case 'specialist':
-      return (
-        <SpecialistConnect 
-          onComplete={onSpecialistComplete} 
-          address={lmiStatus?.address || ''}
-        />
-      );
-      
-    case 'search':
-    case 'form':
-    default:
-      return <AddressSearchForm onSubmit={onSubmit} isLoading={isLoading} />;
-  }
+      )}
+
+      {/* Other steps will be added here */}
+    </div>
+  );
 };
 
 export default PropertyCheckerContent;
