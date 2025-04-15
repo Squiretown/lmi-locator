@@ -23,6 +23,8 @@ export async function handleApiRequest(supabase: any, action: string, params: an
           success: true,
           medianIncome: mockIncome
         };
+      case 'reportSearchIssue':
+        return await handleReportSearchIssue(supabase, params);
       default:
         throw new Error(`Unknown action: ${action}`);
     }
@@ -48,6 +50,42 @@ export async function handleApiRequest(supabase: any, action: string, params: an
       console.error("Failed to log error to database:", loggingError);
     }
     
+    return { 
+      success: false, 
+      error: error instanceof Error ? error.message : String(error)
+    };
+  }
+}
+
+// Handle user-reported search issues
+async function handleReportSearchIssue(supabase: any, params: any) {
+  try {
+    // Get current timestamp
+    const timestamp = new Date().toISOString();
+    
+    // Insert the reported issue into the database
+    const { error } = await supabase
+      .from('lmi_search_error_logs')
+      .insert({
+        search_type: params.searchType || 'unknown',
+        search_value: params.searchValue || '',
+        error_message: 'User reported issue with search',
+        search_params: params,
+        created_at: timestamp,
+        resolved: false
+      });
+    
+    if (error) throw error;
+    
+    console.log('Successfully logged user-reported search issue:', params);
+    
+    return { 
+      success: true, 
+      message: 'Search issue reported successfully',
+      timestamp
+    };
+  } catch (error) {
+    console.error('Error reporting search issue:', error);
     return { 
       success: false, 
       error: error instanceof Error ? error.message : String(error)
