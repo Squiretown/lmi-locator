@@ -17,41 +17,52 @@ export function ClientDashboardContent() {
     <div className="space-y-6">
       <DashboardStats />
       
-      {showPropertyChecker ? (
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>Check Property Eligibility</CardTitle>
-            <Button variant="outline" size="sm" onClick={() => setShowPropertyChecker(false)}>
-              Close
-            </Button>
-          </CardHeader>
-          <CardContent>
-            <PropertyChecker />
-          </CardContent>
-        </Card>
-      ) : (
-        <Card className="bg-gradient-to-r from-blue-50 to-indigo-50">
-          <CardContent className="p-6">
-            <div className="flex flex-col md:flex-row items-center justify-between">
-              <div>
-                <h2 className="text-xl font-bold mb-2">Check If A Property Is Eligible</h2>
-                <p className="text-muted-foreground mb-4 md:mb-0">
-                  Find out if a property is in an LMI area and discover available assistance programs
-                </p>
-              </div>
-              <Button onClick={() => setShowPropertyChecker(true)} className="gap-2">
-                <Search className="h-4 w-4" />
-                Check Property
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-      
-      {/* Replace SavedProperties with TeamContent */}
-      <TeamContent />
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="md:col-span-2 space-y-6">
+          {/* Property Checker */}
+          {showPropertyChecker ? (
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <CardTitle>Check Property Eligibility</CardTitle>
+                <Button variant="outline" size="sm" onClick={() => setShowPropertyChecker(false)}>
+                  Close
+                </Button>
+              </CardHeader>
+              <CardContent>
+                <PropertyChecker />
+              </CardContent>
+            </Card>
+          ) : (
+            <Card className="bg-gradient-to-r from-blue-50 to-indigo-50">
+              <CardContent className="p-6">
+                <div className="flex flex-col md:flex-row items-center justify-between">
+                  <div>
+                    <h2 className="text-xl font-bold mb-2">Check If A Property Is Eligible</h2>
+                    <p className="text-muted-foreground mb-4 md:mb-0">
+                      Find out if a property is in an LMI area and discover available assistance programs
+                    </p>
+                  </div>
+                  <Button onClick={() => setShowPropertyChecker(true)} className="gap-2">
+                    <Search className="h-4 w-4" />
+                    Check Property
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+          
+          {/* Recent Activity */}
+          <RecentActivity activities={activities} />
+        </div>
+        
+        {/* Right sidebar - Team Content */}
+        <div className="md:col-span-1">
+          <TeamContent />
+        </div>
+      </div>
       
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Home Buying Journey */}
         <Card>
           <CardHeader>
             <CardTitle>Your Home Buying Journey</CardTitle>
@@ -94,6 +105,7 @@ export function ClientDashboardContent() {
           </CardContent>
         </Card>
         
+        {/* Program Eligibility */}
         <Card>
           <CardHeader>
             <CardTitle>Program Eligibility</CardTitle>
@@ -134,10 +146,6 @@ export function ClientDashboardContent() {
             </div>
           </CardContent>
         </Card>
-      </div>
-      
-      <div className="grid grid-cols-1 gap-6">
-        <RecentActivity activities={activities} />
       </div>
     </div>
   );

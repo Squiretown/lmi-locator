@@ -4,7 +4,6 @@ import { useAuth } from '@/hooks/useAuth';
 import { ClientHeader } from '@/components/dashboard/client/ClientHeader';
 import { ClientTabs } from '@/components/dashboard/client/ClientTabs';
 import { ClientDashboardContent } from '@/components/dashboard/client/ClientDashboardContent';
-import { Card } from '@/components/ui/card';
 import { User, Settings, LogOut, HelpCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
