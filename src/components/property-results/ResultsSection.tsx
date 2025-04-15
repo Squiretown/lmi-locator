@@ -39,6 +39,8 @@ const ResultsSection: React.FC<ResultsSectionProps> = ({
   const lat = data.lat !== undefined ? data.lat : undefined;
   const lon = data.lon !== undefined ? data.lon : undefined;
 
+  console.log("Rendering ResultsSection with data:", data);
+
   return (
     <>
       <EligibilityIndicator 

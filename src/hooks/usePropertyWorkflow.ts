@@ -34,7 +34,7 @@ export function usePropertyWorkflow() {
 
   const showResults = (lmiStatus: CheckLmiStatusResponse | null) => {
     if (lmiStatus) {
-      console.log("Setting display mode to results");
+      console.log("Setting display mode to results:", lmiStatus);
       setDisplayMode('results');
     }
   };

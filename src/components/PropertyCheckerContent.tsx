@@ -17,6 +17,7 @@ const PropertyCheckerContent: React.FC = () => {
   // Use lmiStatus from usePropertySearch if available
   useEffect(() => {
     if (lmiStatus) {
+      console.log("Setting current data from lmiStatus:", lmiStatus);
       setCurrentData(lmiStatus);
       showResults(lmiStatus);
     }
