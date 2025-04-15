@@ -3,23 +3,24 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { MapPinIcon, BookmarkIcon, XIcon, CheckCircleIcon } from 'lucide-react';
+import { MapPin, Bookmark, X, CheckCircle, Clock, Calendar } from 'lucide-react';
 import { toast } from 'sonner';
 import { useSavedAddresses, type SavedAddress } from '@/hooks/useSavedAddresses';
 import { useAuth } from '@/hooks/useAuth';
+import { Badge } from '@/components/ui/badge';
 
 interface SavedPropertiesProps {
   onAddressSelect: (address: string) => void;
 }
 
 const SavedProperties: React.FC<SavedPropertiesProps> = ({ onAddressSelect }) => {
-  const { savedAddresses, removeAddress, isLoading } = useSavedAddresses();
-  const [isVisible, setIsVisible] = useState(false);
+  const { savedAddresses, removeAddress, isLoading, refreshAddresses } = useSavedAddresses();
+  const [isExpanded, setIsExpanded] = useState(true);
   const { user } = useAuth();
 
-  const toggleVisibility = () => {
-    setIsVisible(!isVisible);
-  };
+  useEffect(() => {
+    refreshAddresses();
+  }, []);
 
   const handleRemoveAddress = (id: string) => {
     removeAddress(id);
@@ -27,90 +28,103 @@ const SavedProperties: React.FC<SavedPropertiesProps> = ({ onAddressSelect }) =>
 
   const selectAddress = (address: string) => {
     onAddressSelect(address);
-    setIsVisible(false);
   };
 
   if (savedAddresses.length === 0 && !isLoading) {
-    return null;
+    return (
+      <Card className="shadow-sm border border-gray-200 mb-6">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-lg flex justify-between items-center">
+            <span>Your Saved Properties</span>
+            <Badge variant="outline" className="ml-2 text-xs">0 Saved</Badge>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="text-center py-8 text-muted-foreground">
+          <p>No properties saved yet</p>
+          <p className="text-sm mt-2">Properties you've checked for eligibility will appear here</p>
+        </CardContent>
+      </Card>
+    );
   }
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.3 }}
-      className="fixed bottom-6 right-6 z-40"
-    >
-      <Button
-        onClick={toggleVisibility}
-        className="rounded-full shadow-lg h-12 w-12 p-0 relative"
-        variant="default"
-      >
-        <BookmarkIcon className="h-5 w-5" />
-        <span className="absolute -top-2 -right-2 bg-primary text-xs rounded-full h-5 w-5 flex items-center justify-center">
-          {savedAddresses.length}
-        </span>
-      </Button>
-
-      {isVisible && (
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9, y: 10 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          transition={{ duration: 0.2 }}
-          className="absolute bottom-16 right-0 w-72"
-        >
-          <Card className="shadow-xl">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base flex justify-between items-center">
-                <span>Saved Properties</span>
-                {user ? (
-                  <span className="text-xs text-muted-foreground">Synced to your account</span>
-                ) : (
-                  <span className="text-xs text-muted-foreground">Saved locally</span>
-                )}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="max-h-60 overflow-y-auto pb-1">
-              {isLoading ? (
-                <div className="py-4 text-center text-muted-foreground">Loading saved properties...</div>
-              ) : (
-                <ul className="space-y-2">
-                  {savedAddresses.map((item) => (
-                    <li key={item.id} className="flex items-center gap-2 group">
+    <Card className="shadow-sm border border-gray-200 mb-6">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-lg flex justify-between items-center">
+          <span>Your Saved Properties</span>
+          <div className="flex items-center gap-2">
+            <Badge variant="outline" className="ml-2 text-xs">
+              {savedAddresses.length} Saved
+            </Badge>
+            <Badge variant="secondary" className="ml-2 text-xs bg-green-100 text-green-800 hover:bg-green-200">
+              {savedAddresses.filter(a => a.isLmiEligible).length} LMI Eligible
+            </Badge>
+          </div>
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="pt-4">
+        {isLoading ? (
+          <div className="py-4 text-center text-muted-foreground">Loading saved properties...</div>
+        ) : (
+          <ul className="space-y-4">
+            {savedAddresses.map((item) => (
+              <li key={item.id} className="border-b pb-4 last:border-0 last:pb-0">
+                <div className="flex items-start justify-between">
+                  <div className="flex items-start gap-3">
+                    <div className={`p-2 rounded-full ${item.isLmiEligible ? 'bg-green-100' : 'bg-red-100'}`}>
+                      <MapPin className={`h-4 w-4 ${item.isLmiEligible ? 'text-green-600' : 'text-red-600'}`} />
+                    </div>
+                    <div>
                       <Button 
-                        variant="ghost" 
-                        className="h-auto py-2 px-2 justify-start text-sm font-normal flex-grow text-left"
+                        variant="link" 
+                        className="h-auto p-0 justify-start text-sm font-medium text-left hover:no-underline"
                         onClick={() => selectAddress(item.address)}
                       >
-                        <div className="flex items-start">
-                          <MapPinIcon className="h-3.5 w-3.5 mr-2 flex-shrink-0 mt-0.5" />
-                          <div>
-                            <span className="truncate block">{item.address}</span>
-                            {item.isLmiEligible && (
-                              <span className="text-xs text-green-600 flex items-center mt-0.5">
-                                <CheckCircleIcon className="h-3 w-3 mr-1" /> LMI Eligible
-                              </span>
-                            )}
-                          </div>
+                        {item.address}
+                      </Button>
+                      <div className="flex items-center mt-1">
+                        {item.isLmiEligible ? (
+                          <Badge className="bg-green-100 text-green-800 hover:bg-green-200 text-xs">
+                            <CheckCircle className="h-3 w-3 mr-1" /> LMI Eligible
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline" className="text-xs border-red-200 text-red-600">
+                            Not Eligible
+                          </Badge>
+                        )}
+                        
+                        <div className="text-xs text-muted-foreground ml-3 flex items-center">
+                          <Calendar className="h-3 w-3 mr-1" />
+                          {new Date(item.createdAt).toLocaleDateString()}
                         </div>
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-6 w-6 p-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                        onClick={() => handleRemoveAddress(item.id)}
-                      >
-                        <XIcon className="h-4 w-4" />
-                      </Button>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </CardContent>
-          </Card>
-        </motion.div>
-      )}
-    </motion.div>
+                      </div>
+                      {item.isLmiEligible && (
+                        <div className="mt-1 text-xs text-green-700">
+                          5 Programs Available
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6 p-1"
+                    onClick={() => handleRemoveAddress(item.id)}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+        <div className="mt-4 flex justify-center">
+          <Button variant="outline" size="sm" className="w-full" onClick={() => setIsExpanded(!isExpanded)}>
+            {savedAddresses.length > 0 ? 'Check Another Property' : 'Check Property Eligibility'}
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
   );
 };
 

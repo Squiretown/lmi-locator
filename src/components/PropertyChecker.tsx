@@ -78,7 +78,7 @@ const PropertyChecker: React.FC = () => {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="bg-blue-50/50 rounded-lg p-6 shadow-sm mb-8">
       <PropertyCheckerContent
         displayMode={displayMode}
         lmiStatus={lmiStatus}

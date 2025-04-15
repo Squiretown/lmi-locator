@@ -5,12 +5,20 @@ import { RecentActivity } from './RecentActivity';
 import { useClientActivity, type ActivityItem } from '@/hooks/useClientActivity';
 import PropertyChecker from '@/components/PropertyChecker';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Search, PlusCircle, CheckCircle } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Search, PlusCircle, CheckCircle, Calendar, Clock, User, Star, Phone, Mail } from 'lucide-react';
+import SavedProperties from '@/components/SavedProperties';
+import { JourneyTrackerContent } from './JourneyTrackerContent';
+import { TeamContent } from './TeamContent';
 
 export function ClientDashboardContent() {
   const { activities, isLoading, addActivity } = useClientActivity();
   const [showPropertyChecker, setShowPropertyChecker] = useState(false);
+  
+  const handleAddressSelect = (address: string) => {
+    // TODO: Implement address selection functionality
+    console.log("Selected address:", address);
+  };
   
   return (
     <div className="space-y-6">
@@ -47,49 +55,58 @@ export function ClientDashboardContent() {
         </Card>
       )}
       
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <RecentActivity activities={activities} />
+      <SavedProperties onAddressSelect={handleAddressSelect} />
+      
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <JourneyTrackerContent />
+        <div className="space-y-6">
+          <TeamContent />
         
-        <Card>
-          <CardHeader>
-            <CardTitle>Program Eligibility</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-6">
-              <div className="bg-green-50 p-4 rounded-lg">
-                <h3 className="font-medium text-green-800 mb-2">Programs You May Qualify For</h3>
-                <ul className="space-y-2">
-                  <li className="text-sm flex items-start gap-2">
-                    <CheckCircle className="h-4 w-4 text-green-600 mt-0.5" />
-                    <div>
-                      <p className="font-medium">First-Time Homebuyer Assistance</p>
-                      <p className="text-muted-foreground">Up to $10,000 in down payment assistance</p>
-                    </div>
-                  </li>
-                  <li className="text-sm flex items-start gap-2">
-                    <CheckCircle className="h-4 w-4 text-green-600 mt-0.5" />
-                    <div>
-                      <p className="font-medium">Low-Interest Rate Mortgage</p>
-                      <p className="text-muted-foreground">Below-market interest rates for eligible properties</p>
-                    </div>
-                  </li>
-                </ul>
-                <Button variant="outline" size="sm" className="mt-4 w-full">View All Programs</Button>
+          <Card>
+            <CardHeader>
+              <CardTitle>Program Eligibility</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-6">
+                <div className="bg-green-50 p-4 rounded-lg">
+                  <h3 className="font-medium text-green-800 mb-2">Programs You May Qualify For</h3>
+                  <ul className="space-y-2">
+                    <li className="text-sm flex items-start gap-2">
+                      <CheckCircle className="h-4 w-4 text-green-600 mt-0.5" />
+                      <div>
+                        <p className="font-medium">First-Time Homebuyer Assistance</p>
+                        <p className="text-muted-foreground">Up to $10,000 in down payment assistance</p>
+                      </div>
+                    </li>
+                    <li className="text-sm flex items-start gap-2">
+                      <CheckCircle className="h-4 w-4 text-green-600 mt-0.5" />
+                      <div>
+                        <p className="font-medium">Low-Interest Rate Mortgage</p>
+                        <p className="text-muted-foreground">Below-market interest rates for eligible properties</p>
+                      </div>
+                    </li>
+                  </ul>
+                  <Button variant="outline" size="sm" className="mt-4 w-full">View All Programs</Button>
+                </div>
+                
+                <div>
+                  <h3 className="font-medium mb-3">Complete Eligibility Screener</h3>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Answer a few questions to find more programs you may qualify for
+                  </p>
+                  <Button variant="outline" className="w-full gap-2">
+                    <PlusCircle className="h-4 w-4" />
+                    Start Eligibility Screener
+                  </Button>
+                </div>
               </div>
-              
-              <div>
-                <h3 className="font-medium mb-3">Complete Eligibility Screener</h3>
-                <p className="text-sm text-muted-foreground mb-4">
-                  Answer a few questions to find more programs you may qualify for
-                </p>
-                <Button variant="outline" className="w-full gap-2">
-                  <PlusCircle className="h-4 w-4" />
-                  Start Eligibility Screener
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+      
+      <div className="grid grid-cols-1 gap-6">
+        <RecentActivity activities={activities} />
       </div>
     </div>
   );
