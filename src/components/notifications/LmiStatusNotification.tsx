@@ -33,6 +33,17 @@ const LmiStatusNotification = ({
   onSave,
   onContinue
 }: LmiStatusNotificationProps) => {
+  // Create wrapper for onContinue to prevent default behavior
+  const handleContinue = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (onContinue) {
+      console.log("Continue button clicked in LmiStatusNotification");
+      onContinue();
+    }
+  };
+  
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <Card className="max-w-2xl w-full bg-white shadow-xl relative overflow-hidden">
@@ -135,7 +146,7 @@ const LmiStatusNotification = ({
             {onContinue && (
               <Button 
                 variant={isApproved ? 'success' : 'destructive'}
-                onClick={onContinue}
+                onClick={handleContinue}
                 className="w-full mt-2"
               >
                 Continue

@@ -45,7 +45,8 @@ const PropertyCheckerContent: React.FC = () => {
       return;
     }
     console.log("Continue button clicked, changing to screener mode");
-    // First change to screener mode
+    
+    // First transition to screener mode
     showScreener();
     
     // Don't reset search data here since we need it for the screener
@@ -94,7 +95,7 @@ const PropertyCheckerContent: React.FC = () => {
         />
       )}
 
-      {displayMode === 'screener' && (currentData || lmiStatus) && (
+      {displayMode === 'screener' && (
         <EligibilityScreener
           address={(currentData || lmiStatus)?.address || ''}
           onComplete={handleEligibilityComplete}

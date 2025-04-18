@@ -44,10 +44,17 @@ Census Tract: ${data.tract_id || 'Unknown'}`;
     }
   };
 
-  // Ensure we're handling the continue action before closing
+  // Dedicated handler for continue button
   const handleContinue = () => {
-    console.log("Continue pressed in ResultsSection");
+    console.log("Continue pressed in ResultsSection, calling parent onContinue");
+    // Call the parent's onContinue function
     onContinue();
+  };
+
+  // Dedicated handler for save button
+  const handleSaveProperty = () => {
+    console.log("Save pressed in ResultsSection");
+    onSaveProperty();
   };
 
   return (
@@ -57,7 +64,7 @@ Census Tract: ${data.tract_id || 'Unknown'}`;
       tractId={data.tract_id || 'Unknown'}
       onClose={onCloseNotification}
       onShare={handleShare}
-      onSave={onSaveProperty}
+      onSave={handleSaveProperty}
       onContinue={handleContinue}
     />
   );

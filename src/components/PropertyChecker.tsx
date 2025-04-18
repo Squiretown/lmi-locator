@@ -15,7 +15,7 @@ const PropertyChecker: React.FC = () => {
   const { addActivity } = useClientActivity();
   const { saveAddress } = useSavedAddresses();
   const { user } = useAuth();
-  const { displayMode } = usePropertyWorkflow();
+  const { displayMode, resetProcess } = usePropertyWorkflow();
   
   // Destructure the values from the hooks
   const { lmiStatus, isLoading, submitPropertySearch, resetSearch } = searchHook;
@@ -28,7 +28,10 @@ const PropertyChecker: React.FC = () => {
         notification.parentNode.removeChild(notification);
       }
     });
-  }, []);
+    
+    // Also reset the workflow process when component mounts
+    resetProcess();
+  }, [resetProcess]);
 
   const onSubmit = async (values: any) => {
     const result = await submitPropertySearch(values);
@@ -42,8 +45,6 @@ const PropertyChecker: React.FC = () => {
           ? 'This property is in an LMI eligible area'
           : 'This property is not in an LMI eligible area'
       });
-      
-      // Toast notifications managed by usePropertySearch now
       
       if (user) {
         try {
@@ -63,7 +64,7 @@ const PropertyChecker: React.FC = () => {
           isLoading={isLoading}
         />
       )}
-      {(lmiStatus || displayMode !== 'form') && <PropertyCheckerContent />}
+      <PropertyCheckerContent />
     </div>
   );
 };
