@@ -1,7 +1,7 @@
-
 import React from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 export const RecentContactsSection: React.FC = () => {
   return (
@@ -10,8 +10,9 @@ export const RecentContactsSection: React.FC = () => {
         <CardTitle>Recent Contacts</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="space-y-4">
-          {[
+        <ScrollArea className="h-[400px] pr-4">
+          <div className="space-y-4">
+            {[
             { name: 'John Smith', type: 'Realtor', date: 'Today' },
             { name: 'John Smith', type: 'First Time Buyer', date: 'Today' },
             { name: 'John Smith', type: 'Realtor', date: 'Yesterday' },
@@ -25,7 +26,8 @@ export const RecentContactsSection: React.FC = () => {
               date={contact.date}
             />
           ))}
-        </div>
+          </div>
+        </ScrollArea>
       </CardContent>
     </Card>
   );

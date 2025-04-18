@@ -1,7 +1,7 @@
-
 import React from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 export const RecentActivitySection: React.FC = () => {
   return (
@@ -10,23 +10,25 @@ export const RecentActivitySection: React.FC = () => {
         <CardTitle>Recent Activity</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="space-y-4">
-          <ActivityItem
-            address="13 DOOLITTLE AVE Y, BRENTWOOD, NY 11717"
-            status="eligible"
-            description="This property is in an LMI eligible area"
-          />
-          <ActivityItem
-            address="23 OAKLAND DRIVE W., RIVERHEAD, NY 11901"
-            status="eligible"
-            description="This property is in an LMI eligible area"
-          />
-          <ActivityItem
-            address="99 SQUIRETOWN RD, HAMPTON BAYS, NY 11946"
-            status="not-eligible"
-            description="This property is not in an LMI eligible area"
-          />
-        </div>
+        <ScrollArea className="h-[400px] pr-4">
+          <div className="space-y-4">
+            <ActivityItem
+              address="13 DOOLITTLE AVE Y, BRENTWOOD, NY 11717"
+              status="eligible"
+              description="This property is in an LMI eligible area"
+            />
+            <ActivityItem
+              address="23 OAKLAND DRIVE W., RIVERHEAD, NY 11901"
+              status="eligible"
+              description="This property is in an LMI eligible area"
+            />
+            <ActivityItem
+              address="99 SQUIRETOWN RD, HAMPTON BAYS, NY 11946"
+              status="not-eligible"
+              description="This property is not in an LMI eligible area"
+            />
+          </div>
+        </ScrollArea>
       </CardContent>
     </Card>
   );
