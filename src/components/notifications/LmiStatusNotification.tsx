@@ -8,7 +8,8 @@ import {
   ArrowRight, 
   CheckCircle, 
   XCircle,
-  Info
+  Info,
+  Mail
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -21,7 +22,6 @@ interface LmiStatusNotificationProps {
   onClose: () => void;
   onShare?: () => void;
   onSave?: () => void;
-  onContinue?: () => void;
 }
 
 const LmiStatusNotification = ({
@@ -30,17 +30,13 @@ const LmiStatusNotification = ({
   tractId,
   onClose,
   onShare,
-  onSave,
-  onContinue
+  onSave
 }: LmiStatusNotificationProps) => {
-  // Create wrapper for onContinue to prevent default behavior
-  const handleContinue = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    
-    if (onContinue) {
-      console.log("Continue button clicked in LmiStatusNotification");
-      onContinue();
+  const handleShare = () => {
+    if (onShare) {
+      const subject = `LMI Property Status: ${address}`;
+      const body = `Property Status Report for ${address}:\n\nCensus Tract: ${tractId}\nLMI Status: ${isApproved ? 'Eligible' : 'Not Eligible'}`;
+      window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
     }
   };
   
@@ -123,36 +119,19 @@ const LmiStatusNotification = ({
 
           {/* Action Buttons */}
           <div className="flex flex-wrap gap-3">
-            <Button variant="outline" onClick={onShare} className="flex-1">
-              <Share2 className="mr-2 h-4 w-4" />
-              Share Results
+            <Button variant="outline" onClick={handleShare} className="flex-1">
+              <Mail className="mr-2 h-4 w-4" />
+              Share via Email
             </Button>
             
             <Button 
-              variant="outline" 
+              variant={isApproved ? 'success' : 'outline'} 
               onClick={onSave} 
               className="flex-1"
             >
-              {isApproved ? (
-                <>
-                  <Save className="mr-2 h-4 w-4" />
-                  Save Report
-                </>
-              ) : (
-                'New LMI Search'
-              )}
+              <Save className="mr-2 h-4 w-4" />
+              Save Property
             </Button>
-            
-            {onContinue && (
-              <Button 
-                variant={isApproved ? 'success' : 'destructive'}
-                onClick={handleContinue}
-                className="w-full mt-2"
-              >
-                Continue
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-            )}
           </div>
         </div>
       </Card>
