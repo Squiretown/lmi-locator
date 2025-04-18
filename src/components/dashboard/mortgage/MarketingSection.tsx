@@ -1,12 +1,9 @@
-
 import React from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
-
 export const MarketingSection: React.FC = () => {
-  return (
-    <div className="space-y-4">
+  return <div className="space-y-4">
       <Card>
         <CardHeader>
           <CardTitle>Create Marketing List</CardTitle>
@@ -24,7 +21,7 @@ export const MarketingSection: React.FC = () => {
 
       <Card>
         <CardHeader>
-          <CardTitle>Create Marketing List</CardTitle>
+          <CardTitle>Invite Contact</CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-sm text-muted-foreground mb-4">
@@ -36,6 +33,5 @@ export const MarketingSection: React.FC = () => {
           </Button>
         </CardContent>
       </Card>
-    </div>
-  );
+    </div>;
 };
