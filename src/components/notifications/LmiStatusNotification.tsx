@@ -22,6 +22,7 @@ interface LmiStatusNotificationProps {
   onClose: () => void;
   onShare?: () => void;
   onSave?: () => void;
+  onContinue?: () => void; // Added optional onContinue prop
 }
 
 const LmiStatusNotification = ({
@@ -30,7 +31,8 @@ const LmiStatusNotification = ({
   tractId,
   onClose,
   onShare,
-  onSave
+  onSave,
+  onContinue
 }: LmiStatusNotificationProps) => {
   const handleShare = () => {
     if (onShare) {

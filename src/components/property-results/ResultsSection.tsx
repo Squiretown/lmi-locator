@@ -6,7 +6,6 @@ import { Share2 } from 'lucide-react';
 
 interface ResultsSectionProps {
   data: CheckLmiStatusResponse;
-  onContinue: () => void;
   onReset: () => void;
   onSaveProperty: () => void;
   onCloseNotification: () => void;
@@ -14,7 +13,6 @@ interface ResultsSectionProps {
 
 const ResultsSection: React.FC<ResultsSectionProps> = ({
   data,
-  onContinue,
   onReset,
   onSaveProperty,
   onCloseNotification
@@ -44,13 +42,6 @@ Census Tract: ${data.tract_id || 'Unknown'}`;
     }
   };
 
-  // Dedicated handler for continue button
-  const handleContinue = () => {
-    console.log("Continue pressed in ResultsSection, calling parent onContinue");
-    // Call the parent's onContinue function
-    onContinue();
-  };
-
   // Dedicated handler for save button
   const handleSaveProperty = () => {
     console.log("Save pressed in ResultsSection");
@@ -65,7 +56,6 @@ Census Tract: ${data.tract_id || 'Unknown'}`;
       onClose={onCloseNotification}
       onShare={handleShare}
       onSave={handleSaveProperty}
-      onContinue={handleContinue}
     />
   );
 };

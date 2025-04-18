@@ -87,11 +87,6 @@ Census Tract: ${data.tractId || 'Unknown'}`;
         onSave: () => {
           console.log('Save clicked');
           handleClose();
-        },
-        onContinue: () => {
-          console.log('Continue clicked');
-          // We don't call handleClose() here as we want the workflow to continue
-          // The component using this will handle it
         }
       })
     );

@@ -30,10 +30,10 @@ const PropertyCheckerContent: React.FC = () => {
     setCurrentData(null);
     resetProcess();
     
-    // Navigate back to the appropriate dashboard based on user type
-    if (user?.type === 'mortgage_professional') {
+    // Navigate back to the appropriate dashboard based on user metadata
+    if (user?.user_metadata?.user_type === 'mortgage_professional') {
       navigate('/mortgage');
-    } else if (user?.type === 'realtor') {
+    } else if (user?.user_metadata?.user_type === 'realtor') {
       navigate('/realtor');
     } else {
       navigate('/client');
