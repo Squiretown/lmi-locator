@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { CheckLmiStatusResponse } from '@/lib/types';
 import { z } from 'zod';
@@ -113,4 +112,3 @@ export function usePropertySearch() {
     submitPropertySearch
   };
 }
-
