@@ -10,6 +10,7 @@ interface LmiStatusNotificationProps {
   isApproved: boolean;
   address: string;
   tractId: string;
+  userType?: string | null;
   onClose: () => void;
   onShare?: () => void;
   onSave?: () => void;
@@ -20,6 +21,7 @@ const LmiStatusNotification = ({
   isApproved,
   address,
   tractId,
+  userType,
   onClose,
   onShare,
   onSave,
@@ -40,7 +42,10 @@ const LmiStatusNotification = ({
             isApproved={isApproved}
           />
 
-          <RoleSpecificContent isApproved={isApproved} />
+          <RoleSpecificContent 
+            isApproved={isApproved} 
+            userType={userType}
+          />
 
           <ActionButtons 
             onShare={onShare}

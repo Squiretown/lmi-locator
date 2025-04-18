@@ -1,17 +1,16 @@
 
 import React from 'react';
 import { Info } from 'lucide-react';
-import { useAuth } from '@/hooks/useAuth';
 
 interface RoleSpecificContentProps {
   isApproved: boolean;
+  userType?: string | null;
 }
 
 export const RoleSpecificContent: React.FC<RoleSpecificContentProps> = ({
-  isApproved
+  isApproved,
+  userType
 }) => {
-  const { userType } = useAuth();
-
   if (!isApproved) {
     return (
       <div className="mb-6 p-4 bg-blue-50 rounded-lg">

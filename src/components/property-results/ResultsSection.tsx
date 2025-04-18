@@ -1,8 +1,10 @@
+
 import React from 'react';
 import { CheckLmiStatusResponse } from '@/lib/types';
 import LmiStatusNotification from '@/components/notifications/LmiStatusNotification';
 import { Share2 } from 'lucide-react';
 import { useRoleSpecificNotifications } from '@/hooks/useRoleSpecificNotifications';
+import { useAuth } from '@/hooks/useAuth';
 
 interface ResultsSectionProps {
   data: CheckLmiStatusResponse;
@@ -18,6 +20,8 @@ const ResultsSection: React.FC<ResultsSectionProps> = ({
   onCloseNotification
 }) => {
   const { createLmiNotification } = useRoleSpecificNotifications();
+  const { user } = useAuth();
+  const userType = user?.user_metadata?.user_type;
 
   const handleShare = async () => {
     const shareText = `Property LMI Status Check Results:
@@ -53,6 +57,7 @@ Census Tract: ${data.tract_id || 'Unknown'}`;
       isApproved={data.is_approved}
       address={data.address}
       tractId={data.tract_id || 'Unknown'}
+      userType={userType}
       onClose={onCloseNotification}
       onShare={handleShare}
       onSave={handleSaveProperty}
