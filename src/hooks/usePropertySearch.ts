@@ -101,8 +101,6 @@ export function usePropertySearch() {
         );
       }
 
-      // Set a timer to reset the search after notification is auto-closed
-      setTimeout(resetSearch, 5000);
       return lmiResponse;
     } catch (error) {
       console.error("Error checking property status:", error);
@@ -124,3 +122,4 @@ export function usePropertySearch() {
     resetSearch
   };
 }
+

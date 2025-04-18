@@ -12,9 +12,8 @@ export const showNotification = (options: {
     tractId?: string;
     isApproved?: boolean;
   };
-  duration?: number;
 }) => {
-  const { duration = 5000, data } = options;
+  const { data } = options;
   
   // Remove any existing notifications
   const existingNotifications = document.querySelectorAll('.notification-overlay');
@@ -36,7 +35,6 @@ export const showNotification = (options: {
   
   // Render the notification component
   if (data?.address) {
-    // Using createElement instead of JSX to avoid TypeScript errors in .ts file
     root.render(
       React.createElement(LmiStatusNotification, {
         isApproved: data.isApproved || false,
@@ -48,11 +46,6 @@ export const showNotification = (options: {
         onContinue: () => console.log('Continue clicked')
       })
     );
-  }
-  
-  // Auto-remove after duration
-  if (duration > 0) {
-    setTimeout(handleClose, duration);
   }
   
   return {
@@ -72,3 +65,4 @@ export const useSimpleNotification = () => {
       showNotification({ type: 'warning', title, message, data }),
   };
 };
+
