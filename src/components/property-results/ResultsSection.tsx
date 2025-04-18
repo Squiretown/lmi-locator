@@ -8,7 +8,7 @@ interface ResultsSectionProps {
   onContinue: () => void;
   onReset: () => void;
   onSaveProperty: () => void;
-  onCloseNotification: () => void; // Add this prop
+  onCloseNotification: () => void;
 }
 
 const ResultsSection: React.FC<ResultsSectionProps> = ({
@@ -16,14 +16,14 @@ const ResultsSection: React.FC<ResultsSectionProps> = ({
   onContinue,
   onReset,
   onSaveProperty,
-  onCloseNotification // Add to destructuring
+  onCloseNotification
 }) => {
   return (
     <LmiStatusNotification 
       isApproved={data.is_approved}
       address={data.address}
       tractId={data.tract_id || 'Unknown'}
-      onClose={onCloseNotification} // Use the new handler
+      onClose={onCloseNotification}
       onShare={() => console.log('Share clicked')}
       onSave={onSaveProperty}
       onContinue={onContinue}
@@ -32,4 +32,3 @@ const ResultsSection: React.FC<ResultsSectionProps> = ({
 };
 
 export default ResultsSection;
-

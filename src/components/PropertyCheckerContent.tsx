@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { CheckLmiStatusResponse } from '@/lib/types';
 import { usePropertyWorkflow } from '@/hooks/usePropertyWorkflow';
@@ -11,7 +10,7 @@ const PropertyCheckerContent: React.FC = () => {
   const [currentData, setCurrentData] = useState<CheckLmiStatusResponse | null>(null);
   const { saveAddress } = useSavedAddresses();
   const [error, setError] = useState<string | null>(null);
-  const { lmiStatus, resetSearch } = usePropertySearch(); // Add resetSearch
+  const { lmiStatus, resetSearch } = usePropertySearch();
 
   useEffect(() => {
     if (lmiStatus) {
@@ -85,7 +84,7 @@ const PropertyCheckerContent: React.FC = () => {
           onContinue={handleContinue}
           onReset={handleReset}
           onSaveProperty={handleSaveProperty}
-          onCloseNotification={handleCloseNotification} // Pass close handler
+          onCloseNotification={handleCloseNotification}
         />
       )}
     </div>
@@ -93,4 +92,3 @@ const PropertyCheckerContent: React.FC = () => {
 };
 
 export default PropertyCheckerContent;
-
