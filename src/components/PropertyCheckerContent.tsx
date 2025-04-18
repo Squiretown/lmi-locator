@@ -11,7 +11,7 @@ const PropertyCheckerContent: React.FC = () => {
   const [currentData, setCurrentData] = useState<CheckLmiStatusResponse | null>(null);
   const { saveAddress } = useSavedAddresses();
   const [error, setError] = useState<string | null>(null);
-  const { lmiStatus } = usePropertySearch();
+  const { lmiStatus, resetSearch } = usePropertySearch(); // Add resetSearch
 
   useEffect(() => {
     if (lmiStatus) {
@@ -27,9 +27,11 @@ const PropertyCheckerContent: React.FC = () => {
     setError(null);
   };
 
-  const handleError = (message: string) => {
-    setError(message);
-    // Don't change step when there's an error
+  const handleCloseNotification = () => {
+    // Reset the entire search process
+    resetSearch(); // Reset the search status
+    setCurrentData(null); // Clear current data
+    resetProcess(); // Reset the workflow process
   };
 
   const handleContinue = () => {
@@ -73,7 +75,6 @@ const PropertyCheckerContent: React.FC = () => {
     <div className="w-full max-w-4xl mx-auto">
       {displayMode === 'form' && (
         <div>
-          {/* Form will be rendered by PropertyChecker.tsx */}
           {error && <div className="text-red-500 mb-4">{error}</div>}
         </div>
       )}
@@ -84,12 +85,12 @@ const PropertyCheckerContent: React.FC = () => {
           onContinue={handleContinue}
           onReset={handleReset}
           onSaveProperty={handleSaveProperty}
+          onCloseNotification={handleCloseNotification} // Pass close handler
         />
       )}
-
-      {/* Other steps will be added here */}
     </div>
   );
 };
 
 export default PropertyCheckerContent;
+
