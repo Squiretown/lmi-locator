@@ -33,6 +33,33 @@ export const showNotification = (options: {
     document.body.removeChild(container);
   };
   
+  // Handle share button click
+  const handleShare = async () => {
+    if (!data?.address) return;
+    
+    const shareText = `Property LMI Status Check Results:
+Address: ${data.address}
+Status: ${data.isApproved ? 'LMI Eligible' : 'Not in LMI Area'}
+Census Tract: ${data.tractId || 'Unknown'}`;
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: 'LMI Property Check Results',
+          text: shareText
+        });
+      } catch (err) {
+        // Fallback to copy to clipboard if share fails or is cancelled
+        await navigator.clipboard.writeText(shareText);
+        alert('Results copied to clipboard');
+      }
+    } else {
+      // Fallback for browsers that don't support sharing
+      await navigator.clipboard.writeText(shareText);
+      alert('Results copied to clipboard');
+    }
+  };
+  
   // Render the notification component
   if (data?.address) {
     root.render(
@@ -41,9 +68,15 @@ export const showNotification = (options: {
         address: data.address,
         tractId: data.tractId || 'Unknown',
         onClose: handleClose,
-        onShare: () => console.log('Share clicked'),
-        onSave: () => console.log('Save clicked'),
-        onContinue: () => console.log('Continue clicked')
+        onShare: handleShare,
+        onSave: () => {
+          console.log('Save clicked');
+          handleClose();
+        },
+        onContinue: () => {
+          console.log('Continue clicked');
+          handleClose();
+        }
       })
     );
   }
@@ -65,4 +98,3 @@ export const useSimpleNotification = () => {
       showNotification({ type: 'warning', title, message, data }),
   };
 };
-

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { CheckLmiStatusResponse } from '@/lib/types';
 import { usePropertyWorkflow } from '@/hooks/usePropertyWorkflow';
@@ -27,6 +28,7 @@ const PropertyCheckerContent: React.FC = () => {
   };
 
   const handleCloseNotification = () => {
+    console.log("Closing notification and resetting search");
     resetSearch();
     setCurrentData(null);
     resetProcess();

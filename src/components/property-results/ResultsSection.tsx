@@ -31,13 +31,16 @@ Census Tract: ${data.tract_id || 'Unknown'}`;
           title: 'LMI Property Check Results',
           text: shareText
         });
+        console.log('Content shared successfully');
       } catch (err) {
         // Fallback to copy to clipboard if share fails or is cancelled
         await navigator.clipboard.writeText(shareText);
+        alert('Results copied to clipboard');
       }
     } else {
       // Fallback for browsers that don't support sharing
       await navigator.clipboard.writeText(shareText);
+      alert('Results copied to clipboard');
     }
   };
 
