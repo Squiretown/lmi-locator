@@ -32,16 +32,20 @@ export const useBackendNotification = () => {
     
     const handleClose = () => {
       console.log("Closing notification in useBackendNotification");
+      
+      // First unmount and remove the component
       root.unmount();
       if (document.body.contains(container)) {
         document.body.removeChild(container);
       }
       
-      // Always call the onReset function when closing if provided
-      if (onReset && typeof onReset === 'function') {
-        console.log("Executing onReset callback when closing notification");
-        onReset();
-      }
+      // Only call the onReset function when closing if provided
+      setTimeout(() => {
+        if (onReset && typeof onReset === 'function') {
+          console.log("Executing onReset callback when closing notification");
+          onReset();
+        }
+      }, 0);
     };
     
     root.render(

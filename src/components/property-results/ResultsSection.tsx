@@ -44,6 +44,12 @@ Census Tract: ${data.tract_id || 'Unknown'}`;
     }
   };
 
+  // Ensure we're handling the continue action before closing
+  const handleContinue = () => {
+    console.log("Continue pressed in ResultsSection");
+    onContinue();
+  };
+
   return (
     <LmiStatusNotification 
       isApproved={data.is_approved}
@@ -52,7 +58,7 @@ Census Tract: ${data.tract_id || 'Unknown'}`;
       onClose={onCloseNotification}
       onShare={handleShare}
       onSave={onSaveProperty}
-      onContinue={onContinue}
+      onContinue={handleContinue}
     />
   );
 };

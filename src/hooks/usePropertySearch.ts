@@ -80,6 +80,8 @@ export function usePropertySearch() {
       
       setLmiStatus(lmiResponse);
 
+      // Pass null as the onClose callback for notifications triggered from search
+      // This prevents the resetSearch from being called when the user wants to continue
       if (lmiResponse.is_approved) {
         notification.success(
           'APPROVED - LMI ELIGIBLE AREA',
@@ -89,7 +91,7 @@ export function usePropertySearch() {
             tractId: lmiResponse.tract_id,
             isApproved: true
           },
-          resetSearch // Pass the reset function to be called when notification closes
+          null // Don't reset on notification close
         );
       } else {
         notification.error(
@@ -100,7 +102,7 @@ export function usePropertySearch() {
             tractId: lmiResponse.tract_id,
             isApproved: false
           },
-          resetSearch // Pass the reset function to be called when notification closes
+          null // Don't reset on notification close
         );
       }
 
@@ -111,7 +113,7 @@ export function usePropertySearch() {
         'Search Failed',
         error instanceof Error ? error.message : "Unable to check property status",
         undefined,
-        resetSearch // Pass the reset function to be called when notification closes
+        resetSearch // Only reset on error
       );
       resetSearch();
       return null;

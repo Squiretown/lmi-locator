@@ -45,7 +45,11 @@ const PropertyCheckerContent: React.FC = () => {
       return;
     }
     console.log("Continue button clicked, changing to screener mode");
+    // First change to screener mode
     showScreener();
+    
+    // Don't reset search data here since we need it for the screener
+    // This was causing the problem - resetSearch() being called too early
   };
 
   const handleSaveProperty = () => {

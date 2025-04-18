@@ -33,15 +33,19 @@ export const showNotification = (options: {
   
   const handleClose = () => {
     console.log("Closing notification from useSimpleNotification");
+    
+    // First unmount and remove the component
     root.unmount();
     if (document.body.contains(container)) {
       document.body.removeChild(container);
     }
     
-    // Call the onClose callback if provided
-    if (onClose && typeof onClose === 'function') {
-      onClose();
-    }
+    // Only call the onClose callback after component is unmounted
+    setTimeout(() => {
+      if (onClose && typeof onClose === 'function') {
+        onClose();
+      }
+    }, 0);
   };
   
   // Handle share button click
@@ -86,7 +90,8 @@ Census Tract: ${data.tractId || 'Unknown'}`;
         },
         onContinue: () => {
           console.log('Continue clicked');
-          handleClose();
+          // We don't call handleClose() here as we want the workflow to continue
+          // The component using this will handle it
         }
       })
     );
