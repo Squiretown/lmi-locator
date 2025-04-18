@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { CheckLmiStatusResponse } from '@/lib/types';
 import { z } from 'zod';
@@ -18,6 +19,11 @@ export function usePropertySearch() {
   const [lmiStatus, setLmiStatus] = useState<CheckLmiStatusResponse | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const notification = useSimpleNotification();
+
+  const resetSearch = () => {
+    setLmiStatus(null);
+    setIsLoading(false);
+  };
 
   const submitPropertySearch = async (values: FormValues) => {
     setIsLoading(true);
@@ -95,6 +101,8 @@ export function usePropertySearch() {
         );
       }
 
+      // Set a timer to reset the search after notification is auto-closed
+      setTimeout(resetSearch, 5000);
       return lmiResponse;
     } catch (error) {
       console.error("Error checking property status:", error);
@@ -102,6 +110,7 @@ export function usePropertySearch() {
         'Search Failed',
         error instanceof Error ? error.message : "Unable to check property status"
       );
+      resetSearch();
       return null;
     } finally {
       setIsLoading(false);
@@ -111,6 +120,7 @@ export function usePropertySearch() {
   return {
     lmiStatus,
     isLoading,
-    submitPropertySearch
+    submitPropertySearch,
+    resetSearch
   };
 }
