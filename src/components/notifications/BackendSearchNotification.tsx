@@ -37,7 +37,7 @@ const BackendSearchNotification = ({
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <Card className="max-w-2xl w-full bg-white shadow-xl relative overflow-hidden">
-        <div className={`p-6 ${isApproved ? 'bg-blue-600' : 'bg-orange-600'} text-white`}>
+        <div className={`p-6 ${isApproved ? 'bg-emerald-600' : 'bg-amber-600'} text-white`}>
           <button 
             onClick={onClose}
             className="absolute top-4 right-4 text-white/80 hover:text-white"
@@ -74,7 +74,7 @@ const BackendSearchNotification = ({
                   Census Tract: {tractId}
                 </Badge>
                 <Badge 
-                  variant={isApproved ? 'default' : 'secondary'}
+                  variant={isApproved ? 'success' : 'warning'}
                   className="text-xs"
                 >
                   {isApproved ? 'Verified LMI Area' : 'Verification Required'}
@@ -106,7 +106,7 @@ const BackendSearchNotification = ({
               
               {onSave && (
                 <Button 
-                  variant={isApproved ? 'default' : 'secondary'}
+                  variant={isApproved ? 'success' : 'warning'}
                   onClick={onSave}
                   className="w-full mt-2"
                 >

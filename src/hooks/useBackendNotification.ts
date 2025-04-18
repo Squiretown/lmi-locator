@@ -11,8 +11,9 @@ export const useBackendNotification = () => {
     onExport?: () => void;
     onFlag?: () => void;
     onSave?: () => void;
+    onReset?: () => void;
   }) => {
-    const { address, tractId, isApproved, onExport, onFlag, onSave } = options;
+    const { address, tractId, isApproved, onExport, onFlag, onSave, onReset } = options;
     
     // Remove any existing notifications
     const existingNotifications = document.querySelectorAll('.notification-overlay');
@@ -30,6 +31,9 @@ export const useBackendNotification = () => {
     const handleClose = () => {
       root.unmount();
       document.body.removeChild(container);
+      if (onReset) {
+        onReset();
+      }
     };
     
     root.render(
