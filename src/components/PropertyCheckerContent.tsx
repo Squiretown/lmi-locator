@@ -27,10 +27,13 @@ const PropertyCheckerContent: React.FC = () => {
   };
 
   const handleCloseNotification = () => {
-    // Reset the entire search process
-    resetSearch(); // Reset the search status
-    setCurrentData(null); // Clear current data
-    resetProcess(); // Reset the workflow process
+    resetSearch();
+    setCurrentData(null);
+    resetProcess();
+  };
+
+  const handleReset = () => {
+    handleCloseNotification();
   };
 
   const handleContinue = () => {
@@ -38,11 +41,6 @@ const PropertyCheckerContent: React.FC = () => {
       return;
     }
     showScreener();
-  };
-
-  const handleReset = () => {
-    resetProcess();
-    setCurrentData(null);
   };
 
   const handleSaveProperty = () => {
@@ -54,7 +52,6 @@ const PropertyCheckerContent: React.FC = () => {
       );
       
       if (success) {
-        // Create toast manually
         const toastElement = document.createElement('div');
         toastElement.className = 'fixed top-4 right-4 z-50 bg-green-500 text-white p-4 rounded shadow-lg';
         toastElement.innerHTML = `
