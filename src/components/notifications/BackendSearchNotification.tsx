@@ -74,7 +74,7 @@ const BackendSearchNotification = ({
                   Census Tract: {tractId}
                 </Badge>
                 <Badge 
-                  variant={isApproved ? 'success' : 'warning'}
+                  variant={isApproved ? 'success' : 'secondary'}
                   className="text-xs"
                 >
                   {isApproved ? 'Verified LMI Area' : 'Verification Required'}
@@ -106,7 +106,7 @@ const BackendSearchNotification = ({
               
               {onSave && (
                 <Button 
-                  variant={isApproved ? 'success' : 'warning'}
+                  variant={isApproved ? 'success' : 'secondary'}
                   onClick={onSave}
                   className="w-full mt-2"
                 >
