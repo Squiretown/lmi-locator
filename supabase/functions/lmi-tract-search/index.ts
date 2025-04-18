@@ -1,12 +1,10 @@
-
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.21.0";
-import { determineCensusTract } from "./census/tract-lookup.ts";  // Updated path
-import { geocodeAddress } from "./census/address-geocoder.ts";    // Updated path
-import { corsHeaders } from "./cors.ts";                         // Updated path
+import { determineCensusTract } from "./census/tract-lookup.ts";
+import { geocodeAddress } from "./census/address-geocoder.ts";
+import { corsHeaders } from "./cors.ts";
 
 serve(async (req) => {
-  // Handle CORS
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
@@ -24,7 +22,6 @@ serve(async (req) => {
       search_name = 'Untitled Search' 
     } = await req.json();
 
-    // Create a new census tract search record
     const { data: searchRecord, error: searchError } = await supabase
       .from('census_tract_searches')
       .insert({
@@ -39,7 +36,6 @@ serve(async (req) => {
 
     if (searchError) throw searchError;
 
-    // Perform search based on type
     let tractResults: any[] = [];
     switch (search_type) {
       case 'tract_id':
@@ -55,18 +51,20 @@ serve(async (req) => {
         throw new Error('Invalid search type');
     }
 
-    // Update search record
     await supabase
       .from('census_tract_searches')
       .update({
         status: 'completed',
-        result_count: tractResults.length
+        result_count: tractResults.length,
+        notification_type: 'backend_search',
+        processed_at: new Date().toISOString()
       })
       .eq('id', searchRecord.id);
 
     return new Response(JSON.stringify({
       searchId: searchRecord.id,
-      results: tractResults
+      results: tractResults,
+      notificationType: 'backend_search'
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
@@ -81,10 +79,7 @@ serve(async (req) => {
   }
 });
 
-// Helper function to search by tract ID
 async function searchByTractId(supabase: any, tractId: string, searchId: string) {
-  // Implement tract ID search logic
-  // This would query properties within the specified tract
   const { data, error } = await supabase
     .from('properties')
     .select('address, city, state, zip_code')
@@ -93,7 +88,6 @@ async function searchByTractId(supabase: any, tractId: string, searchId: string)
 
   if (error) throw error;
 
-  // Store properties in tract_properties
   const propertyInserts = data.map(prop => ({
     tract_result_id: await createTractResult(supabase, searchId, tractId),
     address: prop.address,
@@ -109,7 +103,6 @@ async function searchByTractId(supabase: any, tractId: string, searchId: string)
   return data;
 }
 
-// Similar helper functions for searchByZipCode and searchByCity
 async function searchByZipCode(supabase: any, zipCode: string, searchId: string) {
   const { data, error } = await supabase
     .from('properties')
@@ -119,10 +112,8 @@ async function searchByZipCode(supabase: any, zipCode: string, searchId: string)
 
   if (error) throw error;
 
-  // Group by unique census tracts
   const uniqueTracts = [...new Set(data.map(prop => prop.census_tract))];
 
-  // For each tract, store properties
   for (const tractId of uniqueTracts) {
     const tractProperties = data.filter(prop => prop.census_tract === tractId);
     const propertyInserts = tractProperties.map(prop => ({
@@ -150,10 +141,8 @@ async function searchByCity(supabase: any, city: string, searchId: string) {
 
   if (error) throw error;
 
-  // Group by unique census tracts
   const uniqueTracts = [...new Set(data.map(prop => prop.census_tract))];
 
-  // For each tract, store properties
   for (const tractId of uniqueTracts) {
     const tractProperties = data.filter(prop => prop.census_tract === tractId);
     const propertyInserts = tractProperties.map(prop => ({
@@ -172,7 +161,6 @@ async function searchByCity(supabase: any, city: string, searchId: string) {
   return data;
 }
 
-// Helper to create tract result record
 async function createTractResult(supabase: any, searchId: string, tractId: string) {
   const { data, error } = await supabase
     .from('census_tract_results')
