@@ -1,9 +1,8 @@
-
 import React, { useState, useEffect } from 'react';
 import { CheckLmiStatusResponse } from '@/lib/types';
 import { usePropertyWorkflow } from '@/hooks/usePropertyWorkflow';
 import ResultsSection from './property-results/ResultsSection';
-import { toast } from 'sonner';
+import { toast } from '@/hooks/use-toast';
 import { useSavedAddresses } from '@/hooks/useSavedAddresses';
 import { usePropertySearch } from '@/hooks/usePropertySearch';
 
@@ -14,7 +13,6 @@ const PropertyCheckerContent: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const { lmiStatus } = usePropertySearch();
 
-  // Use lmiStatus from usePropertySearch if available
   useEffect(() => {
     if (lmiStatus) {
       console.log("Setting current data from lmiStatus:", lmiStatus);
@@ -49,14 +47,16 @@ const PropertyCheckerContent: React.FC = () => {
   const handleSaveProperty = () => {
     if (currentData || lmiStatus) {
       const dataToSave = currentData || lmiStatus;
-      // Save the property using the useSavedAddresses hook, passing the LMI eligibility status
       const success = saveAddress(
         dataToSave.address || 'Unknown address', 
         dataToSave.is_approved === true
       );
       
       if (success) {
-        toast.success('Property saved successfully!');
+        toast.success({
+          title: "Property Saved",
+          description: "Property has been added to your saved properties."
+        });
       }
     }
   };

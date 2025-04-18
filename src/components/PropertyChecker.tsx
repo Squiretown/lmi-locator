@@ -1,10 +1,9 @@
-
 import React from 'react';
 import { usePropertySearch } from '@/hooks/usePropertySearch';
 import PropertyCheckerContent from './PropertyCheckerContent';
 import { useClientActivity } from '@/hooks/useClientActivity';
 import { useSavedAddresses } from '@/hooks/useSavedAddresses';
-import { toast } from 'sonner';
+import { toast } from '@/hooks/use-toast';
 import { saveSearch } from '@/lib/supabase/search';
 import { useAuth } from '@/hooks/useAuth';
 import PropertySearchCard from './property-form/PropertySearchCard';
@@ -19,11 +18,9 @@ const PropertyChecker: React.FC = () => {
   // Destructure the values from the hooks
   const { lmiStatus, isLoading, submitPropertySearch } = searchHook;
 
-  // Handle form submission
   const onSubmit = async (values: any) => {
     const result = await submitPropertySearch(values);
     if (result) {
-      // We only need to add activity when a new search is performed
       addActivity({
         type: 'search',
         timestamp: new Date().toISOString(),
@@ -34,7 +31,19 @@ const PropertyChecker: React.FC = () => {
           : 'This property is not in an LMI eligible area'
       });
       
-      // Save search to database if user is logged in
+      // Update notification with new toast system
+      if (result.is_approved) {
+        toast.success({
+          title: "LMI Eligible Property",
+          description: "This property is located in a Low to Moderate Income area.",
+        });
+      } else {
+        toast.error({
+          title: "Not LMI Eligible",
+          description: "This property is not in an LMI eligible area.",
+        });
+      }
+      
       if (user) {
         try {
           await saveSearch(result.address, result, user.id);

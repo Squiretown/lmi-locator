@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { CheckLmiStatusResponse } from '@/lib/types';
@@ -22,7 +21,6 @@ export function usePropertySearch() {
   const submitPropertySearch = async (values: FormValues) => {
     setIsLoading(true);
     try {
-      // Detailed logging of input values
       console.log('Search Input Values:', {
         address: values.address,
         city: values.city,
@@ -39,10 +37,14 @@ export function usePropertySearch() {
       console.log('Full Result Object:', JSON.stringify(result, null, 2));
       
       if (result.status === "error") {
+        toast.error({
+          title: "Search Error",
+          description: result.message || "Failed to check property status"
+        });
         throw new Error(result.message || "Failed to check property status");
       }
       
-      // Log each property of the result to see what might be undefined
+      // Log each property of the result
       console.log('Result Properties:', {
         is_approved: result.is_approved,
         address: result.address,
@@ -73,25 +75,13 @@ export function usePropertySearch() {
       console.log('Processed LMI Response:', JSON.stringify(lmiResponse, null, 2));
       
       setLmiStatus(lmiResponse);
-      
-      if (result.is_approved) {
-        toast.success('Property is LMI Eligible', {
-          description: 'This property is located in a Low to Moderate Income area.'
-        });
-      } else {
-        toast.error('Not LMI Eligible', {
-          description: 'This property is not in an LMI eligible area.'
-        });
-      }
-      
       return lmiResponse;
     } catch (error) {
       console.error("Error checking property status:", error);
-      
-      toast.error('Search Failed', {
+      toast.error({
+        title: "Search Failed",
         description: error instanceof Error ? error.message : "Unable to check property status"
       });
-      
       return null;
     } finally {
       setIsLoading(false);
