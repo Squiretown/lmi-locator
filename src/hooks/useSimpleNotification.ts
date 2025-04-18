@@ -36,16 +36,17 @@ export const showNotification = (options: {
   
   // Render the notification component
   if (data?.address) {
+    // Using createElement instead of JSX to avoid TypeScript errors in .ts file
     root.render(
-      <LmiStatusNotification
-        isApproved={data.isApproved || false}
-        address={data.address}
-        tractId={data.tractId || 'Unknown'}
-        onClose={handleClose}
-        onShare={() => console.log('Share clicked')}
-        onSave={() => console.log('Save clicked')}
-        onContinue={() => console.log('Continue clicked')}
-      />
+      React.createElement(LmiStatusNotification, {
+        isApproved: data.isApproved || false,
+        address: data.address,
+        tractId: data.tractId || 'Unknown',
+        onClose: handleClose,
+        onShare: () => console.log('Share clicked'),
+        onSave: () => console.log('Save clicked'),
+        onContinue: () => console.log('Continue clicked')
+      })
     );
   }
   
