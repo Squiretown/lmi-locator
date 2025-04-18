@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { 
   MapPin, 
@@ -37,6 +36,7 @@ const BackendSearchNotification = ({
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <Card className="max-w-2xl w-full bg-white shadow-xl relative overflow-hidden">
+        {/* Status Header */}
         <div className={`p-6 ${isApproved ? 'bg-emerald-600' : 'bg-amber-600'} text-white`}>
           <button 
             onClick={onClose}
@@ -58,6 +58,7 @@ const BackendSearchNotification = ({
         </div>
 
         <div className="p-6">
+          {/* Address Section */}
           <div className="flex items-start gap-4 mb-6">
             <div className="w-32 h-32 bg-gray-100 rounded-lg flex items-center justify-center">
               <MapPin className="h-8 w-8 text-gray-400" />
@@ -111,7 +112,7 @@ const BackendSearchNotification = ({
                   className="w-full mt-2"
                 >
                   <Save className="mr-2 h-4 w-4" />
-                  {isApproved ? 'Add to Marketing List' : 'Save for Later Review'}
+                  Save Feature
                 </Button>
               )}
             </div>
