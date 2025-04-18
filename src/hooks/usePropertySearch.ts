@@ -1,8 +1,9 @@
+
 import { useState } from 'react';
-import { toast } from 'sonner';
 import { CheckLmiStatusResponse } from '@/lib/types';
 import { z } from 'zod';
 import { checkDirectLmiStatus } from '@/lib/api/lmi';
+import { toast } from '@/hooks/use-toast';
 
 // Define the form schema for address search
 export const formSchema = z.object({
