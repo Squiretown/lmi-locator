@@ -10,3 +10,8 @@ export * from './LmiSearchTab';
 export * from './PendingApplications';
 export * from './ActiveApplications';
 export * from './CompletedApplications';
+export * from './DashboardStats';
+export * from './PropertyCheckSection';
+export * from './MarketingSection';
+export * from './RecentActivitySection';
+export * from './RecentContactsSection';
