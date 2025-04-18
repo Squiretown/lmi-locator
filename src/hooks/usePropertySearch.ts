@@ -1,8 +1,8 @@
-
 import { useState } from 'react';
 import { CheckLmiStatusResponse } from '@/lib/types';
 import { z } from 'zod';
 import { checkDirectLmiStatus } from '@/lib/api/lmi';
+import { useSimpleNotification } from '@/hooks/useSimpleNotification';
 
 // Define the form schema for address search
 export const formSchema = z.object({
@@ -17,6 +17,7 @@ type FormValues = z.infer<typeof formSchema>;
 export function usePropertySearch() {
   const [lmiStatus, setLmiStatus] = useState<CheckLmiStatusResponse | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const notification = useSimpleNotification();
 
   const submitPropertySearch = async (values: FormValues) => {
     setIsLoading(true);
@@ -73,11 +74,27 @@ export function usePropertySearch() {
       console.log('Processed LMI Response:', JSON.stringify(lmiResponse, null, 2));
       
       setLmiStatus(lmiResponse);
+
+      // Enhanced notification with approval status, address, and tract info
+      if (lmiResponse.is_approved) {
+        notification.success(
+          'APPROVED - LMI Eligible Area',
+          `Address: ${lmiResponse.address}\nCensus Tract: ${lmiResponse.tract_id || 'Unknown'}`
+        );
+      } else {
+        notification.error(
+          'NOT APPROVED - Not in LMI Area',
+          `Address: ${lmiResponse.address}\nCensus Tract: ${lmiResponse.tract_id || 'Unknown'}`
+        );
+      }
+
       return lmiResponse;
     } catch (error) {
       console.error("Error checking property status:", error);
-      // Show error alert without toast
-      console.error('Search Failed:', error instanceof Error ? error.message : "Unable to check property status");
+      notification.error(
+        'Search Failed',
+        error instanceof Error ? error.message : "Unable to check property status"
+      );
       return null;
     } finally {
       setIsLoading(false);
