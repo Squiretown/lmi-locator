@@ -36,13 +36,21 @@ const BackendSearchNotification = ({
   onSave,
   isBackendNotification = true
 }: BackendSearchNotificationProps) => {
+  // Function to handle the close button click
+  const handleClose = () => {
+    console.log("Close button clicked in notification");
+    if (onClose) {
+      onClose();
+    }
+  };
+
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <Card className="max-w-2xl w-full bg-white shadow-xl relative overflow-hidden">
         {/* Status Header */}
         <div className={`p-6 ${isApproved ? 'bg-emerald-600' : 'bg-amber-600'} text-white`}>
           <button 
-            onClick={onClose}
+            onClick={handleClose}
             className="absolute top-4 right-4 text-white/80 hover:text-white"
           >
             <X className="h-6 w-6" />

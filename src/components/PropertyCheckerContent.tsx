@@ -35,6 +35,7 @@ const PropertyCheckerContent: React.FC = () => {
   };
 
   const handleReset = () => {
+    console.log("Reset called in PropertyCheckerContent");
     handleCloseNotification();
   };
 

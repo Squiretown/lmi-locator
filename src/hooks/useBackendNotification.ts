@@ -18,7 +18,9 @@ export const useBackendNotification = () => {
     // Remove any existing notifications
     const existingNotifications = document.querySelectorAll('.notification-overlay');
     existingNotifications.forEach(notification => {
-      document.body.removeChild(notification);
+      if (notification.parentNode) {
+        notification.parentNode.removeChild(notification);
+      }
     });
     
     // Create container
@@ -30,8 +32,13 @@ export const useBackendNotification = () => {
     
     const handleClose = () => {
       root.unmount();
-      document.body.removeChild(container);
-      if (onReset) {
+      if (document.body.contains(container)) {
+        document.body.removeChild(container);
+      }
+      
+      // Always call the onReset function when closing if provided
+      if (onReset && typeof onReset === 'function') {
+        console.log("Executing onReset callback when closing notification");
         onReset();
       }
     };
@@ -44,7 +51,8 @@ export const useBackendNotification = () => {
         onClose: handleClose,
         onExport,
         onFlag,
-        onSave
+        onSave,
+        isBackendNotification: true
       })
     );
     
