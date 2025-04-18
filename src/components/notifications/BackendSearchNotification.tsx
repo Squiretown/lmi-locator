@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { 
   MapPin, 
@@ -22,6 +23,7 @@ interface BackendSearchNotificationProps {
   onExport?: () => void;
   onFlag?: () => void;
   onSave?: () => void;
+  isBackendNotification?: boolean;
 }
 
 const BackendSearchNotification = ({
@@ -31,7 +33,8 @@ const BackendSearchNotification = ({
   onClose,
   onExport,
   onFlag,
-  onSave
+  onSave,
+  isBackendNotification = true
 }: BackendSearchNotificationProps) => {
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
@@ -111,8 +114,17 @@ const BackendSearchNotification = ({
                   onClick={onSave}
                   className="w-full mt-2"
                 >
-                  <Save className="mr-2 h-4 w-4" />
-                  Save Feature
+                  {isBackendNotification ? (
+                    <>
+                      <Save className="mr-2 h-4 w-4" />
+                      Save Feature
+                    </>
+                  ) : (
+                    <>
+                      <ArrowRight className="mr-2 h-4 w-4" />
+                      Continue
+                    </>
+                  )}
                 </Button>
               )}
             </div>
