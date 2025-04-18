@@ -4,100 +4,178 @@ import { reducer, toastTimeouts } from "./toast/reducer"
 import { actionTypes, genId } from "./toast/actions"
 import { ToasterToast, ToastOptions, TOAST_REMOVE_DELAY } from "./toast/types"
 
+// Create a React context for the toast
+const ToastContext = React.createContext<{
+  toast: (props: Omit<ToasterToast, "id">) => string;
+  update: (props: ToasterToast) => void;
+  dismiss: (toastId?: string) => void;
+  toasts: ToasterToast[];
+}>({
+  toast: () => "",
+  update: () => {},
+  dismiss: () => {},
+  toasts: [],
+});
+
 export function useToast() {
-  const [state, dispatch] = React.useReducer(reducer, {
-    toasts: [],
-  })
+  const context = React.useContext(ToastContext);
+  if (!context) {
+    const [state, dispatch] = React.useReducer(reducer, {
+      toasts: [],
+    });
 
-  React.useEffect(() => {
-    state.toasts.forEach((toast) => {
-      if (toast.open) return
+    React.useEffect(() => {
+      state.toasts.forEach((toast) => {
+        if (toast.open) return;
 
-      const timeoutId = setTimeout(() => {
-        dispatch({
-          type: "REMOVE_TOAST",
-          toastId: toast.id,
-        })
-      }, TOAST_REMOVE_DELAY)
+        const timeoutId = setTimeout(() => {
+          dispatch({
+            type: "REMOVE_TOAST",
+            toastId: toast.id,
+          });
+        }, TOAST_REMOVE_DELAY);
 
-      toastTimeouts.set(toast.id, timeoutId)
-    })
-  }, [state.toasts])
+        toastTimeouts.set(toast.id, timeoutId);
+      });
+    }, [state.toasts]);
 
-  const toast = React.useCallback(({ ...props }: Omit<ToasterToast, "id">) => {
-    const id = genId()
+    const toast = React.useCallback(({ ...props }: Omit<ToasterToast, "id">) => {
+      const id = genId();
 
-    dispatch({
-      type: "ADD_TOAST",
-      toast: {
-        ...props,
-        id,
-        open: true,
-      },
-    })
-
-    return id
-  }, [])
-
-  const update = React.useCallback(
-    (props: ToasterToast) => {
       dispatch({
-        type: "UPDATE_TOAST",
-        toast: props,
-      })
-    },
-    []
-  )
+        type: "ADD_TOAST",
+        toast: {
+          ...props,
+          id,
+          open: true,
+        },
+      });
 
-  const dismiss = React.useCallback((toastId?: string) => {
-    dispatch({
-      type: "DISMISS_TOAST",
-      toastId,
-    })
-  }, [])
+      return id;
+    }, []);
 
-  return {
-    toasts: state.toasts,
-    toast,
-    dismiss,
-    update,
+    const update = React.useCallback(
+      (props: ToasterToast) => {
+        dispatch({
+          type: "UPDATE_TOAST",
+          toast: props,
+        });
+      },
+      []
+    );
+
+    const dismiss = React.useCallback((toastId?: string) => {
+      dispatch({
+        type: "DISMISS_TOAST",
+        toastId,
+      });
+    }, []);
+
+    return {
+      toasts: state.toasts,
+      toast,
+      dismiss,
+      update,
+    };
   }
+  
+  return context;
 }
 
+// Create a global toast helper that doesn't rely on require
 export const toast = {
   success: (opts: ToastOptions) => {
-    const { useToast: useToastHook } = require('@/hooks/use-toast')
-    const { toast } = useToastHook()
-    return toast({
-      ...opts,
-      variant: 'default',
-      className: 'bg-green-500 text-white border-green-600',
-    })
+    // Use a function that can be safely called in a browser environment
+    const ui = document.getElementById('toast-container');
+    if (!ui) {
+      console.warn('Toast container not found; toast may not be visible');
+    }
+    
+    // Create a temporary element to show the toast
+    const toastElement = document.createElement('div');
+    toastElement.className = 'fixed top-4 right-4 z-50 bg-green-500 text-white p-4 rounded shadow-lg';
+    toastElement.textContent = opts.title ? opts.title.toString() : '';
+    
+    if (opts.description) {
+      const description = document.createElement('div');
+      description.className = 'text-sm mt-1';
+      description.textContent = opts.description.toString();
+      toastElement.appendChild(description);
+    }
+    
+    document.body.appendChild(toastElement);
+    
+    // Remove after 5 seconds
+    setTimeout(() => {
+      toastElement.remove();
+    }, 5000);
+    
+    return '1'; // Return dummy ID
   },
+  
   error: (opts: ToastOptions) => {
-    const { useToast: useToastHook } = require('@/hooks/use-toast')
-    const { toast } = useToastHook()
-    return toast({
-      ...opts,
-      variant: 'destructive',
-    })
+    // Similar implementation for error toast
+    const toastElement = document.createElement('div');
+    toastElement.className = 'fixed top-4 right-4 z-50 bg-red-500 text-white p-4 rounded shadow-lg';
+    toastElement.textContent = opts.title ? opts.title.toString() : '';
+    
+    if (opts.description) {
+      const description = document.createElement('div');
+      description.className = 'text-sm mt-1';
+      description.textContent = opts.description.toString();
+      toastElement.appendChild(description);
+    }
+    
+    document.body.appendChild(toastElement);
+    
+    setTimeout(() => {
+      toastElement.remove();
+    }, 5000);
+    
+    return '1';
   },
+  
   info: (opts: ToastOptions) => {
-    const { useToast: useToastHook } = require('@/hooks/use-toast')
-    const { toast } = useToastHook()
-    return toast({
-      ...opts,
-      variant: 'default',
-      className: 'bg-blue-500 text-white border-blue-600',
-    })
+    // Info toast implementation
+    const toastElement = document.createElement('div');
+    toastElement.className = 'fixed top-4 right-4 z-50 bg-blue-500 text-white p-4 rounded shadow-lg';
+    toastElement.textContent = opts.title ? opts.title.toString() : '';
+    
+    if (opts.description) {
+      const description = document.createElement('div');
+      description.className = 'text-sm mt-1';
+      description.textContent = opts.description.toString();
+      toastElement.appendChild(description);
+    }
+    
+    document.body.appendChild(toastElement);
+    
+    setTimeout(() => {
+      toastElement.remove();
+    }, 5000);
+    
+    return '1';
   },
+  
   warning: (opts: ToastOptions) => {
-    const { useToast: useToastHook } = require('@/hooks/use-toast')
-    const { toast } = useToastHook()
-    return toast({
-      ...opts,
-      variant: 'default',
-      className: 'bg-yellow-500 text-white border-yellow-600',
-    })
+    // Warning toast implementation
+    const toastElement = document.createElement('div');
+    toastElement.className = 'fixed top-4 right-4 z-50 bg-yellow-500 text-white p-4 rounded shadow-lg';
+    toastElement.textContent = opts.title ? opts.title.toString() : '';
+    
+    if (opts.description) {
+      const description = document.createElement('div');
+      description.className = 'text-sm mt-1';
+      description.textContent = opts.description.toString();
+      toastElement.appendChild(description);
+    }
+    
+    document.body.appendChild(toastElement);
+    
+    setTimeout(() => {
+      toastElement.remove();
+    }, 5000);
+    
+    return '1';
   },
-}
+};

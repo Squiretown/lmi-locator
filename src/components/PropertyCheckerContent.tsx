@@ -1,8 +1,8 @@
+
 import React, { useState, useEffect } from 'react';
 import { CheckLmiStatusResponse } from '@/lib/types';
 import { usePropertyWorkflow } from '@/hooks/usePropertyWorkflow';
 import ResultsSection from './property-results/ResultsSection';
-import { toast } from '@/hooks/use-toast';
 import { useSavedAddresses } from '@/hooks/useSavedAddresses';
 import { usePropertySearch } from '@/hooks/usePropertySearch';
 
@@ -53,10 +53,18 @@ const PropertyCheckerContent: React.FC = () => {
       );
       
       if (success) {
-        toast.success({
-          title: "Property Saved",
-          description: "Property has been added to your saved properties."
-        });
+        // Create toast manually
+        const toastElement = document.createElement('div');
+        toastElement.className = 'fixed top-4 right-4 z-50 bg-green-500 text-white p-4 rounded shadow-lg';
+        toastElement.innerHTML = `
+          <div class="font-bold">Property Saved</div>
+          <div class="text-sm mt-1">Property has been added to your saved properties.</div>
+        `;
+        document.body.appendChild(toastElement);
+        
+        setTimeout(() => {
+          toastElement.remove();
+        }, 5000);
       }
     }
   };

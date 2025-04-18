@@ -7,7 +7,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { Download, FilePlus, Info } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import { useSimpleNotification } from '@/hooks/useSimpleNotification';
 import { usePermissions } from '@/hooks/usePermissions';
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table';
 
@@ -21,7 +21,7 @@ type SearchResult = {
 
 const LmiMarketingList: React.FC = () => {
   const { user, userType } = useAuth();
-  const { toast } = useToast();
+  const { toast } = useSimpleNotification();
   const [searchType, setSearchType] = useState<SearchType>('tract_id');
   const [searchValue, setSearchValue] = useState('');
   const [searchName, setSearchName] = useState('');

@@ -1,12 +1,13 @@
+
 import React from 'react';
 import { usePropertySearch } from '@/hooks/usePropertySearch';
 import PropertyCheckerContent from './PropertyCheckerContent';
 import { useClientActivity } from '@/hooks/useClientActivity';
 import { useSavedAddresses } from '@/hooks/useSavedAddresses';
-import { toast } from '@/hooks/use-toast';
 import { saveSearch } from '@/lib/supabase/search';
 import { useAuth } from '@/hooks/useAuth';
 import PropertySearchCard from './property-form/PropertySearchCard';
+import { toast } from '@/hooks/use-toast';
 
 const PropertyChecker: React.FC = () => {
   // Initialize hooks outside of any conditional logic
@@ -31,17 +32,31 @@ const PropertyChecker: React.FC = () => {
           : 'This property is not in an LMI eligible area'
       });
       
-      // Update notification with new toast system
+      // Manually create and append toast notifications
       if (result.is_approved) {
-        toast.success({
-          title: "LMI Eligible Property",
-          description: "This property is located in a Low to Moderate Income area.",
-        });
+        const toastElement = document.createElement('div');
+        toastElement.className = 'fixed top-4 right-4 z-50 bg-green-500 text-white p-4 rounded shadow-lg';
+        toastElement.innerHTML = `
+          <div class="font-bold">LMI Eligible Property</div>
+          <div class="text-sm mt-1">This property is located in a Low to Moderate Income area.</div>
+        `;
+        document.body.appendChild(toastElement);
+        
+        setTimeout(() => {
+          toastElement.remove();
+        }, 5000);
       } else {
-        toast.error({
-          title: "Not LMI Eligible",
-          description: "This property is not in an LMI eligible area.",
-        });
+        const toastElement = document.createElement('div');
+        toastElement.className = 'fixed top-4 right-4 z-50 bg-red-500 text-white p-4 rounded shadow-lg';
+        toastElement.innerHTML = `
+          <div class="font-bold">Not LMI Eligible</div>
+          <div class="text-sm mt-1">This property is not in an LMI eligible area.</div>
+        `;
+        document.body.appendChild(toastElement);
+        
+        setTimeout(() => {
+          toastElement.remove();
+        }, 5000);
       }
       
       if (user) {

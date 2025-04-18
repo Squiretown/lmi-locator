@@ -3,7 +3,6 @@ import { useState } from 'react';
 import { CheckLmiStatusResponse } from '@/lib/types';
 import { z } from 'zod';
 import { checkDirectLmiStatus } from '@/lib/api/lmi';
-import { toast } from '@/hooks/use-toast';
 
 // Define the form schema for address search
 export const formSchema = z.object({
@@ -38,10 +37,8 @@ export function usePropertySearch() {
       console.log('Full Result Object:', JSON.stringify(result, null, 2));
       
       if (result.status === "error") {
-        toast.error({
-          title: "Search Error",
-          description: result.message || "Failed to check property status"
-        });
+        // Show error alert without toast
+        console.error('Search Error:', result.message || "Failed to check property status");
         throw new Error(result.message || "Failed to check property status");
       }
       
@@ -79,10 +76,8 @@ export function usePropertySearch() {
       return lmiResponse;
     } catch (error) {
       console.error("Error checking property status:", error);
-      toast.error({
-        title: "Search Failed",
-        description: error instanceof Error ? error.message : "Unable to check property status"
-      });
+      // Show error alert without toast
+      console.error('Search Failed:', error instanceof Error ? error.message : "Unable to check property status");
       return null;
     } finally {
       setIsLoading(false);
