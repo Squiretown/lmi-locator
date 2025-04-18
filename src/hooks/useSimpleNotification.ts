@@ -12,13 +12,16 @@ export const showNotification = (options: {
     tractId?: string;
     isApproved?: boolean;
   };
+  onClose?: () => void;
 }) => {
-  const { data } = options;
+  const { data, onClose } = options;
   
   // Remove any existing notifications
   const existingNotifications = document.querySelectorAll('.notification-overlay');
   existingNotifications.forEach(notification => {
-    document.body.removeChild(notification);
+    if (notification.parentNode) {
+      notification.parentNode.removeChild(notification);
+    }
   });
   
   // Create container for the notification
@@ -29,8 +32,16 @@ export const showNotification = (options: {
   const root = createRoot(container);
   
   const handleClose = () => {
+    console.log("Closing notification from useSimpleNotification");
     root.unmount();
-    document.body.removeChild(container);
+    if (document.body.contains(container)) {
+      document.body.removeChild(container);
+    }
+    
+    // Call the onClose callback if provided
+    if (onClose && typeof onClose === 'function') {
+      onClose();
+    }
   };
   
   // Handle share button click
@@ -88,13 +99,13 @@ Census Tract: ${data.tractId || 'Unknown'}`;
 
 export const useSimpleNotification = () => {
   return {
-    success: (title: string, message?: string, data?: any) => 
-      showNotification({ type: 'success', title, message, data }),
-    error: (title: string, message?: string, data?: any) => 
-      showNotification({ type: 'error', title, message, data }),
-    info: (title: string, message?: string, data?: any) => 
-      showNotification({ type: 'info', title, message, data }),
-    warning: (title: string, message?: string, data?: any) => 
-      showNotification({ type: 'warning', title, message, data }),
+    success: (title: string, message?: string, data?: any, onClose?: () => void) => 
+      showNotification({ type: 'success', title, message, data, onClose }),
+    error: (title: string, message?: string, data?: any, onClose?: () => void) => 
+      showNotification({ type: 'error', title, message, data, onClose }),
+    info: (title: string, message?: string, data?: any, onClose?: () => void) => 
+      showNotification({ type: 'info', title, message, data, onClose }),
+    warning: (title: string, message?: string, data?: any, onClose?: () => void) => 
+      showNotification({ type: 'warning', title, message, data, onClose }),
   };
 };

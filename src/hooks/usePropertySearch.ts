@@ -21,6 +21,7 @@ export function usePropertySearch() {
   const notification = useSimpleNotification();
 
   const resetSearch = () => {
+    console.log("Resetting search state in usePropertySearch");
     setLmiStatus(null);
     setIsLoading(false);
   };
@@ -87,7 +88,8 @@ export function usePropertySearch() {
             address: lmiResponse.address,
             tractId: lmiResponse.tract_id,
             isApproved: true
-          }
+          },
+          resetSearch // Pass the reset function to be called when notification closes
         );
       } else {
         notification.error(
@@ -97,7 +99,8 @@ export function usePropertySearch() {
             address: lmiResponse.address,
             tractId: lmiResponse.tract_id,
             isApproved: false
-          }
+          },
+          resetSearch // Pass the reset function to be called when notification closes
         );
       }
 
@@ -106,7 +109,9 @@ export function usePropertySearch() {
       console.error("Error checking property status:", error);
       notification.error(
         'Search Failed',
-        error instanceof Error ? error.message : "Unable to check property status"
+        error instanceof Error ? error.message : "Unable to check property status",
+        undefined,
+        resetSearch // Pass the reset function to be called when notification closes
       );
       resetSearch();
       return null;
@@ -122,4 +127,3 @@ export function usePropertySearch() {
     resetSearch
   };
 }
-

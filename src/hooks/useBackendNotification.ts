@@ -31,6 +31,7 @@ export const useBackendNotification = () => {
     const root = createRoot(container);
     
     const handleClose = () => {
+      console.log("Closing notification in useBackendNotification");
       root.unmount();
       if (document.body.contains(container)) {
         document.body.removeChild(container);
