@@ -73,23 +73,25 @@ export function usePropertySearch() {
       
       setLmiStatus(lmiResponse);
 
-      // Single, centered notification with enhanced styling
-      const notificationContent = `
-        ${lmiResponse.address}
-        Census Tract: ${lmiResponse.tract_id || 'Unknown'}
-        Income Category: ${lmiResponse.income_category || 'Unknown'}
-        AMI: ${lmiResponse.percentage_of_ami}%
-      `;
-
       if (lmiResponse.is_approved) {
         notification.success(
           'APPROVED - LMI ELIGIBLE AREA',
-          notificationContent
+          '',
+          {
+            address: lmiResponse.address,
+            tractId: lmiResponse.tract_id,
+            isApproved: true
+          }
         );
       } else {
         notification.error(
           'NOT APPROVED - NOT IN LMI AREA',
-          notificationContent
+          '',
+          {
+            address: lmiResponse.address,
+            tractId: lmiResponse.tract_id,
+            isApproved: false
+          }
         );
       }
 

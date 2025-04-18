@@ -1,15 +1,20 @@
 
-/**
- * A simple notification system that doesn't rely on React components
- * Used as a fallback when the toast system might not be available
- */
+import React from 'react';
+import { createRoot } from 'react-dom/client';
+import LmiStatusNotification from '@/components/notifications/LmiStatusNotification';
+
 export const showNotification = (options: {
   type: 'success' | 'error' | 'info' | 'warning';
   title: string;
   message?: string;
+  data?: {
+    address?: string;
+    tractId?: string;
+    isApproved?: boolean;
+  };
   duration?: number;
 }) => {
-  const { type, title, message, duration = 5000 } = options;
+  const { duration = 5000, data } = options;
   
   // Remove any existing notifications
   const existingNotifications = document.querySelectorAll('.notification-overlay');
@@ -17,86 +22,52 @@ export const showNotification = (options: {
     document.body.removeChild(notification);
   });
   
-  // Create the notification overlay
-  const overlay = document.createElement('div');
-  overlay.className = 'notification-overlay fixed inset-0 flex items-center justify-center z-50';
-  overlay.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
+  // Create container for the notification
+  const container = document.createElement('div');
+  container.className = 'notification-overlay';
+  document.body.appendChild(container);
   
-  // Create the notification element
-  const notification = document.createElement('div');
+  const root = createRoot(container);
   
-  // Set styles based on type
-  let bgColor = 'bg-blue-500';
-  switch (type) {
-    case 'success':
-      bgColor = 'bg-green-500';
-      break;
-    case 'error':
-      bgColor = 'bg-red-500';
-      break;
-    case 'warning':
-      bgColor = 'bg-yellow-500';
-      break;
-  }
-  
-  // Add styling
-  notification.className = `${bgColor} text-white p-6 rounded-lg shadow-xl max-w-lg w-full mx-4 relative`;
-  
-  // Create title element
-  const titleElement = document.createElement('div');
-  titleElement.className = 'font-bold text-xl mb-3';
-  titleElement.textContent = title;
-  notification.appendChild(titleElement);
-  
-  // Add message if provided
-  if (message) {
-    const messageElement = document.createElement('div');
-    messageElement.className = 'text-base whitespace-pre-line';
-    messageElement.textContent = message;
-    notification.appendChild(messageElement);
-  }
-  
-  // Add close button
-  const closeButton = document.createElement('button');
-  closeButton.className = 'absolute top-3 right-3 text-white hover:text-gray-200 text-xl font-bold';
-  closeButton.innerHTML = '✕';
-  closeButton.onclick = () => {
-    document.body.removeChild(overlay);
+  const handleClose = () => {
+    root.unmount();
+    document.body.removeChild(container);
   };
-  notification.appendChild(closeButton);
   
-  // Add notification to overlay
-  overlay.appendChild(notification);
+  // Render the notification component
+  if (data?.address) {
+    root.render(
+      <LmiStatusNotification
+        isApproved={data.isApproved || false}
+        address={data.address}
+        tractId={data.tractId || 'Unknown'}
+        onClose={handleClose}
+        onShare={() => console.log('Share clicked')}
+        onSave={() => console.log('Save clicked')}
+        onContinue={() => console.log('Continue clicked')}
+      />
+    );
+  }
   
-  // Add to DOM
-  document.body.appendChild(overlay);
-  
-  // Remove after specified duration
-  setTimeout(() => {
-    if (document.body.contains(overlay)) {
-      document.body.removeChild(overlay);
-    }
-  }, duration);
+  // Auto-remove after duration
+  if (duration > 0) {
+    setTimeout(handleClose, duration);
+  }
   
   return {
-    close: () => {
-      if (document.body.contains(overlay)) {
-        document.body.removeChild(overlay);
-      }
-    }
+    close: handleClose
   };
 };
 
 export const useSimpleNotification = () => {
   return {
-    success: (title: string, message?: string) => 
-      showNotification({ type: 'success', title, message }),
-    error: (title: string, message?: string) => 
-      showNotification({ type: 'error', title, message }),
-    info: (title: string, message?: string) => 
-      showNotification({ type: 'info', title, message }),
-    warning: (title: string, message?: string) => 
-      showNotification({ type: 'warning', title, message }),
+    success: (title: string, message?: string, data?: any) => 
+      showNotification({ type: 'success', title, message, data }),
+    error: (title: string, message?: string, data?: any) => 
+      showNotification({ type: 'error', title, message, data }),
+    info: (title: string, message?: string, data?: any) => 
+      showNotification({ type: 'info', title, message, data }),
+    warning: (title: string, message?: string, data?: any) => 
+      showNotification({ type: 'warning', title, message, data }),
   };
 };
-
