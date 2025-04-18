@@ -1,8 +1,8 @@
-
 import React from 'react';
 import { CheckLmiStatusResponse } from '@/lib/types';
 import LmiStatusNotification from '@/components/notifications/LmiStatusNotification';
 import { Share2 } from 'lucide-react';
+import { useRoleSpecificNotifications } from '@/hooks/useRoleSpecificNotifications';
 
 interface ResultsSectionProps {
   data: CheckLmiStatusResponse;
@@ -17,6 +17,8 @@ const ResultsSection: React.FC<ResultsSectionProps> = ({
   onSaveProperty,
   onCloseNotification
 }) => {
+  const { createLmiNotification } = useRoleSpecificNotifications();
+
   const handleShare = async () => {
     const shareText = `Property LMI Status Check Results:
 Address: ${data.address}
@@ -31,20 +33,18 @@ Census Tract: ${data.tract_id || 'Unknown'}`;
         });
         console.log('Content shared successfully');
       } catch (err) {
-        // Fallback to copy to clipboard if share fails or is cancelled
         await navigator.clipboard.writeText(shareText);
         alert('Results copied to clipboard');
       }
     } else {
-      // Fallback for browsers that don't support sharing
       await navigator.clipboard.writeText(shareText);
       alert('Results copied to clipboard');
     }
   };
 
-  // Dedicated handler for save button
-  const handleSaveProperty = () => {
+  const handleSaveProperty = async () => {
     console.log("Save pressed in ResultsSection");
+    await createLmiNotification(data.address, data.is_approved);
     onSaveProperty();
   };
 
