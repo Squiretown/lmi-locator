@@ -1,22 +1,14 @@
-
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { CircleUserRound, Contact, HelpCircle, LogOut, Settings } from 'lucide-react';
-import {
-  DashboardStats,
-  PropertyCheckSection,
-  MarketingSection,
-  RecentActivitySection,
-  RecentContactsSection
-} from '@/components/dashboard/mortgage';
+import { DashboardStats, PropertyCheckSection, MarketingSection, RecentActivitySection, RecentContactsSection } from '@/components/dashboard/mortgage';
 import { useMortgageDashboard } from '@/hooks/useMortgageDashboard';
-
 const MortgageProfessionalDashboard: React.FC = () => {
-  const { signOut } = useMortgageDashboard();
-
-  return (
-    <div className="container mx-auto px-4 py-6 max-w-7xl">
+  const {
+    signOut
+  } = useMortgageDashboard();
+  return <div className="container mx-auto px-4 py-6 max-w-7xl">
       {/* Header */}
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-2xl font-bold">Mortgage Professional Dashboard</h1>
@@ -41,7 +33,7 @@ const MortgageProfessionalDashboard: React.FC = () => {
         <Tabs defaultValue="overview" className="w-full">
           <TabsList>
             <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="lmi-search">LMI Search</TabsTrigger>
+            <TabsTrigger value="lmi-search">Bulk Search</TabsTrigger>
             <TabsTrigger value="marketing">Marketing</TabsTrigger>
           </TabsList>
         </Tabs>
@@ -71,8 +63,6 @@ const MortgageProfessionalDashboard: React.FC = () => {
           <RecentContactsSection />
         </div>
       </div>
-    </div>
-  );
+    </div>;
 };
-
 export default MortgageProfessionalDashboard;
