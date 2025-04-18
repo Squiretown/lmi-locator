@@ -21,7 +21,7 @@ type SearchResult = {
 
 const LmiMarketingList: React.FC = () => {
   const { user, userType } = useAuth();
-  const { toast } = useSimpleNotification();
+  const notification = useSimpleNotification();
   const [searchType, setSearchType] = useState<SearchType>('tract_id');
   const [searchValue, setSearchValue] = useState('');
   const [searchName, setSearchName] = useState('');
@@ -41,20 +41,18 @@ const LmiMarketingList: React.FC = () => {
 
   const handleSearch = async () => {
     if (!user) {
-      toast({
-        title: 'Authentication Required',
-        description: 'You must be logged in to search for properties',
-        variant: 'destructive',
-      });
+      notification.error(
+        'Authentication Required',
+        'You must be logged in to search for properties'
+      );
       return;
     }
     
     if (!canSearch) {
-      toast({
-        title: 'Permission Denied',
-        description: 'You do not have permission to perform this search',
-        variant: 'destructive',
-      });
+      notification.error(
+        'Permission Denied',
+        'You do not have permission to perform this search'
+      );
       return;
     }
 
@@ -74,17 +72,16 @@ const LmiMarketingList: React.FC = () => {
       setResults(data.results);
       setSearchId(data.searchId);
       
-      toast({
-        title: 'Search completed',
-        description: `Found ${data.results.length} properties`,
-      });
+      notification.success(
+        'Search completed',
+        `Found ${data.results.length} properties`
+      );
     } catch (error) {
       console.error('Search error:', error);
-      toast({
-        title: 'Search failed',
-        description: 'Unable to complete the search. Please try again.',
-        variant: 'destructive',
-      });
+      notification.error(
+        'Search failed',
+        'Unable to complete the search. Please try again.'
+      );
     } finally {
       setIsLoading(false);
     }
@@ -92,20 +89,18 @@ const LmiMarketingList: React.FC = () => {
 
   const handleExport = async () => {
     if (!searchId || !user) {
-      toast({
-        title: 'Export Error',
-        description: 'No search results to export',
-        variant: 'destructive',
-      });
+      notification.error(
+        'Export Error',
+        'No search results to export'
+      );
       return;
     }
     
     if (!canExport) {
-      toast({
-        title: 'Permission Denied',
-        description: 'You do not have permission to export data',
-        variant: 'destructive',
-      });
+      notification.error(
+        'Permission Denied',
+        'You do not have permission to export data'
+      );
       return;
     }
     
@@ -138,17 +133,16 @@ const LmiMarketingList: React.FC = () => {
         .update({ download_count: data.downloadCount })
         .eq('id', searchId);
         
-      toast({
-        title: 'Export successful',
-        description: 'Your marketing list has been downloaded',
-      });
+      notification.success(
+        'Export successful',
+        'Your marketing list has been downloaded'
+      );
     } catch (error) {
       console.error('Export error:', error);
-      toast({
-        title: 'Export failed',
-        description: 'Unable to export the data. Please try again.',
-        variant: 'destructive',
-      });
+      notification.error(
+        'Export failed',
+        'Unable to export the data. Please try again.'
+      );
     }
   };
 
