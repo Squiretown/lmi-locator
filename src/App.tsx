@@ -24,6 +24,7 @@ import MortgageProfessionalDashboard from './pages/dashboard/MortgageProfessiona
 import MortgageBrokersPage from './pages/admin/MortgageBrokersPage';
 import RealtorsPage from './pages/admin/RealtorsPage';
 import SearchHistoryPage from './pages/admin/search-history';
+import PropertyChecker from './components/PropertyChecker';
 
 function App() {
   return (
@@ -42,6 +43,15 @@ function App() {
               <Route path="/contact" element={<ContactPage />} />
               <Route path="/login" element={<LoginPage />} />
               <Route path="/reset-password" element={<ResetPasswordPage />} />
+              <Route path="/property-checker" element={<PropertyChecker />} />
+              <Route path="/lmi-search" element={
+                <ProtectedRoute requiredUserType="mortgage_professional">
+                  <div className="container mx-auto px-4 py-6">
+                    <h1 className="text-2xl font-bold mb-6">LMI Area Listings Search</h1>
+                    <p className="text-muted-foreground mb-8">This feature is coming soon.</p>
+                  </div>
+                </ProtectedRoute>
+              } />
 
               <Route path="/admin" element={
                 <ProtectedRoute requiredUserType="admin">
