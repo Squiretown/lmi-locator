@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { CheckLmiStatusResponse } from '@/lib/types';
 import { z } from 'zod';
@@ -71,20 +72,25 @@ export function usePropertySearch() {
         lon: result.lon
       };
       
-      console.log('Processed LMI Response:', JSON.stringify(lmiResponse, null, 2));
-      
       setLmiStatus(lmiResponse);
 
-      // Enhanced notification with approval status, address, and tract info
+      // Single, centered notification with enhanced styling
+      const notificationContent = `
+        ${lmiResponse.address}
+        Census Tract: ${lmiResponse.tract_id || 'Unknown'}
+        Income Category: ${lmiResponse.income_category || 'Unknown'}
+        AMI: ${lmiResponse.percentage_of_ami}%
+      `;
+
       if (lmiResponse.is_approved) {
         notification.success(
-          'APPROVED - LMI Eligible Area',
-          `Address: ${lmiResponse.address}\nCensus Tract: ${lmiResponse.tract_id || 'Unknown'}`
+          'APPROVED - LMI ELIGIBLE AREA',
+          notificationContent
         );
       } else {
         notification.error(
-          'NOT APPROVED - Not in LMI Area',
-          `Address: ${lmiResponse.address}\nCensus Tract: ${lmiResponse.tract_id || 'Unknown'}`
+          'NOT APPROVED - NOT IN LMI AREA',
+          notificationContent
         );
       }
 
@@ -107,3 +113,4 @@ export function usePropertySearch() {
     submitPropertySearch
   };
 }
+

@@ -11,6 +11,17 @@ export const showNotification = (options: {
 }) => {
   const { type, title, message, duration = 5000 } = options;
   
+  // Remove any existing notifications
+  const existingNotifications = document.querySelectorAll('.notification-overlay');
+  existingNotifications.forEach(notification => {
+    document.body.removeChild(notification);
+  });
+  
+  // Create the notification overlay
+  const overlay = document.createElement('div');
+  overlay.className = 'notification-overlay fixed inset-0 flex items-center justify-center z-50';
+  overlay.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
+  
   // Create the notification element
   const notification = document.createElement('div');
   
@@ -29,45 +40,48 @@ export const showNotification = (options: {
   }
   
   // Add styling
-  notification.className = `fixed top-4 right-4 z-50 ${bgColor} text-white p-4 rounded shadow-lg max-w-sm`;
+  notification.className = `${bgColor} text-white p-6 rounded-lg shadow-xl max-w-lg w-full mx-4 relative`;
   
   // Create title element
   const titleElement = document.createElement('div');
-  titleElement.className = 'font-bold';
+  titleElement.className = 'font-bold text-xl mb-3';
   titleElement.textContent = title;
   notification.appendChild(titleElement);
   
   // Add message if provided
   if (message) {
     const messageElement = document.createElement('div');
-    messageElement.className = 'text-sm mt-1';
+    messageElement.className = 'text-base whitespace-pre-line';
     messageElement.textContent = message;
     notification.appendChild(messageElement);
   }
   
   // Add close button
   const closeButton = document.createElement('button');
-  closeButton.className = 'absolute top-2 right-2 text-white hover:text-gray-200';
+  closeButton.className = 'absolute top-3 right-3 text-white hover:text-gray-200 text-xl font-bold';
   closeButton.innerHTML = '✕';
   closeButton.onclick = () => {
-    document.body.removeChild(notification);
+    document.body.removeChild(overlay);
   };
   notification.appendChild(closeButton);
   
+  // Add notification to overlay
+  overlay.appendChild(notification);
+  
   // Add to DOM
-  document.body.appendChild(notification);
+  document.body.appendChild(overlay);
   
   // Remove after specified duration
   setTimeout(() => {
-    if (document.body.contains(notification)) {
-      document.body.removeChild(notification);
+    if (document.body.contains(overlay)) {
+      document.body.removeChild(overlay);
     }
   }, duration);
   
   return {
     close: () => {
-      if (document.body.contains(notification)) {
-        document.body.removeChild(notification);
+      if (document.body.contains(overlay)) {
+        document.body.removeChild(overlay);
       }
     }
   };
@@ -85,3 +99,4 @@ export const useSimpleNotification = () => {
       showNotification({ type: 'warning', title, message }),
   };
 };
+
