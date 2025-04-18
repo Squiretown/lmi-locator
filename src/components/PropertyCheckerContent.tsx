@@ -5,9 +5,10 @@ import { usePropertyWorkflow } from '@/hooks/usePropertyWorkflow';
 import ResultsSection from './property-results/ResultsSection';
 import { useSavedAddresses } from '@/hooks/useSavedAddresses';
 import { usePropertySearch } from '@/hooks/usePropertySearch';
+import EligibilityScreener from './EligibilityScreener';
 
 const PropertyCheckerContent: React.FC = () => {
-  const { displayMode, showResults, showScreener, resetProcess } = usePropertyWorkflow();
+  const { displayMode, showResults, showScreener, resetProcess, handleEligibilityComplete } = usePropertyWorkflow();
   const [currentData, setCurrentData] = useState<CheckLmiStatusResponse | null>(null);
   const { saveAddress } = useSavedAddresses();
   const [error, setError] = useState<string | null>(null);
@@ -43,6 +44,7 @@ const PropertyCheckerContent: React.FC = () => {
     if (!currentData && !lmiStatus) {
       return;
     }
+    console.log("Continue button clicked, changing to screener mode");
     showScreener();
   };
 
@@ -85,6 +87,13 @@ const PropertyCheckerContent: React.FC = () => {
           onReset={handleReset}
           onSaveProperty={handleSaveProperty}
           onCloseNotification={handleCloseNotification}
+        />
+      )}
+
+      {displayMode === 'screener' && (currentData || lmiStatus) && (
+        <EligibilityScreener
+          address={(currentData || lmiStatus)?.address || ''}
+          onComplete={handleEligibilityComplete}
         />
       )}
     </div>

@@ -7,6 +7,7 @@ import { useSavedAddresses } from '@/hooks/useSavedAddresses';
 import { saveSearch } from '@/lib/supabase/search';
 import { useAuth } from '@/hooks/useAuth';
 import PropertySearchCard from './property-form/PropertySearchCard';
+import { usePropertyWorkflow } from '@/hooks/usePropertyWorkflow';
 
 const PropertyChecker: React.FC = () => {
   // Initialize hooks outside of any conditional logic
@@ -14,6 +15,7 @@ const PropertyChecker: React.FC = () => {
   const { addActivity } = useClientActivity();
   const { saveAddress } = useSavedAddresses();
   const { user } = useAuth();
+  const { displayMode } = usePropertyWorkflow();
   
   // Destructure the values from the hooks
   const { lmiStatus, isLoading, submitPropertySearch, resetSearch } = searchHook;
@@ -55,13 +57,13 @@ const PropertyChecker: React.FC = () => {
 
   return (
     <div className="bg-blue-50/50 rounded-lg p-6 shadow-sm mb-8">
-      {!lmiStatus && (
+      {!lmiStatus && displayMode === 'form' && (
         <PropertySearchCard 
           onSubmit={onSubmit}
           isLoading={isLoading}
         />
       )}
-      {lmiStatus && <PropertyCheckerContent />}
+      {(lmiStatus || displayMode !== 'form') && <PropertyCheckerContent />}
     </div>
   );
 };
