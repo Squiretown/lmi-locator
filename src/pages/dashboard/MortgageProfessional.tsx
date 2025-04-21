@@ -1,30 +1,78 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { CircleUserRound, Contact, HelpCircle, LogOut, Settings } from 'lucide-react';
+import { CircleUserRound, Contact, HelpCircle, LogOut, Settings, Home, UserPlus } from 'lucide-react';
 import { DashboardStats, PropertyCheckSection, MarketingSection, RecentActivitySection, RecentContactsSection } from '@/components/dashboard/mortgage';
 import { useMortgageDashboard } from '@/hooks/useMortgageDashboard';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Link } from 'react-router-dom';
+
 const MortgageProfessionalDashboard: React.FC = () => {
   const {
     signOut
   } = useMortgageDashboard();
+
   return <div className="container mx-auto px-4 py-6 max-w-7xl">
       {/* Header */}
       <div className="flex justify-between items-center mb-8">
-        <h1 className="text-2xl font-bold">Mortgage Professional Dashboard</h1>
         <div className="flex items-center gap-4">
-          <Button variant="outline" className="gap-2">
-            <Contact className="w-4 h-4" />
-            Contact
-          </Button>
-          <Button variant="outline" className="gap-2" onClick={signOut}>
-            <LogOut className="w-4 h-4" />
-            Sign Out
-          </Button>
-          <Button variant="outline" className="gap-2">
-            <CircleUserRound className="w-4 h-4" />
-            My Profile
-          </Button>
+          <Link to="/">
+            <Button variant="outline" className="gap-2">
+              <Home className="w-4 h-4" />
+              Home
+            </Button>
+          </Link>
+          <h1 className="text-2xl font-bold">Mortgage Professional Dashboard</h1>
+        </div>
+        <div className="flex items-center gap-4">
+          {/* Contact Dropdown */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className="gap-2">
+                <Contact className="w-4 h-4" />
+                Contact
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuItem>
+                <Contact className="w-4 h-4 mr-2" />
+                Contact List
+              </DropdownMenuItem>
+              <DropdownMenuItem>
+                <UserPlus className="w-4 h-4 mr-2" />
+                Invite Contact
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          {/* Profile Dropdown */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className="gap-2">
+                <CircleUserRound className="w-4 h-4" />
+                My Profile
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuItem>
+                <Settings className="w-4 h-4 mr-2" />
+                Settings
+              </DropdownMenuItem>
+              <DropdownMenuItem>
+                <HelpCircle className="w-4 h-4 mr-2" />
+                Help
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={signOut}>
+                <LogOut className="w-4 h-4 mr-2" />
+                Sign Out
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 
@@ -65,4 +113,5 @@ const MortgageProfessionalDashboard: React.FC = () => {
       </div>
     </div>;
 };
+
 export default MortgageProfessionalDashboard;
