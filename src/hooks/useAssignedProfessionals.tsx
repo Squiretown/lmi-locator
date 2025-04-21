@@ -2,6 +2,8 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Professional } from '@/lib/api/types';
+import { ProfessionalTable } from '@/lib/api/database-types';
+import { transformProfessional } from '@/lib/api/utils/transformers';
 
 export const useAssignedProfessionals = () => {
   return useQuery({
@@ -15,7 +17,7 @@ export const useAssignedProfessionals = () => {
         .limit(2);
 
       if (error) throw error;
-      return professionals as Professional[];
+      return (professionals || []).map((item) => transformProfessional(item as ProfessionalTable));
     }
   });
 };
