@@ -1,13 +1,14 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { MapPinIcon } from 'lucide-react';
+import { MapPinIcon, Home } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 
 const Header = () => {
   const { pathname } = useLocation();
+  const navigate = useNavigate();
   const { user, userType, signOut } = useAuth();
   
   // Don't show header in admin area
@@ -15,6 +16,20 @@ const Header = () => {
     return null;
   }
   
+  // Determine dashboard route based on user type
+  const getDashboardRoute = () => {
+    switch(userType) {
+      case 'mortgage_professional':
+        return '/mortgage';
+      case 'client':
+        return '/client';
+      case 'realtor':
+        return '/realtor';
+      default:
+        return '/';
+    }
+  };
+
   return (
     <motion.header 
       className="sticky top-0 z-50 bg-black text-white py-4"
@@ -67,6 +82,16 @@ const Header = () => {
           <div className="flex items-center gap-4">
             {user ? (
               <>
+                {/* Home Dashboard Button */}
+                <Button 
+                  variant="ghost" 
+                  className="text-white hover:text-primary" 
+                  onClick={() => navigate(getDashboardRoute())}
+                >
+                  <Home className="mr-2 h-4 w-4" />
+                  Home
+                </Button>
+
                 {userType === 'admin' && (
                   <Button asChild variant="ghost" className="text-white hover:text-primary">
                     <Link to="/admin">Admin Panel</Link>
