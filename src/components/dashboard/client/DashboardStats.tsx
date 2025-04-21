@@ -3,18 +3,19 @@ import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Home, CheckCircle, Calendar, Clock } from 'lucide-react';
 import { useSavedAddresses } from '@/hooks/useSavedAddresses';
+import { useAuth } from '@/hooks/useAuth';
 
 export const DashboardStats: React.FC = () => {
   const { savedAddresses } = useSavedAddresses();
+  const { user } = useAuth();
   
-  // Count LMI eligible properties
+  // Calculate LMI eligible properties
   const lmiEligibleCount = savedAddresses.filter(a => a.isLmiEligible).length;
   
-  // Calculate days active (for now using a placeholder of 30 days)
-  const daysActive = 30;
-  
-  // Program matches (using 3 as a placeholder, will be updated in future)
-  const programMatches = 3;
+  // Calculate days active (using account creation date)
+  const daysActive = user ? Math.ceil(
+    (new Date().getTime() - new Date(user.created_at).getTime()) / (1000 * 3600 * 24)
+  ) : 0;
   
   const stats = [
     {
@@ -36,9 +37,9 @@ export const DashboardStats: React.FC = () => {
       color: 'bg-purple-50'
     },
     {
-      label: 'Program Matches',
-      value: programMatches,
-      icon: <CheckCircle className="h-5 w-5 text-amber-500" />,
+      label: 'Recent Searches',
+      value: '5',
+      icon: <Clock className="h-5 w-5 text-amber-500" />,
       color: 'bg-amber-50'
     }
   ];
