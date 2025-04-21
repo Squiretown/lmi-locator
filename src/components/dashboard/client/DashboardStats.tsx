@@ -1,13 +1,18 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Home, CheckCircle, Calendar, Clock } from 'lucide-react';
 import { useSavedAddresses } from '@/hooks/useSavedAddresses';
 import { useAuth } from '@/hooks/useAuth';
 
 export const DashboardStats: React.FC = () => {
-  const { savedAddresses } = useSavedAddresses();
+  const { savedAddresses, refreshAddresses } = useSavedAddresses();
   const { user } = useAuth();
+  
+  // Refresh saved addresses when component mounts
+  useEffect(() => {
+    refreshAddresses();
+  }, []);
   
   // Calculate LMI eligible properties
   const lmiEligibleCount = savedAddresses.filter(a => a.isLmiEligible).length;

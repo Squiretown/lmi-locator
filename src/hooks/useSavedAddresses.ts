@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -17,21 +17,15 @@ export function useSavedAddresses() {
   const [isLoading, setIsLoading] = useState(false);
   const { user } = useAuth();
 
-  // Load saved addresses on mount and when user changes
-  useEffect(() => {
-    loadSavedAddresses();
-  }, [user]);
-
-  // Load saved addresses from localStorage (for non-authenticated users)
-  // or from Supabase (for authenticated users)
-  const loadSavedAddresses = async () => {
+  // Load saved addresses function
+  const loadSavedAddresses = useCallback(async () => {
     setIsLoading(true);
     try {
       if (user) {
         // Load from Supabase if user is authenticated
         const { data, error } = await supabase
           .from('saved_properties')
-          .select('id, property_id, notes, created_at, is_favorite, properties(address)')
+          .select('id, property_id, notes, created_at, is_favorite, address')
           .order('created_at', { ascending: false });
           
         if (error) throw error;
@@ -40,7 +34,7 @@ export function useSavedAddresses() {
           setSavedAddresses(
             data.map(item => ({
               id: item.id,
-              address: item.properties?.address || 'Unknown address',
+              address: item.address || 'Unknown address',
               createdAt: item.created_at,
               isLmiEligible: item.is_favorite || false,
               notes: item.notes
@@ -75,7 +69,12 @@ export function useSavedAddresses() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [user]);
+
+  // Load saved addresses on mount and when user changes
+  useEffect(() => {
+    loadSavedAddresses();
+  }, [user, loadSavedAddresses]);
 
   // Save an address
   const saveAddress = async (address: string, isLmiEligible: boolean = false) => {
@@ -100,7 +99,7 @@ export function useSavedAddresses() {
             .from('saved_properties')
             .insert({
               user_id: user.id,
-              // We'll use a dummy property_id since we can't create property records
+              address: address,
               property_id: '00000000-0000-0000-0000-000000000000',
               is_favorite: isLmiEligible, // Store LMI eligibility in is_favorite field
               notes: isLmiEligible ? 'LMI Eligible' : ''
@@ -114,22 +113,23 @@ export function useSavedAddresses() {
           
           // Refresh the list to include the newly saved address
           await loadSavedAddresses();
+          return true;
         } catch (error) {
           // Fallback to localStorage if database operations fail
           console.warn('Falling back to localStorage for address storage');
           const updatedAddresses = [newAddress, ...savedAddresses];
           localStorage.setItem('savedAddresses', JSON.stringify(updatedAddresses));
           setSavedAddresses(updatedAddresses);
+          return true;
         }
       } else {
         // Save to localStorage if user is not authenticated
         const updatedAddresses = [newAddress, ...savedAddresses];
         localStorage.setItem('savedAddresses', JSON.stringify(updatedAddresses));
         setSavedAddresses(updatedAddresses);
+        toast.success('Address saved to your collection');
+        return true;
       }
-      
-      toast.success('Address saved to your collection');
-      return true;
     } catch (error) {
       console.error('Error saving address:', error);
       toast.error('Failed to save address');

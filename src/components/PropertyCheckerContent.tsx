@@ -12,7 +12,7 @@ import EligibilityScreener from './EligibilityScreener';
 const PropertyCheckerContent: React.FC = () => {
   const { displayMode, showResults, resetProcess } = usePropertyWorkflow();
   const [currentData, setCurrentData] = useState<CheckLmiStatusResponse | null>(null);
-  const { saveAddress } = useSavedAddresses();
+  const { saveAddress, refreshAddresses } = useSavedAddresses();
   const [error, setError] = useState<string | null>(null);
   const { lmiStatus, resetSearch } = usePropertySearch();
   const navigate = useNavigate();
@@ -40,13 +40,19 @@ const PropertyCheckerContent: React.FC = () => {
     }
   };
 
-  const handleSaveProperty = () => {
+  const handleSaveProperty = async () => {
+    console.log("Save clicked");
     if (currentData || lmiStatus) {
       const dataToSave = currentData || lmiStatus;
-      saveAddress(
+      const success = await saveAddress(
         dataToSave.address || 'Unknown address', 
         dataToSave.is_approved === true
       );
+      
+      if (success) {
+        // Refresh the saved addresses to update the dashboard counters
+        refreshAddresses();
+      }
     }
   };
 
