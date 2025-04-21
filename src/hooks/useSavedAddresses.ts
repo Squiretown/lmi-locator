@@ -23,23 +23,62 @@ export function useSavedAddresses() {
     try {
       if (user) {
         // Load from Supabase if user is authenticated
+        // Join saved_properties with properties to get the address
         const { data, error } = await supabase
           .from('saved_properties')
-          .select('id, property_id, notes, created_at, is_favorite, address')
+          .select(`
+            id, 
+            notes, 
+            created_at, 
+            is_favorite,
+            property_id
+          `)
           .order('created_at', { ascending: false });
           
         if (error) throw error;
         
         if (data) {
-          setSavedAddresses(
-            data.map(item => ({
-              id: item.id,
-              address: item.address || 'Unknown address',
-              createdAt: item.created_at,
-              isLmiEligible: item.is_favorite || false,
-              notes: item.notes
-            }))
-          );
+          // Create a temporary array to hold the complete saved addresses
+          const tempAddresses: SavedAddress[] = [];
+          
+          // For each saved property, get its address from the property_id
+          for (const item of data) {
+            try {
+              // For simplicity, we'll use the property_id as an address if we can't get the real one
+              let addressText = `Property ID: ${item.property_id}`;
+              
+              // Attempt to get the property details to get the address
+              const { data: propertyData, error: propertyError } = await supabase
+                .from('properties')
+                .select('address')
+                .eq('id', item.property_id)
+                .single();
+                
+              if (!propertyError && propertyData) {
+                addressText = propertyData.address;
+              }
+              
+              tempAddresses.push({
+                id: item.id,
+                address: addressText,
+                createdAt: item.created_at,
+                isLmiEligible: item.is_favorite || false,
+                notes: item.notes
+              });
+            } catch (err) {
+              console.error('Error getting property details:', err);
+              // Still add the item with a placeholder address
+              tempAddresses.push({
+                id: item.id,
+                address: `Property ID: ${item.property_id}`,
+                createdAt: item.created_at,
+                isLmiEligible: item.is_favorite || false,
+                notes: item.notes
+              });
+            }
+          }
+          
+          setSavedAddresses(tempAddresses);
         }
       } else {
         // Load from localStorage if user is not authenticated
@@ -94,14 +133,51 @@ export function useSavedAddresses() {
       
       if (user) {
         try {
-          // For authenticated users, store directly in saved_properties
+          // First check if we need to create a property record
+          let propertyId = '00000000-0000-0000-0000-000000000000';
+          
+          // Check if this property exists
+          const { data: existingProperty } = await supabase
+            .from('properties')
+            .select('id')
+            .eq('address', address)
+            .maybeSingle();
+            
+          if (existingProperty) {
+            propertyId = existingProperty.id;
+          } else {
+            // Create a new property record
+            const { data: newProperty, error: propertyError } = await supabase
+              .from('properties')
+              .insert({
+                address: address,
+                price: 0, // Required field but we don't have real data
+                city: '',  // Required field but we don't have real data
+                state: '', // Required field but we don't have real data
+                zip_code: '', // Required field but we don't have real data
+                mls_number: crypto.randomUUID(), // Required field but we don't have real data
+                is_lmi_eligible: isLmiEligible
+              })
+              .select('id')
+              .single();
+              
+            if (propertyError) {
+              console.error('Error creating property:', propertyError);
+              throw new Error('Failed to create property record');
+            }
+            
+            if (newProperty) {
+              propertyId = newProperty.id;
+            }
+          }
+          
+          // Now save the reference in saved_properties
           const { error } = await supabase
             .from('saved_properties')
             .insert({
               user_id: user.id,
-              address: address,
-              property_id: '00000000-0000-0000-0000-000000000000',
-              is_favorite: isLmiEligible, // Store LMI eligibility in is_favorite field
+              property_id: propertyId,
+              is_favorite: isLmiEligible,
               notes: isLmiEligible ? 'LMI Eligible' : ''
             });
             
@@ -113,6 +189,7 @@ export function useSavedAddresses() {
           
           // Refresh the list to include the newly saved address
           await loadSavedAddresses();
+          toast.success('Address saved to your collection');
           return true;
         } catch (error) {
           // Fallback to localStorage if database operations fail
@@ -120,6 +197,7 @@ export function useSavedAddresses() {
           const updatedAddresses = [newAddress, ...savedAddresses];
           localStorage.setItem('savedAddresses', JSON.stringify(updatedAddresses));
           setSavedAddresses(updatedAddresses);
+          toast.success('Address saved to your collection');
           return true;
         }
       } else {
@@ -151,14 +229,15 @@ export function useSavedAddresses() {
         
         // Update the state after successful deletion
         setSavedAddresses(prevAddresses => prevAddresses.filter(address => address.id !== id));
+        toast.success('Address removed from your collection');
       } else {
         // Update state and localStorage
         const updatedAddresses = savedAddresses.filter(address => address.id !== id);
         setSavedAddresses(updatedAddresses);
         localStorage.setItem('savedAddresses', JSON.stringify(updatedAddresses));
+        toast.success('Address removed from your collection');
       }
       
-      toast.success('Address removed from your collection');
       return true;
     } catch (error) {
       console.error('Error removing address:', error);

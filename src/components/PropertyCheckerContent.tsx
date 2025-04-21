@@ -52,6 +52,8 @@ const PropertyCheckerContent: React.FC = () => {
       if (success) {
         // Refresh the saved addresses to update the dashboard counters
         refreshAddresses();
+        // Give visual feedback
+        console.log("Property saved successfully");
       }
     }
   };
