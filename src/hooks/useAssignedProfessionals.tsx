@@ -11,44 +11,43 @@ export const useAssignedProfessionals = () => {
 
   return useQuery({
     queryKey: ['assigned-professionals', user?.id],
-    queryFn: async () => {
+    queryFn: async (): Promise<Professional[]> => {
       if (!user) return [];
 
       try {
-        // First try to get professionals from client_profiles
-        const clientProfileResponse = await supabase
+        // First try to get professionals from client_profiles with explicit typing
+        type ClientProfileResult = { professional_id: string | null };
+        
+        const { data: clientProfile, error: profileError } = await supabase
           .from('client_profiles')
-          .select('professional_id')
+          .select<'professional_id', ClientProfileResult>('professional_id')
           .eq('user_id', user.id)
           .maybeSingle();
 
-        if (clientProfileResponse.error) {
-          console.error('Error fetching client profile:', clientProfileResponse.error);
+        if (profileError) {
+          console.error('Error fetching client profile:', profileError);
           return [];
         }
 
-        const clientProfile = clientProfileResponse.data;
-        
         if (!clientProfile?.professional_id) {
           return [];
         }
         
-        // Fetch the professional with an explicit type annotation to avoid deep instantiation
-        const professionalResponse = await supabase
+        // Fetch professionals with explicit typing
+        type ProfessionalResult = ProfessionalTable[];
+        
+        const { data: professionals, error: professionalError } = await supabase
           .from('professionals')
-          .select('*')
+          .select<'*', ProfessionalResult>('*')
           .eq('id', clientProfile.professional_id);
           
-        if (professionalResponse.error) {
-          console.error('Error fetching professionals:', professionalResponse.error);
+        if (professionalError) {
+          console.error('Error fetching professionals:', professionalError);
           return [];
         }
         
-        // Map the results with explicit type casting
-        const professionals = professionalResponse.data || [];
-        return professionals.map((pro) => {
-          return transformProfessional(pro as ProfessionalTable);
-        });
+        // Transform the results with type safety
+        return (professionals || []).map(pro => transformProfessional(pro));
       } catch (err) {
         console.error('Error in useAssignedProfessionals:', err);
         return [];
