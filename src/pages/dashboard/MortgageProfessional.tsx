@@ -2,7 +2,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Contact, HelpCircle, LogOut, Settings, UserPlus, CircleUserRound } from 'lucide-react';
+import { Contact, UserPlus, CircleUserRound, Settings, HelpCircle } from 'lucide-react';
 import { DashboardStats, PropertyCheckSection, MarketingSection, RecentActivitySection, RecentContactsSection } from '@/components/dashboard/mortgage';
 import { useMortgageDashboard } from '@/hooks/useMortgageDashboard';
 import {
@@ -60,10 +60,6 @@ const MortgageProfessionalDashboard: React.FC = () => {
               <DropdownMenuItem>
                 <HelpCircle className="w-4 h-4 mr-2" />
                 Help
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={signOut}>
-                <LogOut className="w-4 h-4 mr-2" />
-                Sign Out
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
