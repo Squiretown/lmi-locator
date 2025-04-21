@@ -2,7 +2,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { CircleUserRound, Contact, HelpCircle, LogOut, Settings, Home, UserPlus } from 'lucide-react';
+import { Contact, HelpCircle, LogOut, Settings, UserPlus, CircleUserRound } from 'lucide-react';
 import { DashboardStats, PropertyCheckSection, MarketingSection, RecentActivitySection, RecentContactsSection } from '@/components/dashboard/mortgage';
 import { useMortgageDashboard } from '@/hooks/useMortgageDashboard';
 import {
@@ -20,15 +20,7 @@ const MortgageProfessionalDashboard: React.FC = () => {
   return <div className="container mx-auto px-4 py-6 max-w-7xl">
       {/* Header */}
       <div className="flex justify-between items-center mb-8">
-        <div className="flex items-center gap-4">
-          <Button 
-            variant="outline" 
-            className="gap-2"
-            onClick={() => navigate('/mortgage')}
-          >
-            <Home className="w-4 h-4" />
-            Home
-          </Button>
+        <div>
           <h1 className="text-2xl font-bold">Mortgage Professional Dashboard</h1>
         </div>
         <div className="flex items-center gap-4">

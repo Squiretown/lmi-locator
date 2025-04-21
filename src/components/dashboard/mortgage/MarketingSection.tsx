@@ -2,21 +2,11 @@
 import React from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Plus, Bookmark } from 'lucide-react';
-import { SavedPropertiesTable } from './marketing/SavedPropertiesTable';
+import { Plus } from 'lucide-react';
 
 export const MarketingSection: React.FC = () => {
   return (
     <div className="space-y-4">
-      <Card>
-        <CardHeader>
-          <CardTitle>Saved Properties</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <SavedPropertiesTable />
-        </CardContent>
-      </Card>
-
       <Card>
         <CardHeader>
           <CardTitle>Create Marketing List</CardTitle>
