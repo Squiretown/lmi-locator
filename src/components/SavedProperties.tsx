@@ -2,10 +2,11 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { MapPin, X, CheckCircle, Calendar } from 'lucide-react';
+import { MapPin, X, CheckCircle, Calendar, RefreshCw } from 'lucide-react';
 import { useSavedAddresses, type SavedAddress } from '@/hooks/useSavedAddresses';
 import { useAuth } from '@/hooks/useAuth';
 import { Badge } from '@/components/ui/badge';
+import { toast } from 'sonner';
 
 interface SavedPropertiesProps {
   onAddressSelect: (address: string) => void;
@@ -14,18 +15,29 @@ interface SavedPropertiesProps {
 const SavedProperties: React.FC<SavedPropertiesProps> = ({ onAddressSelect }) => {
   const { savedAddresses, removeAddress, isLoading, refreshAddresses } = useSavedAddresses();
   const { user } = useAuth();
+  const [refreshing, setRefreshing] = useState(false);
 
   // Refresh addresses when component mounts or user changes
   useEffect(() => {
     refreshAddresses();
-  }, [user]);
+  }, [user, refreshAddresses]);
 
-  const handleRemoveAddress = (id: string) => {
-    removeAddress(id);
+  const handleRemoveAddress = async (id: string) => {
+    const success = await removeAddress(id);
+    if (success) {
+      toast.success('Address removed from your collection');
+    }
   };
 
   const selectAddress = (address: string) => {
     onAddressSelect(address);
+  };
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await refreshAddresses();
+    setRefreshing(false);
+    toast.success('Saved properties refreshed');
   };
 
   // No saved properties state
@@ -52,6 +64,16 @@ const SavedProperties: React.FC<SavedPropertiesProps> = ({ onAddressSelect }) =>
         <CardTitle className="text-lg flex justify-between items-center">
           <span>Your Saved Properties</span>
           <div className="flex items-center gap-2">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="h-6 w-6" 
+              onClick={handleRefresh}
+              disabled={refreshing || isLoading}
+            >
+              <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
+              <span className="sr-only">Refresh</span>
+            </Button>
             <Badge variant="outline" className="text-xs">
               {savedAddresses.length} Saved
             </Badge>
@@ -115,7 +137,7 @@ const SavedProperties: React.FC<SavedPropertiesProps> = ({ onAddressSelect }) =>
           </ul>
         )}
         <div className="mt-4 flex justify-center">
-          <Button variant="outline" size="sm" className="w-full">
+          <Button variant="outline" size="sm" className="w-full" onClick={() => onAddressSelect("")}>
             Check Another Property
           </Button>
         </div>

@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -17,17 +17,11 @@ export function useClientActivity() {
   const [isLoading, setIsLoading] = useState(false);
   const { user } = useAuth();
 
-  useEffect(() => {
-    if (user) {
-      loadActivities();
-    } else {
-      // For non-authenticated users, we can load from localStorage
+  const loadActivities = useCallback(async () => {
+    if (!user) {
       loadActivitiesFromLocalStorage();
+      return;
     }
-  }, [user]);
-
-  const loadActivities = async () => {
-    if (!user) return;
     
     setIsLoading(true);
     try {
@@ -37,7 +31,7 @@ export function useClientActivity() {
         .select('id, address, searched_at, is_eligible, search_params, result')
         .eq('user_id', user.id)
         .order('searched_at', { ascending: false })
-        .limit(10);
+        .limit(20);
         
       if (searchError) throw searchError;
       
@@ -52,17 +46,47 @@ export function useClientActivity() {
           : 'This property is not in an LMI eligible area'
       }));
       
-      // You can also load saved properties, program applications, etc. here
-      
-      setActivities(formattedActivities);
+      // Also get saved properties
+      const { data: savedProperties, error: savedError } = await supabase
+        .from('saved_properties')
+        .select(`
+          id, 
+          created_at, 
+          is_favorite, 
+          properties!inner(address)
+        `)
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+        
+      if (!savedError && savedProperties) {
+        const savedActivities: ActivityItem[] = savedProperties.map(item => ({
+          id: item.id,
+          type: 'save',
+          timestamp: item.created_at,
+          address: item.properties?.address || 'Unknown address',
+          result: item.is_favorite ? 'eligible' : 'not-eligible',
+          details: 'Property saved to collection'
+        }));
+        
+        // Combine both types of activities and sort by timestamp
+        const combined = [...formattedActivities, ...savedActivities].sort((a, b) => 
+          new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+        );
+        
+        setActivities(combined);
+      } else {
+        setActivities(formattedActivities);
+      }
     } catch (error) {
       console.error('Error loading client activities:', error);
+      // Fall back to local storage if needed
+      loadActivitiesFromLocalStorage();
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [user]);
 
-  const loadActivitiesFromLocalStorage = () => {
+  const loadActivitiesFromLocalStorage = useCallback(() => {
     const localActivities = localStorage.getItem('clientActivities');
     if (localActivities) {
       try {
@@ -71,29 +95,36 @@ export function useClientActivity() {
         console.error('Error parsing local activities:', error);
       }
     }
-  };
+  }, []);
 
-  const addActivity = (activity: Omit<ActivityItem, 'id'>) => {
+  useEffect(() => {
+    loadActivities();
+  }, [loadActivities]);
+
+  const addActivity = useCallback((activity: Omit<ActivityItem, 'id'>) => {
     const newActivity: ActivityItem = {
       ...activity,
       id: crypto.randomUUID()
     };
     
-    const updatedActivities = [newActivity, ...activities].slice(0, 20); // Keep last 20 activities
-    setActivities(updatedActivities);
-    
-    // Save to localStorage for non-authenticated users
-    if (!user) {
-      localStorage.setItem('clientActivities', JSON.stringify(updatedActivities));
-    }
+    setActivities(prev => {
+      const updatedActivities = [newActivity, ...prev].slice(0, 20); // Keep last 20 activities
+      
+      // Save to localStorage for non-authenticated users
+      if (!user) {
+        localStorage.setItem('clientActivities', JSON.stringify(updatedActivities));
+      }
+      
+      return updatedActivities;
+    });
     
     return newActivity;
-  };
+  }, [user]);
 
   return {
     activities,
     isLoading,
     addActivity,
-    refreshActivities: user ? loadActivities : loadActivitiesFromLocalStorage
+    refreshActivities: loadActivities
   };
 }

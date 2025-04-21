@@ -8,6 +8,7 @@ import { usePropertySearch } from '@/hooks/usePropertySearch';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import EligibilityScreener from './EligibilityScreener';
+import { useClientActivity } from '@/hooks/useClientActivity';
 
 const PropertyCheckerContent: React.FC = () => {
   const { displayMode, showResults, resetProcess } = usePropertyWorkflow();
@@ -17,13 +18,24 @@ const PropertyCheckerContent: React.FC = () => {
   const { lmiStatus, resetSearch } = usePropertySearch();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { addActivity } = useClientActivity();
 
   useEffect(() => {
     if (lmiStatus) {
       setCurrentData(lmiStatus);
       showResults(lmiStatus);
+      
+      // Add search activity when a property is checked
+      if (lmiStatus.address) {
+        addActivity({
+          type: 'search',
+          timestamp: new Date().toISOString(),
+          address: lmiStatus.address,
+          result: lmiStatus.is_approved ? 'eligible' : 'not-eligible'
+        });
+      }
     }
-  }, [lmiStatus, showResults]);
+  }, [lmiStatus, showResults, addActivity]);
 
   const handleCloseNotification = () => {
     resetSearch();
@@ -52,6 +64,16 @@ const PropertyCheckerContent: React.FC = () => {
       if (success) {
         // Refresh the saved addresses to update the dashboard counters
         refreshAddresses();
+        
+        // Add to activity history
+        addActivity({
+          type: 'save',
+          timestamp: new Date().toISOString(),
+          address: dataToSave.address || 'Unknown address',
+          result: dataToSave.is_approved ? 'eligible' : 'not-eligible',
+          details: 'Property saved to collection'
+        });
+        
         // Give visual feedback
         console.log("Property saved successfully");
       }

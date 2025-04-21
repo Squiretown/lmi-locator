@@ -4,23 +4,28 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Home, CheckCircle, Calendar, Clock } from 'lucide-react';
 import { useSavedAddresses } from '@/hooks/useSavedAddresses';
 import { useAuth } from '@/hooks/useAuth';
+import { useClientActivity } from '@/hooks/useClientActivity';
 
 export const DashboardStats: React.FC = () => {
   const { savedAddresses, refreshAddresses } = useSavedAddresses();
+  const { activities } = useClientActivity();
   const { user } = useAuth();
   
   // Refresh saved addresses when component mounts
   useEffect(() => {
     refreshAddresses();
-  }, []);
+  }, [refreshAddresses]);
   
   // Calculate LMI eligible properties
   const lmiEligibleCount = savedAddresses.filter(a => a.isLmiEligible).length;
   
   // Calculate days active (using account creation date)
-  const daysActive = user ? Math.ceil(
+  const daysActive = user ? Math.max(1, Math.ceil(
     (new Date().getTime() - new Date(user.created_at).getTime()) / (1000 * 3600 * 24)
-  ) : 0;
+  )) : 0;
+  
+  // Get recent searches count
+  const recentSearchesCount = activities.filter(a => a.type === 'search').length;
   
   const stats = [
     {
@@ -43,7 +48,7 @@ export const DashboardStats: React.FC = () => {
     },
     {
       label: 'Recent Searches',
-      value: '5',
+      value: recentSearchesCount,
       icon: <Clock className="h-5 w-5 text-amber-500" />,
       color: 'bg-amber-50'
     }
