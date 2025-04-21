@@ -15,12 +15,10 @@ export const useAssignedProfessionals = () => {
       if (!user) return [];
 
       try {
-        // First try to get professionals from client_profiles with explicit typing
-        type ClientProfileResult = { professional_id: string | null };
-        
+        // First get client profile to find the professional_id
         const { data: clientProfile, error: profileError } = await supabase
           .from('client_profiles')
-          .select<'professional_id', ClientProfileResult>('professional_id')
+          .select('professional_id')
           .eq('user_id', user.id)
           .maybeSingle();
 
@@ -33,12 +31,10 @@ export const useAssignedProfessionals = () => {
           return [];
         }
         
-        // Fetch professionals with explicit typing
-        type ProfessionalResult = ProfessionalTable[];
-        
+        // Fetch professionals
         const { data: professionals, error: professionalError } = await supabase
           .from('professionals')
-          .select<'*', ProfessionalResult>('*')
+          .select('*')
           .eq('id', clientProfile.professional_id);
           
         if (professionalError) {
@@ -46,8 +42,11 @@ export const useAssignedProfessionals = () => {
           return [];
         }
         
-        // Transform the results with type safety
-        return (professionals || []).map(pro => transformProfessional(pro));
+        // Transform the results - ensure we're passing each professional object individually
+        return (professionals || []).map(pro => {
+          // Explicitly cast each item to ProfessionalTable
+          return transformProfessional(pro as ProfessionalTable);
+        });
       } catch (err) {
         console.error('Error in useAssignedProfessionals:', err);
         return [];
