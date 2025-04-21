@@ -16,37 +16,37 @@ export const useAssignedProfessionals = () => {
 
       try {
         // First get client profile to find the professional_id
-        const { data: clientProfile, error: profileError } = await supabase
+        const clientProfileResponse = await supabase
           .from('client_profiles')
           .select('professional_id')
           .eq('user_id', user.id)
           .maybeSingle();
 
-        if (profileError) {
-          console.error('Error fetching client profile:', profileError);
+        if (clientProfileResponse.error) {
+          console.error('Error fetching client profile:', clientProfileResponse.error);
           return [];
         }
 
+        const clientProfile = clientProfileResponse.data;
         if (!clientProfile?.professional_id) {
           return [];
         }
         
         // Fetch professionals
-        const { data: professionals, error: professionalError } = await supabase
+        const professionalsResponse = await supabase
           .from('professionals')
           .select('*')
           .eq('id', clientProfile.professional_id);
           
-        if (professionalError) {
-          console.error('Error fetching professionals:', professionalError);
+        if (professionalsResponse.error) {
+          console.error('Error fetching professionals:', professionalsResponse.error);
           return [];
         }
         
+        const professionals = professionalsResponse.data || [];
+        
         // Transform the results - ensure we're passing each professional object individually
-        return (professionals || []).map(pro => {
-          // Explicitly cast each item to ProfessionalTable
-          return transformProfessional(pro as ProfessionalTable);
-        });
+        return professionals.map(pro => transformProfessional(pro as ProfessionalTable));
       } catch (err) {
         console.error('Error in useAssignedProfessionals:', err);
         return [];
