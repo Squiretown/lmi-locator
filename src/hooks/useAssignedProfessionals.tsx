@@ -28,19 +28,22 @@ export const useAssignedProfessionals = () => {
         }
 
         if (clientProfile?.professional_id) {
-          const { data: professionals, error: proError } = await supabase
+          // Explicitly typed query to avoid deep type instantiation
+          const professionalQuery = await supabase
             .from('professionals')
             .select('*')
             .eq('id', clientProfile.professional_id);
+            
+          const professionals = professionalQuery.data || [];
+          const proError = professionalQuery.error;
 
           if (proError) {
             console.error('Error fetching professionals:', proError);
             return [];
           }
 
-          return professionals ? professionals.map(pro => 
-            transformProfessional(pro as ProfessionalTable)
-          ) : [];
+          // Transform the results to match the Professional interface
+          return professionals.map(pro => transformProfessional(pro as ProfessionalTable));
         }
 
         // If no invited professional found, return empty array
