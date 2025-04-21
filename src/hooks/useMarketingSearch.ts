@@ -4,7 +4,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useSimpleNotification } from '@/hooks/useSimpleNotification';
 import { useAuth } from '@/hooks/useAuth';
 
-type SearchType = 'tract_id' | 'zip_code' | 'city';
+// Export the SearchType so it can be used in other files
+export type SearchType = 'tract_id' | 'zip_code' | 'city';
 export type SearchResult = {
   address: string;
   city: string;
