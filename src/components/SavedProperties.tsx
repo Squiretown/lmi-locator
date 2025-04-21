@@ -26,6 +26,7 @@ const SavedProperties: React.FC<SavedPropertiesProps> = ({ onAddressSelect }) =>
     const success = await removeAddress(id);
     if (success) {
       toast.success('Address removed from your collection');
+      refreshAddresses(); // Refresh the list after removal
     }
   };
 
@@ -39,6 +40,9 @@ const SavedProperties: React.FC<SavedPropertiesProps> = ({ onAddressSelect }) =>
     setRefreshing(false);
     toast.success('Saved properties refreshed');
   };
+
+  // Get the count of LMI eligible properties
+  const lmiEligibleCount = savedAddresses.filter(a => a.isLmiEligible).length;
 
   // No saved properties state
   if (savedAddresses.length === 0 && !isLoading) {
@@ -77,9 +81,9 @@ const SavedProperties: React.FC<SavedPropertiesProps> = ({ onAddressSelect }) =>
             <Badge variant="outline" className="text-xs">
               {savedAddresses.length} Saved
             </Badge>
-            {savedAddresses.filter(a => a.isLmiEligible).length > 0 && (
+            {lmiEligibleCount > 0 && (
               <Badge variant="secondary" className="text-xs bg-green-100 text-green-800 hover:bg-green-200">
-                {savedAddresses.filter(a => a.isLmiEligible).length} LMI Eligible
+                {lmiEligibleCount} LMI Eligible
               </Badge>
             )}
           </div>

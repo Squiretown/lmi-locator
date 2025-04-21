@@ -53,7 +53,7 @@ export function useClientActivity() {
           id, 
           created_at, 
           is_favorite, 
-          properties!inner(address)
+          properties!inner(address, is_lmi_eligible)
         `)
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
@@ -64,7 +64,7 @@ export function useClientActivity() {
           type: 'save',
           timestamp: item.created_at,
           address: item.properties?.address || 'Unknown address',
-          result: item.is_favorite ? 'eligible' : 'not-eligible',
+          result: (item.properties?.is_lmi_eligible || item.is_favorite) ? 'eligible' : 'not-eligible',
           details: 'Property saved to collection'
         }));
         

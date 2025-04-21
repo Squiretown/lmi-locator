@@ -7,6 +7,7 @@ export async function fetchSavedAddresses(userId?: string): Promise<SavedAddress
   if (!userId) return [];
 
   try {
+    // Query to get saved properties with their related property information
     const { data, error } = await supabase
       .from('saved_properties')
       .select(`
@@ -23,13 +24,17 @@ export async function fetchSavedAddresses(userId?: string): Promise<SavedAddress
       .eq('user_id', userId)
       .order('created_at', { ascending: false });
 
-    if (error) throw error;
+    if (error) {
+      console.error('DB error fetching saved addresses:', error);
+      throw error;
+    }
 
+    // Map the data to our SavedAddress type
     return data.map(item => ({
       id: item.id,
       address: item.properties?.address || 'Unknown address',
       createdAt: item.created_at,
-      isLmiEligible: item.is_favorite,
+      isLmiEligible: item.properties?.is_lmi_eligible || item.is_favorite || false,
       notes: item.notes
     }));
   } catch (error) {
@@ -43,24 +48,33 @@ export async function saveAddressToDb(
   { address, isLmiEligible, notes }: SaveAddressInput
 ): Promise<boolean> {
   try {
+    console.log(`Saving to DB - Address: ${address}, LMI: ${isLmiEligible}`);
     // First check if this property exists
     let propertyId: string;
     
     const { data: existingProperty } = await supabase
       .from('properties')
-      .select('id')
+      .select('id, is_lmi_eligible')
       .eq('address', address)
       .maybeSingle();
       
     if (existingProperty) {
       propertyId = existingProperty.id;
+      
+      // If the property exists but LMI status is different, update it
+      if (existingProperty.is_lmi_eligible !== isLmiEligible) {
+        await supabase
+          .from('properties')
+          .update({ is_lmi_eligible: isLmiEligible })
+          .eq('id', propertyId);
+      }
     } else {
-      // Create a new property record
+      // Create a new property record with the LMI status
       const { data: newProperty, error: propertyError } = await supabase
         .from('properties')
         .insert({
           address: address,
-          price: 0,
+          price: 0, // Required field
           city: '',
           state: '',
           zip_code: '',
@@ -71,6 +85,7 @@ export async function saveAddressToDb(
         .single();
         
       if (propertyError || !newProperty) {
+        console.error('Failed to create property record:', propertyError);
         throw new Error('Failed to create property record');
       }
       
@@ -78,16 +93,20 @@ export async function saveAddressToDb(
     }
     
     // Now save the reference in saved_properties
+    // Note: is_favorite is used as a backup for the LMI status
     const { error } = await supabase
       .from('saved_properties')
       .insert({
         user_id: userId,
         property_id: propertyId,
-        is_favorite: isLmiEligible,
+        is_favorite: isLmiEligible, // Use is_favorite to store LMI status as a backup
         notes
       });
       
-    if (error) throw error;
+    if (error) {
+      console.error('Error inserting saved property:', error);
+      throw error;
+    }
     
     return true;
   } catch (error) {

@@ -8,13 +8,16 @@ import { useClientActivity } from '@/hooks/useClientActivity';
 
 export const DashboardStats: React.FC = () => {
   const { savedAddresses, refreshAddresses } = useSavedAddresses();
-  const { activities } = useClientActivity();
+  const { activities, refreshActivities } = useClientActivity();
   const { user } = useAuth();
   
-  // Refresh saved addresses when component mounts
+  // Refresh data when component mounts
   useEffect(() => {
     refreshAddresses();
-  }, [refreshAddresses]);
+    if (refreshActivities) {
+      refreshActivities();
+    }
+  }, [refreshAddresses, refreshActivities]);
   
   // Calculate LMI eligible properties
   const lmiEligibleCount = savedAddresses.filter(a => a.isLmiEligible).length;
@@ -24,7 +27,7 @@ export const DashboardStats: React.FC = () => {
     (new Date().getTime() - new Date(user.created_at).getTime()) / (1000 * 3600 * 24)
   )) : 0;
   
-  // Get recent searches count
+  // Get recent searches count from activities
   const recentSearchesCount = activities.filter(a => a.type === 'search').length;
   
   const stats = [
