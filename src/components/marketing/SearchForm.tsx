@@ -1,10 +1,9 @@
 
 import React from 'react';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import type { SearchType } from '@/hooks/useMarketingSearch';
+import { SearchTypeTabs } from './search/SearchTypeTabs';
+import { SearchInputs } from './search/SearchInputs';
 
 interface SearchFormProps {
   searchType: SearchType;
@@ -35,37 +34,20 @@ export const SearchForm: React.FC<SearchFormProps> = ({
         <CardTitle>Search Properties</CardTitle>
       </CardHeader>
       <CardContent>
-        <Tabs 
-          value={searchType} 
-          onValueChange={(value) => onSearchTypeChange(value as SearchType)}
-          className="w-full"
-        >
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="tract_id">Census Tract</TabsTrigger>
-            <TabsTrigger value="zip_code">ZIP Code</TabsTrigger>
-            <TabsTrigger value="city">City</TabsTrigger>
-          </TabsList>
-        </Tabs>
-        
-        <div className="mt-4 space-y-4">
-          <Input 
-            placeholder={`Enter ${searchType.replace('_', ' ')}`}
-            value={searchValue}
-            onChange={(e) => onSearchValueChange(e.target.value)}
-          />
-          <Input 
-            placeholder="Optional: Name this search"
-            value={searchName}
-            onChange={(e) => onSearchNameChange(e.target.value)}
-          />
-          <Button 
-            onClick={onSearch} 
-            disabled={!searchValue || isLoading || !canSearch}
-            className="w-full"
-          >
-            {isLoading ? 'Searching...' : 'Search Properties'}
-          </Button>
-        </div>
+        <SearchTypeTabs 
+          searchType={searchType}
+          onSearchTypeChange={onSearchTypeChange}
+        />
+        <SearchInputs
+          searchType={searchType}
+          searchValue={searchValue}
+          onSearchValueChange={onSearchValueChange}
+          searchName={searchName}
+          onSearchNameChange={onSearchNameChange}
+          onSearch={onSearch}
+          isLoading={isLoading}
+          canSearch={canSearch}
+        />
       </CardContent>
     </Card>
   );
