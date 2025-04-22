@@ -1,30 +1,27 @@
-
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { LineChart, XAxis, YAxis, CartesianGrid, Tooltip, Line, ResponsiveContainer } from 'recharts';
 import { Building, Users, Search, DollarSign, ListFilter, Plus, UserCog } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getRealtorByUserId, createRealtor, updateRealtor, Realtor, RealtorFormValues } from '@/lib/api/realtors';
+import { getRealtorByUserId, createRealtor, updateRealtor, RealtorFormValues } from '@/lib/api/realtors';
 import { toast } from 'sonner';
 import RealtorDialog from '@/components/realtors/RealtorDialog';
+import { TeamContent } from '@/components/dashboard/client/TeamContent';
 
 const RealtorDashboard: React.FC = () => {
   const { user, signOut } = useAuth();
   const [profileDialogOpen, setProfileDialogOpen] = useState(false);
   const queryClient = useQueryClient();
   
-  // Query to fetch realtor profile
   const { data: realtorProfile, isLoading: isLoadingProfile } = useQuery({
     queryKey: ['realtorProfile'],
     queryFn: getRealtorByUserId
   });
 
-  // Check if profile exists when the component mounts
   useEffect(() => {
     if (!isLoadingProfile && !realtorProfile && user) {
-      // If user is logged in but has no profile, suggest creating one
       toast.info(
         'Complete your realtor profile to access all features', 
         {
@@ -38,7 +35,6 @@ const RealtorDashboard: React.FC = () => {
     }
   }, [realtorProfile, isLoadingProfile, user]);
 
-  // Mutations for realtor operations
   const createRealtorMutation = useMutation({
     mutationFn: createRealtor,
     onSuccess: () => {
@@ -101,7 +97,6 @@ const RealtorDashboard: React.FC = () => {
         </div>
       </div>
       
-      {/* Profile Status Alert */}
       {!realtorProfile && !isLoadingProfile && (
         <Card className="mb-6 bg-amber-50 border-amber-200">
           <CardContent className="py-4">
@@ -187,35 +182,9 @@ const RealtorDashboard: React.FC = () => {
           </CardContent>
         </Card>
         
-        <Card>
-          <CardHeader>
-            <CardTitle>LMI Eligibility</CardTitle>
-            <CardDescription>Properties checked</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="h-64 w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={eligibilityData}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                    outerRadius={80}
-                    fill="#8884d8"
-                    dataKey="value"
-                  >
-                    {eligibilityData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-          </CardContent>
-        </Card>
+        <div className="md:col-span-1">
+          <TeamContent />
+        </div>
       </div>
       
       <div className="flex justify-between items-center mb-4">
@@ -281,7 +250,6 @@ const RealtorDashboard: React.FC = () => {
         </CardContent>
       </Card>
 
-      {/* Realtor Profile Dialog */}
       <RealtorDialog 
         isOpen={profileDialogOpen}
         setIsOpen={setProfileDialogOpen}
