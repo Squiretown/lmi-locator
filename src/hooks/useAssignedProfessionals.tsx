@@ -25,7 +25,7 @@ export const useAssignedProfessionals = () => {
           .from('client_profiles')
           .select('professional_id')
           .eq('user_id', user.id)
-          .maybeSingle<ClientProfileResult>();
+          .maybeSingle();
 
         if (!profile?.professional_id) return [];
 
