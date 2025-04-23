@@ -19,16 +19,17 @@ export const useAssignedProfessionals = () => {
     queryFn: async (): Promise<Professional[]> => {
       if (!user) return [];
 
-      // Get the profile result and cast it as unknown first to break recursion
+      // Use any as an intermediate type to completely break the type recursion
       const profileResult = await supabase
         .from('client_profiles')
         .select('professional_id')
         .eq('user_id', user.id)
         .maybeSingle();
       
-      // Cast the result to our simple interface to avoid deep type instantiation
-      const profileData = profileResult.data as unknown as ClientProfileData;
-      const professionalId = profileData?.professional_id;
+      // First cast to any to break any deep type instantiation
+      const rawData: any = profileResult.data;
+      // Then cast to our simple interface
+      const professionalId: string | null = rawData?.professional_id || null;
       
       if (!professionalId) return [];
 
