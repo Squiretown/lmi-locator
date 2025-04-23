@@ -13,11 +13,16 @@ export const useAssignedProfessionals = () => {
       if (!user) return [];
 
       try {
+        // Define the return type for the client_profiles query
+        interface ClientProfileResult {
+          professional_id: string | null;
+        }
+
         const { data: clientProfile } = await supabase
           .from('client_profiles')
           .select('professional_id')
           .eq('user_id', user.id)
-          .maybeSingle();
+          .maybeSingle<ClientProfileResult>();
 
         if (!clientProfile?.professional_id) {
           return [];
@@ -28,7 +33,7 @@ export const useAssignedProfessionals = () => {
           .select('*')
           .eq('id', clientProfile.professional_id);
 
-        return professionals || [];
+        return professionals as Professional[] || [];
       } catch (err) {
         console.error('Error in useAssignedProfessionals:', err);
         return [];
