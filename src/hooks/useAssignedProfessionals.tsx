@@ -6,6 +6,11 @@ import { useAuth } from '@/hooks/useAuth';
 import { transformProfessional } from '@/lib/api/utils/transformers';
 import { ProfessionalTable } from '@/lib/api/database-types';
 
+// Define a simple interface to break the type recursion
+interface ClientProfileData {
+  professional_id: string | null;
+}
+
 export const useAssignedProfessionals = () => {
   const { user } = useAuth();
 
@@ -14,15 +19,16 @@ export const useAssignedProfessionals = () => {
     queryFn: async (): Promise<Professional[]> => {
       if (!user) return [];
 
-      // Simplify by avoiding complex type inference
+      // Get the profile result and cast it as unknown first to break recursion
       const profileResult = await supabase
         .from('client_profiles')
         .select('professional_id')
         .eq('user_id', user.id)
         .maybeSingle();
       
-      // Simple extraction of the professional_id value
-      const professionalId = profileResult.data?.professional_id;
+      // Cast the result to our simple interface to avoid deep type instantiation
+      const profileData = profileResult.data as unknown as ClientProfileData;
+      const professionalId = profileData?.professional_id;
       
       if (!professionalId) return [];
 
