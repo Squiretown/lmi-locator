@@ -6,6 +6,11 @@ import { useAuth } from '@/hooks/useAuth';
 import { transformProfessional } from '@/lib/api/utils/transformers';
 import { ProfessionalTable } from '@/lib/api/database-types';
 
+// Define a simple type for the client_profiles query result outside the function
+type ClientProfileResult = {
+  professional_id: string | null;
+};
+
 export const useAssignedProfessionals = () => {
   const { user } = useAuth();
 
@@ -15,11 +20,7 @@ export const useAssignedProfessionals = () => {
       if (!user) return [];
 
       try {
-        // Define a simple type for the client_profiles query result
-        type ClientProfileResult = {
-          professional_id: string | null;
-        };
-
+        // Use the pre-defined type rather than inline definition
         const { data: clientProfile } = await supabase
           .from('client_profiles')
           .select('professional_id')
