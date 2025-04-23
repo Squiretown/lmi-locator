@@ -1,4 +1,3 @@
-
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Professional } from '@/lib/api/types';
@@ -6,7 +5,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { transformProfessional } from '@/lib/api/utils/transformers';
 import { ProfessionalTable } from '@/lib/api/database-types';
 
-// Define a simple type for the client_profiles query result outside the function
+// Explicitly define a simple type without complex inference
 type ClientProfileResult = { 
   professional_id: string | null 
 };
@@ -19,21 +18,22 @@ export const useAssignedProfessionals = () => {
     queryFn: async (): Promise<Professional[]> => {
       if (!user) return [];
 
-      // 1️⃣ fetch the client's professional_id
+      // Use type assertion to help TypeScript
       const { data: profile } = await supabase
         .from('client_profiles')
         .select('professional_id')
         .eq('user_id', user.id)
-        .maybeSingle()
-        .returns<ClientProfileResult>();
+        .maybeSingle();
 
-      if (!profile?.professional_id) return [];
+      // Explicit type check and assertion
+      const validProfile = profile as ClientProfileResult | null;
+      if (!validProfile?.professional_id) return [];
 
       // 2️⃣ fetch the professional record(s)
       const { data: professionals } = await supabase
         .from('professionals')
         .select('*')
-        .eq('id', profile.professional_id);
+        .eq('id', validProfile.professional_id);
 
       // Transform the Supabase response to match our Professional interface
       return professionals ? professionals.map(prof => {
