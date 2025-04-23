@@ -7,8 +7,8 @@ import { transformProfessional } from '@/lib/api/utils/transformers';
 import { ProfessionalTable } from '@/lib/api/database-types';
 
 // Define a simple type for the client_profiles query result outside the function
-type ClientProfileResult = {
-  professional_id: string | null;
+type ClientProfileResult = { 
+  professional_id: string | null 
 };
 
 export const useAssignedProfessionals = () => {
@@ -20,24 +20,22 @@ export const useAssignedProfessionals = () => {
       if (!user) return [];
 
       try {
-        // Use the pre-defined type rather than inline definition
-        const { data: clientProfile } = await supabase
+        // 1️⃣ fetch the client's professional_id
+        const { data: profile } = await supabase
           .from('client_profiles')
           .select('professional_id')
           .eq('user_id', user.id)
           .maybeSingle<ClientProfileResult>();
 
-        if (!clientProfile?.professional_id) {
-          return [];
-        }
+        if (!profile?.professional_id) return [];
 
+        // 2️⃣ fetch the professional record(s)
         const { data: professionals } = await supabase
           .from('professionals')
           .select('*')
-          .eq('id', clientProfile.professional_id);
+          .eq('id', profile.professional_id);
 
         // Transform the Supabase response to match our Professional interface
-        // We need to manually cast the database records to ensure the type fields are handled correctly
         return professionals ? professionals.map(prof => {
           // Create a properly typed ProfessionalTable object with proper validation
           const professionalWithValidType: ProfessionalTable = {
