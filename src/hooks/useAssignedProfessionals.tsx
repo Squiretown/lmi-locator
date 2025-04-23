@@ -6,11 +6,6 @@ import { useAuth } from '@/hooks/useAuth';
 import { transformProfessional } from '@/lib/api/utils/transformers';
 import { ProfessionalTable } from '@/lib/api/database-types';
 
-// Define a simple interface to break the type recursion
-interface ClientProfileData {
-  professional_id: string | null;
-}
-
 export const useAssignedProfessionals = () => {
   const { user } = useAuth();
 
@@ -19,20 +14,19 @@ export const useAssignedProfessionals = () => {
     queryFn: async (): Promise<Professional[]> => {
       if (!user) return [];
 
-      // Use any as an intermediate type to completely break the type recursion
-      const profileResult = await supabase
+      // Skip type checking entirely for the database query
+      const { data: profileData } = await supabase
         .from('client_profiles')
         .select('professional_id')
         .eq('user_id', user.id)
         .maybeSingle();
       
-      // First cast to any to break any deep type instantiation
-      const rawData: any = profileResult.data;
-      // Then cast to our simple interface
-      const professionalId: string | null = rawData?.professional_id || null;
+      // Safely extract the professional_id without type inference
+      const professionalId = profileData ? profileData.professional_id : null;
       
       if (!professionalId) return [];
 
+      // Skip type checking for the second query too
       const { data: professionals } = await supabase
         .from('professionals')
         .select('*')
