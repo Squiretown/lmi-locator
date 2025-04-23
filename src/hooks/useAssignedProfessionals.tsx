@@ -8,44 +8,48 @@ import { ProfessionalTable } from '@/lib/api/database-types';
 
 export const useAssignedProfessionals = () => {
   const { user } = useAuth();
-
+  
+  // Helper function for fetching professional ID
+  const fetchProfessionalId = async (userId: string): Promise<string | null> => {
+    const { data } = await supabase
+      .from('client_profiles')
+      .select('professional_id')
+      .eq('user_id', userId)
+      .maybeSingle();
+    
+    return data?.professional_id || null;
+  };
+  
+  // Helper function for fetching professionals
+  const fetchProfessionals = async (professionalId: string): Promise<Professional[]> => {
+    const { data } = await supabase
+      .from('professionals')
+      .select('*')
+      .eq('id', professionalId);
+    
+    if (!data || !data.length) return [];
+    
+    return data.map(prof => {
+      const validProf = {
+        ...prof,
+        type: (['realtor', 'mortgage_broker'].includes(prof.type) ? prof.type : 'realtor') as 'realtor' | 'mortgage_broker',
+        status: (['active', 'pending', 'inactive'].includes(prof.status) ? prof.status : 'pending') as 'active' | 'pending' | 'inactive'
+      };
+      
+      return transformProfessional(validProf);
+    });
+  };
+  
+  // Main query
   return useQuery({
     queryKey: ['assigned-professionals', user?.id],
     queryFn: async (): Promise<Professional[]> => {
       if (!user) return [];
-
-      // Skip type checking entirely for the database query
-      const { data: profileData } = await supabase
-        .from('client_profiles')
-        .select('professional_id')
-        .eq('user_id', user.id)
-        .maybeSingle();
       
-      // Safely extract the professional_id without type inference
-      const professionalId = profileData ? profileData.professional_id : null;
-      
+      const professionalId = await fetchProfessionalId(user.id);
       if (!professionalId) return [];
-
-      // Skip type checking for the second query too
-      const { data: professionals } = await supabase
-        .from('professionals')
-        .select('*')
-        .eq('id', professionalId);
-
-      // Transform the Supabase response to match our Professional interface
-      return professionals ? professionals.map(prof => {
-        // Create a properly typed ProfessionalTable object with proper validation
-        const professionalWithValidType: ProfessionalTable = {
-          ...prof,
-          type: (prof.type === 'realtor' || prof.type === 'mortgage_broker') 
-            ? prof.type 
-            : 'realtor', // Default to 'realtor' if type is invalid
-          status: (prof.status === 'active' || prof.status === 'pending' || prof.status === 'inactive')
-            ? prof.status
-            : 'pending' // Default to 'pending' if status is invalid
-        };
-        return transformProfessional(professionalWithValidType);
-      }) : [];
+      
+      return fetchProfessionals(professionalId);
     },
     enabled: !!user
   });
