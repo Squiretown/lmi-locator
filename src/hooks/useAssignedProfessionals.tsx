@@ -4,47 +4,52 @@ import { supabase } from '@/integrations/supabase/client';
 import { Professional } from '@/lib/api/types';
 import { useAuth } from '@/hooks/useAuth';
 import { transformProfessional } from '@/lib/api/utils/transformers';
-import { ProfessionalTable } from '@/lib/api/database-types';
+import type { ProfessionalTable } from '@/lib/api/database-types';
+
+// Separate interface for the profile response
+interface ClientProfile {
+  professional_id: string;
+}
 
 export const useAssignedProfessionals = () => {
   const { user } = useAuth();
-  
+
   return useQuery({
     queryKey: ['assigned-professionals', user?.id],
-    queryFn: async (): Promise<Professional[]> => {
-      // Early return if no user
-      if (!user) return [];
-      
+    queryFn: async () => {
+      if (!user) {
+        return [];
+      }
+
       try {
-        // First, fetch the client profile to get the professional ID
-        const { data: profile, error: profileError } = await supabase
+        // Explicitly type the profile response
+        const { data: profile } = await supabase
           .from('client_profiles')
-          .select('professional_id')
+          .select<'client_profiles', ClientProfile>('professional_id')
           .eq('user_id', user.id)
           .single();
-          
-        if (profileError || !profile || !profile.professional_id) {
-          console.error('No professional found for this client', profileError);
+
+        if (!profile?.professional_id) {
           return [];
         }
-        
-        // Now fetch the professional's details
-        const { data: professionals, error: profError } = await supabase
+
+        // Fetch professional with explicit typing
+        const { data: professionals } = await supabase
           .from('professionals')
           .select('*')
           .eq('id', profile.professional_id);
-        
-        if (profError || !professionals || professionals.length === 0) {
-          console.error('Error fetching professional details', profError);
+
+        if (!professionals?.length) {
           return [];
         }
-        
-        // Transform the raw database objects to Professional interface objects
-        return professionals.map(rawProf => {
-          return transformProfessional(rawProf as ProfessionalTable);
-        });
+
+        // Transform each professional with proper typing
+        return professionals.map((prof) => 
+          transformProfessional(prof as ProfessionalTable)
+        );
+
       } catch (error) {
-        console.error('Error in useAssignedProfessionals:', error);
+        console.error('Error fetching professionals:', error);
         return [];
       }
     },
