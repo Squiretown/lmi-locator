@@ -6,9 +6,9 @@ import { useAuth } from '@/hooks/useAuth';
 import { transformProfessional } from '@/lib/api/utils/transformers';
 import type { ProfessionalTable } from '@/lib/api/database-types';
 
-// Separate interface for the profile response
-interface ClientProfile {
-  professional_id: string;
+// Simple interface for the client profile data we need
+interface ClientProfileData {
+  professional_id: string | null;
 }
 
 export const useAssignedProfessionals = () => {
@@ -16,40 +16,46 @@ export const useAssignedProfessionals = () => {
 
   return useQuery({
     queryKey: ['assigned-professionals', user?.id],
-    queryFn: async () => {
-      if (!user) {
-        return [];
-      }
-
+    queryFn: async (): Promise<Professional[]> => {
+      if (!user) return [];
+      
       try {
-        // Explicitly type the profile response
-        const { data: profile } = await supabase
+        // Use a simpler approach to fetch profile data
+        const { data: profileData, error: profileError } = await supabase
           .from('client_profiles')
-          .select<'client_profiles', ClientProfile>('professional_id')
+          .select('professional_id')
           .eq('user_id', user.id)
-          .single();
-
+          .maybeSingle();
+        
+        if (profileError) {
+          console.error('Error fetching client profile:', profileError);
+          return [];
+        }
+        
+        // Type assertion to avoid deep type instantiation
+        const profile = profileData as ClientProfileData | null;
         if (!profile?.professional_id) {
           return [];
         }
-
-        // Fetch professional with explicit typing
-        const { data: professionals } = await supabase
+        
+        // Fetch professional data
+        const { data: professionalsData, error: profsError } = await supabase
           .from('professionals')
           .select('*')
           .eq('id', profile.professional_id);
-
-        if (!professionals?.length) {
+        
+        if (profsError || !professionalsData?.length) {
+          console.error('Error fetching professionals:', profsError);
           return [];
         }
-
-        // Transform each professional with proper typing
-        return professionals.map((prof) => 
-          transformProfessional(prof as ProfessionalTable)
-        );
-
+        
+        // Transform the professionals data
+        return professionalsData.map(rawProf => {
+          const professionalRecord = rawProf as unknown as ProfessionalTable;
+          return transformProfessional(professionalRecord);
+        });
       } catch (error) {
-        console.error('Error fetching professionals:', error);
+        console.error('Unexpected error in useAssignedProfessionals:', error);
         return [];
       }
     },
