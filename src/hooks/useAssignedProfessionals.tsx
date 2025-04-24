@@ -7,62 +7,62 @@ import { transformProfessional } from '@/lib/api/utils/transformers';
 
 /**
  * Custom hook to fetch professionals assigned to the current user
- * Uses a simplified approach to avoid TypeScript deep instantiation errors
+ * Uses an approach that avoids TypeScript deep instantiation errors
  */
 export const useAssignedProfessionals = () => {
   const { user } = useAuth();
-
+  
   return useQuery({
     queryKey: ['assigned-professionals', user?.id],
     queryFn: async (): Promise<Professional[]> => {
       if (!user) return [];
       
       try {
-        // Step 1: Get professional_id from client_profiles - don't use any type inference
-        const { data: profileData, error: profileError } = await supabase
+        // Step 1: Get professional_id from client_profiles without type inference
+        const profileResponse = await supabase
           .from('client_profiles')
           .select('professional_id')
           .eq('user_id', user.id)
           .maybeSingle();
-          
-        if (profileError) {
-          console.error('Error fetching client profile:', profileError);
+        
+        if (profileResponse.error) {
+          console.error('Error fetching client profile:', profileResponse.error);
           return [];
         }
         
         // Step 2: Extract professional_id safely
-        const professionalId = profileData?.professional_id;
+        const professionalId = profileResponse.data?.professional_id;
         if (!professionalId) {
           return [];
         }
         
-        // Step 3: Fetch professional data using the ID - avoid type inference
-        const { data: professionalsData, error: professionalsError } = await supabase
+        // Step 3: Fetch professional data using a simpler query structure
+        const professionalsResponse = await supabase
           .from('professionals')
           .select('*')
           .eq('id', professionalId);
           
-        if (professionalsError || !professionalsData) {
-          console.error('Error fetching professionals:', professionalsError);
+        if (professionalsResponse.error || !professionalsResponse.data) {
+          console.error('Error fetching professionals:', professionalsResponse.error);
           return [];
         }
         
-        // Step 4: Map raw data to professionals with explicit typing
-        return professionalsData.map(rawProf => {
-          // Safely determine the professional type
+        // Step 4: Transform data without complex type inference
+        return professionalsResponse.data.map(rawProf => {
+          // Handle professional type with validation
           let professionalType: 'realtor' | 'mortgage_broker' = 'realtor';
           if (rawProf.type === 'realtor' || rawProf.type === 'mortgage_broker') {
             professionalType = rawProf.type as 'realtor' | 'mortgage_broker';
           }
           
-          // Safely determine the status
+          // Handle status with validation
           let statusValue: 'active' | 'pending' | 'inactive' = 'pending';
           if (rawProf.status === 'active' || rawProf.status === 'pending' || rawProf.status === 'inactive') {
             statusValue = rawProf.status as 'active' | 'pending' | 'inactive';
           }
           
-          // Create a properly typed professional record manually
-          const professionalRecord = {
+          // Build the professional record with explicitly defined types
+          return transformProfessional({
             id: rawProf.id,
             user_id: rawProf.user_id,
             type: professionalType,
@@ -81,9 +81,7 @@ export const useAssignedProfessionals = () => {
             is_flagged: rawProf.is_flagged,
             notes: rawProf.notes,
             social_media: rawProf.social_media
-          };
-          
-          return transformProfessional(professionalRecord);
+          });
         });
       } catch (err) {
         console.error('Unexpected error in useAssignedProfessionals:', err);
