@@ -18,7 +18,8 @@ export const useAssignedProfessionals = () => {
     queryFn: async (): Promise<Professional[]> => {
       if (!user) return [];
       
-      // Step 1: Get professional_id from client_profiles using raw query without type inference
+      // Step 1: Get professional_id from client_profiles without type inference
+      // Using raw SQL-like query structure to avoid deep type instantiation
       const profileResponse = await supabase
         .from('client_profiles')
         .select('professional_id')
@@ -53,7 +54,10 @@ export const useAssignedProfessionals = () => {
         const professionalRecord: ProfessionalTable = {
           id: rawProf.id,
           user_id: rawProf.user_id,
-          type: rawProf.type,
+          // Cast to the expected union types with explicit type checking
+          type: (rawProf.type === 'realtor' || rawProf.type === 'mortgage_broker') 
+            ? (rawProf.type as 'realtor' | 'mortgage_broker') 
+            : 'realtor',
           name: rawProf.name,
           company: rawProf.company,
           license_number: rawProf.license_number,
@@ -62,7 +66,10 @@ export const useAssignedProfessionals = () => {
           website: rawProf.website,
           bio: rawProf.bio,
           photo_url: rawProf.photo_url,
-          status: rawProf.status || 'pending',
+          // Cast status to the expected union type with validation
+          status: (rawProf.status === 'active' || rawProf.status === 'pending' || rawProf.status === 'inactive') 
+            ? (rawProf.status as 'active' | 'pending' | 'inactive') 
+            : 'pending',
           created_at: rawProf.created_at,
           last_updated: rawProf.last_updated,
           is_verified: rawProf.is_verified,
