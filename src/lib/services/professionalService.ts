@@ -1,69 +1,79 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { DbProfessional, DbClientProfile } from '../types/databaseTypes';
+import { DbClientProfile, DbProfessional } from '../types/databaseTypes';
 import { Professional, ProfessionalType, ProfessionalStatus } from '../types/modelTypes';
 
-export const getProfessionalForUser = async (userId: string): Promise<Professional[]> => {
+/**
+ * Get professionals assigned to a user
+ */
+export async function getProfessionalForUser(userId: string): Promise<Professional[]> {
   try {
-    const { data: clientProfile, error } = await supabase
+    // Step 1: Get professional ID from client profile
+    const { data: clientProfile, error: profileError } = await supabase
       .from('client_profiles')
       .select('professional_id')
       .eq('user_id', userId)
-      .maybeSingle() as { data: DbClientProfile | null; error: any };
-
-    if (error || !clientProfile?.professional_id) {
-      if (error) console.error('Error fetching client profile:', error);
+      .maybeSingle();
+    
+    if (profileError || !clientProfile?.professional_id) {
+      if (profileError) console.error('Error fetching client profile:', profileError);
       return [];
     }
 
+    // Step 2: Get professional details
     const { data: professionals, error: profError } = await supabase
       .from('professionals')
       .select('*')
-      .eq('id', clientProfile.professional_id) as { data: DbProfessional[] | null; error: any };
-
-    if (profError) {
+      .eq('id', clientProfile.professional_id);
+    
+    if (profError || !professionals) {
       console.error('Error fetching professionals:', profError);
       return [];
     }
 
-    return (professionals || []).map(transformProfessional);
+    // Step 3: Map to application models
+    return professionals.map(mapDbProfessionalToModel);
   } catch (err) {
     console.error('Unexpected error in getProfessionalForUser:', err);
     return [];
   }
-};
+}
 
-export const transformProfessional = (rawProf: DbProfessional): Professional => {
-  // Validate professional type
-  const professionalType: ProfessionalType = 
-    (rawProf.type === 'realtor' || rawProf.type === 'mortgage_broker') 
-      ? rawProf.type 
+/**
+ * Map database professional record to application model
+ */
+function mapDbProfessionalToModel(dbProf: DbProfessional): Professional {
+  // Determine professional type
+  const type: ProfessionalType = 
+    (dbProf.type === 'realtor' || dbProf.type === 'mortgage_broker') 
+      ? dbProf.type 
       : 'realtor';
-  
-  // Validate status
-  const statusValue: ProfessionalStatus = 
-    (rawProf.status === 'active' || rawProf.status === 'pending' || rawProf.status === 'inactive')
-      ? rawProf.status as ProfessionalStatus
+
+  // Determine status
+  const status: ProfessionalStatus = 
+    (dbProf.status === 'active' || dbProf.status === 'pending' || dbProf.status === 'inactive')
+      ? dbProf.status as ProfessionalStatus
       : 'pending';
-  
+
+  // Map DB model to application model with proper null handling
   return {
-    id: rawProf.id,
-    userId: rawProf.user_id,
-    type: professionalType,
-    name: rawProf.name || '',
-    company: rawProf.company || '',
-    licenseNumber: rawProf.license_number || '',
-    phone: rawProf.phone,
-    address: rawProf.address,
-    website: rawProf.website,
-    bio: rawProf.bio,
-    photoUrl: rawProf.photo_url,
-    status: statusValue,
-    createdAt: rawProf.created_at,
-    lastUpdated: rawProf.last_updated || rawProf.created_at,
-    isVerified: !!rawProf.is_verified,
-    isFlagged: !!rawProf.is_flagged,
-    notes: rawProf.notes,
-    socialMedia: rawProf.social_media
+    id: dbProf.id,
+    userId: dbProf.user_id,
+    type,
+    name: dbProf.name || '',
+    company: dbProf.company || '',
+    licenseNumber: dbProf.license_number || '',
+    phone: dbProf.phone,
+    address: dbProf.address,
+    website: dbProf.website,
+    bio: dbProf.bio,
+    photoUrl: dbProf.photo_url,
+    status,
+    createdAt: dbProf.created_at,
+    lastUpdated: dbProf.last_updated || dbProf.created_at,
+    isVerified: !!dbProf.is_verified,
+    isFlagged: !!dbProf.is_flagged,
+    notes: dbProf.notes,
+    socialMedia: dbProf.social_media
   };
-};
+}
