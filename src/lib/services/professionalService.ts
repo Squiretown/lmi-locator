@@ -53,7 +53,7 @@ export const transformProfessional = (rawProf: ProfessionalDTO): Professional =>
     company: rawProf.company,
     licenseNumber: rawProf.license_number,
     phone: rawProf.phone,
-    address: rawProf.address,
+    address: rawProf.address || null,
     website: rawProf.website,
     bio: rawProf.bio,
     photoUrl: rawProf.photo_url,
