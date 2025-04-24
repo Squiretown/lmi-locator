@@ -5,9 +5,14 @@ import { Professional } from '@/lib/api/types';
 import { useAuth } from '@/hooks/useAuth';
 import { transformProfessional } from '@/lib/api/utils/transformers';
 
+// Define explicit return type for the first Supabase query to avoid deep instantiation
+interface ClientProfile {
+  professional_id: string | null;
+}
+
 /**
  * Custom hook to fetch professionals assigned to the current user
- * Using well-defined types to avoid TypeScript deep instantiation errors
+ * Using explicit type annotations to avoid TypeScript deep instantiation errors
  */
 export const useAssignedProfessionals = () => {
   const { user } = useAuth();
@@ -18,19 +23,23 @@ export const useAssignedProfessionals = () => {
       if (!user) return [];
       
       try {
-        // Step 1: Get the professional_id using properly defined return types
-        const { data: profileData, error: profileError } = await supabase
+        // Step 1: Use explicit type casting to avoid deep type inference
+        const profileResult = await supabase
           .from('client_profiles')
           .select('professional_id')
           .eq('user_id', user.id)
           .maybeSingle();
+          
+        // Explicitly type the query result
+        const profileData = profileResult.data as ClientProfile | null;
+        const profileError = profileResult.error;
         
         if (profileError) {
           console.error('Error fetching client profile:', profileError);
           return [];
         }
         
-        // Extract professional_id safely
+        // Extract professional_id safely with proper null checking
         const professionalId = profileData?.professional_id;
         if (!professionalId) {
           return [];
@@ -58,12 +67,16 @@ export const useAssignedProfessionals = () => {
           social_media: any;
         }
         
-        // Step 3: Fetch professionals with proper typing
-        const { data: professionals, error: professionalsError } = await supabase
+        // Step 3: Use explicit type casting for the professionals query as well
+        const professionalsResult = await supabase
           .from('professionals')
           .select('*')
           .eq('id', professionalId);
           
+        // Explicitly type the professionals query result
+        const professionals = professionalsResult.data as RawProfessional[] | null;
+        const professionalsError = professionalsResult.error;
+        
         if (professionalsError || !professionals) {
           console.error('Error fetching professionals:', professionalsError);
           return [];
