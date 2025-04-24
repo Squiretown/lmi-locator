@@ -9,34 +9,39 @@ import { ProfessionalTable } from '@/lib/api/database-types';
 export const useAssignedProfessionals = () => {
   const { user } = useAuth();
   
-  // Helper function for fetching professional ID
+  // Helper function for fetching professional ID with simplified typing
   const fetchProfessionalId = async (userId: string): Promise<string | null> => {
-    const { data } = await supabase
+    // Use explicit type assertion to break potential circular references
+    const response = await supabase
       .from('client_profiles')
       .select('professional_id')
       .eq('user_id', userId)
       .maybeSingle();
     
-    return data?.professional_id || null;
+    // Safely access the data without complex type inference
+    return response.data?.professional_id || null;
   };
   
-  // Helper function for fetching professionals
+  // Helper function for fetching professionals with simplified typing
   const fetchProfessionals = async (professionalId: string): Promise<Professional[]> => {
-    const { data } = await supabase
+    const response = await supabase
       .from('professionals')
       .select('*')
       .eq('id', professionalId);
     
-    if (!data || !data.length) return [];
+    const professionals = response.data || [];
     
-    return data.map(prof => {
+    if (!professionals.length) return [];
+    
+    return professionals.map(prof => {
+      // Ensure proper type validation
       const validProf = {
         ...prof,
         type: (['realtor', 'mortgage_broker'].includes(prof.type) ? prof.type : 'realtor') as 'realtor' | 'mortgage_broker',
         status: (['active', 'pending', 'inactive'].includes(prof.status) ? prof.status : 'pending') as 'active' | 'pending' | 'inactive'
       };
       
-      return transformProfessional(validProf);
+      return transformProfessional(validProf as ProfessionalTable);
     });
   };
   
