@@ -18,43 +18,43 @@ export const useAssignedProfessionals = () => {
       
       try {
         // Fetch client profile to get the professional ID
-        const clientProfileResult = await supabase
+        const { data: clientProfile, error: clientError } = await supabase
           .from('client_profiles')
           .select('professional_id')
           .eq('user_id', user.id)
           .maybeSingle();
         
-        if (clientProfileResult.error) {
-          console.error('Error fetching client profile:', clientProfileResult.error);
+        if (clientError) {
+          console.error('Error fetching client profile:', clientError);
           return [];
         }
         
-        const professionalId = clientProfileResult.data?.professional_id;
+        const professionalId = clientProfile?.professional_id;
         if (!professionalId) {
           return [];
         }
         
         // Fetch professional data using the ID from client profile
-        const professionalsResult = await supabase
+        const { data: professionals, error: profError } = await supabase
           .from('professionals')
           .select('*')
           .eq('id', professionalId);
         
-        if (professionalsResult.error) {
-          console.error('Error fetching professionals:', professionalsResult.error);
+        if (profError) {
+          console.error('Error fetching professionals:', profError);
           return [];
         }
         
-        // Map raw data to Professional objects with proper validation
-        return (professionalsResult.data || []).map(rawProf => {
+        // Process and return professional data
+        return (professionals || []).map(rawProf => {
           // Validate professional type
-          let professionalType: 'realtor' | 'mortgage_broker' = 'realtor'; // Default
+          let professionalType: 'realtor' | 'mortgage_broker' = 'realtor';
           if (rawProf.type === 'realtor' || rawProf.type === 'mortgage_broker') {
             professionalType = rawProf.type as 'realtor' | 'mortgage_broker';
           }
           
           // Validate status
-          let statusValue: 'active' | 'pending' | 'inactive' = 'pending'; // Default
+          let statusValue: 'active' | 'pending' | 'inactive' = 'pending';
           if (rawProf.status === 'active' || rawProf.status === 'pending' || rawProf.status === 'inactive') {
             statusValue = rawProf.status as 'active' | 'pending' | 'inactive';
           }
