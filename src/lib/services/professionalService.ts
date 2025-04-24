@@ -13,7 +13,7 @@ export async function getProfessionalForUser(userId: string): Promise<Profession
       .from('client_profiles')
       .select('professional_id')
       .eq('user_id', userId)
-      .maybeSingle<DbClientProfile>();
+      .single();
     
     if (profileError || !clientProfile?.professional_id) {
       if (profileError) console.error('Error fetching client profile:', profileError);
@@ -24,8 +24,7 @@ export async function getProfessionalForUser(userId: string): Promise<Profession
     const { data: professionals, error: profError } = await supabase
       .from('professionals')
       .select('*')
-      .eq('id', clientProfile.professional_id)
-      .returns<DbProfessional[]>();
+      .eq('id', clientProfile.professional_id);
     
     if (profError || !professionals?.length) {
       console.error('Error fetching professionals:', profError);

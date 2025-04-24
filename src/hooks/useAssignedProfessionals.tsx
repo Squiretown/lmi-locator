@@ -1,7 +1,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/useAuth';
-import { Professional } from '@/lib/types/professionalTypes';
+import { Professional } from '@/lib/types/modelTypes';
 import { getProfessionalForUser } from '@/lib/services/professionalService';
 
 /**
