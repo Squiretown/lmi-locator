@@ -17,12 +17,15 @@ export const useAssignedProfessionals = () => {
       if (!user) return [];
       
       try {
-        // Fetch client profile to get the professional ID
-        const { data: clientProfile, error: clientError } = await supabase
+        // Fetch client profile to get the professional ID using explicit typing
+        const result = await supabase
           .from('client_profiles')
           .select('professional_id')
           .eq('user_id', user.id)
           .maybeSingle();
+          
+        const clientError = result.error;
+        const clientProfile = result.data;
         
         if (clientError) {
           console.error('Error fetching client profile:', clientError);
@@ -35,10 +38,13 @@ export const useAssignedProfessionals = () => {
         }
         
         // Fetch professional data using the ID from client profile
-        const { data: professionals, error: profError } = await supabase
+        const profResult = await supabase
           .from('professionals')
           .select('*')
           .eq('id', professionalId);
+          
+        const profError = profResult.error;
+        const professionals = profResult.data;
         
         if (profError) {
           console.error('Error fetching professionals:', profError);
