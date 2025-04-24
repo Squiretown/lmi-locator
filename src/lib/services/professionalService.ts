@@ -4,28 +4,28 @@ import { ProfessionalDTO, Professional, ProfessionalType, ProfessionalStatus } f
 
 export const getProfessionalForUser = async (userId: string): Promise<Professional[]> => {
   try {
-    const result = await supabase
+    const { data: clientProfile, error } = await supabase
       .from('client_profiles')
       .select('professional_id')
       .eq('user_id', userId)
       .maybeSingle();
 
-    if (result.error || !result.data?.professional_id) {
-      if (result.error) console.error('Error fetching client profile:', result.error);
+    if (error || !clientProfile?.professional_id) {
+      if (error) console.error('Error fetching client profile:', error);
       return [];
     }
 
-    const profResult = await supabase
+    const { data: professionals, error: profError } = await supabase
       .from('professionals')
       .select('*')
-      .eq('id', result.data.professional_id);
+      .eq('id', clientProfile.professional_id);
 
-    if (profResult.error) {
-      console.error('Error fetching professionals:', profResult.error);
+    if (profError) {
+      console.error('Error fetching professionals:', profError);
       return [];
     }
 
-    return (profResult.data || []).map(transformProfessional);
+    return (professionals || []).map(transformProfessional);
   } catch (err) {
     console.error('Unexpected error in getProfessionalForUser:', err);
     return [];
@@ -52,17 +52,17 @@ export const transformProfessional = (rawProf: ProfessionalDTO): Professional =>
     name: rawProf.name,
     company: rawProf.company,
     licenseNumber: rawProf.license_number,
-    phone: rawProf.phone,
+    phone: rawProf.phone || null,
     address: rawProf.address || null,
-    website: rawProf.website,
-    bio: rawProf.bio,
-    photoUrl: rawProf.photo_url,
+    website: rawProf.website || null,
+    bio: rawProf.bio || null,
+    photoUrl: rawProf.photo_url || null,
     status: statusValue,
     createdAt: rawProf.created_at,
-    lastUpdated: rawProf.last_updated,
+    lastUpdated: rawProf.last_updated || rawProf.created_at,
     isVerified: !!rawProf.is_verified,
     isFlagged: !!rawProf.is_flagged,
-    notes: rawProf.notes,
+    notes: rawProf.notes || null,
     socialMedia: rawProf.social_media || {}
   };
 };
