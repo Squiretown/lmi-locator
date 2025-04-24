@@ -5,38 +5,6 @@ import { Professional } from '@/lib/api/types';
 import { useAuth } from '@/hooks/useAuth';
 import { transformProfessional } from '@/lib/api/utils/transformers';
 
-// Define simpler types for Supabase responses
-type ClientProfileResponse = {
-  data: { professional_id: string | null } | null;
-  error: Error | null;
-};
-
-type ProfessionalData = {
-  id: string;
-  user_id: string;
-  type: string;
-  name: string;
-  company: string;
-  license_number: string;
-  phone: string | null;
-  address: string | null;
-  website: string | null;
-  bio: string | null;
-  photo_url: string | null;
-  status: string;
-  created_at: string;
-  last_updated: string;
-  is_verified: boolean | null;
-  is_flagged: boolean | null;
-  notes: string | null;
-  social_media: any;
-}
-
-type ProfessionalsResponse = {
-  data: ProfessionalData[] | null;
-  error: Error | null;
-};
-
 /**
  * Custom hook to fetch professionals assigned to the current user
  */
@@ -56,14 +24,12 @@ export const useAssignedProfessionals = () => {
           .eq('user_id', user.id)
           .maybeSingle();
         
-        const clientProfileResponse = clientProfileResult as ClientProfileResponse;
-        
-        if (clientProfileResponse.error) {
-          console.error('Error fetching client profile:', clientProfileResponse.error);
+        if (clientProfileResult.error) {
+          console.error('Error fetching client profile:', clientProfileResult.error);
           return [];
         }
         
-        const professionalId = clientProfileResponse.data?.professional_id;
+        const professionalId = clientProfileResult.data?.professional_id;
         if (!professionalId) {
           return [];
         }
@@ -74,24 +40,24 @@ export const useAssignedProfessionals = () => {
           .select('*')
           .eq('id', professionalId);
         
-        const professionalsResponse = professionalsResult as ProfessionalsResponse;
-        
-        if (professionalsResponse.error || !professionalsResponse.data) {
-          console.error('Error fetching professionals:', professionalsResponse.error);
+        if (professionalsResult.error) {
+          console.error('Error fetching professionals:', professionalsResult.error);
           return [];
         }
         
-        // Map raw data to Professional objects
-        return professionalsResponse.data.map((rawProf: ProfessionalData) => {
+        // Map raw data to Professional objects with proper validation
+        return (professionalsResult.data || []).map(rawProf => {
           // Validate professional type
-          const professionalType = (rawProf.type === 'realtor' || rawProf.type === 'mortgage_broker') 
-            ? rawProf.type as 'realtor' | 'mortgage_broker'
-            : 'realtor'; // Default fallback
+          let professionalType: 'realtor' | 'mortgage_broker' = 'realtor'; // Default
+          if (rawProf.type === 'realtor' || rawProf.type === 'mortgage_broker') {
+            professionalType = rawProf.type as 'realtor' | 'mortgage_broker';
+          }
           
           // Validate status
-          const statusValue = (rawProf.status === 'active' || rawProf.status === 'pending' || rawProf.status === 'inactive')
-            ? rawProf.status as 'active' | 'pending' | 'inactive'
-            : 'pending'; // Default fallback
+          let statusValue: 'active' | 'pending' | 'inactive' = 'pending'; // Default
+          if (rawProf.status === 'active' || rawProf.status === 'pending' || rawProf.status === 'inactive') {
+            statusValue = rawProf.status as 'active' | 'pending' | 'inactive';
+          }
           
           return transformProfessional({
             id: rawProf.id,
