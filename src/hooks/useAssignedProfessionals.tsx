@@ -4,7 +4,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { Professional } from '@/lib/api/types';
 import { useAuth } from '@/hooks/useAuth';
 import { transformProfessional } from '@/lib/api/utils/transformers';
-import type { ProfessionalTable } from '@/lib/api/database-types';
 
 /**
  * Custom hook to fetch professionals assigned to the current user
@@ -18,68 +17,78 @@ export const useAssignedProfessionals = () => {
     queryFn: async (): Promise<Professional[]> => {
       if (!user) return [];
       
-      // Step 1: Get professional_id from client_profiles without type inference
-      // Using raw SQL-like query structure to avoid deep type instantiation
-      const profileResponse = await supabase
-        .from('client_profiles')
-        .select('professional_id')
-        .eq('user_id', user.id)
-        .maybeSingle();
+      try {
+        // Step 1: Get professional_id from client_profiles - don't use any type inference
+        const { data: profileData, error: profileError } = await supabase
+          .from('client_profiles')
+          .select('professional_id')
+          .eq('user_id', user.id)
+          .maybeSingle();
+          
+        if (profileError) {
+          console.error('Error fetching client profile:', profileError);
+          return [];
+        }
         
-      if (profileResponse.error) {
-        console.error('Error fetching client profile:', profileResponse.error);
+        // Step 2: Extract professional_id safely
+        const professionalId = profileData?.professional_id;
+        if (!professionalId) {
+          return [];
+        }
+        
+        // Step 3: Fetch professional data using the ID - avoid type inference
+        const { data: professionalsData, error: professionalsError } = await supabase
+          .from('professionals')
+          .select('*')
+          .eq('id', professionalId);
+          
+        if (professionalsError || !professionalsData) {
+          console.error('Error fetching professionals:', professionalsError);
+          return [];
+        }
+        
+        // Step 4: Map raw data to professionals with explicit typing
+        return professionalsData.map(rawProf => {
+          // Safely determine the professional type
+          let professionalType: 'realtor' | 'mortgage_broker' = 'realtor';
+          if (rawProf.type === 'realtor' || rawProf.type === 'mortgage_broker') {
+            professionalType = rawProf.type as 'realtor' | 'mortgage_broker';
+          }
+          
+          // Safely determine the status
+          let statusValue: 'active' | 'pending' | 'inactive' = 'pending';
+          if (rawProf.status === 'active' || rawProf.status === 'pending' || rawProf.status === 'inactive') {
+            statusValue = rawProf.status as 'active' | 'pending' | 'inactive';
+          }
+          
+          // Create a properly typed professional record manually
+          const professionalRecord = {
+            id: rawProf.id,
+            user_id: rawProf.user_id,
+            type: professionalType,
+            name: rawProf.name,
+            company: rawProf.company,
+            license_number: rawProf.license_number,
+            phone: rawProf.phone,
+            address: rawProf.address,
+            website: rawProf.website,
+            bio: rawProf.bio,
+            photo_url: rawProf.photo_url,
+            status: statusValue,
+            created_at: rawProf.created_at,
+            last_updated: rawProf.last_updated,
+            is_verified: rawProf.is_verified,
+            is_flagged: rawProf.is_flagged,
+            notes: rawProf.notes,
+            social_media: rawProf.social_media
+          };
+          
+          return transformProfessional(professionalRecord);
+        });
+      } catch (err) {
+        console.error('Unexpected error in useAssignedProfessionals:', err);
         return [];
       }
-      
-      // Step 2: Extract professional_id safely
-      const professionalId = profileResponse.data?.professional_id;
-      if (!professionalId) {
-        return [];
-      }
-      
-      // Step 3: Fetch professional data using the ID
-      const professionalsResponse = await supabase
-        .from('professionals')
-        .select('*')
-        .eq('id', professionalId);
-        
-      if (professionalsResponse.error) {
-        console.error('Error fetching professionals:', professionalsResponse.error);
-        return [];
-      }
-      
-      // Step 4: Transform data manually without complex type inference
-      return (professionalsResponse.data || []).map(rawProf => {
-        // Create a properly typed professional record by mapping known fields
-        const professionalRecord: ProfessionalTable = {
-          id: rawProf.id,
-          user_id: rawProf.user_id,
-          // Cast to the expected union types with explicit type checking
-          type: (rawProf.type === 'realtor' || rawProf.type === 'mortgage_broker') 
-            ? (rawProf.type as 'realtor' | 'mortgage_broker') 
-            : 'realtor',
-          name: rawProf.name,
-          company: rawProf.company,
-          license_number: rawProf.license_number,
-          phone: rawProf.phone,
-          address: rawProf.address,
-          website: rawProf.website,
-          bio: rawProf.bio,
-          photo_url: rawProf.photo_url,
-          // Cast status to the expected union type with validation
-          status: (rawProf.status === 'active' || rawProf.status === 'pending' || rawProf.status === 'inactive') 
-            ? (rawProf.status as 'active' | 'pending' | 'inactive') 
-            : 'pending',
-          created_at: rawProf.created_at,
-          last_updated: rawProf.last_updated,
-          is_verified: rawProf.is_verified,
-          is_flagged: rawProf.is_flagged,
-          notes: rawProf.notes,
-          social_media: rawProf.social_media
-        };
-        
-        return transformProfessional(professionalRecord);
-      });
     },
     enabled: !!user
   });
