@@ -6,11 +6,10 @@ import { useAuth } from '@/hooks/useAuth';
 import { transformProfessional } from '@/lib/api/utils/transformers';
 import type { ProfessionalTable } from '@/lib/api/database-types';
 
-// Simple interface for the client profile data we need
-interface ClientProfileData {
-  professional_id: string | null;
-}
-
+/**
+ * Custom hook to fetch professionals assigned to the current user
+ * Uses a simplified approach to avoid TypeScript deep instantiation errors
+ */
 export const useAssignedProfessionals = () => {
   const { user } = useAuth();
 
@@ -19,45 +18,61 @@ export const useAssignedProfessionals = () => {
     queryFn: async (): Promise<Professional[]> => {
       if (!user) return [];
       
-      try {
-        // Use a simpler approach to fetch profile data
-        const { data: profileData, error: profileError } = await supabase
-          .from('client_profiles')
-          .select('professional_id')
-          .eq('user_id', user.id)
-          .maybeSingle();
+      // Step 1: Get professional_id from client_profiles using raw query without type inference
+      const profileResponse = await supabase
+        .from('client_profiles')
+        .select('professional_id')
+        .eq('user_id', user.id)
+        .maybeSingle();
         
-        if (profileError) {
-          console.error('Error fetching client profile:', profileError);
-          return [];
-        }
-        
-        // Type assertion to avoid deep type instantiation
-        const profile = profileData as ClientProfileData | null;
-        if (!profile?.professional_id) {
-          return [];
-        }
-        
-        // Fetch professional data
-        const { data: professionalsData, error: profsError } = await supabase
-          .from('professionals')
-          .select('*')
-          .eq('id', profile.professional_id);
-        
-        if (profsError || !professionalsData?.length) {
-          console.error('Error fetching professionals:', profsError);
-          return [];
-        }
-        
-        // Transform the professionals data
-        return professionalsData.map(rawProf => {
-          const professionalRecord = rawProf as unknown as ProfessionalTable;
-          return transformProfessional(professionalRecord);
-        });
-      } catch (error) {
-        console.error('Unexpected error in useAssignedProfessionals:', error);
+      if (profileResponse.error) {
+        console.error('Error fetching client profile:', profileResponse.error);
         return [];
       }
+      
+      // Step 2: Extract professional_id safely
+      const professionalId = profileResponse.data?.professional_id;
+      if (!professionalId) {
+        return [];
+      }
+      
+      // Step 3: Fetch professional data using the ID
+      const professionalsResponse = await supabase
+        .from('professionals')
+        .select('*')
+        .eq('id', professionalId);
+        
+      if (professionalsResponse.error) {
+        console.error('Error fetching professionals:', professionalsResponse.error);
+        return [];
+      }
+      
+      // Step 4: Transform data manually without complex type inference
+      return (professionalsResponse.data || []).map(rawProf => {
+        // Create a properly typed professional record by mapping known fields
+        const professionalRecord: ProfessionalTable = {
+          id: rawProf.id,
+          user_id: rawProf.user_id,
+          type: rawProf.type,
+          name: rawProf.name,
+          company: rawProf.company,
+          license_number: rawProf.license_number,
+          phone: rawProf.phone,
+          address: rawProf.address,
+          website: rawProf.website,
+          bio: rawProf.bio,
+          photo_url: rawProf.photo_url,
+          status: rawProf.status || 'pending',
+          created_at: rawProf.created_at,
+          last_updated: rawProf.last_updated,
+          is_verified: rawProf.is_verified,
+          is_flagged: rawProf.is_flagged,
+          notes: rawProf.notes,
+          social_media: rawProf.social_media
+        };
+        
+        return transformProfessional(professionalRecord);
+      });
     },
     enabled: !!user
   });
