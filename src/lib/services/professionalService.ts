@@ -1,38 +1,30 @@
 
-import { supabase } from '@/integrations/supabase/client';
-import { DbClientProfile, DbProfessional } from '../types/databaseTypes';
 import { Professional, ProfessionalType, ProfessionalStatus } from '../types/modelTypes';
+import { supabaseUntyped } from '../utils/supabaseUntyped';
 
 /**
  * Get professionals assigned to a user
  */
 export async function getProfessionalForUser(userId: string): Promise<Professional[]> {
   try {
-    // Step 1: Get professional ID from client profile
-    const { data: clientProfile, error: profileError } = await supabase
-      .from('client_profiles')
-      .select('professional_id')
-      .eq('user_id', userId)
-      .single();
+    // Get client profile without type inference
+    const clientProfileResult = await supabaseUntyped.getClientProfile(userId);
     
-    if (profileError || !clientProfile?.professional_id) {
-      if (profileError) console.error('Error fetching client profile:', profileError);
+    if (clientProfileResult.error || !clientProfileResult.data?.professional_id) {
       return [];
     }
-
-    // Step 2: Get professional details
-    const { data: professionals, error: profError } = await supabase
-      .from('professionals')
-      .select('*')
-      .eq('id', clientProfile.professional_id);
     
-    if (profError || !professionals?.length) {
-      console.error('Error fetching professionals:', profError);
+    const professionalId = clientProfileResult.data.professional_id;
+    
+    // Get professional details without type inference
+    const professionalsResult = await supabaseUntyped.getProfessional(professionalId);
+    
+    if (professionalsResult.error || !professionalsResult.data?.length) {
       return [];
     }
-
-    // Step 3: Map to application models
-    return professionals.map(mapDbProfessionalToModel);
+    
+    // Convert raw data to Professional objects
+    return professionalsResult.data.map(createProfessionalModel);
   } catch (err) {
     console.error('Unexpected error in getProfessionalForUser:', err);
     return [];
@@ -40,40 +32,45 @@ export async function getProfessionalForUser(userId: string): Promise<Profession
 }
 
 /**
- * Map database professional record to application model
+ * Create a Professional model from raw database data
  */
-function mapDbProfessionalToModel(dbProf: DbProfessional): Professional {
-  // Determine professional type
-  const type: ProfessionalType = 
-    (dbProf.type === 'realtor' || dbProf.type === 'mortgage_broker') 
-      ? dbProf.type 
-      : 'realtor';
-
-  // Determine status
-  const status: ProfessionalStatus = 
-    (dbProf.status === 'active' || dbProf.status === 'pending' || dbProf.status === 'inactive')
-      ? dbProf.status as ProfessionalStatus
-      : 'pending';
-
-  // Map DB model to application model with proper null handling
+function createProfessionalModel(rawData: any): Professional {
   return {
-    id: dbProf.id,
-    userId: dbProf.user_id,
-    type,
-    name: dbProf.name || '',
-    company: dbProf.company || '',
-    licenseNumber: dbProf.license_number || '',
-    phone: dbProf.phone,
-    address: dbProf.address,
-    website: dbProf.website,
-    bio: dbProf.bio,
-    photoUrl: dbProf.photo_url,
-    status,
-    createdAt: dbProf.created_at,
-    lastUpdated: dbProf.last_updated || dbProf.created_at,
-    isVerified: !!dbProf.is_verified,
-    isFlagged: !!dbProf.is_flagged,
-    notes: dbProf.notes,
-    socialMedia: dbProf.social_media
+    id: rawData.id || '',
+    userId: rawData.user_id || '',
+    type: validateProfessionalType(rawData.type),
+    name: rawData.name || '',
+    company: rawData.company || '',
+    licenseNumber: rawData.license_number || '',
+    phone: rawData.phone || '',
+    address: rawData.address || '',
+    website: rawData.website || '',
+    bio: rawData.bio || '',
+    photoUrl: rawData.photo_url || '',
+    status: validateProfessionalStatus(rawData.status),
+    createdAt: rawData.created_at || '',
+    lastUpdated: rawData.last_updated || '',
+    isVerified: !!rawData.is_verified,
+    isFlagged: !!rawData.is_flagged,
+    notes: rawData.notes || '',
+    socialMedia: rawData.social_media || {}
   };
+}
+
+/**
+ * Validate and convert professional type
+ */
+function validateProfessionalType(type: any): ProfessionalType {
+  return (type === 'realtor' || type === 'mortgage_broker') 
+    ? type as ProfessionalType 
+    : 'realtor';
+}
+
+/**
+ * Validate and convert professional status
+ */
+function validateProfessionalStatus(status: any): ProfessionalStatus {
+  return (status === 'active' || status === 'pending' || status === 'inactive') 
+    ? status as ProfessionalStatus 
+    : 'pending';
 }

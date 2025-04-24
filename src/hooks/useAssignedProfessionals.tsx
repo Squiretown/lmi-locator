@@ -1,12 +1,9 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/useAuth';
-import { Professional } from '@/lib/types/modelTypes';
-import { getProfessionalForUser } from '@/lib/services/professionalService';
+import { Professional } from '../types/modelTypes';
+import { getProfessionalForUser } from '../services/professionalService';
 
-/**
- * Custom hook to fetch professionals assigned to the current user
- */
 export const useAssignedProfessionals = () => {
   const { user } = useAuth();
   
