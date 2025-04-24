@@ -7,7 +7,7 @@ import { transformProfessional } from '@/lib/api/utils/transformers';
 
 /**
  * Custom hook to fetch professionals assigned to the current user
- * Uses explicit typing to avoid TypeScript deep instantiation errors
+ * Uses explicit type annotations to avoid TypeScript deep instantiation errors
  */
 export const useAssignedProfessionals = () => {
   const { user } = useAuth();
@@ -18,25 +18,31 @@ export const useAssignedProfessionals = () => {
       if (!user) return [];
       
       try {
-        // Step 1: Create a typed query that avoids deep type inference
+        // Define explicit TypeScript types for the responses to avoid deep inference
+        type ProfileResponse = {
+          data: { professional_id: string } | null;
+          error: any;
+        };
+        
+        // Step 1: Get professional_id with explicit typing
         const profileResponse = await supabase
           .from('client_profiles')
           .select('professional_id')
           .eq('user_id', user.id)
-          .maybeSingle();
+          .maybeSingle() as ProfileResponse;
         
         if (profileResponse.error) {
           console.error('Error fetching client profile:', profileResponse.error);
           return [];
         }
         
-        // Step 2: Use a simple type assertion for the result
+        // Step 2: Extract professional_id safely
         const professionalId = profileResponse.data?.professional_id;
         if (!professionalId) {
           return [];
         }
         
-        // Step 3: Use a simpler typing approach for the professionals query
+        // Step 3: Define raw professional type to avoid deep type inference
         type RawProfessional = {
           id: string;
           user_id: string;
@@ -58,18 +64,24 @@ export const useAssignedProfessionals = () => {
           social_media: any;
         };
         
-        const { data: professionals, error: professionalsError } = await supabase
+        type ProfessionalsResponse = {
+          data: RawProfessional[] | null;
+          error: any;
+        };
+        
+        // Step 4: Fetch professionals with explicit typing
+        const professionalsResponse = await supabase
           .from('professionals')
           .select('*')
-          .eq('id', professionalId);
+          .eq('id', professionalId) as ProfessionalsResponse;
           
-        if (professionalsError || !professionals) {
-          console.error('Error fetching professionals:', professionalsError);
+        if (professionalsResponse.error || !professionalsResponse.data) {
+          console.error('Error fetching professionals:', professionalsResponse.error);
           return [];
         }
         
-        // Step 4: Transform data with explicit type validations
-        return professionals.map((rawProf: RawProfessional) => {
+        // Step 5: Transform data with explicit type validations
+        return professionalsResponse.data.map((rawProf: RawProfessional) => {
           // Handle professional type with validation
           let professionalType: 'realtor' | 'mortgage_broker' = 'realtor';
           if (rawProf.type === 'realtor' || rawProf.type === 'mortgage_broker') {
