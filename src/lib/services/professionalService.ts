@@ -2,13 +2,17 @@
 import { supabase } from '@/integrations/supabase/client';
 import { ProfessionalDTO, Professional, ProfessionalType, ProfessionalStatus } from '../types/professionalTypes';
 
+interface ClientProfileResponse {
+  professional_id: string;
+}
+
 export const getProfessionalForUser = async (userId: string): Promise<Professional[]> => {
   try {
     const { data: clientProfile, error } = await supabase
       .from('client_profiles')
       .select('professional_id')
       .eq('user_id', userId)
-      .maybeSingle();
+      .maybeSingle() as { data: ClientProfileResponse | null; error: any };
 
     if (error || !clientProfile?.professional_id) {
       if (error) console.error('Error fetching client profile:', error);
@@ -18,7 +22,7 @@ export const getProfessionalForUser = async (userId: string): Promise<Profession
     const { data: professionals, error: profError } = await supabase
       .from('professionals')
       .select('*')
-      .eq('id', clientProfile.professional_id);
+      .eq('id', clientProfile.professional_id) as { data: ProfessionalDTO[] | null; error: any };
 
     if (profError) {
       console.error('Error fetching professionals:', profError);
