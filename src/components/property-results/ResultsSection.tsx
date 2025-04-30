@@ -63,11 +63,15 @@ Census Tract: ${data.tract_id || 'Unknown'}`;
         console.log('Content shared successfully');
       } catch (err) {
         await navigator.clipboard.writeText(shareText);
-        toast.info('Results copied to clipboard');
+        toast("Results copied to clipboard", {
+          description: "Property details have been copied to your clipboard"
+        });
       }
     } else {
       await navigator.clipboard.writeText(shareText);
-      toast.info('Results copied to clipboard');
+      toast("Results copied to clipboard", {
+        description: "Property details have been copied to your clipboard"
+      });
     }
   };
 
@@ -87,7 +91,7 @@ Census Tract: ${data.tract_id || 'Unknown'}`;
   const handleSignUp = () => {
     onCloseNotification();
     window.location.href = '/login';
-    toast.info('Please sign in to save properties', {
+    toast("Please sign in to save properties", {
       description: 'Create an account to save and track properties'
     });
   };
