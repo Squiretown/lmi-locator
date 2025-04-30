@@ -4,6 +4,8 @@ import { CheckLmiStatusResponse } from '@/lib/types';
 import { z } from 'zod';
 import { checkDirectLmiStatus } from '@/lib/api/lmi';
 import { useSimpleNotification } from '@/hooks/useSimpleNotification';
+import { useAuth } from '@/hooks/useAuth'; 
+import { toast } from 'sonner';
 
 // Define the form schema for address search
 export const formSchema = z.object({
@@ -19,6 +21,7 @@ export function usePropertySearch() {
   const [lmiStatus, setLmiStatus] = useState<CheckLmiStatusResponse | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const notification = useSimpleNotification();
+  const { user } = useAuth();
 
   const resetSearch = () => {
     console.log("Resetting search state in usePropertySearch");
@@ -45,7 +48,6 @@ export function usePropertySearch() {
       console.log('Full Result Object:', JSON.stringify(result, null, 2));
       
       if (result.status === "error") {
-        // Show error alert without toast
         console.error('Search Error:', result.message || "Failed to check property status");
         throw new Error(result.message || "Failed to check property status");
       }
@@ -80,8 +82,21 @@ export function usePropertySearch() {
       
       setLmiStatus(lmiResponse);
 
-      // Pass null as the onClose callback for notifications triggered from search
-      // This prevents the resetSearch from being called when the user wants to continue
+      // Only show a toast notification for logged-in users, for non-logged in users
+      // the LmiStatusNotification component will be shown instead
+      if (user && lmiResponse) {
+        if (lmiResponse.is_approved) {
+          toast.success('LMI Eligible Area', {
+            description: `${lmiResponse.address} is in an LMI eligible area`
+          });
+        } else {
+          toast.info('Search Complete', {
+            description: `${lmiResponse.address} is not in an LMI eligible area`
+          });
+        }
+      }
+
+      // Always show the notification overlay regardless of user login status
       if (lmiResponse.is_approved) {
         notification.success(
           'APPROVED - LMI ELIGIBLE AREA',

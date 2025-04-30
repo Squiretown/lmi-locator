@@ -39,10 +39,12 @@ const PropertyCheckerContent: React.FC = () => {
     setCurrentData(null);
     resetProcess();
     
-    // Show toast when notification is closed
-    toast.info('Search closed', { 
-      description: 'Property search results cleared' 
-    });
+    // Only show toast when notification is closed by a logged-in user
+    if (user) {
+      toast.info('Search closed', { 
+        description: 'Property search results cleared' 
+      });
+    }
     
     if (user?.user_metadata?.user_type === 'mortgage_professional') {
       navigate('/mortgage');

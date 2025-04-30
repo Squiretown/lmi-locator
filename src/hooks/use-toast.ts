@@ -5,18 +5,11 @@ import { toast as sonnerToast } from "sonner";
 export type ToastProps = {
   title: string;
   description?: string;
-  variant?: "default" | "destructive";
   duration?: number;
 };
 
 export const useToast = () => ({
   toast: (props: ToastProps) => {
-    if (props.variant === "destructive") {
-      return sonnerToast.error(props.title, { 
-        description: props.description,
-        duration: props.duration
-      });
-    }
     return sonnerToast(props.title, { 
       description: props.description,
       duration: props.duration
@@ -45,4 +38,3 @@ export const toast = {
   warning: (title: string, description?: string) => 
     sonnerToast.warning(title, { description }),
 };
-

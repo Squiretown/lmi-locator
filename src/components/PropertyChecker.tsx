@@ -36,27 +36,16 @@ const PropertyChecker: React.FC = () => {
 
   const onSubmit = async (values: any) => {
     const result = await submitPropertySearch(values);
+    
     if (result) {
-      // Add toast notification for search result with proper styling
-      const isApproved = result.is_approved;
-      const address = result.address;
-      
-      if (isApproved) {
-        toast.success('LMI Eligible Area', {
-          description: `${address} is in an LMI eligible area`
-        });
-      } else {
-        toast.info('Search Complete', {
-          description: `${address} is not in an LMI eligible area`
-        });
-      }
+      // We won't show toast here as the usePropertySearch hook handles the notifications
       
       addActivity({
         type: 'search',
         timestamp: new Date().toISOString(),
         address: result.address,
-        result: isApproved ? 'eligible' : 'not-eligible',
-        details: isApproved 
+        result: result.is_approved ? 'eligible' : 'not-eligible',
+        details: result.is_approved 
           ? 'This property is in an LMI eligible area'
           : 'This property is not in an LMI eligible area'
       });

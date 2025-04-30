@@ -1,6 +1,5 @@
 
 import { toast as sonnerToast } from "sonner";
-import type { ToastProps } from "@/hooks/use-toast";
 
 // Create a helper function to get a toast instance
 const getToastInstance = () => {

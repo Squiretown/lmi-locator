@@ -7,13 +7,6 @@ import { ToastProps } from "@/hooks/use-toast";
 export const useToast = () => ({
   toast: (props?: ToastProps) => {
     if (!props) return;
-    
-    if (props.variant === "destructive") {
-      return sonnerToast.error(props.title, { 
-        description: props.description,
-        duration: props.duration
-      });
-    }
     return sonnerToast(props.title, { 
       description: props.description,
       duration: props.duration
