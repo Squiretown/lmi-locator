@@ -30,14 +30,17 @@ const ResultsSection: React.FC<ResultsSectionProps> = ({
       setIsLoggedIn(isAuthenticated);
       
       // Try to get user type if authenticated
-      if (isAuthenticated) {
+      if (isAuthenticated && sessionStr) {
         try {
           const sessionData = JSON.parse(sessionStr);
           const userMeta = sessionData?.currentSession?.user?.user_metadata;
           setUserType(userMeta?.user_type || null);
+          console.log("User is logged in as type:", userMeta?.user_type || "client");
         } catch (e) {
           console.error("Error parsing user metadata:", e);
         }
+      } else {
+        console.log("User is not logged in");
       }
     } catch (error) {
       console.error('Error checking authentication status:', error);
@@ -69,9 +72,14 @@ Census Tract: ${data.tract_id || 'Unknown'}`;
   };
 
   const handleSaveProperty = async () => {
-    console.log("Save pressed in ResultsSection");
+    console.log("Save pressed in ResultsSection, user logged in:", isLoggedIn);
     if (isLoggedIn) {
       await createLmiNotification(data.address, data.is_approved);
+      toast.success('Property saved successfully', {
+        description: data.is_approved 
+          ? 'LMI eligible property saved to your collection'
+          : 'Property saved to your collection for reference'
+      });
     }
     onSaveProperty();
   };

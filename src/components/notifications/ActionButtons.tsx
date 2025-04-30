@@ -7,9 +7,10 @@ interface ActionButtonsProps {
   onShare?: () => void;
   onSave?: () => void;
   onSignUp?: () => void;
+  isLoggedIn?: boolean;
 }
 
-export const ActionButtons = ({ onShare, onSave, onSignUp }: ActionButtonsProps) => {
+export const ActionButtons = ({ onShare, onSave, onSignUp, isLoggedIn }: ActionButtonsProps) => {
   return (
     <div className="mt-6 flex flex-wrap gap-3">
       {onShare && (
@@ -19,15 +20,15 @@ export const ActionButtons = ({ onShare, onSave, onSignUp }: ActionButtonsProps)
         </Button>
       )}
       
-      {onSignUp && (
+      {!isLoggedIn && onSignUp && (
         <Button onClick={onSignUp} className="flex-1">
           <LogIn className="mr-2 h-4 w-4" />
           Create Account
         </Button>
       )}
       
-      {onSave && (
-        <Button onClick={onSave} className="flex-1">
+      {isLoggedIn && onSave && (
+        <Button onClick={onSave} className="flex-1 bg-green-600 hover:bg-green-700">
           <Save className="mr-2 h-4 w-4" />
           Save Property
         </Button>

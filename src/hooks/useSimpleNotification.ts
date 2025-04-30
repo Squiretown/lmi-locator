@@ -2,6 +2,7 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import LmiStatusNotification from '@/components/notifications/LmiStatusNotification';
+import { toast } from 'sonner';
 
 export const showNotification = (options: {
   type: 'success' | 'error' | 'info' | 'warning';
@@ -50,9 +51,21 @@ export const showNotification = (options: {
   
   // Check if the user is logged in
   let isLoggedIn = false;
+  let userType = null;
+  
   try {
     const sessionStr = localStorage.getItem('supabase.auth.token');
     isLoggedIn = !!sessionStr && sessionStr !== 'null';
+    
+    // If logged in, try to get user type from session data
+    if (isLoggedIn && sessionStr) {
+      try {
+        const sessionData = JSON.parse(sessionStr);
+        userType = sessionData?.currentSession?.user?.user_metadata?.user_type || null;
+      } catch (e) {
+        console.error("Error parsing user type from session:", e);
+      }
+    }
   } catch (error) {
     console.error('Error checking authentication status:', error);
   }
@@ -75,18 +88,24 @@ Census Tract: ${data.tractId || 'Unknown'}`;
       } catch (err) {
         // Fallback to copy to clipboard if share fails or is cancelled
         await navigator.clipboard.writeText(shareText);
-        alert('Results copied to clipboard');
+        toast.info('Results copied to clipboard');
       }
     } else {
       // Fallback for browsers that don't support sharing
       await navigator.clipboard.writeText(shareText);
-      alert('Results copied to clipboard');
+      toast.info('Results copied to clipboard');
     }
   };
 
   // Handle save button click for logged in users
   const handleSave = () => {
-    console.log('Save clicked');
+    console.log('Save property clicked from notification');
+    // Show a success toast
+    toast.success('Property saved to your collection', {
+      description: data?.isApproved 
+        ? 'LMI eligible property saved' 
+        : 'Property saved for your reference'
+    });
     handleClose();
   };
 
@@ -97,6 +116,10 @@ Census Tract: ${data.tractId || 'Unknown'}`;
     handleClose();
     // Navigate to login page by changing window location
     window.location.href = '/login';
+    // Show toast
+    toast.info('Please sign in to save properties', {
+      description: 'Create an account to save and track properties'
+    });
   };
   
   // Render the notification component
@@ -106,6 +129,7 @@ Census Tract: ${data.tractId || 'Unknown'}`;
         isApproved: data.isApproved || false,
         address: data.address,
         tractId: data.tractId || 'Unknown',
+        userType: userType,
         onClose: handleClose,
         onShare: handleShare,
         onSave: isLoggedIn ? handleSave : undefined,

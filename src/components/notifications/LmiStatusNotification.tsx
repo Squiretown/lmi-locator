@@ -66,6 +66,7 @@ const LmiStatusNotification = ({
             onShare={onShare}
             onSave={isLoggedIn ? onSave : undefined}
             onSignUp={!isLoggedIn ? onSignUp : undefined}
+            isLoggedIn={isLoggedIn}
           />
         </div>
       </Card>
