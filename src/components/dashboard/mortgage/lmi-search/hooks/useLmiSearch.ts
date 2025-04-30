@@ -1,11 +1,10 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { logLmiSearchError, notifyAdminsOfLmiError } from '@/lib/api/lmi/error-logger';
 
 export function useLmiSearch() {
-  const { toast } = useToast();
   const [searchType, setSearchType] = useState<'county' | 'zip' | 'tract'>('county');
   const [searchValue, setSearchValue] = useState<string>('');
   const [isSearching, setIsSearching] = useState<boolean>(false);
@@ -44,10 +43,8 @@ export function useLmiSearch() {
         setCounties(mockCounties);
       } catch (error) {
         console.error("Error fetching counties:", error);
-        toast({
-          title: "Error",
-          description: "Failed to load counties. Please try again.",
-          variant: "destructive"
+        toast.error("Error", {
+          description: "Failed to load counties. Please try again."
         });
         
         // Log the counties fetch error
@@ -61,14 +58,12 @@ export function useLmiSearch() {
     };
 
     fetchCounties();
-  }, [selectedState, toast]);
+  }, [selectedState]);
 
   const handleSearch = async () => {
     if (!searchValue) {
-      toast({
-        title: "Input required",
-        description: `Please enter a ${searchType} to search`,
-        variant: "destructive"
+      toast.error("Input required", {
+        description: `Please enter a ${searchType} to search`
       });
       return;
     }
@@ -132,15 +127,12 @@ export function useLmiSearch() {
         });
 
         if (tracts.length > 0) {
-          toast({
-            title: "Search completed",
-            description: `Found ${tracts.length} census tracts`,
+          toast.success("Search completed", {
+            description: `Found ${tracts.length} census tracts`
           });
         } else {
-          toast({
-            title: "No results found",
-            description: "Try another search criteria or check your input",
-            variant: "destructive"
+          toast.error("No results found", {
+            description: "Try another search criteria or check your input"
           });
           
           // Log the "no results" case (not an error but worth tracking)
@@ -152,10 +144,8 @@ export function useLmiSearch() {
           );
         }
       } else {
-        toast({
-          title: "No results",
-          description: "No results returned from search",
-          variant: "destructive"
+        toast.error("No results", {
+          description: "No results returned from search"
         });
         
         // Log the empty response case
@@ -168,10 +158,8 @@ export function useLmiSearch() {
       }
     } catch (error) {
       console.error("Search error:", error);
-      toast({
-        title: "Search failed",
-        description: "Unable to complete the search. Please try again.",
-        variant: "destructive"
+      toast.error("Search failed", {
+        description: "Unable to complete the search. Please try again."
       });
       
       // Log the general search error

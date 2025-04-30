@@ -38,8 +38,6 @@ const PropertyChecker: React.FC = () => {
     const result = await submitPropertySearch(values);
     
     if (result) {
-      // We won't show toast here as the usePropertySearch hook handles the notifications
-      
       addActivity({
         type: 'search',
         timestamp: new Date().toISOString(),

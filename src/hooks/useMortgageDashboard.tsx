@@ -8,7 +8,6 @@ export function useMortgageDashboard() {
   const [activeTab, setActiveTab] = useState('overview');
   
   const handleExportResults = (results: any[]) => {
-    // Use the toast function from sonner directly
     toast.success("Export successful", {
       description: `${results.length} properties exported to your marketing list.`
     });

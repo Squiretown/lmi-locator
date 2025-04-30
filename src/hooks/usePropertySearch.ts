@@ -5,7 +5,6 @@ import { z } from 'zod';
 import { checkDirectLmiStatus } from '@/lib/api/lmi';
 import { useSimpleNotification } from '@/hooks/useSimpleNotification';
 import { useAuth } from '@/hooks/useAuth'; 
-import { toast } from 'sonner';
 
 // Define the form schema for address search
 export const formSchema = z.object({
@@ -82,21 +81,7 @@ export function usePropertySearch() {
       
       setLmiStatus(lmiResponse);
 
-      // Only show a toast notification for logged-in users, for non-logged in users
-      // the LmiStatusNotification component will be shown instead
-      if (user && lmiResponse) {
-        if (lmiResponse.is_approved) {
-          toast.success('LMI Eligible Area', {
-            description: `${lmiResponse.address} is in an LMI eligible area`
-          });
-        } else {
-          toast.info('Search Complete', {
-            description: `${lmiResponse.address} is not in an LMI eligible area`
-          });
-        }
-      }
-
-      // Always show the notification overlay regardless of user login status
+      // Show the notification overlay regardless of user login status
       if (lmiResponse.is_approved) {
         notification.success(
           'APPROVED - LMI ELIGIBLE AREA',
