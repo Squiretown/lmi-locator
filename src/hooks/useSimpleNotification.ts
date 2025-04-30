@@ -99,14 +99,14 @@ Census Tract: ${data.tractId || 'Unknown'}`;
       } catch (err) {
         // Fallback to copy to clipboard if share fails or is cancelled
         await navigator.clipboard.writeText(shareText);
-        toast("Results copied to clipboard", {
+        toast.success("Results copied to clipboard", {
           description: "Property details have been copied to your clipboard"
         });
       }
     } else {
       // Fallback for browsers that don't support sharing
       await navigator.clipboard.writeText(shareText);
-      toast("Results copied to clipboard", {
+      toast.success("Results copied to clipboard", {
         description: "Property details have been copied to your clipboard"
       });
     }
@@ -132,7 +132,7 @@ Census Tract: ${data.tractId || 'Unknown'}`;
     // Navigate to login page by changing window location
     window.location.href = '/login';
     // Show toast
-    toast("Please sign in to save properties", {
+    toast.info("Please sign in to save properties", {
       description: 'Create an account to save and track properties'
     });
   };

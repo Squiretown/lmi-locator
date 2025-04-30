@@ -37,13 +37,16 @@ const PropertyChecker: React.FC = () => {
   const onSubmit = async (values: any) => {
     const result = await submitPropertySearch(values);
     if (result) {
-      // Add toast notification for search result
-      toast[result.is_approved ? 'success' : 'info'](
-        result.is_approved ? 'LMI Eligible Area' : 'Search Complete',
+      // Add toast notification for search result with proper styling
+      const isApproved = result.is_approved;
+      const address = result.address;
+      
+      toast[isApproved ? 'success' : 'info'](
+        isApproved ? 'LMI Eligible Area' : 'Search Complete',
         { 
-          description: result.is_approved 
-            ? `${result.address} is in an LMI eligible area` 
-            : `${result.address} is not in an LMI eligible area`
+          description: isApproved 
+            ? `${address} is in an LMI eligible area` 
+            : `${address} is not in an LMI eligible area`
         }
       );
       
@@ -51,8 +54,8 @@ const PropertyChecker: React.FC = () => {
         type: 'search',
         timestamp: new Date().toISOString(),
         address: result.address,
-        result: result.is_approved ? 'eligible' : 'not-eligible',
-        details: result.is_approved 
+        result: isApproved ? 'eligible' : 'not-eligible',
+        details: isApproved 
           ? 'This property is in an LMI eligible area'
           : 'This property is not in an LMI eligible area'
       });
@@ -62,6 +65,9 @@ const PropertyChecker: React.FC = () => {
           await saveSearch(result.address, result, user.id);
         } catch (error) {
           console.error('Error saving search to database:', error);
+          toast.error('Error saving search', {
+            description: 'Unable to save your search to your history'
+          });
         }
       }
     }
