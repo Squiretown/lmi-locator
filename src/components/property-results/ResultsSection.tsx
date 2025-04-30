@@ -79,6 +79,9 @@ Census Tract: ${data.tract_id || 'Unknown'}`;
   const handleSignUp = () => {
     onCloseNotification();
     window.location.href = '/login';
+    toast.info('Please sign in to save properties', {
+      description: 'Create an account to save and track properties'
+    });
   };
 
   return (

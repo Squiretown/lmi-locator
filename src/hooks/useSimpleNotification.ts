@@ -48,6 +48,15 @@ export const showNotification = (options: {
     }, 0);
   };
   
+  // Check if the user is logged in
+  let isLoggedIn = false;
+  try {
+    const sessionStr = localStorage.getItem('supabase.auth.token');
+    isLoggedIn = !!sessionStr && sessionStr !== 'null';
+  } catch (error) {
+    console.error('Error checking authentication status:', error);
+  }
+  
   // Handle share button click
   const handleShare = async () => {
     if (!data?.address) return;
@@ -75,7 +84,13 @@ Census Tract: ${data.tractId || 'Unknown'}`;
     }
   };
 
-  // Handle signup button
+  // Handle save button click for logged in users
+  const handleSave = () => {
+    console.log('Save clicked');
+    handleClose();
+  };
+
+  // Handle signup button for non-logged in users
   const handleSignUp = () => {
     console.log('Sign up clicked');
     // Close the notification
@@ -93,11 +108,8 @@ Census Tract: ${data.tractId || 'Unknown'}`;
         tractId: data.tractId || 'Unknown',
         onClose: handleClose,
         onShare: handleShare,
-        onSave: () => {
-          console.log('Save clicked');
-          handleClose();
-        },
-        onSignUp: handleSignUp
+        onSave: isLoggedIn ? handleSave : undefined,
+        onSignUp: !isLoggedIn ? handleSignUp : undefined
       })
     );
   }
