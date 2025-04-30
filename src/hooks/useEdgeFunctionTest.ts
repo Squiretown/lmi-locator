@@ -1,13 +1,12 @@
 
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 
 export function useEdgeFunctionTest() {
   const [isLoading, setIsLoading] = useState(false);
   const [lastResult, setLastResult] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
-  const { toast } = useToast();
 
   const testFunction = async (functionName: string, payload?: any) => {
     setIsLoading(true);
@@ -33,10 +32,8 @@ export function useEdgeFunctionTest() {
           responseTime,
           timestamp: new Date().toISOString()
         });
-        toast({
-          title: "Function Test Failed",
-          description: `Error: ${error.message}`,
-          variant: "destructive"
+        toast.error("Function Test Failed", {
+          description: `Error: ${error.message}`
         });
         return false;
       }
@@ -49,10 +46,8 @@ export function useEdgeFunctionTest() {
         timestamp: new Date().toISOString()
       });
       
-      toast({
-        title: "Function Test Successful",
-        description: `Response time: ${responseTime}ms`,
-        variant: "default"
+      toast.success("Function Test Successful", {
+        description: `Response time: ${responseTime}ms`
       });
       
       return true;
@@ -68,10 +63,8 @@ export function useEdgeFunctionTest() {
         timestamp: new Date().toISOString()
       });
       
-      toast({
-        title: "Function Test Failed",
-        description: `Error: ${errorMessage}`,
-        variant: "destructive"
+      toast.error("Function Test Failed", {
+        description: `Error: ${errorMessage}`
       });
       
       return false;

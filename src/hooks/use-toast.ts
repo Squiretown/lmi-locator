@@ -1,26 +1,29 @@
 
 // Forward all toast functionality to sonner
-import { toast as sonnerToast } from "sonner";
-import { ToastOptions } from "./toast/types";
+import { toast as sonnerToast, type ToastT } from "sonner";
 
 export const useToast = () => ({
   toast: (props: { title: string; description?: string }) => sonnerToast(props.title, { description: props.description }),
-  update: (props: { id: string; title: string; description?: string }) => sonnerToast.update(props.id, { description: props.description }),
   dismiss: (toastId?: string) => sonnerToast.dismiss(toastId),
   toasts: []
 });
 
 // Create simple toast helpers
 export const toast = {
-  success: (title: string, options?: { description?: string }) => 
-    sonnerToast.success(title, options),
+  // Basic toast function
+  default: (title: string, description?: string) => 
+    sonnerToast(title, { description }),
   
-  error: (title: string, options?: { description?: string }) => 
-    sonnerToast.error(title, options),
+  // Toast variants
+  success: (title: string, description?: string) => 
+    sonnerToast.success(title, { description }),
   
-  info: (title: string, options?: { description?: string }) => 
-    sonnerToast.info(title, options),
+  error: (title: string, description?: string) => 
+    sonnerToast.error(title, { description }),
   
-  warning: (title: string, options?: { description?: string }) => 
-    sonnerToast.warning(title, options),
+  info: (title: string, description?: string) => 
+    sonnerToast.info(title, { description }),
+  
+  warning: (title: string, description?: string) => 
+    sonnerToast.warning(title, { description }),
 };

@@ -1,42 +1,32 @@
 
-import { ToastOptions } from "./types";
-import { useToast as useToastHook } from "../use-toast";
+import { toast as sonnerToast } from "sonner";
 
 // Create a helper function to get a toast instance
 const getToastInstance = () => {
-  // We need to use a custom implementation that avoids using require
-  // and is safe for the browser
-  const toastHook = useToastHook();
-  return toastHook.toast;
+  // Return the sonner toast directly
+  return sonnerToast;
 };
 
 // Pre-configured toast variants
 export const toastApi = {
-  success: (opts: ToastOptions) => {
-    return getToastInstance()({
-      ...opts,
-      variant: 'default',
-      className: 'bg-green-500 text-white border-green-600',
+  success: (opts: { title: string; description?: string }) => {
+    return sonnerToast.success(opts.title, {
+      description: opts.description
     });
   },
-  error: (opts: ToastOptions) => {
-    return getToastInstance()({
-      ...opts,
-      variant: 'destructive',
+  error: (opts: { title: string; description?: string }) => {
+    return sonnerToast.error(opts.title, {
+      description: opts.description
     });
   },
-  info: (opts: ToastOptions) => {
-    return getToastInstance()({
-      ...opts,
-      variant: 'default',
-      className: 'bg-blue-500 text-white border-blue-600',
+  info: (opts: { title: string; description?: string }) => {
+    return sonnerToast.info(opts.title, {
+      description: opts.description
     });
   },
-  warning: (opts: ToastOptions) => {
-    return getToastInstance()({
-      ...opts,
-      variant: 'default',
-      className: 'bg-yellow-500 text-white border-yellow-600',
+  warning: (opts: { title: string; description?: string }) => {
+    return sonnerToast.warning(opts.title, {
+      description: opts.description
     });
   },
 };
