@@ -27,13 +27,15 @@ export function useClientActivity() {
     try {
       // Load search history from Supabase
       const { data: searchHistory, error: searchError } = await supabase
-        .from('search_history')
-        .select('id, address, searched_at, is_eligible, search_params, result')
-        .eq('user_id', user.id)
-        .order('searched_at', { ascending: false })
+        .from("search_history")
+        .select("id, address, searched_at, is_eligible, search_params, result")
+        .eq("user_id", user.id)
+        .order("searched_at", { ascending: false })
         .limit(20);
         
       if (searchError) throw searchError;
+      
+      console.log("Fetched search history:", searchHistory);
       
       const formattedActivities: ActivityItem[] = searchHistory.map(item => ({
         id: item.id,
@@ -51,22 +53,28 @@ export function useClientActivity() {
         .from('saved_properties')
         .select(`
           id, 
-          created_at, 
-          is_favorite, 
-          properties!inner(address, is_lmi_eligible)
+          created_at,
+          is_favorite,
+          property_id,
+          properties(address, is_lmi_eligible)
         `)
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
         
-      if (!savedError && savedProperties) {
-        const savedActivities: ActivityItem[] = savedProperties.map(item => ({
-          id: item.id,
-          type: 'save',
-          timestamp: item.created_at,
-          address: item.properties?.address || 'Unknown address',
-          result: (item.properties?.is_lmi_eligible || item.is_favorite) ? 'eligible' : 'not-eligible',
-          details: 'Property saved to collection'
-        }));
+      console.log("Fetched saved properties:", savedProperties);
+      
+      if (!savedError && savedProperties && savedProperties.length > 0) {
+        const savedActivities: ActivityItem[] = savedProperties.map(item => {
+          const properties = item.properties as any;
+          return {
+            id: item.id,
+            type: 'save',
+            timestamp: item.created_at,
+            address: properties?.address || 'Unknown address',
+            result: (properties?.is_lmi_eligible || item.is_favorite) ? 'eligible' : 'not-eligible',
+            details: 'Property saved to collection'
+          };
+        });
         
         // Combine both types of activities and sort by timestamp
         const combined = [...formattedActivities, ...savedActivities].sort((a, b) => 

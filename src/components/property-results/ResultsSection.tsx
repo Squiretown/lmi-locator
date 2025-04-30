@@ -4,6 +4,7 @@ import { CheckLmiStatusResponse } from '@/lib/types';
 import LmiStatusNotification from '@/components/notifications/LmiStatusNotification';
 import { useRoleSpecificNotifications } from '@/hooks/useRoleSpecificNotifications';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 interface ResultsSectionProps {
   data: CheckLmiStatusResponse;
@@ -22,30 +23,35 @@ const ResultsSection: React.FC<ResultsSectionProps> = ({
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
   const [userType, setUserType] = useState<string | null>(null);
   
-  // Check authentication status from localStorage
+  // Check authentication status
   useEffect(() => {
-    try {
-      const sessionStr = localStorage.getItem('supabase.auth.token');
-      const isAuthenticated = !!sessionStr && sessionStr !== 'null';
-      setIsLoggedIn(isAuthenticated);
-      
-      // Try to get user type if authenticated
-      if (isAuthenticated && sessionStr) {
-        try {
-          const sessionData = JSON.parse(sessionStr);
-          const userMeta = sessionData?.currentSession?.user?.user_metadata;
+    const checkAuthStatus = async () => {
+      try {
+        // Get the current session
+        const { data: sessionData, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          throw error;
+        }
+        
+        const isAuthenticated = !!sessionData.session;
+        setIsLoggedIn(isAuthenticated);
+        
+        // Get user type if authenticated
+        if (isAuthenticated && sessionData.session) {
+          const userMeta = sessionData.session.user.user_metadata;
           setUserType(userMeta?.user_type || null);
           console.log("User is logged in as type:", userMeta?.user_type || "client");
-        } catch (e) {
-          console.error("Error parsing user metadata:", e);
+        } else {
+          console.log("User is not logged in");
         }
-      } else {
-        console.log("User is not logged in");
+      } catch (error) {
+        console.error('Error checking authentication status:', error);
+        setIsLoggedIn(false);
       }
-    } catch (error) {
-      console.error('Error checking authentication status:', error);
-      setIsLoggedIn(false);
-    }
+    };
+    
+    checkAuthStatus();
   }, []);
 
   const handleShare = async () => {

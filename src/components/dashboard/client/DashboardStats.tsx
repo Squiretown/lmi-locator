@@ -1,5 +1,5 @@
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Home, CheckCircle, Calendar, Clock } from 'lucide-react';
 import { useSavedAddresses } from '@/hooks/useSavedAddresses';
@@ -7,17 +7,24 @@ import { useAuth } from '@/hooks/useAuth';
 import { useClientActivity } from '@/hooks/useClientActivity';
 
 export const DashboardStats: React.FC = () => {
-  const { savedAddresses, refreshAddresses } = useSavedAddresses();
-  const { activities, refreshActivities } = useClientActivity();
+  const { savedAddresses, refreshAddresses, isLoading: loadingAddresses } = useSavedAddresses();
+  const { activities, refreshActivities, isLoading: loadingActivities } = useClientActivity();
   const { user } = useAuth();
+  const [isLoading, setIsLoading] = useState(true);
   
   // Refresh data when component mounts
   useEffect(() => {
-    refreshAddresses();
-    if (refreshActivities) {
-      refreshActivities();
-    }
-  }, [refreshAddresses, refreshActivities]);
+    const loadData = async () => {
+      setIsLoading(true);
+      await Promise.all([
+        refreshAddresses(),
+        refreshActivities ? refreshActivities() : Promise.resolve()
+      ]);
+      setIsLoading(false);
+    };
+    
+    loadData();
+  }, [user, refreshAddresses, refreshActivities]);
   
   // Calculate LMI eligible properties
   const lmiEligibleCount = savedAddresses.filter(a => a.isLmiEligible).length;
@@ -27,31 +34,31 @@ export const DashboardStats: React.FC = () => {
     (new Date().getTime() - new Date(user.created_at).getTime()) / (1000 * 3600 * 24)
   )) : 0;
   
-  // Get recent searches count from activities
+  // Get recent searches count
   const recentSearchesCount = activities.filter(a => a.type === 'search').length;
   
   const stats = [
     {
       label: 'Saved Properties',
-      value: savedAddresses.length,
+      value: isLoading ? '...' : savedAddresses.length,
       icon: <Home className="h-5 w-5 text-blue-500" />,
       color: 'bg-blue-50'
     },
     {
       label: 'LMI Eligible',
-      value: lmiEligibleCount,
+      value: isLoading ? '...' : lmiEligibleCount,
       icon: <CheckCircle className="h-5 w-5 text-green-500" />,
       color: 'bg-green-50'
     },
     {
       label: 'Days Active',
-      value: daysActive,
+      value: isLoading ? '...' : daysActive,
       icon: <Calendar className="h-5 w-5 text-purple-500" />,
       color: 'bg-purple-50'
     },
     {
       label: 'Recent Searches',
-      value: recentSearchesCount,
+      value: isLoading ? '...' : recentSearchesCount,
       icon: <Clock className="h-5 w-5 text-amber-500" />,
       color: 'bg-amber-50'
     }
