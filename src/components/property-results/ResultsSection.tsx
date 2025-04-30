@@ -5,6 +5,8 @@ import LmiStatusNotification from '@/components/notifications/LmiStatusNotificat
 import { Share2 } from 'lucide-react';
 import { useRoleSpecificNotifications } from '@/hooks/useRoleSpecificNotifications';
 import { useAuth } from '@/hooks/useAuth';
+import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 
 interface ResultsSectionProps {
   data: CheckLmiStatusResponse;
@@ -21,6 +23,7 @@ const ResultsSection: React.FC<ResultsSectionProps> = ({
 }) => {
   const { createLmiNotification } = useRoleSpecificNotifications();
   const { user } = useAuth();
+  const navigate = useNavigate();
   const userType = user?.user_metadata?.user_type;
 
   const handleShare = async () => {
@@ -38,18 +41,30 @@ Census Tract: ${data.tract_id || 'Unknown'}`;
         console.log('Content shared successfully');
       } catch (err) {
         await navigator.clipboard.writeText(shareText);
-        alert('Results copied to clipboard');
+        toast.info('Results copied to clipboard');
       }
     } else {
       await navigator.clipboard.writeText(shareText);
-      alert('Results copied to clipboard');
+      toast.info('Results copied to clipboard');
     }
   };
 
   const handleSaveProperty = async () => {
+    if (!user) {
+      onCloseNotification();
+      navigate('/login');
+      toast.info('Please sign in to save properties');
+      return;
+    }
+    
     console.log("Save pressed in ResultsSection");
     await createLmiNotification(data.address, data.is_approved);
     onSaveProperty();
+  };
+
+  const handleSignUp = () => {
+    onCloseNotification();
+    navigate('/login');
   };
 
   return (

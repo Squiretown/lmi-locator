@@ -2,11 +2,12 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { CheckCircle, XCircle, MapPin, Home, Save } from 'lucide-react';
+import { CheckCircle, XCircle, MapPin, Home, Save, LogIn } from 'lucide-react';
 import { CheckLmiStatusResponse } from '@/lib/types';
 import ResultsMap from './map/ResultsMap';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
+import { useNavigate } from 'react-router-dom';
 
 interface ResultViewProps {
   data: CheckLmiStatusResponse;
@@ -18,6 +19,7 @@ interface ResultViewProps {
 const ResultView: React.FC<ResultViewProps> = ({ data, onContinue, onReset, onSaveProperty }) => {
   // Get authentication status
   const { user } = useAuth();
+  const navigate = useNavigate();
   
   // Determine if the property is eligible
   const isEligible = data.is_approved;
@@ -35,13 +37,10 @@ const ResultView: React.FC<ResultViewProps> = ({ data, onContinue, onReset, onSa
   // Handler for save property button when user is not logged in
   const handleSaveClick = () => {
     if (!user && !onSaveProperty) {
-      // Redirect to login/signup page or show a toast message
-      toast.error('Please sign in to save properties', {
+      // Redirect to login/signup page
+      navigate('/login');
+      toast.info('Please sign in to save properties', {
         description: 'Create an account to save and track properties',
-        action: {
-          label: 'Sign In',
-          onClick: () => window.location.href = '/login'
-        }
       });
       return;
     }
@@ -49,6 +48,11 @@ const ResultView: React.FC<ResultViewProps> = ({ data, onContinue, onReset, onSa
     if (onSaveProperty) {
       onSaveProperty();
     }
+  };
+
+  // Handler for account creation
+  const handleCreateAccount = () => {
+    navigate('/login');
   };
 
   // Extract lat/lon from the data - add compatibility for both formats
@@ -116,15 +120,24 @@ const ResultView: React.FC<ResultViewProps> = ({ data, onContinue, onReset, onSa
           </div>
         </CardContent>
         <CardFooter className="flex flex-col sm:flex-row gap-2 justify-between">
-          <div className="flex gap-2">
-            <Button onClick={onReset} variant="outline">Start New Search</Button>
-            <Button onClick={handleSaveClick} className="gap-2">
-              <Save className="h-4 w-4" />
-              Save Property
-            </Button>
+          <div className="flex gap-2 w-full sm:w-auto">
+            <Button onClick={onReset} variant="outline" className="flex-1 sm:flex-auto">Start New Search</Button>
+            
+            {user ? (
+              <Button onClick={handleSaveClick} className="gap-2 flex-1 sm:flex-auto">
+                <Save className="h-4 w-4" />
+                Save Property
+              </Button>
+            ) : (
+              <Button onClick={handleCreateAccount} className="gap-2 flex-1 sm:flex-auto">
+                <LogIn className="h-4 w-4" />
+                Create Account
+              </Button>
+            )}
           </div>
+          
           {isEligible && (
-            <Button onClick={onContinue}>
+            <Button onClick={onContinue} className="w-full sm:w-auto mt-2 sm:mt-0">
               Continue to Eligibility
             </Button>
           )}

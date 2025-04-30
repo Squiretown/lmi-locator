@@ -1,32 +1,36 @@
 
 import React from 'react';
-import { Mail, Save } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Share2, Save, LogIn } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
 
 interface ActionButtonsProps {
   onShare?: () => void;
   onSave?: () => void;
+  onSignUp?: () => void;
 }
 
-export const ActionButtons: React.FC<ActionButtonsProps> = ({
-  onShare,
-  onSave
-}) => {
+export const ActionButtons = ({ onShare, onSave, onSignUp }: ActionButtonsProps) => {
+  const { user } = useAuth();
+  
   return (
-    <div className="flex flex-wrap gap-3">
+    <div className="mt-6 flex flex-wrap gap-3">
       {onShare && (
         <Button variant="outline" onClick={onShare} className="flex-1">
-          <Mail className="mr-2 h-4 w-4" />
-          Share via Email
+          <Share2 className="mr-2 h-4 w-4" />
+          Share Results
         </Button>
       )}
       
-      {onSave && (
-        <Button 
-          variant="outline"
-          onClick={onSave} 
-          className="flex-1"
-        >
+      {!user && onSignUp && (
+        <Button onClick={onSignUp} className="flex-1">
+          <LogIn className="mr-2 h-4 w-4" />
+          Create Account
+        </Button>
+      )}
+      
+      {user && onSave && (
+        <Button onClick={onSave} className="flex-1">
           <Save className="mr-2 h-4 w-4" />
           Save Property
         </Button>

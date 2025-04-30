@@ -5,6 +5,8 @@ import { NotificationHeader } from './NotificationHeader';
 import { AddressSection } from './AddressSection';
 import { RoleSpecificContent } from './RoleSpecificContent';
 import { ActionButtons } from './ActionButtons';
+import { useAuth } from '@/hooks/useAuth';
+import { useNavigate } from 'react-router-dom';
 
 interface LmiStatusNotificationProps {
   isApproved: boolean;
@@ -27,6 +29,14 @@ const LmiStatusNotification = ({
   onSave,
   onContinue
 }: LmiStatusNotificationProps) => {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  
+  const handleSignUp = () => {
+    onClose();
+    navigate('/login');
+  };
+
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <Card className="max-w-2xl w-full bg-white shadow-xl relative overflow-hidden">
@@ -49,7 +59,8 @@ const LmiStatusNotification = ({
 
           <ActionButtons 
             onShare={onShare}
-            onSave={onSave}
+            onSave={user ? onSave : undefined}
+            onSignUp={!user ? handleSignUp : undefined}
           />
         </div>
       </Card>
