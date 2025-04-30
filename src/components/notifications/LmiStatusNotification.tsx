@@ -1,11 +1,10 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { NotificationHeader } from './NotificationHeader';
 import { AddressSection } from './AddressSection';
 import { RoleSpecificContent } from './RoleSpecificContent';
 import { ActionButtons } from './ActionButtons';
-import { useAuth } from '@/hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 
 interface LmiStatusNotificationProps {
@@ -29,8 +28,19 @@ const LmiStatusNotification = ({
   onSave,
   onContinue
 }: LmiStatusNotificationProps) => {
-  const { user } = useAuth();
   const navigate = useNavigate();
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
+  
+  // Instead of directly using useAuth(), check for user in localStorage
+  useEffect(() => {
+    try {
+      const sessionStr = localStorage.getItem('supabase.auth.token');
+      setIsLoggedIn(!!sessionStr && sessionStr !== 'null');
+    } catch (error) {
+      console.error('Error checking authentication status:', error);
+      setIsLoggedIn(false);
+    }
+  }, []);
   
   const handleSignUp = () => {
     onClose();
@@ -59,8 +69,8 @@ const LmiStatusNotification = ({
 
           <ActionButtons 
             onShare={onShare}
-            onSave={user ? onSave : undefined}
-            onSignUp={!user ? handleSignUp : undefined}
+            onSave={isLoggedIn ? onSave : undefined}
+            onSignUp={!isLoggedIn ? handleSignUp : undefined}
           />
         </div>
       </Card>

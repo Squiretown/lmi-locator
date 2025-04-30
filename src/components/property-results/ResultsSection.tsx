@@ -1,10 +1,9 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { CheckLmiStatusResponse } from '@/lib/types';
 import LmiStatusNotification from '@/components/notifications/LmiStatusNotification';
 import { Share2 } from 'lucide-react';
 import { useRoleSpecificNotifications } from '@/hooks/useRoleSpecificNotifications';
-import { useAuth } from '@/hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
@@ -22,9 +21,32 @@ const ResultsSection: React.FC<ResultsSectionProps> = ({
   onCloseNotification
 }) => {
   const { createLmiNotification } = useRoleSpecificNotifications();
-  const { user } = useAuth();
   const navigate = useNavigate();
-  const userType = user?.user_metadata?.user_type;
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
+  const [userType, setUserType] = useState<string | null>(null);
+  
+  // Check authentication status from localStorage
+  useEffect(() => {
+    try {
+      const sessionStr = localStorage.getItem('supabase.auth.token');
+      const isAuthenticated = !!sessionStr && sessionStr !== 'null';
+      setIsLoggedIn(isAuthenticated);
+      
+      // Try to get user type if authenticated
+      if (isAuthenticated) {
+        try {
+          const sessionData = JSON.parse(sessionStr);
+          const userMeta = sessionData?.currentSession?.user?.user_metadata;
+          setUserType(userMeta?.user_type || null);
+        } catch (e) {
+          console.error("Error parsing user metadata:", e);
+        }
+      }
+    } catch (error) {
+      console.error('Error checking authentication status:', error);
+      setIsLoggedIn(false);
+    }
+  }, []);
 
   const handleShare = async () => {
     const shareText = `Property LMI Status Check Results:
@@ -50,7 +72,7 @@ Census Tract: ${data.tract_id || 'Unknown'}`;
   };
 
   const handleSaveProperty = async () => {
-    if (!user) {
+    if (!isLoggedIn) {
       onCloseNotification();
       navigate('/login');
       toast.info('Please sign in to save properties');
@@ -58,7 +80,9 @@ Census Tract: ${data.tract_id || 'Unknown'}`;
     }
     
     console.log("Save pressed in ResultsSection");
-    await createLmiNotification(data.address, data.is_approved);
+    if (isLoggedIn) {
+      await createLmiNotification(data.address, data.is_approved);
+    }
     onSaveProperty();
   };
 

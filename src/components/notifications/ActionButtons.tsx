@@ -2,7 +2,6 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Share2, Save, LogIn } from 'lucide-react';
-import { useAuth } from '@/hooks/useAuth';
 
 interface ActionButtonsProps {
   onShare?: () => void;
@@ -11,8 +10,6 @@ interface ActionButtonsProps {
 }
 
 export const ActionButtons = ({ onShare, onSave, onSignUp }: ActionButtonsProps) => {
-  const { user } = useAuth();
-  
   return (
     <div className="mt-6 flex flex-wrap gap-3">
       {onShare && (
@@ -22,14 +19,14 @@ export const ActionButtons = ({ onShare, onSave, onSignUp }: ActionButtonsProps)
         </Button>
       )}
       
-      {!user && onSignUp && (
+      {onSignUp && (
         <Button onClick={onSignUp} className="flex-1">
           <LogIn className="mr-2 h-4 w-4" />
           Create Account
         </Button>
       )}
       
-      {user && onSave && (
+      {onSave && (
         <Button onClick={onSave} className="flex-1">
           <Save className="mr-2 h-4 w-4" />
           Save Property
