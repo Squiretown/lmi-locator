@@ -1,9 +1,27 @@
 
 // Forward all toast functionality to sonner
-import { toast as sonnerToast, type ToastT } from "sonner";
+import { toast as sonnerToast } from "sonner";
+
+export type ToastProps = {
+  title: string;
+  description?: string;
+  variant?: "default" | "destructive";
+  duration?: number;
+};
 
 export const useToast = () => ({
-  toast: (props: { title: string; description?: string }) => sonnerToast(props.title, { description: props.description }),
+  toast: (props: ToastProps) => {
+    if (props.variant === "destructive") {
+      return sonnerToast.error(props.title, { 
+        description: props.description,
+        duration: props.duration
+      });
+    }
+    return sonnerToast(props.title, { 
+      description: props.description,
+      duration: props.duration
+    });
+  },
   dismiss: (toastId?: string) => sonnerToast.dismiss(toastId),
   toasts: []
 });
@@ -27,3 +45,4 @@ export const toast = {
   warning: (title: string, description?: string) => 
     sonnerToast.warning(title, { description }),
 };
+

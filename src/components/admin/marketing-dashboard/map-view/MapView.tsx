@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import MapContainer, { MapRef } from './MapContainer';
 import TractInfoPanel from './TractInfoPanel';
 import MapSidebar from './components/MapSidebar';
@@ -13,7 +13,6 @@ interface MapViewProps {
 }
 
 const MapView: React.FC<MapViewProps> = ({ onExportResults }) => {
-  const { toast } = useToast();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [selectedTract, setSelectedTract] = useState<any>(null);
   const [searchRadius, setSearchRadius] = useState([25]); // miles
@@ -69,15 +68,12 @@ const MapView: React.FC<MapViewProps> = ({ onExportResults }) => {
         onExportResults(exportData);
       }
       
-      toast({
-        title: "Export successful",
-        description: `${exportData.length} tracts exported to marketing list.`,
+      toast.success("Export successful", {
+        description: `${exportData.length} tracts exported to marketing list.`
       });
     } catch (error) {
-      toast({
-        title: "Export failed",
-        description: "There was an error exporting the data. Please try again.",
-        variant: "destructive",
+      toast.error("Export failed", {
+        description: "There was an error exporting the data. Please try again."
       });
     }
   };

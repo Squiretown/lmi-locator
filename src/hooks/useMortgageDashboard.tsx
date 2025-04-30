@@ -1,17 +1,16 @@
 
 import { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
-import { toast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 
 export function useMortgageDashboard() {
   const { signOut } = useAuth();
   const [activeTab, setActiveTab] = useState('overview');
   
   const handleExportResults = (results: any[]) => {
-    // Use the toast function that now accepts arguments
-    toast.success({
-      title: "Export successful",
-      description: `${results.length} properties exported to your marketing list.`,
+    // Use the toast function from sonner directly
+    toast.success("Export successful", {
+      description: `${results.length} properties exported to your marketing list.`
     });
   };
 

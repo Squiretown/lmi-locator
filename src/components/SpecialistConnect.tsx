@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import SpecialistForm from './specialist-connect/SpecialistForm';
 import SuccessMessage from './specialist-connect/SuccessMessage';
@@ -20,7 +20,6 @@ const SpecialistConnect: React.FC<SpecialistConnectProps> = ({
   propertyId,
   onComplete
 }) => {
-  const { toast } = useToast();
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [userEmail, setUserEmail] = useState('');
   
@@ -51,9 +50,8 @@ const SpecialistConnect: React.FC<SpecialistConnectProps> = ({
       setUserEmail(data.email);
       setIsSubmitted(true);
       
-      toast({
-        title: "Request Sent",
-        description: "A specialist will contact you shortly about down payment assistance options.",
+      toast.success("Request Sent", {
+        description: "A specialist will contact you shortly about down payment assistance options."
       });
       
       // Wait a bit before completing to let the user see the success message
@@ -62,10 +60,8 @@ const SpecialistConnect: React.FC<SpecialistConnectProps> = ({
       }, 3000);
     } catch (error) {
       console.error('Error submitting specialist request:', error);
-      toast({
-        title: "Error",
-        description: "Failed to submit your request. Please try again.",
-        variant: "destructive",
+      toast.error("Error", {
+        description: "Failed to submit your request. Please try again."
       });
     }
   };

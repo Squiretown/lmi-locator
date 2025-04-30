@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { Contact, ContactFormValues } from '@/lib/api/types';
 import { useContacts } from '@/hooks/useContacts';
 
@@ -20,7 +20,6 @@ const ContactsPage: React.FC = () => {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
-  const { toast } = useToast();
   
   const { 
     contacts, 
@@ -32,10 +31,8 @@ const ContactsPage: React.FC = () => {
 
   const handleCreateContact = async (data: ContactFormValues) => {
     if (!professionalId) {
-      toast({
-        title: 'Error',
-        description: 'No professional ID provided',
-        variant: 'destructive'
+      toast.error('Error', {
+        description: 'No professional ID provided'
       });
       return;
     }

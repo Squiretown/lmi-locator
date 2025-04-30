@@ -9,7 +9,7 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { useBrokers } from '@/hooks/useBrokers';
 
 interface BrokerPermissionsDialogProps {
@@ -30,7 +30,6 @@ const BrokerPermissionsDialog: React.FC<BrokerPermissionsDialogProps> = ({
   const { mutateAsync: addPermission, isPending: isAddingPermission } = useAddPermission();
   const { mutateAsync: removePermission, isPending: isRemovingPermission } = useRemovePermission();
   const isLoading = isAddingPermission || isRemovingPermission;
-  const { toast } = useToast();
 
   // List of available permissions
   const allPermissions = [
@@ -75,19 +74,14 @@ const BrokerPermissionsDialog: React.FC<BrokerPermissionsDialogProps> = ({
       
       await Promise.all(promises);
       
-      toast({
-        title: 'Success',
-        description: 'Permissions updated successfully',
-        duration: 3000
+      toast.success('Success', {
+        description: 'Permissions updated successfully'
       });
       
       onClose();
     } catch (error: any) {
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: error.message || 'Failed to update permissions',
-        duration: 3000
+      toast.error('Error', {
+        description: error.message || 'Failed to update permissions'
       });
     }
   };

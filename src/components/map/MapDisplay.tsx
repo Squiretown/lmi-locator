@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react';
 import MapInitializer from './MapInitializer';
@@ -15,7 +15,6 @@ interface MapDisplayProps {
 }
 
 const MapDisplay: React.FC<MapDisplayProps> = ({ lat, lon, isEligible, tractId, address }) => {
-  const { toast } = useToast();
   const [mapError, setMapError] = useState<string | null>(null);
   const [tractError, setTractError] = useState<string | null>(null);
   const [mapboxToken, setMapboxToken] = useState<string | null>(null);
@@ -49,16 +48,14 @@ const MapDisplay: React.FC<MapDisplayProps> = ({ lat, lon, isEligible, tractId, 
       } catch (error) {
         console.error('Error fetching Mapbox token:', error);
         setMapError('Could not initialize map due to configuration issues. Please try again later.');
-        toast({
-          title: 'Map Error',
-          description: 'Could not initialize map due to configuration issues.',
-          variant: 'destructive',
+        toast.error('Map Error', {
+          description: 'Could not initialize map due to configuration issues.'
         });
       }
     };
     
     fetchMapboxToken();
-  }, [toast]);
+  }, []);
   
   // Display loading state while fetching token
   if (!mapboxToken) {
@@ -90,10 +87,8 @@ const MapDisplay: React.FC<MapDisplayProps> = ({ lat, lon, isEligible, tractId, 
   const handleMapError = (error: string) => {
     console.error('Map initialization error:', error);
     setMapError(error);
-    toast({
-      title: 'Map Error',
-      description: error,
-      variant: 'destructive',
+    toast.error('Map Error', {
+      description: error
     });
   };
   
@@ -101,10 +96,8 @@ const MapDisplay: React.FC<MapDisplayProps> = ({ lat, lon, isEligible, tractId, 
   const handleTractBoundaryError = (error: string) => {
     console.warn('Tract boundary error:', error);
     setTractError(error);
-    toast({
-      title: 'Tract Boundary Warning',
-      description: 'Could not load census tract boundary. The map will still show the property location.',
-      variant: 'default',
+    toast('Tract Boundary Warning', {
+      description: 'Could not load census tract boundary. The map will still show the property location.'
     });
   };
   

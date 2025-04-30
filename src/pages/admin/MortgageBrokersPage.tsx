@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import type { MortgageBroker, BrokerFormValues } from '@/lib/api/types';
 import BrokerDialog from '@/components/brokers/BrokerDialog';
 import BrokerTable from '@/components/brokers/BrokerTable';
@@ -24,8 +24,6 @@ const MortgageBrokersPage: React.FC = () => {
     deleteBroker, 
     getBrokerPermissionsQuery 
   } = useBrokers();
-  
-  const { toast } = useToast();
 
   // Get broker permissions when a broker is selected
   const { data: brokerPermissions = [] } = getBrokerPermissionsQuery(
@@ -47,16 +45,12 @@ const MortgageBrokersPage: React.FC = () => {
   const handleDeleteBroker = async (id: string) => {
     try {
       await deleteBroker(id);
-      toast({
-        title: 'Broker deleted',
-        description: 'Broker successfully deleted.',
-        duration: 3000
+      toast.success('Broker deleted', {
+        description: 'Broker successfully deleted.'
       });
     } catch (error: any) {
-      toast({
-        title: 'Error deleting broker',
-        description: error.message,
-        variant: 'destructive'
+      toast.error('Error deleting broker', {
+        description: error.message
       });
     }
   };
@@ -76,10 +70,8 @@ const MortgageBrokersPage: React.FC = () => {
       
       setIsDialogOpen(false);
     } catch (error: any) {
-      toast({
-        title: 'Error saving broker',
-        description: error.message,
-        variant: 'destructive'
+      toast.error('Error saving broker', {
+        description: error.message
       });
     }
   };

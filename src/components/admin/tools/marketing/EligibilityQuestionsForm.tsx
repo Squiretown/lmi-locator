@@ -1,10 +1,9 @@
-
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Form, FormField, FormItem, FormLabel, FormControl, FormDescription, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
@@ -29,7 +28,6 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 
 export const EligibilityQuestionsForm: React.FC = () => {
-  const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
 
   // Initialize the form with default values
@@ -66,10 +64,8 @@ export const EligibilityQuestionsForm: React.FC = () => {
         }
       } catch (error) {
         console.error('Error fetching eligibility questions:', error);
-        toast({
-          title: "Error",
-          description: "Failed to load eligibility questions.",
-          variant: "destructive",
+        toast.error("Error", {
+          description: "Failed to load eligibility questions."
         });
       } finally {
         setIsLoading(false);
@@ -77,7 +73,7 @@ export const EligibilityQuestionsForm: React.FC = () => {
     };
 
     fetchEligibilityQuestions();
-  }, [form, toast]);
+  }, [form]);
 
   // Save the form data to the database
   const onSubmit = async (values: FormValues) => {
@@ -121,16 +117,13 @@ export const EligibilityQuestionsForm: React.FC = () => {
       
       if (saveError) throw saveError;
       
-      toast({
-        title: "Success",
-        description: "Eligibility questions have been updated successfully.",
+      toast.success("Success", {
+        description: "Eligibility questions have been updated successfully."
       });
     } catch (error) {
       console.error('Error saving eligibility questions:', error);
-      toast({
-        title: "Error",
-        description: "Failed to save eligibility questions.",
-        variant: "destructive",
+      toast.error("Error", {
+        description: "Failed to save eligibility questions."
       });
     } finally {
       setIsLoading(false);

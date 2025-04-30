@@ -41,14 +41,15 @@ const PropertyChecker: React.FC = () => {
       const isApproved = result.is_approved;
       const address = result.address;
       
-      toast[isApproved ? 'success' : 'info'](
-        isApproved ? 'LMI Eligible Area' : 'Search Complete',
-        { 
-          description: isApproved 
-            ? `${address} is in an LMI eligible area` 
-            : `${address} is not in an LMI eligible area`
-        }
-      );
+      if (isApproved) {
+        toast.success('LMI Eligible Area', {
+          description: `${address} is in an LMI eligible area`
+        });
+      } else {
+        toast.info('Search Complete', {
+          description: `${address} is not in an LMI eligible area`
+        });
+      }
       
       addActivity({
         type: 'search',

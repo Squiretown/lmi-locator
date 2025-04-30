@@ -2,9 +2,23 @@
 // This file is now just a passthrough to sonner
 // to maintain compatibility with existing code
 import { toast as sonnerToast } from "sonner";
+import { ToastProps } from "@/hooks/use-toast";
 
 export const useToast = () => ({
-  toast: (args?: any) => sonnerToast(args?.title || "", { description: args?.description }),
+  toast: (props?: ToastProps) => {
+    if (!props) return;
+    
+    if (props.variant === "destructive") {
+      return sonnerToast.error(props.title, { 
+        description: props.description,
+        duration: props.duration
+      });
+    }
+    return sonnerToast(props.title, { 
+      description: props.description,
+      duration: props.duration
+    });
+  },
   dismiss: (toastId?: string) => sonnerToast.dismiss(toastId),
   toasts: []
 });

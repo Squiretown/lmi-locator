@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -8,12 +7,12 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
-import { Download, Search, Upload, FileSpreadsheet, MapPin, Filter, RefreshCw } from 'lucide-react';
+import { toast } from 'sonner';
 import { useAuth } from '@/hooks/useAuth';
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Download, Search, Upload, FileSpreadsheet, MapPin, Filter, RefreshCw } from 'lucide-react';
 
 type SearchType = 'tract_id' | 'zip_code' | 'city' | 'county' | 'bulk';
 type SearchResult = {
@@ -26,7 +25,6 @@ type SearchResult = {
 
 export const BulkAddressSearch: React.FC = () => {
   const { user } = useAuth();
-  const { toast } = useToast();
   const [searchType, setSearchType] = useState<SearchType>('zip_code');
   const [searchValue, setSearchValue] = useState('');
   const [bulkAddresses, setBulkAddresses] = useState('');
@@ -70,17 +68,14 @@ export const BulkAddressSearch: React.FC = () => {
           if (data.status === 'completed') {
             setIsPolling(false);
             fetchJobResults(searchId);
-            toast({
-              title: 'Search completed',
-              description: `Found ${data.resultCount} properties`,
+            toast.success('Search completed', {
+              description: `Found ${data.resultCount} properties`
             });
           } else if (data.status === 'error') {
             setIsPolling(false);
             setIsLoading(false);
-            toast({
-              title: 'Search failed',
-              description: data.errorMessage || 'An error occurred during search processing',
-              variant: 'destructive',
+            toast.error('Search failed', {
+              description: data.errorMessage || 'An error occurred during search processing'
             });
           }
         } catch (error) {
@@ -92,7 +87,7 @@ export const BulkAddressSearch: React.FC = () => {
     return () => {
       if (interval) clearInterval(interval);
     };
-  }, [isPolling, searchId, toast]);
+  }, [isPolling, searchId]);
   
   const fetchJobResults = async (jobId: string) => {
     try {
@@ -112,10 +107,8 @@ export const BulkAddressSearch: React.FC = () => {
       
     } catch (error) {
       console.error('Error fetching job results:', error);
-      toast({
-        title: 'Failed to fetch results',
-        description: 'Unable to retrieve search results. Please try again.',
-        variant: 'destructive',
+      toast.error('Failed to fetch results', {
+        description: 'Unable to retrieve search results. Please try again.'
       });
       setIsLoading(false);
       setIsPolling(false);
@@ -124,10 +117,8 @@ export const BulkAddressSearch: React.FC = () => {
 
   const handleSearch = async () => {
     if (!user) {
-      toast({
-        title: 'Authentication Required',
-        description: 'You must be logged in to search for properties',
-        variant: 'destructive',
+      toast.error('Authentication Required', {
+        description: 'You must be logged in to search for properties'
       });
       return;
     }
@@ -191,9 +182,8 @@ export const BulkAddressSearch: React.FC = () => {
         setJobStatus('processing');
         setStatusMessage(`Processing ${addresses.length} addresses...`);
         
-        toast({
-          title: 'Bulk processing started',
-          description: `${addresses.length} addresses submitted for processing.`,
+        toast.success('Bulk processing started', {
+          description: `${addresses.length} addresses submitted for processing.`
         });
 
       } else {
@@ -221,18 +211,15 @@ export const BulkAddressSearch: React.FC = () => {
           setIsLoading(false);
           setSearchCount(prev => prev + 1);
           
-          toast({
-            title: 'Search completed',
-            description: `Found ${data.results?.length || 0} properties`,
+          toast.success('Search completed', {
+            description: `Found ${data.results?.length || 0} properties`
           });
         }
       }
     } catch (error) {
       console.error('Search error:', error);
-      toast({
-        title: 'Search failed',
-        description: error.message || 'Unable to complete the search. Please try again.',
-        variant: 'destructive',
+      toast.error('Search failed', {
+        description: error.message || 'Unable to complete the search. Please try again.'
       });
       setIsLoading(false);
       setIsPolling(false);
@@ -241,10 +228,8 @@ export const BulkAddressSearch: React.FC = () => {
 
   const handleExport = async () => {
     if (filteredResults.length === 0) {
-      toast({
-        title: 'Export Error',
-        description: 'No search results to export',
-        variant: 'destructive',
+      toast.error('Export Error', {
+        description: 'No search results to export'
       });
       return;
     }
@@ -290,9 +275,8 @@ export const BulkAddressSearch: React.FC = () => {
       }
     }
     
-    toast({
-      title: 'Export successful',
-      description: 'Your marketing list has been downloaded',
+    toast.success('Export successful', {
+      description: 'Your marketing list has been downloaded'
     });
   };
 
@@ -320,16 +304,13 @@ export const BulkAddressSearch: React.FC = () => {
       setIsLoading(false);
       setJobStatus('pending');
       
-      toast({
-        title: 'Search cancelled',
-        description: 'The search operation has been cancelled',
+      toast.success('Search cancelled', {
+        description: 'The search operation has been cancelled'
       });
     } catch (error) {
       console.error('Error cancelling search:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to cancel the search operation',
-        variant: 'destructive',
+      toast.error('Error', {
+        description: 'Failed to cancel the search operation'
       });
     }
   };

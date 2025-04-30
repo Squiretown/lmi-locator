@@ -1,13 +1,12 @@
 
 import { useState, useCallback } from 'react';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { CensusTract, SearchParams, StatsData, SearchResults } from './types/census-tract';
 import { COUNTIES_BY_STATE, STATES } from './data/mock-data';
 import { fetchRealData } from './services/census-api';
 import { generateMockTracts } from './services/mock-data-generator';
 
 export const useTractSearch = () => {
-  const { toast } = useToast();
   const [tracts, setTracts] = useState<CensusTract[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -42,9 +41,8 @@ export const useTractSearch = () => {
           dataSource: 'real'
         });
         
-        toast({
-          title: "Search Complete",
-          description: `Found ${realData.tracts.length} census tracts using real data`,
+        toast.success("Search Complete", {
+          description: `Found ${realData.tracts.length} census tracts using real data`
         });
         
         setLoading(false);
@@ -54,19 +52,15 @@ export const useTractSearch = () => {
         console.warn('No real data available, falling back to mock data');
         
         if (!params.state && !params.county && !params.zipCode) {
-          toast({
-            title: "Search parameters required",
-            description: "Please enter at least one search parameter",
-            variant: "destructive",
+          toast.error("Search parameters required", {
+            description: "Please enter at least one search parameter"
           });
           setLoading(false);
           return;
         }
         
-        toast({
-          title: "Using mock data",
-          description: "Couldn't retrieve real data, using simulated results instead",
-          variant: "default",
+        toast("Using mock data", {
+          description: "Couldn't retrieve real data, using simulated results instead"
         });
       }
       
@@ -88,10 +82,8 @@ export const useTractSearch = () => {
     } catch (err) {
       console.error('Error searching tracts:', err);
       setError('Failed to search census tracts. Please try again.');
-      toast({
-        title: 'Search Error',
-        description: 'Failed to search census tracts. Please try again.',
-        variant: 'destructive',
+      toast.error('Search Error', {
+        description: 'Failed to search census tracts. Please try again.'
       });
     } finally {
       setLoading(false);
@@ -124,9 +116,8 @@ export const useTractSearch = () => {
   // Toggle between real and mock data sources
   const toggleDataSource = () => {
     setUseRealData(!useRealData);
-    toast({
-      title: `Using ${!useRealData ? 'Real' : 'Mock'} Data`,
-      description: `Switched to ${!useRealData ? 'real' : 'mock'} data source for tract searches.`,
+    toast.info(`Using ${!useRealData ? 'Real' : 'Mock'} Data`, {
+      description: `Switched to ${!useRealData ? 'real' : 'mock'} data source for tract searches.`
     });
   };
 
