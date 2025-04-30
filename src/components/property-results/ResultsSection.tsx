@@ -2,9 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { CheckLmiStatusResponse } from '@/lib/types';
 import LmiStatusNotification from '@/components/notifications/LmiStatusNotification';
-import { Share2 } from 'lucide-react';
 import { useRoleSpecificNotifications } from '@/hooks/useRoleSpecificNotifications';
-import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
 interface ResultsSectionProps {
@@ -21,7 +19,6 @@ const ResultsSection: React.FC<ResultsSectionProps> = ({
   onCloseNotification
 }) => {
   const { createLmiNotification } = useRoleSpecificNotifications();
-  const navigate = useNavigate();
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
   const [userType, setUserType] = useState<string | null>(null);
   
@@ -72,13 +69,6 @@ Census Tract: ${data.tract_id || 'Unknown'}`;
   };
 
   const handleSaveProperty = async () => {
-    if (!isLoggedIn) {
-      onCloseNotification();
-      navigate('/login');
-      toast.info('Please sign in to save properties');
-      return;
-    }
-    
     console.log("Save pressed in ResultsSection");
     if (isLoggedIn) {
       await createLmiNotification(data.address, data.is_approved);
@@ -88,7 +78,7 @@ Census Tract: ${data.tract_id || 'Unknown'}`;
 
   const handleSignUp = () => {
     onCloseNotification();
-    navigate('/login');
+    window.location.href = '/login';
   };
 
   return (
@@ -99,7 +89,8 @@ Census Tract: ${data.tract_id || 'Unknown'}`;
       userType={userType}
       onClose={onCloseNotification}
       onShare={handleShare}
-      onSave={handleSaveProperty}
+      onSave={isLoggedIn ? handleSaveProperty : undefined}
+      onSignUp={!isLoggedIn ? handleSignUp : undefined}
     />
   );
 };

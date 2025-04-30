@@ -5,7 +5,6 @@ import { NotificationHeader } from './NotificationHeader';
 import { AddressSection } from './AddressSection';
 import { RoleSpecificContent } from './RoleSpecificContent';
 import { ActionButtons } from './ActionButtons';
-import { useNavigate } from 'react-router-dom';
 
 interface LmiStatusNotificationProps {
   isApproved: boolean;
@@ -16,6 +15,7 @@ interface LmiStatusNotificationProps {
   onShare?: () => void;
   onSave?: () => void;
   onContinue?: () => void;
+  onSignUp?: () => void;
 }
 
 const LmiStatusNotification = ({
@@ -26,12 +26,12 @@ const LmiStatusNotification = ({
   onClose,
   onShare,
   onSave,
-  onContinue
+  onContinue,
+  onSignUp
 }: LmiStatusNotificationProps) => {
-  const navigate = useNavigate();
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
   
-  // Instead of directly using useAuth(), check for user in localStorage
+  // Check for user in localStorage
   useEffect(() => {
     try {
       const sessionStr = localStorage.getItem('supabase.auth.token');
@@ -41,11 +41,6 @@ const LmiStatusNotification = ({
       setIsLoggedIn(false);
     }
   }, []);
-  
-  const handleSignUp = () => {
-    onClose();
-    navigate('/login');
-  };
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
@@ -70,7 +65,7 @@ const LmiStatusNotification = ({
           <ActionButtons 
             onShare={onShare}
             onSave={isLoggedIn ? onSave : undefined}
-            onSignUp={!isLoggedIn ? handleSignUp : undefined}
+            onSignUp={!isLoggedIn ? onSignUp : undefined}
           />
         </div>
       </Card>

@@ -74,6 +74,15 @@ Census Tract: ${data.tractId || 'Unknown'}`;
       alert('Results copied to clipboard');
     }
   };
+
+  // Handle signup button
+  const handleSignUp = () => {
+    console.log('Sign up clicked');
+    // Close the notification
+    handleClose();
+    // Navigate to login page by changing window location
+    window.location.href = '/login';
+  };
   
   // Render the notification component
   if (data?.address) {
@@ -87,7 +96,8 @@ Census Tract: ${data.tractId || 'Unknown'}`;
         onSave: () => {
           console.log('Save clicked');
           handleClose();
-        }
+        },
+        onSignUp: handleSignUp
       })
     );
   }
