@@ -15,7 +15,18 @@ export const showNotification = (options: {
   };
   onClose?: () => void;
 }) => {
-  const { data, onClose } = options;
+  const { type, title, message, data, onClose } = options;
+  
+  // Add a toast notification based on type
+  if (type === 'success') {
+    toast.success(title, { description: message });
+  } else if (type === 'error') {
+    toast.error(title, { description: message });
+  } else if (type === 'info') {
+    toast.info(title, { description: message });
+  } else if (type === 'warning') {
+    toast.warning(title, { description: message });
+  }
   
   // Remove any existing notifications
   const existingNotifications = document.querySelectorAll('.notification-overlay');
@@ -149,13 +160,21 @@ Census Tract: ${data.tractId || 'Unknown'}`;
 
 export const useSimpleNotification = () => {
   return {
-    success: (title: string, message?: string, data?: any, onClose?: () => void) => 
-      showNotification({ type: 'success', title, message, data, onClose }),
-    error: (title: string, message?: string, data?: any, onClose?: () => void) => 
-      showNotification({ type: 'error', title, message, data, onClose }),
-    info: (title: string, message?: string, data?: any, onClose?: () => void) => 
-      showNotification({ type: 'info', title, message, data, onClose }),
-    warning: (title: string, message?: string, data?: any, onClose?: () => void) => 
-      showNotification({ type: 'warning', title, message, data, onClose }),
+    success: (title: string, message?: string, data?: any, onClose?: () => void) => {
+      toast.success(title, { description: message });
+      return showNotification({ type: 'success', title, message, data, onClose });
+    },
+    error: (title: string, message?: string, data?: any, onClose?: () => void) => {
+      toast.error(title, { description: message });
+      return showNotification({ type: 'error', title, message, data, onClose });
+    },
+    info: (title: string, message?: string, data?: any, onClose?: () => void) => {
+      toast.info(title, { description: message });
+      return showNotification({ type: 'info', title, message, data, onClose });
+    },
+    warning: (title: string, message?: string, data?: any, onClose?: () => void) => {
+      toast.warning(title, { description: message });
+      return showNotification({ type: 'warning', title, message, data, onClose });
+    },
   };
 };

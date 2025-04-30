@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useSimpleNotification } from '@/hooks/useSimpleNotification';
 import { useAuth } from '@/hooks/useAuth';
+import { toast } from 'sonner';
 
 // Export the SearchType so it can be used in other files
 export type SearchType = 'tract_id' | 'zip_code' | 'city';
@@ -25,10 +26,9 @@ export function useMarketingSearch() {
 
   const handleSearch = async () => {
     if (!user) {
-      notification.error(
-        'Authentication Required',
-        'You must be logged in to search for properties'
-      );
+      toast.error('Authentication Required', {
+        description: 'You must be logged in to search for properties'
+      });
       return;
     }
 
@@ -48,16 +48,14 @@ export function useMarketingSearch() {
       setResults(data.results);
       setSearchId(data.searchId);
       
-      notification.success(
-        'Search completed',
-        `Found ${data.results.length} properties`
-      );
+      toast.success('Search completed', {
+        description: `Found ${data.results.length} properties`
+      });
     } catch (error) {
       console.error('Search error:', error);
-      notification.error(
-        'Search failed',
-        'Unable to complete the search. Please try again.'
-      );
+      toast.error('Search failed', {
+        description: 'Unable to complete the search. Please try again.'
+      });
     } finally {
       setIsLoading(false);
     }
@@ -65,7 +63,9 @@ export function useMarketingSearch() {
 
   const handleExport = async () => {
     if (!searchId || !user) {
-      notification.error('Export Error', 'No search results to export');
+      toast.error('Export Error', {
+        description: 'No search results to export'
+      });
       return;
     }
 
@@ -98,16 +98,14 @@ export function useMarketingSearch() {
         .update({ download_count: data.downloadCount })
         .eq('id', searchId);
         
-      notification.success(
-        'Export successful',
-        'Your marketing list has been downloaded'
-      );
+      toast.success('Export successful', {
+        description: 'Your marketing list has been downloaded'
+      });
     } catch (error) {
       console.error('Export error:', error);
-      notification.error(
-        'Export failed',
-        'Unable to export the data. Please try again.'
-      );
+      toast.error('Export failed', {
+        description: 'Unable to export the data. Please try again.'
+      });
     }
   };
 

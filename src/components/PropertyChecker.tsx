@@ -8,6 +8,7 @@ import { saveSearch } from '@/lib/supabase/search';
 import { useAuth } from '@/hooks/useAuth';
 import PropertySearchCard from './property-form/PropertySearchCard';
 import { usePropertyWorkflow } from '@/hooks/usePropertyWorkflow';
+import { toast } from 'sonner';
 
 const PropertyChecker: React.FC = () => {
   // Initialize hooks outside of any conditional logic
@@ -36,6 +37,16 @@ const PropertyChecker: React.FC = () => {
   const onSubmit = async (values: any) => {
     const result = await submitPropertySearch(values);
     if (result) {
+      // Add toast notification for search result
+      toast[result.is_approved ? 'success' : 'info'](
+        result.is_approved ? 'LMI Eligible Area' : 'Search Complete',
+        { 
+          description: result.is_approved 
+            ? `${result.address} is in an LMI eligible area` 
+            : `${result.address} is not in an LMI eligible area`
+        }
+      );
+      
       addActivity({
         type: 'search',
         timestamp: new Date().toISOString(),
@@ -50,7 +61,7 @@ const PropertyChecker: React.FC = () => {
         try {
           await saveSearch(result.address, result, user.id);
         } catch (error) {
-          console.warn('Error saving search to database:', error);
+          console.error('Error saving search to database:', error);
         }
       }
     }

@@ -7,6 +7,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useClientActivity } from '@/hooks/useClientActivity';
 import PropertyCheckerLayout from './property-checker/PropertyCheckerLayout';
+import { toast } from 'sonner';
 
 const PropertyCheckerContent: React.FC = () => {
   const { displayMode, showResults, resetProcess } = usePropertyWorkflow();
@@ -37,6 +38,11 @@ const PropertyCheckerContent: React.FC = () => {
     resetSearch();
     setCurrentData(null);
     resetProcess();
+    
+    // Show toast when notification is closed
+    toast.info('Search closed', { 
+      description: 'Property search results cleared' 
+    });
     
     if (user?.user_metadata?.user_type === 'mortgage_professional') {
       navigate('/mortgage');
