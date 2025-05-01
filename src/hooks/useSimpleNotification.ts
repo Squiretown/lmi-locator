@@ -51,11 +51,11 @@ export const showNotification = async (options: {
   };
   
   // Check if the user is logged in and get user type
-  const { data: { session } } = await supabase.auth.getSession();
-  const isLoggedIn = !!session;
-  let userType = session?.user?.user_metadata?.user_type || null;
+  const { data: sessionData } = await supabase.auth.getSession();
+  const isLoggedIn = !!sessionData?.session;
+  let userType = sessionData?.session?.user?.user_metadata?.user_type || null;
   
-  console.log('Notification auth status:', { isLoggedIn, userType });
+  console.log('Notification auth status in useSimpleNotification:', { isLoggedIn, userType });
   
   // Handle share button click
   const handleShare = async () => {

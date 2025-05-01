@@ -17,9 +17,13 @@ const PropertyCheckerContent: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { addActivity } = useClientActivity();
+  const isLoggedIn = !!user;
+
+  console.log('PropertyCheckerContent - Auth status:', { isLoggedIn, user: !!user });
 
   useEffect(() => {
     if (lmiStatus) {
+      console.log('LMI Status received in PropertyCheckerContent:', lmiStatus);
       setCurrentData(lmiStatus);
       showResults(lmiStatus);
       
@@ -35,6 +39,7 @@ const PropertyCheckerContent: React.FC = () => {
   }, [lmiStatus, showResults, addActivity, user]);
 
   const handleCloseNotification = () => {
+    console.log('Closing notification in PropertyCheckerContent, user logged in:', !!user);
     resetSearch();
     setCurrentData(null);
     resetProcess();

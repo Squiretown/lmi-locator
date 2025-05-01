@@ -1,11 +1,10 @@
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Card } from '@/components/ui/card';
 import { NotificationHeader } from './NotificationHeader';
 import { AddressSection } from './AddressSection';
 import { RoleSpecificContent } from './RoleSpecificContent';
 import { ActionButtons } from './ActionButtons';
-import { useAuth } from '@/hooks/useAuth';
 
 interface LmiStatusNotificationProps {
   isApproved: boolean;
@@ -30,10 +29,11 @@ const LmiStatusNotification = ({
   onContinue,
   onSignUp
 }: LmiStatusNotificationProps) => {
-  const { user } = useAuth();
-  const isLoggedIn = !!user;
+  // We're removing the useAuth call directly in this component to avoid potential issues
+  // Instead, we'll rely on the props passed to determine whether a user is logged in
+  const isLoggedIn = onSave !== undefined;
   
-  console.log('LmiStatusNotification - Auth status:', { isLoggedIn, userType });
+  console.log('LmiStatusNotification render:', { isApproved, address, isLoggedIn, userType });
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
@@ -57,8 +57,8 @@ const LmiStatusNotification = ({
 
           <ActionButtons 
             onShare={onShare}
-            onSave={isLoggedIn ? onSave : undefined}
-            onSignUp={!isLoggedIn ? onSignUp : undefined}
+            onSave={onSave}
+            onSignUp={onSignUp}
             isLoggedIn={isLoggedIn}
           />
         </div>

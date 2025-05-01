@@ -11,7 +11,7 @@ interface ActionButtonsProps {
 }
 
 export const ActionButtons = ({ onShare, onSave, onSignUp, isLoggedIn }: ActionButtonsProps) => {
-  console.log('ActionButtons - isLoggedIn:', isLoggedIn);
+  console.log('ActionButtons render:', { isLoggedIn, hasSaveHandler: !!onSave, hasSignUpHandler: !!onSignUp });
   
   return (
     <div className="mt-6 flex flex-wrap gap-3">
@@ -30,7 +30,7 @@ export const ActionButtons = ({ onShare, onSave, onSignUp, isLoggedIn }: ActionB
       )}
       
       {isLoggedIn && onSave && (
-        <Button onClick={onSave} className="flex-1 bg-green-600 hover:bg-green-700">
+        <Button onClick={onSave} variant="success" className="flex-1">
           <Save className="mr-2 h-4 w-4" />
           Save Property
         </Button>
