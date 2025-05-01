@@ -23,7 +23,7 @@ const PropertyCheckerContent: React.FC = () => {
       setCurrentData(lmiStatus);
       showResults(lmiStatus);
       
-      if (lmiStatus.address) {
+      if (user && lmiStatus.address) {
         addActivity({
           type: 'search',
           timestamp: new Date().toISOString(),
@@ -32,7 +32,7 @@ const PropertyCheckerContent: React.FC = () => {
         });
       }
     }
-  }, [lmiStatus, showResults, addActivity]);
+  }, [lmiStatus, showResults, addActivity, user]);
 
   const handleCloseNotification = () => {
     resetSearch();
@@ -44,14 +44,15 @@ const PropertyCheckerContent: React.FC = () => {
       toast.info('Search closed', { 
         description: 'Property search results cleared' 
       });
-    }
-    
-    if (user?.user_metadata?.user_type === 'mortgage_professional') {
-      navigate('/mortgage');
-    } else if (user?.user_metadata?.user_type === 'realtor') {
-      navigate('/realtor');
-    } else {
-      navigate('/client');
+      
+      // Navigate based on user type
+      if (user?.user_metadata?.user_type === 'mortgage_professional') {
+        navigate('/mortgage');
+      } else if (user?.user_metadata?.user_type === 'realtor') {
+        navigate('/realtor');
+      } else {
+        navigate('/client');
+      }
     }
   };
 

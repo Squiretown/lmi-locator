@@ -11,6 +11,8 @@ interface ActionButtonsProps {
 }
 
 export const ActionButtons = ({ onShare, onSave, onSignUp, isLoggedIn }: ActionButtonsProps) => {
+  console.log('ActionButtons - isLoggedIn:', isLoggedIn);
+  
   return (
     <div className="mt-6 flex flex-wrap gap-3">
       {onShare && (
@@ -21,7 +23,7 @@ export const ActionButtons = ({ onShare, onSave, onSignUp, isLoggedIn }: ActionB
       )}
       
       {!isLoggedIn && onSignUp && (
-        <Button onClick={onSignUp} className="flex-1">
+        <Button onClick={onSignUp} className="flex-1 bg-blue-600 hover:bg-blue-700">
           <LogIn className="mr-2 h-4 w-4" />
           Create Account
         </Button>

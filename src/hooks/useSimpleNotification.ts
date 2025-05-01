@@ -3,8 +3,9 @@ import React from 'react';
 import { createRoot } from 'react-dom/client';
 import LmiStatusNotification from '@/components/notifications/LmiStatusNotification';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
-export const showNotification = (options: {
+export const showNotification = async (options: {
   type: 'success' | 'error' | 'info' | 'warning';
   title: string;
   message?: string;
@@ -49,26 +50,12 @@ export const showNotification = (options: {
     }, 0);
   };
   
-  // Check if the user is logged in
-  let isLoggedIn = false;
-  let userType = null;
+  // Check if the user is logged in and get user type
+  const { data: { session } } = await supabase.auth.getSession();
+  const isLoggedIn = !!session;
+  let userType = session?.user?.user_metadata?.user_type || null;
   
-  try {
-    const sessionStr = localStorage.getItem('supabase.auth.token');
-    isLoggedIn = !!sessionStr && sessionStr !== 'null';
-    
-    // If logged in, try to get user type from session data
-    if (isLoggedIn && sessionStr) {
-      try {
-        const sessionData = JSON.parse(sessionStr);
-        userType = sessionData?.currentSession?.user?.user_metadata?.user_type || null;
-      } catch (e) {
-        console.error("Error parsing user type from session:", e);
-      }
-    }
-  } catch (error) {
-    console.error('Error checking authentication status:', error);
-  }
+  console.log('Notification auth status:', { isLoggedIn, userType });
   
   // Handle share button click
   const handleShare = async () => {

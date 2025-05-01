@@ -35,20 +35,21 @@ const PropertyChecker: React.FC = () => {
   }, [resetProcess]);
 
   const onSubmit = async (values: any) => {
+    console.log('Property search submitted, user authenticated:', !!user);
     const result = await submitPropertySearch(values);
     
     if (result) {
-      addActivity({
-        type: 'search',
-        timestamp: new Date().toISOString(),
-        address: result.address,
-        result: result.is_approved ? 'eligible' : 'not-eligible',
-        details: result.is_approved 
-          ? 'This property is in an LMI eligible area'
-          : 'This property is not in an LMI eligible area'
-      });
-      
       if (user) {
+        addActivity({
+          type: 'search',
+          timestamp: new Date().toISOString(),
+          address: result.address,
+          result: result.is_approved ? 'eligible' : 'not-eligible',
+          details: result.is_approved 
+            ? 'This property is in an LMI eligible area'
+            : 'This property is not in an LMI eligible area'
+        });
+        
         try {
           await saveSearch(result.address, result, user.id);
         } catch (error) {
