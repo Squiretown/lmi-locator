@@ -85,12 +85,8 @@ Census Tract: ${data.tract_id || 'Unknown'}`;
     console.log("Save pressed in ResultsSection, user logged in:", isLoggedIn);
     if (isLoggedIn) {
       await createLmiNotification(data.address, data.is_approved);
-      toast.success('Property saved successfully', {
-        description: data.is_approved 
-          ? 'LMI eligible property saved to your collection'
-          : 'Property saved to your collection for reference'
-      });
     }
+    // Call the onSaveProperty function passed from the parent component
     onSaveProperty();
   };
 

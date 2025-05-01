@@ -7,8 +7,13 @@ import { Home, Search, Check, Clock } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export const DashboardStats = () => {
-  const { savedAddresses, isLoading: isSavedLoading } = useSavedAddresses();
+  const { savedAddresses, isLoading: isSavedLoading, refreshAddresses } = useSavedAddresses();
   const { activities, isLoading: isActivitiesLoading } = useClientActivity();
+
+  React.useEffect(() => {
+    // Ensure we have the latest data when the component mounts
+    refreshAddresses();
+  }, [refreshAddresses]);
 
   // Calculate real stats from user data
   const savedPropertiesCount = savedAddresses.length;
@@ -20,6 +25,9 @@ export const DashboardStats = () => {
   const daysRemaining = 30; // Example: 30 days remaining in trial
   
   const isLoading = isSavedLoading || isActivitiesLoading;
+
+  console.log("DashboardStats rendering with saved addresses:", savedAddresses);
+  console.log("Saved properties count:", savedPropertiesCount);
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">

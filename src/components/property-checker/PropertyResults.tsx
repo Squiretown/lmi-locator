@@ -36,6 +36,7 @@ const PropertyResults: React.FC<PropertyResultsProps> = ({
         );
         
         if (success) {
+          console.log("Property saved successfully, refreshing addresses...");
           await refreshAddresses();
           
           toast.success('Property saved successfully', {

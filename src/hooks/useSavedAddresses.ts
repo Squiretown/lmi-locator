@@ -58,15 +58,18 @@ export function useSavedAddresses() {
     setIsLoading(true);
     try {
       if (user?.id) {
+        console.log("Loading saved addresses for user:", user.id);
         const addresses = await fetchSavedAddresses(user.id);
+        console.log("Loaded addresses:", addresses);
         setSavedAddresses(addresses);
-        console.log('Loaded saved addresses:', addresses);
       } else {
         // Load from localStorage for non-authenticated users
         const localAddresses = localStorage.getItem('savedAddresses');
         if (localAddresses) {
           try {
-            setSavedAddresses(JSON.parse(localAddresses));
+            const parsed = JSON.parse(localAddresses);
+            console.log("Loaded addresses from localStorage:", parsed);
+            setSavedAddresses(parsed);
           } catch (error) {
             console.error('Error parsing local saved addresses:', error);
             localStorage.removeItem('savedAddresses');
@@ -148,21 +151,33 @@ export function useSavedAddresses() {
         
         // Now save the reference in saved_properties
         // Note: is_favorite is used as a backup for the LMI status
-        const { error } = await supabase
+        const { data: savedProperty, error } = await supabase
           .from('saved_properties')
           .insert({
             user_id: user.id,
             property_id: propertyId,
             is_favorite: isLmiEligible, // Use is_favorite to store LMI status as a backup
-          });
+          })
+          .select('id')
+          .single();
           
         if (error) {
           console.error('Error inserting saved property:', error);
           throw error;
         }
         
-        // Refresh the saved addresses list
-        await loadSavedAddresses();
+        console.log("Property saved successfully with ID:", savedProperty.id);
+        
+        // Update the local state with the new saved property
+        const newSavedAddress: SavedAddress = {
+          id: savedProperty.id,
+          address,
+          createdAt: new Date().toISOString(),
+          isLmiEligible
+        };
+        
+        setSavedAddresses(prev => [newSavedAddress, ...prev]);
+        
         return true;
       } catch (error) {
         console.error('Error saving address:', error);

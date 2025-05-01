@@ -1,8 +1,9 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { DashboardStats } from './DashboardStats';
 import { RecentActivity } from './RecentActivity';
 import { useClientActivity } from '@/hooks/useClientActivity';
+import { useSavedAddresses } from '@/hooks/useSavedAddresses';
 import PropertyChecker from '@/components/PropertyChecker';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,9 +11,17 @@ import { Search, PlusCircle, CheckCircle } from 'lucide-react';
 import { TeamContent } from './TeamContent';
 
 export function ClientDashboardContent() {
-  const { activities } = useClientActivity();
+  const { activities, refreshActivities } = useClientActivity();
+  const { refreshAddresses } = useSavedAddresses();
   const [showPropertyChecker, setShowPropertyChecker] = useState(false);
   
+  // Refresh data when the component mounts
+  useEffect(() => {
+    console.log("ClientDashboardContent: Refreshing data");
+    refreshActivities();
+    refreshAddresses();
+  }, [refreshActivities, refreshAddresses]);
+
   return (
     <div className="space-y-6">
       <DashboardStats />
