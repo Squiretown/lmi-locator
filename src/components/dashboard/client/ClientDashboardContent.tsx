@@ -12,14 +12,30 @@ import { TeamContent } from './TeamContent';
 
 export function ClientDashboardContent() {
   const { activities, refreshActivities } = useClientActivity();
-  const { refreshAddresses } = useSavedAddresses();
+  const { savedAddresses, refreshAddresses } = useSavedAddresses();
   const [showPropertyChecker, setShowPropertyChecker] = useState(false);
   
   // Refresh data when the component mounts
   useEffect(() => {
-    console.log("ClientDashboardContent: Refreshing data");
-    refreshActivities();
-    refreshAddresses();
+    const refreshData = async () => {
+      console.log("ClientDashboardContent: Refreshing data on mount");
+      try {
+        await Promise.all([
+          refreshActivities(),
+          refreshAddresses()
+        ]);
+        console.log("Dashboard content data refreshed. Saved addresses:", savedAddresses.length);
+      } catch (error) {
+        console.error("Error refreshing dashboard content data:", error);
+      }
+    };
+    
+    refreshData();
+    
+    // Refresh data every 15 seconds
+    const intervalId = setInterval(refreshData, 15000);
+    
+    return () => clearInterval(intervalId);
   }, [refreshActivities, refreshAddresses]);
 
   return (

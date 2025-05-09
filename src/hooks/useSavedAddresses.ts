@@ -79,14 +79,14 @@ export function useSavedAddresses() {
           setSavedAddresses([]);
         }
       }
+      return true;
     } catch (error) {
       console.error('Error loading saved addresses:', error);
       toast.error('Failed to load saved addresses');
+      return false;
     } finally {
       setIsLoading(false);
     }
-    
-    return true;
   }, [user]);
 
   useEffect(() => {
@@ -176,6 +176,7 @@ export function useSavedAddresses() {
           isLmiEligible
         };
         
+        // Immediately update the local state to avoid waiting for the next refresh
         setSavedAddresses(prev => [newSavedAddress, ...prev]);
         
         return true;

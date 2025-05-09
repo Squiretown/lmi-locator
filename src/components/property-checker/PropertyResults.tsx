@@ -45,7 +45,7 @@ const PropertyResults: React.FC<PropertyResultsProps> = ({
           });
           
           // Add activity and refresh activities list
-          const newActivity = addActivity({
+          await addActivity({
             type: 'save',
             timestamp: new Date().toISOString(),
             address: data.address || 'Unknown address',
@@ -56,7 +56,7 @@ const PropertyResults: React.FC<PropertyResultsProps> = ({
           // Make sure activities list is refreshed too
           await refreshActivities();
           
-          console.log("New activity added:", newActivity);
+          console.log("Property saving process completed, stats should update now");
         }
       } catch (error) {
         console.error('Error saving property:', error);

@@ -90,9 +90,11 @@ Census Tract: ${data.tract_id || 'Unknown'}`;
     setIsSaving(true);
     
     try {
+      // Create notification if user is logged in
       if (isLoggedIn) {
         await createLmiNotification(data.address, data.is_approved);
       }
+      
       // Call the onSaveProperty function passed from the parent component
       // and await the result to ensure everything is properly saved and refreshed
       await onSaveProperty();
