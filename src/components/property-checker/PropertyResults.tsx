@@ -19,7 +19,7 @@ const PropertyResults: React.FC<PropertyResultsProps> = ({
   onClose,
 }) => {
   const { saveAddress, refreshAddresses } = useSavedAddresses();
-  const { addActivity } = useClientActivity();
+  const { addActivity, refreshActivities } = useClientActivity();
   const { user } = useAuth();
   
   const handleSaveProperty = async () => {
@@ -37,19 +37,26 @@ const PropertyResults: React.FC<PropertyResultsProps> = ({
         
         if (success) {
           console.log("Property saved successfully, refreshing addresses...");
+          // Ensure we refresh the addresses immediately
           await refreshAddresses();
           
           toast.success('Property saved successfully', {
             description: isLmiEligible ? 'LMI eligible property saved to your collection' : 'Property saved to your collection'
           });
           
-          addActivity({
+          // Add activity and refresh activities list
+          const newActivity = addActivity({
             type: 'save',
             timestamp: new Date().toISOString(),
             address: data.address || 'Unknown address',
             result: isLmiEligible ? 'eligible' : 'not-eligible',
             details: 'Property saved to collection'
           });
+          
+          // Make sure activities list is refreshed too
+          await refreshActivities();
+          
+          console.log("New activity added:", newActivity);
         }
       } catch (error) {
         console.error('Error saving property:', error);

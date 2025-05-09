@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { useSavedAddresses } from '@/hooks/useSavedAddresses';
 import { useClientActivity } from '@/hooks/useClientActivity';
@@ -8,12 +8,22 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 export const DashboardStats = () => {
   const { savedAddresses, isLoading: isSavedLoading, refreshAddresses } = useSavedAddresses();
-  const { activities, isLoading: isActivitiesLoading } = useClientActivity();
+  const { activities, isLoading: isActivitiesLoading, refreshActivities } = useClientActivity();
 
-  React.useEffect(() => {
+  useEffect(() => {
     // Ensure we have the latest data when the component mounts
-    refreshAddresses();
-  }, [refreshAddresses]);
+    const refreshData = async () => {
+      await refreshAddresses();
+      await refreshActivities();
+    };
+    
+    refreshData();
+    
+    // Set up an interval to refresh data every 30 seconds
+    const intervalId = setInterval(refreshData, 30000);
+    
+    return () => clearInterval(intervalId);
+  }, [refreshAddresses, refreshActivities]);
 
   // Calculate real stats from user data
   const savedPropertiesCount = savedAddresses.length;

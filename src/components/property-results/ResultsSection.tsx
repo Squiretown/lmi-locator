@@ -9,7 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 interface ResultsSectionProps {
   data: CheckLmiStatusResponse;
   onReset: () => void;
-  onSaveProperty: () => void;
+  onSaveProperty: () => Promise<void>; // Make it async to ensure we can await it
   onCloseNotification: () => void;
 }
 
@@ -22,6 +22,7 @@ const ResultsSection: React.FC<ResultsSectionProps> = ({
   const { createLmiNotification } = useRoleSpecificNotifications();
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
   const [userType, setUserType] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState<boolean>(false);
   
   // Check authentication status
   useEffect(() => {
@@ -83,11 +84,25 @@ Census Tract: ${data.tract_id || 'Unknown'}`;
 
   const handleSaveProperty = async () => {
     console.log("Save pressed in ResultsSection, user logged in:", isLoggedIn);
-    if (isLoggedIn) {
-      await createLmiNotification(data.address, data.is_approved);
+    
+    if (isSaving) return; // Prevent multiple saves
+    
+    setIsSaving(true);
+    
+    try {
+      if (isLoggedIn) {
+        await createLmiNotification(data.address, data.is_approved);
+      }
+      // Call the onSaveProperty function passed from the parent component
+      // and await the result to ensure everything is properly saved and refreshed
+      await onSaveProperty();
+      console.log("Property saved successfully via ResultsSection");
+    } catch (error) {
+      console.error("Error saving property:", error);
+      toast.error("Failed to save property");
+    } finally {
+      setIsSaving(false);
     }
-    // Call the onSaveProperty function passed from the parent component
-    onSaveProperty();
   };
 
   const handleSignUp = () => {

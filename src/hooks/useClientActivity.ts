@@ -37,7 +37,7 @@ export function useClientActivity() {
       
       console.log("Fetched search history:", searchHistory);
       
-      const formattedActivities: ActivityItem[] = searchHistory.map(item => ({
+      const formattedActivities: ActivityItem[] = searchHistory?.map(item => ({
         id: item.id,
         type: 'search',
         timestamp: item.searched_at,
@@ -46,7 +46,7 @@ export function useClientActivity() {
         details: item.is_eligible 
           ? 'This property is in an LMI eligible area'
           : 'This property is not in an LMI eligible area'
-      }));
+      })) || [];
       
       // Also get saved properties
       const { data: savedProperties, error: savedError } = await supabase
@@ -92,6 +92,8 @@ export function useClientActivity() {
     } finally {
       setIsLoading(false);
     }
+    
+    return true;
   }, [user]);
 
   const loadActivitiesFromLocalStorage = useCallback(() => {

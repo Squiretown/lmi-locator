@@ -20,13 +20,21 @@ const SavedProperties: React.FC<SavedPropertiesProps> = ({ onAddressSelect }) =>
   // Refresh addresses when component mounts or user changes
   useEffect(() => {
     refreshAddresses();
+    
+    // Also set up a refresh interval (every 30 seconds)
+    const intervalId = setInterval(() => {
+      refreshAddresses();
+    }, 30000);
+    
+    return () => clearInterval(intervalId);
   }, [user, refreshAddresses]);
 
   const handleRemoveAddress = async (id: string) => {
     const success = await removeAddress(id);
     if (success) {
       toast.success('Address removed from your collection');
-      refreshAddresses(); // Refresh the list after removal
+      // Force refresh after removal to ensure counts are updated
+      await refreshAddresses();
     }
   };
 
@@ -43,6 +51,8 @@ const SavedProperties: React.FC<SavedPropertiesProps> = ({ onAddressSelect }) =>
 
   // Get the count of LMI eligible properties
   const lmiEligibleCount = savedAddresses.filter(a => a.isLmiEligible).length;
+
+  console.log("Rendering SavedProperties with", savedAddresses.length, "saved addresses");
 
   // No saved properties state
   if (savedAddresses.length === 0 && !isLoading) {
