@@ -37,14 +37,8 @@ const PropertyResults: React.FC<PropertyResultsProps> = ({
         
         if (success) {
           console.log("Property saved successfully, refreshing addresses...");
-          // Ensure we refresh the addresses immediately
-          await refreshAddresses();
           
-          toast.success('Property saved successfully', {
-            description: isLmiEligible ? 'LMI eligible property saved to your collection' : 'Property saved to your collection'
-          });
-          
-          // Add activity and refresh activities list
+          // Add activity immediately
           await addActivity({
             type: 'save',
             timestamp: new Date().toISOString(),
@@ -53,8 +47,15 @@ const PropertyResults: React.FC<PropertyResultsProps> = ({
             details: 'Property saved to collection'
           });
           
-          // Make sure activities list is refreshed too
+          // First ensure we refresh activities
           await refreshActivities();
+          
+          // Then refresh addresses - critical for stat updates
+          await refreshAddresses();
+          
+          toast.success('Property saved successfully', {
+            description: isLmiEligible ? 'LMI eligible property saved to your collection' : 'Property saved to your collection'
+          });
           
           console.log("Property saving process completed, stats should update now");
         }

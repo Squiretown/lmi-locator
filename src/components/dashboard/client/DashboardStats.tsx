@@ -12,22 +12,34 @@ export const DashboardStats = () => {
   const { savedAddresses, isLoading: isSavedLoading, refreshAddresses } = useSavedAddresses();
   const { activities, isLoading: isActivitiesLoading, refreshActivities } = useClientActivity();
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState(Date.now());
+
+  // Force re-render when savedAddresses changes
+  useEffect(() => {
+    console.log("DashboardStats: savedAddresses changed, length:", savedAddresses.length);
+    // Update last updated timestamp to force re-render
+    setLastUpdated(Date.now());
+  }, [savedAddresses]);
 
   useEffect(() => {
     // Ensure we have the latest data when the component mounts
     const refreshData = async () => {
+      setIsRefreshing(true);
       try {
+        console.log("DashboardStats: Refreshing data...");
         await Promise.all([refreshAddresses(), refreshActivities()]);
         console.log("Dashboard stats refreshed with saved addresses:", savedAddresses.length);
       } catch (error) {
         console.error("Error refreshing dashboard stats:", error);
+      } finally {
+        setIsRefreshing(false);
       }
     };
     
     refreshData();
     
-    // Set up an interval to refresh data every 15 seconds
-    const intervalId = setInterval(refreshData, 15000);
+    // Set up an interval to refresh data every 5 seconds (shorter interval for testing)
+    const intervalId = setInterval(refreshData, 5000);
     
     return () => clearInterval(intervalId);
   }, [refreshAddresses, refreshActivities]);
@@ -41,10 +53,11 @@ export const DashboardStats = () => {
   // For now, set a placeholder or calculate based on user metadata if available
   const daysRemaining = 30; // Example: 30 days remaining in trial
   
-  const isLoading = isSavedLoading || isActivitiesLoading;
+  const isLoading = isSavedLoading || isActivitiesLoading || isRefreshing;
 
   console.log("DashboardStats rendering with saved addresses:", savedAddresses);
   console.log("Saved properties count:", savedPropertiesCount);
+  console.log("Last updated:", new Date(lastUpdated).toISOString());
 
   const handleManualRefresh = async () => {
     if (isRefreshing) return;
@@ -81,16 +94,19 @@ export const DashboardStats = () => {
           title="Saved Properties"
           value={isLoading ? null : savedPropertiesCount.toString()}
           icon={<Home className="h-5 w-5 text-blue-500" />}
+          key={`saved-${savedPropertiesCount}-${lastUpdated}`}
         />
         <StatCard
           title="Property Searches"
           value={isLoading ? null : searchesCount.toString()}
           icon={<Search className="h-5 w-5 text-amber-500" />}
+          key={`searches-${searchesCount}-${lastUpdated}`}
         />
         <StatCard
           title="LMI Eligible"
           value={isLoading ? null : eligibleCount.toString()}
           icon={<Check className="h-5 w-5 text-green-500" />}
+          key={`eligible-${eligibleCount}-${lastUpdated}`}
         />
         <StatCard
           title="Days Remaining"

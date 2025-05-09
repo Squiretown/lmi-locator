@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { DashboardStats } from './DashboardStats';
 import { RecentActivity } from './RecentActivity';
 import { useClientActivity } from '@/hooks/useClientActivity';
@@ -14,32 +14,47 @@ export function ClientDashboardContent() {
   const { activities, refreshActivities } = useClientActivity();
   const { savedAddresses, refreshAddresses } = useSavedAddresses();
   const [showPropertyChecker, setShowPropertyChecker] = useState(false);
+  const [lastRefreshed, setLastRefreshed] = useState(Date.now());
   
-  // Refresh data when the component mounts
+  // Refreshing function that can be called from anywhere
+  const refreshData = useCallback(async () => {
+    console.log("ClientDashboardContent: Refreshing data");
+    try {
+      await Promise.all([
+        refreshActivities(),
+        refreshAddresses()
+      ]);
+      console.log("Dashboard content data refreshed. Saved addresses:", savedAddresses.length);
+      setLastRefreshed(Date.now());
+    } catch (error) {
+      console.error("Error refreshing dashboard content data:", error);
+    }
+  }, [refreshActivities, refreshAddresses, savedAddresses.length]);
+  
+  // Initial load and interval refresh
   useEffect(() => {
-    const refreshData = async () => {
-      console.log("ClientDashboardContent: Refreshing data on mount");
-      try {
-        await Promise.all([
-          refreshActivities(),
-          refreshAddresses()
-        ]);
-        console.log("Dashboard content data refreshed. Saved addresses:", savedAddresses.length);
-      } catch (error) {
-        console.error("Error refreshing dashboard content data:", error);
-      }
-    };
-    
+    // Initial refresh
     refreshData();
     
-    // Refresh data every 15 seconds
-    const intervalId = setInterval(refreshData, 15000);
+    // Refresh data every 3 seconds
+    const intervalId = setInterval(refreshData, 3000);
     
-    return () => clearInterval(intervalId);
-  }, [refreshActivities, refreshAddresses]);
+    // Listen for custom property saved event
+    const handlePropertySaved = () => {
+      console.log("Property saved event detected, refreshing dashboard data");
+      refreshData();
+    };
+    
+    window.addEventListener('property-saved', handlePropertySaved);
+    
+    return () => {
+      clearInterval(intervalId);
+      window.removeEventListener('property-saved', handlePropertySaved);
+    };
+  }, [refreshData]);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" key={`dashboard-content-${lastRefreshed}`}>
       <DashboardStats />
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

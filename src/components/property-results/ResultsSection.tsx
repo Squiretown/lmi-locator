@@ -98,7 +98,17 @@ Census Tract: ${data.tract_id || 'Unknown'}`;
       // Call the onSaveProperty function passed from the parent component
       // and await the result to ensure everything is properly saved and refreshed
       await onSaveProperty();
-      console.log("Property saved successfully via ResultsSection");
+      
+      // Dispatch a custom event that listeners can use to trigger a refresh
+      const customEvent = new CustomEvent('property-saved', { 
+        detail: { 
+          address: data.address, 
+          isLmiEligible: data.is_approved 
+        } 
+      });
+      window.dispatchEvent(customEvent);
+      
+      console.log("Property saved successfully via ResultsSection, custom event dispatched");
     } catch (error) {
       console.error("Error saving property:", error);
       toast.error("Failed to save property");
