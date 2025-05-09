@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -10,12 +9,12 @@ import {
   RecentActivityCard, 
   VerificationChallengesCard,
   ContentManagement 
-} from '.';
+} from './index';
 import { MapView } from './map-view';
 import { MarketingContent } from '../tools/marketing/MarketingContent';
 import { useMarketingDashboardData } from './useMarketingDashboardData';
 import { MarketingSidebar } from './MarketingSidebar';
-import { BulkAddressSearch } from './BulkAddressSearch';
+import { BulkAddressSearch } from './bulk-search/BulkAddressSearch';
 
 // Component for the "Coming Soon" placeholder card
 const ComingSoonSection = ({ title }: { title: string }) => (
