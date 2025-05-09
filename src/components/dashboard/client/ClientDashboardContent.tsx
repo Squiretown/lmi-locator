@@ -31,25 +31,28 @@ export function ClientDashboardContent() {
     }
   }, [refreshActivities, refreshAddresses, savedAddresses.length]);
   
-  // Initial load and interval refresh
+  // Add event listener for property-saved
   useEffect(() => {
+    const handlePropertySaved = (event: Event) => {
+      console.log("ClientDashboardContent: Property saved event detected");
+      setTimeout(() => refreshData(), 500); // Small delay to ensure database has updated
+    };
+    
+    // Listen for the custom event
+    document.addEventListener('property-saved', handlePropertySaved);
+    
     // Initial refresh
     refreshData();
     
     // Refresh data every 3 seconds
-    const intervalId = setInterval(refreshData, 3000);
-    
-    // Listen for custom property saved event
-    const handlePropertySaved = () => {
-      console.log("Property saved event detected, refreshing dashboard data");
+    const intervalId = setInterval(() => {
+      console.log("ClientDashboardContent: Running interval refresh");
       refreshData();
-    };
-    
-    window.addEventListener('property-saved', handlePropertySaved);
+    }, 3000);
     
     return () => {
       clearInterval(intervalId);
-      window.removeEventListener('property-saved', handlePropertySaved);
+      document.removeEventListener('property-saved', handlePropertySaved);
     };
   }, [refreshData]);
 

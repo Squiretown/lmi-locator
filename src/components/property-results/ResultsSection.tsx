@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { CheckLmiStatusResponse } from '@/lib/types';
 import LmiStatusNotification from '@/components/notifications/LmiStatusNotification';
@@ -99,16 +98,7 @@ Census Tract: ${data.tract_id || 'Unknown'}`;
       // and await the result to ensure everything is properly saved and refreshed
       await onSaveProperty();
       
-      // Dispatch a custom event that listeners can use to trigger a refresh
-      const customEvent = new CustomEvent('property-saved', { 
-        detail: { 
-          address: data.address, 
-          isLmiEligible: data.is_approved 
-        } 
-      });
-      window.dispatchEvent(customEvent);
-      
-      console.log("Property saved successfully via ResultsSection, custom event dispatched");
+      console.log("Property saved successfully via ResultsSection");
     } catch (error) {
       console.error("Error saving property:", error);
       toast.error("Failed to save property");

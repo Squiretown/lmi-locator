@@ -47,17 +47,28 @@ const PropertyResults: React.FC<PropertyResultsProps> = ({
             details: 'Property saved to collection'
           });
           
-          // First ensure we refresh activities
-          await refreshActivities();
+          // Force immediate refreshes
+          await Promise.all([
+            refreshActivities(),
+            refreshAddresses()
+          ]);
           
-          // Then refresh addresses - critical for stat updates
-          await refreshAddresses();
+          // Dispatch a custom event to force dashboard updates
+          const customEvent = new CustomEvent('property-saved', { 
+            bubbles: true,
+            detail: { 
+              address: data.address, 
+              isLmiEligible: isLmiEligible,
+              timestamp: new Date().toISOString()
+            } 
+          });
+          document.dispatchEvent(customEvent);
           
           toast.success('Property saved successfully', {
             description: isLmiEligible ? 'LMI eligible property saved to your collection' : 'Property saved to your collection'
           });
           
-          console.log("Property saving process completed, stats should update now");
+          console.log("Property saving process completed with event dispatch");
         }
       } catch (error) {
         console.error('Error saving property:', error);

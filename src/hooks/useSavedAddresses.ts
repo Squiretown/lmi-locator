@@ -91,6 +91,18 @@ export function useSavedAddresses() {
 
   useEffect(() => {
     loadSavedAddresses();
+    
+    // Listen for property-saved events to update our saved addresses
+    const handlePropertySaved = (event: Event) => {
+      console.log("useSavedAddresses: Property saved event detected");
+      setTimeout(() => loadSavedAddresses(), 500); // Small delay to ensure database has updated
+    };
+    
+    document.addEventListener('property-saved', handlePropertySaved);
+    
+    return () => {
+      document.removeEventListener('property-saved', handlePropertySaved);
+    };
   }, [loadSavedAddresses]);
 
   const saveAddress = async (address: string, isLmiEligible: boolean = false) => {
@@ -179,6 +191,17 @@ export function useSavedAddresses() {
         // Immediately update the local state to avoid waiting for the next refresh
         setSavedAddresses(prev => [newSavedAddress, ...prev]);
         
+        // Force a global event for all components to refresh
+        const customEvent = new CustomEvent('property-saved', { 
+          bubbles: true,
+          detail: { 
+            address: address, 
+            isLmiEligible: isLmiEligible,
+            timestamp: new Date().toISOString()
+          } 
+        });
+        document.dispatchEvent(customEvent);
+        
         return true;
       } catch (error) {
         console.error('Error saving address:', error);
@@ -197,6 +220,18 @@ export function useSavedAddresses() {
         const updatedAddresses = [newAddress, ...savedAddresses];
         localStorage.setItem('savedAddresses', JSON.stringify(updatedAddresses));
         setSavedAddresses(updatedAddresses);
+        
+        // Even for local storage, dispatch the event for consistency
+        const customEvent = new CustomEvent('property-saved', { 
+          bubbles: true,
+          detail: { 
+            address: address, 
+            isLmiEligible: isLmiEligible,
+            timestamp: new Date().toISOString() 
+          } 
+        });
+        document.dispatchEvent(customEvent);
+        
         return true;
       } catch (error) {
         console.error('Error saving to localStorage:', error);
@@ -218,6 +253,10 @@ export function useSavedAddresses() {
         
         // Update the state after successful deletion
         setSavedAddresses(prev => prev.filter(address => address.id !== id));
+        
+        // Force a refresh to ensure consistency with the database
+        await loadSavedAddresses();
+        
         return true;
       } catch (error) {
         console.error('Error removing address:', error);
