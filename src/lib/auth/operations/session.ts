@@ -1,14 +1,13 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from 'sonner';
 
 export async function signOutUser() {
   try {
     await supabase.auth.signOut();
-    toast.success('Signed out successfully');
+    // Toast notification removed
   } catch (error) {
     console.error('Error signing out:', error);
-    toast.error('Error signing out');
+    // Toast notification removed
     throw error;
   }
 }
@@ -20,15 +19,15 @@ export async function signOutAllUsers() {
     
     if (error) {
       console.error('Error signing out all users:', error);
-      toast.error(`Failed to sign out all users: ${error.message}`);
+      // Toast notification removed
       return { success: false, error };
     }
     
-    toast.success('All users have been signed out successfully');
+    // Toast notification removed
     return { success: true, error: null };
   } catch (error) {
     console.error('Exception during sign out all users:', error);
-    toast.error('An unexpected error occurred while signing out all users');
+    // Toast notification removed
     return { success: false, error: error as Error };
   }
 }

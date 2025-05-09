@@ -1,5 +1,5 @@
+
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from 'sonner';
 import { UserMetadata } from "@/types/auth";
 import { getUserTypeName } from '@/lib/supabase/user';
 
@@ -15,14 +15,14 @@ export async function signInWithEmail(email: string, password: string) {
       return { userType: null, error };
     } else if (data?.user) {
       const userType = await getUserTypeName();
-      toast.success('Signed in successfully');
+      // Toast notification removed
       return { userType, error: null };
     }
     
     return { userType: null, error: new Error('Unknown error occurred during sign in') };
   } catch (err) {
     console.error('Exception during sign in:', err);
-    toast.error('An unexpected error occurred during login');
+    // Toast notification removed
     return { userType: null, error: err as Error };
   }
 }
@@ -55,19 +55,19 @@ export async function signUpWithEmail(email: string, password: string, metadata:
       console.error('Sign up error:', error.message);
       return { error, data: null };
     } else if (data?.user) {
-      toast.success('Account created successfully!');
+      // Toast notification removed
       
       const requiresEmailConfirmation = !data.session;
       
       if (requiresEmailConfirmation) {
-        toast.info('Please check your email to confirm your account before logging in.');
+        // Toast notification removed
       }
     }
     
     return { error, data };
   } catch (err) {
     console.error('Exception during sign up:', err);
-    toast.error('An unexpected error occurred during sign up');
+    // Toast notification removed
     return { error: err as Error, data: null };
   }
 }
@@ -97,7 +97,7 @@ export async function updateUserEmail(currentEmail: string, newEmail: string, pa
       return { success: false, error };
     }
     
-    toast.success('Email update initiated. Please check your inbox for confirmation.');
+    // Toast notification removed
     return { success: true, data, error: null };
   } catch (err) {
     console.error('Exception during email update:', err);
