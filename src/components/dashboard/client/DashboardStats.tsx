@@ -1,5 +1,5 @@
 
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { useSavedAddresses } from '@/hooks/useSavedAddresses';
 import { useClientActivity } from '@/hooks/useClientActivity';
@@ -13,68 +13,51 @@ export const DashboardStats = () => {
   const { activities, isLoading: isActivitiesLoading, refreshActivities } = useClientActivity();
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [lastUpdated, setLastUpdated] = useState(Date.now());
-  const [stats, setStats] = useState({
-    savedCount: 0,
-    searchesCount: 0,
-    eligibleCount: 0,
-    daysRemaining: 30,
-  });
 
   // Force re-render when savedAddresses changes
   useEffect(() => {
     console.log("DashboardStats: savedAddresses changed, length:", savedAddresses.length);
-    
-    // Calculate derived statistics
-    setStats({
-      savedCount: savedAddresses.length,
-      searchesCount: activities.filter(a => a.type === 'search').length,
-      eligibleCount: savedAddresses.filter(p => p.isLmiEligible).length,
-      daysRemaining: 30, // Example: 30 days remaining in trial
-    });
-    
     // Update last updated timestamp to force re-render
     setLastUpdated(Date.now());
-  }, [savedAddresses, activities]);
+  }, [savedAddresses]);
 
-  // Refresh data with delay
-  const refreshData = useCallback(async () => {
-    if (isRefreshing) return;
-    
-    setIsRefreshing(true);
-    try {
-      console.log("DashboardStats: Refreshing data...");
-      await Promise.all([refreshAddresses(), refreshActivities()]);
-      console.log("Dashboard stats refreshed with saved addresses:", savedAddresses.length);
-    } catch (error) {
-      console.error("Error refreshing dashboard stats:", error);
-    } finally {
-      setIsRefreshing(false);
-    }
-  }, [refreshAddresses, refreshActivities, savedAddresses.length, isRefreshing]);
-  
-  // Set up event listener for property-saved events
   useEffect(() => {
-    const handlePropertySaved = () => {
-      console.log("DashboardStats: Caught property-saved event");
-      setTimeout(() => refreshData(), 500); // Small delay to ensure database has updated
+    // Ensure we have the latest data when the component mounts
+    const refreshData = async () => {
+      setIsRefreshing(true);
+      try {
+        console.log("DashboardStats: Refreshing data...");
+        await Promise.all([refreshAddresses(), refreshActivities()]);
+        console.log("Dashboard stats refreshed with saved addresses:", savedAddresses.length);
+      } catch (error) {
+        console.error("Error refreshing dashboard stats:", error);
+      } finally {
+        setIsRefreshing(false);
+      }
     };
     
-    document.addEventListener('property-saved', handlePropertySaved);
-    
-    // Initial load and interval refresh
     refreshData();
     
-    // Set up an interval to refresh data every 3 seconds
-    const intervalId = setInterval(() => {
-      console.log("DashboardStats: Running interval refresh");
-      refreshData();
-    }, 3000);
+    // Set up an interval to refresh data every 5 seconds (shorter interval for testing)
+    const intervalId = setInterval(refreshData, 5000);
     
-    return () => {
-      document.removeEventListener('property-saved', handlePropertySaved);
-      clearInterval(intervalId);
-    };
-  }, [refreshData]);
+    return () => clearInterval(intervalId);
+  }, [refreshAddresses, refreshActivities]);
+
+  // Calculate real stats from user data
+  const savedPropertiesCount = savedAddresses.length;
+  const searchesCount = activities.filter(a => a.type === 'search').length;
+  const eligibleCount = savedAddresses.filter(p => p.isLmiEligible).length;
+  
+  // For the remaining days, we'd need to fetch from an API
+  // For now, set a placeholder or calculate based on user metadata if available
+  const daysRemaining = 30; // Example: 30 days remaining in trial
+  
+  const isLoading = isSavedLoading || isActivitiesLoading || isRefreshing;
+
+  console.log("DashboardStats rendering with saved addresses:", savedAddresses);
+  console.log("Saved properties count:", savedPropertiesCount);
+  console.log("Last updated:", new Date(lastUpdated).toISOString());
 
   const handleManualRefresh = async () => {
     if (isRefreshing) return;
@@ -91,10 +74,6 @@ export const DashboardStats = () => {
       setIsRefreshing(false);
     }
   };
-
-  const isLoading = isSavedLoading || isActivitiesLoading || isRefreshing;
-
-  console.log("DashboardStats rendering with stats:", stats);
 
   return (
     <div className="relative mb-6">
@@ -113,25 +92,25 @@ export const DashboardStats = () => {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           title="Saved Properties"
-          value={isLoading ? null : stats.savedCount.toString()}
+          value={isLoading ? null : savedPropertiesCount.toString()}
           icon={<Home className="h-5 w-5 text-blue-500" />}
-          key={`saved-${stats.savedCount}-${lastUpdated}`}
+          key={`saved-${savedPropertiesCount}-${lastUpdated}`}
         />
         <StatCard
           title="Property Searches"
-          value={isLoading ? null : stats.searchesCount.toString()}
+          value={isLoading ? null : searchesCount.toString()}
           icon={<Search className="h-5 w-5 text-amber-500" />}
-          key={`searches-${stats.searchesCount}-${lastUpdated}`}
+          key={`searches-${searchesCount}-${lastUpdated}`}
         />
         <StatCard
           title="LMI Eligible"
-          value={isLoading ? null : stats.eligibleCount.toString()}
+          value={isLoading ? null : eligibleCount.toString()}
           icon={<Check className="h-5 w-5 text-green-500" />}
-          key={`eligible-${stats.eligibleCount}-${lastUpdated}`}
+          key={`eligible-${eligibleCount}-${lastUpdated}`}
         />
         <StatCard
           title="Days Remaining"
-          value={isLoading ? null : stats.daysRemaining.toString()}
+          value={isLoading ? null : daysRemaining.toString()}
           icon={<Clock className="h-5 w-5 text-purple-500" />}
         />
       </div>
