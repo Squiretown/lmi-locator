@@ -24,7 +24,7 @@ import MortgageBrokersPage from './pages/admin/MortgageBrokersPage';
 import RealtorsPage from './pages/admin/RealtorsPage';
 import ContactsPage from './pages/admin/ContactsPage';
 import SearchHistoryPage from './pages/admin/search-history/SearchHistoryPage';
-import MarketingDashboard from './components/admin/marketing-dashboard/MarketingDashboard';
+import { MarketingDashboard } from './components/admin/marketing-dashboard';
 import BulkSearch from './pages/dashboard/BulkSearch';
 import './App.css';
 

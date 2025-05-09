@@ -26,7 +26,7 @@ export const SearchInputs: React.FC<SearchInputsProps> = ({
   isLoading,
   canSearch,
 }) => {
-  const getPlaceholder = () => {
+  const getPlaceholder = (): string => {
     switch (searchType) {
       case 'tract_id':
         return 'Enter census tract ID (e.g., 36103169901)';
@@ -35,7 +35,7 @@ export const SearchInputs: React.FC<SearchInputsProps> = ({
       case 'city':
         return 'Enter city name (e.g., Los Angeles, CA)';
       default:
-        return `Enter ${searchType.replace('_', ' ')}`;
+        return `Enter ${String(searchType).replace('_', ' ')}`;
     }
   };
 
