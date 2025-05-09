@@ -2,7 +2,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { User, Settings, LogOut, HelpCircle } from 'lucide-react';
+import { User, Settings, HelpCircle, Search } from 'lucide-react';
 import { DashboardStats, PropertyCheckSection, MarketingSection, RecentActivitySection, RecentContactsSection } from '@/components/dashboard/mortgage';
 import { useMortgageDashboard } from '@/hooks/useMortgageDashboard';
 import {
@@ -28,11 +28,11 @@ const MortgageProfessionalDashboard: React.FC = () => {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56">
-            <DropdownMenuItem className="flex items-center gap-2">
+            <DropdownMenuItem className="flex items-center gap-2" onClick={() => navigate('/settings')}>
               <User className="h-4 w-4" />
               <span>My Profile</span>
             </DropdownMenuItem>
-            <DropdownMenuItem className="flex items-center gap-2">
+            <DropdownMenuItem className="flex items-center gap-2" onClick={() => navigate('/settings')}>
               <Settings className="h-4 w-4" />
               <span>Settings</span>
             </DropdownMenuItem>
@@ -46,8 +46,12 @@ const MortgageProfessionalDashboard: React.FC = () => {
 
       <div className="container mx-auto px-4 py-6 max-w-7xl">
         {/* Header */}
-        <div className="mb-8">
+        <div className="mb-8 flex justify-between items-center">
           <h1 className="text-2xl font-bold">Mortgage Professional Dashboard</h1>
+          <Button onClick={() => navigate('/bulk-search')} variant="outline" className="flex items-center gap-2">
+            <Search className="h-4 w-4" />
+            Bulk Search
+          </Button>
         </div>
 
         {/* Navigation */}
@@ -55,7 +59,7 @@ const MortgageProfessionalDashboard: React.FC = () => {
           <Tabs defaultValue="overview" className="w-full">
             <TabsList>
               <TabsTrigger value="overview">Overview</TabsTrigger>
-              <TabsTrigger value="lmi-search">Bulk Search</TabsTrigger>
+              <TabsTrigger value="lmi-search">LMI Search</TabsTrigger>
               <TabsTrigger value="marketing">Marketing</TabsTrigger>
             </TabsList>
           </Tabs>

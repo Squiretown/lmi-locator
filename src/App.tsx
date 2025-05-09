@@ -1,97 +1,72 @@
 
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import Header from './components/Header';
-import Footer from './components/Footer';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { Toaster } from 'sonner';
 import Index from './pages/Index';
-import NotFound from './pages/NotFound';
-import ProductPage from './pages/ProductPage';
-import ResourcesPage from './pages/ResourcesPage';
-import PricingPage from './pages/PricingPage';
-import CustomersPage from './pages/CustomersPage';
-import BlogPage from './pages/BlogPage';
-import ContactPage from './pages/ContactPage';
 import LoginPage from './pages/auth/LoginPage';
 import ResetPasswordPage from './pages/auth/ResetPasswordPage';
-import { AdminLayout, AdminDashboard, MarketingDashboard } from './components/admin';
-import AdminTools from './pages/auth/AdminTools';
-import UserManagement from './pages/auth/UserManagement';
+import NotFound from './pages/NotFound';
 import SettingsPage from './pages/auth/SettingsPage';
-import ProtectedRoute from './components/auth/ProtectedRoute';
-import { AuthProvider } from '@/providers/AuthProvider';
-import ClientDashboard from './pages/dashboard/Client';
-import RealtorDashboard from './pages/dashboard/Realtor';
-import MortgageProfessionalDashboard from './pages/dashboard/MortgageProfessional';
+import UserManagement from './pages/auth/UserManagement';
+import AdminTools from './pages/auth/AdminTools';
+import Client from './pages/dashboard/Client';
+import LmiMarketingList from './pages/dashboard/LmiMarketingList';
+import MortgageProfessional from './pages/dashboard/MortgageProfessional';
+import Realtor from './pages/dashboard/Realtor';
+import ContactPage from './pages/ContactPage';
+import ResourcesPage from './pages/ResourcesPage';
+import CustomerPage from './pages/CustomersPage';
+import BlogPage from './pages/BlogPage';
+import PricingPage from './pages/PricingPage';
+import ProductPage from './pages/ProductPage';
+import AdminDashboard from './components/admin/AdminDashboard';
 import MortgageBrokersPage from './pages/admin/MortgageBrokersPage';
 import RealtorsPage from './pages/admin/RealtorsPage';
-import SearchHistoryPage from './pages/admin/search-history';
-import PropertyChecker from './components/PropertyChecker';
+import ContactsPage from './pages/admin/ContactsPage';
+import SearchHistoryPage from './pages/admin/search-history/SearchHistoryPage';
+import MarketingDashboard from './components/admin/marketing-dashboard/MarketingDashboard';
+import BulkSearch from './pages/dashboard/BulkSearch';
+import './App.css';
+
+const queryClient = new QueryClient();
 
 function App() {
   return (
-    <AuthProvider>
+    <QueryClientProvider client={queryClient}>
       <Router>
-        <div className="flex flex-col min-h-screen">
-          <Header />
-          <div className="flex-grow">
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/product" element={<ProductPage />} />
-              <Route path="/resources" element={<ResourcesPage />} />
-              <Route path="/pricing" element={<PricingPage />} />
-              <Route path="/customers" element={<CustomersPage />} />
-              <Route path="/blog" element={<BlogPage />} />
-              <Route path="/contact" element={<ContactPage />} />
-              <Route path="/login" element={<LoginPage />} />
-              <Route path="/reset-password" element={<ResetPasswordPage />} />
-              <Route path="/property-checker" element={<PropertyChecker />} />
-              <Route path="/lmi-search" element={
-                <ProtectedRoute requiredUserType="mortgage_professional">
-                  <div className="container mx-auto px-4 py-6">
-                    <h1 className="text-2xl font-bold mb-6">LMI Area Listings Search</h1>
-                    <p className="text-muted-foreground mb-8">This feature is coming soon.</p>
-                  </div>
-                </ProtectedRoute>
-              } />
-
-              <Route path="/admin" element={
-                <ProtectedRoute requiredUserType="admin">
-                  <AdminLayout />
-                </ProtectedRoute>
-              }>
-                <Route index element={<AdminDashboard />} />
-                <Route path="marketing" element={<MarketingDashboard />} />
-                <Route path="tools" element={<AdminTools />} />
-                <Route path="users" element={<UserManagement />} />
-                <Route path="settings" element={<SettingsPage />} />
-                <Route path="mortgage-brokers" element={<MortgageBrokersPage />} />
-                <Route path="realtors" element={<RealtorsPage />} />
-                <Route path="search-history" element={<SearchHistoryPage />} />
-                <Route path="*" element={<Navigate to="/admin" replace />} />
-              </Route>
-
-              <Route path="/client" element={
-                <ProtectedRoute requiredUserType="client">
-                  <ClientDashboard />
-                </ProtectedRoute>
-              } />
-              <Route path="/realtor" element={
-                <ProtectedRoute requiredUserType="realtor">
-                  <RealtorDashboard />
-                </ProtectedRoute>
-              } />
-              <Route path="/mortgage" element={
-                <ProtectedRoute requiredUserType="mortgage_professional">
-                  <MortgageProfessionalDashboard />
-                </ProtectedRoute>
-              } />
-
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </div>
-          <Footer />
-        </div>
+        <Toaster closeButton position="top-center" />
+        <Routes>
+          <Route path="/" element={<Index />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
+          <Route path="/settings" element={<SettingsPage />} />
+          <Route path="/user-management" element={<UserManagement />} />
+          <Route path="/admin-tools" element={<AdminTools />} />
+          <Route path="/contact" element={<ContactPage />} />
+          <Route path="/resources" element={<ResourcesPage />} />
+          <Route path="/customers" element={<CustomerPage />} />
+          <Route path="/blog" element={<BlogPage />} />
+          <Route path="/pricing" element={<PricingPage />} />
+          <Route path="/product" element={<ProductPage />} />
+          <Route path="/dashboard/client" element={<Client />} />
+          <Route path="/dashboard/mortgage" element={<MortgageProfessional />} />
+          <Route path="/dashboard/realtor" element={<Realtor />} />
+          <Route path="/marketing" element={<LmiMarketingList />} />
+          <Route path="/bulk-search" element={<BulkSearch />} />
+          
+          {/* Admin routes */}
+          <Route path="/admin" element={<AdminDashboard />} />
+          <Route path="/admin/marketing" element={<MarketingDashboard />} />
+          <Route path="/admin/brokers" element={<MortgageBrokersPage />} />
+          <Route path="/admin/realtors" element={<RealtorsPage />} />
+          <Route path="/admin/contacts" element={<ContactsPage />} />
+          <Route path="/admin/search-history" element={<SearchHistoryPage />} />
+          
+          {/* 404 route */}
+          <Route path="*" element={<NotFound />} />
+        </Routes>
       </Router>
-    </AuthProvider>
+    </QueryClientProvider>
   );
 }
 

@@ -1,9 +1,8 @@
 
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useSimpleNotification } from '@/hooks/useSimpleNotification';
 import { useAuth } from '@/hooks/useAuth';
-import { toast } from 'sonner';
+import { showSearchStarted, showSearchComplete, showSearchError, showExportSuccess, showExportError } from '@/utils/toastUtils';
 
 // Export the SearchType so it can be used in other files
 export type SearchType = 'tract_id' | 'zip_code' | 'city';
@@ -16,24 +15,48 @@ export type SearchResult = {
 
 export function useMarketingSearch() {
   const { user, userType } = useAuth();
-  const notification = useSimpleNotification();
   const [searchType, setSearchType] = useState<SearchType>('tract_id');
   const [searchValue, setSearchValue] = useState('');
   const [searchName, setSearchName] = useState('');
   const [results, setResults] = useState<SearchResult[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [searchId, setSearchId] = useState<string | null>(null);
+  const [searchCount, setSearchCount] = useState(0);
+
+  const validateSearch = (): boolean => {
+    // Simple validation based on search type
+    if (searchType === 'zip_code' && !/^\d{5}$/.test(searchValue)) {
+      showSearchError('Please enter a valid 5-digit ZIP code');
+      return false;
+    }
+    
+    if (searchType === 'tract_id' && !/^\d{11}$/.test(searchValue)) {
+      showSearchError('Please enter a valid 11-digit census tract ID');
+      return false;
+    }
+    
+    if (searchType === 'city' && searchValue.length < 2) {
+      showSearchError('Please enter a valid city name');
+      return false;
+    }
+    
+    return true;
+  };
 
   const handleSearch = async () => {
     if (!user) {
-      toast.error('Authentication Required', {
-        description: 'You must be logged in to search for properties'
-      });
+      showSearchError('You must be logged in to search for properties');
+      return;
+    }
+
+    if (!validateSearch()) {
       return;
     }
 
     setIsLoading(true);
     try {
+      showSearchStarted(1); // One search query
+      
       const { data, error } = await supabase.functions.invoke('lmi-tract-search', {
         body: {
           search_type: searchType,
@@ -45,17 +68,14 @@ export function useMarketingSearch() {
 
       if (error) throw error;
 
-      setResults(data.results);
+      setResults(data.results || []);
       setSearchId(data.searchId);
+      setSearchCount(prev => prev + 1);
       
-      toast.success('Search completed', {
-        description: `Found ${data.results.length} properties`
-      });
+      showSearchComplete(data.results.length, data.lmiCount || 0);
     } catch (error) {
       console.error('Search error:', error);
-      toast.error('Search failed', {
-        description: 'Unable to complete the search. Please try again.'
-      });
+      showSearchError(error.message || 'An error occurred during the search');
     } finally {
       setIsLoading(false);
     }
@@ -63,9 +83,7 @@ export function useMarketingSearch() {
 
   const handleExport = async () => {
     if (!searchId || !user) {
-      toast.error('Export Error', {
-        description: 'No search results to export'
-      });
+      showExportError('No search results to export');
       return;
     }
 
@@ -83,29 +101,28 @@ export function useMarketingSearch() {
 
       if (error) throw error;
       
+      // Create and download the CSV file
+      const filename = `${searchName || 'marketing-list'}.csv`;
       const blob = new Blob([data.csvContent], { type: 'text/csv' });
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.setAttribute('hidden', '');
       a.setAttribute('href', url);
-      a.setAttribute('download', `${searchName || 'marketing-list'}.csv`);
+      a.setAttribute('download', filename);
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
       
+      // Update download count
       await supabase
         .from('census_tract_searches')
         .update({ download_count: data.downloadCount })
         .eq('id', searchId);
         
-      toast.success('Export successful', {
-        description: 'Your marketing list has been downloaded'
-      });
+      showExportSuccess(filename);
     } catch (error) {
       console.error('Export error:', error);
-      toast.error('Export failed', {
-        description: 'Unable to export the data. Please try again.'
-      });
+      showExportError(error.message || 'Unable to export the data');
     }
   };
 
@@ -118,7 +135,10 @@ export function useMarketingSearch() {
     setSearchName,
     results,
     isLoading,
+    searchCount,
     handleSearch,
-    handleExport
+    handleExport,
+    // Check if the user can export based on their type
+    canExport: !!user && ['admin', 'mortgage_professional', 'realtor'].includes(userType || '')
   };
 }
