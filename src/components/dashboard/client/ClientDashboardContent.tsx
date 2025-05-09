@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
 import { DashboardStats } from './DashboardStats';
 import { RecentActivity } from './RecentActivity';
@@ -31,24 +30,20 @@ export function ClientDashboardContent() {
     }
   }, [refreshActivities, refreshAddresses, savedAddresses.length]);
   
-  // Initial load and interval refresh
+  // Initial load and listen for property-saved events
   useEffect(() => {
     // Initial refresh
     refreshData();
     
-    // Refresh data every 3 seconds
-    const intervalId = setInterval(refreshData, 3000);
-    
     // Listen for custom property saved event
     const handlePropertySaved = () => {
-      console.log("Property saved event detected, refreshing dashboard data");
+      console.log("ClientDashboardContent: Property saved event detected, refreshing dashboard data");
       refreshData();
     };
     
     window.addEventListener('property-saved', handlePropertySaved);
     
     return () => {
-      clearInterval(intervalId);
       window.removeEventListener('property-saved', handlePropertySaved);
     };
   }, [refreshData]);
@@ -101,6 +96,7 @@ export function ClientDashboardContent() {
         </div>
       </div>
       
+      {/* Home Buying Journey and Program Eligibility */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Home Buying Journey */}
         <Card>

@@ -22,26 +22,35 @@ export const DashboardStats = () => {
   }, [savedAddresses]);
 
   useEffect(() => {
-    // Ensure we have the latest data when the component mounts
-    const refreshData = async () => {
+    // Initial data fetch when component mounts
+    const fetchInitialData = async () => {
       setIsRefreshing(true);
       try {
-        console.log("DashboardStats: Refreshing data...");
+        console.log("DashboardStats: Initial data fetch");
         await Promise.all([refreshAddresses(), refreshActivities()]);
-        console.log("Dashboard stats refreshed with saved addresses:", savedAddresses.length);
+        console.log("Initial dashboard stats loaded with saved addresses:", savedAddresses.length);
       } catch (error) {
-        console.error("Error refreshing dashboard stats:", error);
+        console.error("Error fetching initial dashboard stats:", error);
       } finally {
         setIsRefreshing(false);
       }
     };
     
-    refreshData();
+    fetchInitialData();
     
-    // Set up an interval to refresh data every 5 seconds (shorter interval for testing)
-    const intervalId = setInterval(refreshData, 5000);
+    // Listen for property-saved event
+    const handlePropertySaved = () => {
+      console.log("DashboardStats: Property saved event received");
+      refreshAddresses().catch(error => {
+        console.error("Error refreshing addresses after property saved:", error);
+      });
+    };
     
-    return () => clearInterval(intervalId);
+    window.addEventListener('property-saved', handlePropertySaved);
+    
+    return () => {
+      window.removeEventListener('property-saved', handlePropertySaved);
+    };
   }, [refreshAddresses, refreshActivities]);
 
   // Calculate real stats from user data
