@@ -58,37 +58,15 @@ function App() {
           <Route path="/marketing" element={<LmiMarketingList />} />
           <Route path="/bulk-search" element={<BulkSearch />} />
           
-          {/* Admin routes */}
-          <Route path="/admin" element={
-            <AdminLayout>
-              <AdminDashboard />
-            </AdminLayout>
-          } />
-          <Route path="/admin/marketing" element={
-            <AdminLayout>
-              <MarketingDashboard />
-            </AdminLayout>
-          } />
-          <Route path="/admin/brokers" element={
-            <AdminLayout>
-              <MortgageBrokersPage />
-            </AdminLayout>
-          } />
-          <Route path="/admin/realtors" element={
-            <AdminLayout>
-              <RealtorsPage />
-            </AdminLayout>
-          } />
-          <Route path="/admin/contacts" element={
-            <AdminLayout>
-              <ContactsPage />
-            </AdminLayout>
-          } />
-          <Route path="/admin/search-history" element={
-            <AdminLayout>
-              <SearchHistoryPage />
-            </AdminLayout>
-          } />
+          {/* Admin routes - Use Route nesting with parent element and child routes */}
+          <Route path="/admin" element={<AdminLayout />}>
+            <Route index element={<AdminDashboard />} />
+            <Route path="marketing" element={<MarketingDashboard />} />
+            <Route path="brokers" element={<MortgageBrokersPage />} />
+            <Route path="realtors" element={<RealtorsPage />} />
+            <Route path="contacts" element={<ContactsPage />} />
+            <Route path="search-history" element={<SearchHistoryPage />} />
+          </Route>
           
           {/* 404 route */}
           <Route path="*" element={<NotFound />} />

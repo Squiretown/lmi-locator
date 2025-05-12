@@ -15,6 +15,7 @@ const AdminLayout: React.FC = () => {
           
           <main className="flex-1 overflow-auto bg-background">
             <ScrollArea className="h-full w-full">
+              {/* Outlet renders child routes */}
               <Outlet />
             </ScrollArea>
           </main>
