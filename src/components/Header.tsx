@@ -11,7 +11,7 @@ const Header = () => {
   const navigate = useNavigate();
   const { user, userType, signOut } = useAuth();
   
-  // Don't show header in admin area
+  // Only hide header in admin area
   if (pathname.startsWith('/admin')) {
     return null;
   }
@@ -20,11 +20,11 @@ const Header = () => {
   const getDashboardRoute = () => {
     switch(userType) {
       case 'mortgage_professional':
-        return '/mortgage';
+        return '/dashboard/mortgage';
       case 'client':
-        return '/client';
+        return '/dashboard/client';
       case 'realtor':
-        return '/realtor';
+        return '/dashboard/realtor';
       default:
         return '/';
     }
@@ -107,7 +107,7 @@ const Header = () => {
               </>
             ) : (
               <>
-                <Link to="/login?tab=login" className="text-white hover:text-primary transition-colors hidden sm:inline-block">
+                <Link to="/login" className="text-white hover:text-primary transition-colors hidden sm:inline-block">
                   Log in
                 </Link>
                 <Button asChild size="sm" className="bg-white text-black hover:bg-white/90">

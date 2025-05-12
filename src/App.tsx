@@ -26,6 +26,9 @@ import ContactsPage from './pages/admin/ContactsPage';
 import SearchHistoryPage from './pages/admin/search-history/SearchHistoryPage';
 import { MarketingDashboard } from './components/admin/marketing-dashboard';
 import BulkSearch from './pages/dashboard/BulkSearch';
+import AdminLayout from './components/admin/layout/AdminLayout';
+import Header from './components/Header';
+import Footer from './components/Footer';
 import './App.css';
 
 const queryClient = new QueryClient();
@@ -35,6 +38,7 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <Router>
         <Toaster closeButton position="top-center" />
+        <Header />
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/login" element={<LoginPage />} />
@@ -55,16 +59,41 @@ function App() {
           <Route path="/bulk-search" element={<BulkSearch />} />
           
           {/* Admin routes */}
-          <Route path="/admin" element={<AdminDashboard />} />
-          <Route path="/admin/marketing" element={<MarketingDashboard />} />
-          <Route path="/admin/brokers" element={<MortgageBrokersPage />} />
-          <Route path="/admin/realtors" element={<RealtorsPage />} />
-          <Route path="/admin/contacts" element={<ContactsPage />} />
-          <Route path="/admin/search-history" element={<SearchHistoryPage />} />
+          <Route path="/admin" element={
+            <AdminLayout>
+              <AdminDashboard />
+            </AdminLayout>
+          } />
+          <Route path="/admin/marketing" element={
+            <AdminLayout>
+              <MarketingDashboard />
+            </AdminLayout>
+          } />
+          <Route path="/admin/brokers" element={
+            <AdminLayout>
+              <MortgageBrokersPage />
+            </AdminLayout>
+          } />
+          <Route path="/admin/realtors" element={
+            <AdminLayout>
+              <RealtorsPage />
+            </AdminLayout>
+          } />
+          <Route path="/admin/contacts" element={
+            <AdminLayout>
+              <ContactsPage />
+            </AdminLayout>
+          } />
+          <Route path="/admin/search-history" element={
+            <AdminLayout>
+              <SearchHistoryPage />
+            </AdminLayout>
+          } />
           
           {/* 404 route */}
           <Route path="*" element={<NotFound />} />
         </Routes>
+        <Footer />
       </Router>
     </QueryClientProvider>
   );
