@@ -2,7 +2,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { User, Settings, HelpCircle, Search } from 'lucide-react';
+import { User, Settings, HelpCircle } from 'lucide-react'; // Removed Search icon import
 import { DashboardStats, PropertyCheckSection, MarketingSection, RecentActivitySection, RecentContactsSection } from '@/components/dashboard/mortgage';
 import { useMortgageDashboard } from '@/hooks/useMortgageDashboard';
 import {
@@ -48,8 +48,7 @@ const MortgageProfessionalDashboard: React.FC = () => {
         {/* Header */}
         <div className="mb-8 flex justify-between items-center">
           <h1 className="text-2xl font-bold">Mortgage Professional Dashboard</h1>
-          <Button onClick={() => navigate('/bulk-search')} variant="outline" className="flex items-center gap-2">
-            <Search className="h-4 w-4" />
+          <Button onClick={() => navigate('/bulk-search')} variant="outline">
             Bulk Search
           </Button>
         </div>
