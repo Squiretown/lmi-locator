@@ -19,38 +19,39 @@ const MortgageProfessionalDashboard: React.FC = () => {
 
   return (
     <div className="relative">
-      {/* User menu dropdown */}
-      <div className="absolute top-6 right-6 z-50">
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="rounded-full h-10 w-10 bg-white shadow-sm hover:bg-gray-50">
-              <User className="h-5 w-5" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56">
-            <DropdownMenuItem className="flex items-center gap-2" onClick={() => navigate('/settings')}>
-              <User className="h-4 w-4" />
-              <span>My Profile</span>
-            </DropdownMenuItem>
-            <DropdownMenuItem className="flex items-center gap-2" onClick={() => navigate('/settings')}>
-              <Settings className="h-4 w-4" />
-              <span>Settings</span>
-            </DropdownMenuItem>
-            <DropdownMenuItem className="flex items-center gap-2">
-              <HelpCircle className="h-4 w-4" />
-              <span>Help</span>
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
-
+      {/* Header with main content and user menu */}
       <div className="container mx-auto px-4 py-6 max-w-7xl">
         {/* Header */}
         <div className="mb-8 flex justify-between items-center">
           <h1 className="text-2xl font-bold">Mortgage Professional Dashboard</h1>
-          <Button onClick={() => navigate('/bulk-search')} variant="outline">
-            Bulk Search
-          </Button>
+          <div className="flex items-center gap-4">
+            <Button onClick={() => navigate('/bulk-search')} variant="outline">
+              Bulk Search
+            </Button>
+            
+            {/* User menu dropdown - moved inside container */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="rounded-full h-10 w-10 bg-white shadow-sm hover:bg-gray-50">
+                  <User className="h-5 w-5" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuItem className="flex items-center gap-2" onClick={() => navigate('/settings')}>
+                  <User className="h-4 w-4" />
+                  <span>My Profile</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem className="flex items-center gap-2" onClick={() => navigate('/settings')}>
+                  <Settings className="h-4 w-4" />
+                  <span>Settings</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem className="flex items-center gap-2">
+                  <HelpCircle className="h-4 w-4" />
+                  <span>Help</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
 
         {/* Navigation */}
