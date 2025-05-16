@@ -36,13 +36,13 @@ const LoginForm: React.FC = () => {
           navigate('/admin');
           break;
         case 'mortgage_professional':
-          navigate('/mortgage');
+          navigate('/dashboard/mortgage');
           break;
         case 'realtor':
-          navigate('/realtor');
+          navigate('/dashboard/realtor');
           break;
         case 'client':
-          navigate('/client');
+          navigate('/dashboard/client');
           break;
         default:
           navigate('/');

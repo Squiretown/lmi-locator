@@ -69,11 +69,11 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     // Otherwise, redirect to appropriate dashboard
     switch (userType) {
       case 'mortgage_professional':
-        return <Navigate to="/mortgage" replace />;
+        return <Navigate to="/dashboard/mortgage" replace />;
       case 'realtor':
-        return <Navigate to="/realtor" replace />;
+        return <Navigate to="/dashboard/realtor" replace />;
       case 'client':
-        return <Navigate to="/client" replace />;
+        return <Navigate to="/dashboard/client" replace />;
       default:
         return <Navigate to="/" replace />;
     }
