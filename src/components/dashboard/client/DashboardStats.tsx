@@ -1,5 +1,5 @@
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { useSavedAddresses } from '@/hooks/useSavedAddresses';
 import { useClientActivity } from '@/hooks/useClientActivity';
