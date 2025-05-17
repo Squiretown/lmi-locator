@@ -1,6 +1,5 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
 
 /**
  * Retrieves dashboard statistics from the database using an edge function
@@ -43,12 +42,13 @@ export const getDashboardStats = async () => {
       userCount: 0, 
       propertyCount: 0, 
       realtorCount: 0, 
-      searchHistory: [] 
+      searchHistory: [],
+      success: true
     };
   } catch (error) {
     console.error('Exception in getDashboardStats:', error);
     
-    // Don't show toast here - let the component handle UI feedback
+    // Return error information
     return { 
       userCount: 0, 
       propertyCount: 0, 

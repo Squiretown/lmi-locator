@@ -15,15 +15,27 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { useAuth } from "@/hooks/useAuth";
 
 const SignOutAllUsersButton: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
+  const { session } = useAuth();
   
   const handleSignOutAll = async () => {
     setIsLoading(true);
     
     try {
+      // Check if we have an active session
+      if (!session) {
+        toast.error("You need to be logged in to perform this action");
+        setIsLoading(false);
+        setIsOpen(false);
+        return;
+      }
+      
+      console.log("Attempting to sign out all users with token:", session.access_token.substring(0, 10) + "...");
+      
       const result = await signOutAllUsers();
       
       if (result.success) {
@@ -31,11 +43,12 @@ const SignOutAllUsersButton: React.FC = () => {
           description: "Users will need to sign in again at their next session"
         });
       } else {
+        console.error("Sign out all users failed:", result.error);
         toast.error(`Operation failed: ${result.error?.message || 'Unknown error'}`);
       }
     } catch (error) {
-      toast.error("An unexpected error occurred");
       console.error("Error in sign out all:", error);
+      toast.error("An unexpected error occurred while signing out users");
     } finally {
       setIsLoading(false);
       setIsOpen(false);

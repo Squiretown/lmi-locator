@@ -27,9 +27,16 @@ serve(async (req) => {
   if (corsResponse) return corsResponse;
 
   try {
+    console.log("Processing sign out all users request");
+
     // Initialize Supabase client with admin privileges
     const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+    
+    if (!supabaseUrl || !supabaseKey) {
+      throw new Error("Missing required environment variables for Supabase connection");
+    }
+    
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     // Get user JWT from request
@@ -37,29 +44,42 @@ serve(async (req) => {
     const token = authHeader.replace('Bearer ', '');
     
     if (!token) {
+      console.error("No authorization token provided");
       throw new Error("No authorization token provided");
     }
 
     // Verify the JWT and get the user
+    console.log("Verifying user authentication");
     const { data: { user }, error: userError } = await supabase.auth.getUser(token);
     
     if (userError || !user) {
+      console.error("Invalid or expired token:", userError);
       throw new Error("Invalid authorization token");
     }
 
+    console.log(`User authenticated: ${user.id}`);
+
     // Check if user is admin
+    console.log("Checking admin privileges");
     const { data: isAdmin, error: adminCheckError } = await supabase.rpc('user_is_admin');
     
-    if (adminCheckError || !isAdmin) {
+    if (adminCheckError) {
+      console.error("Error checking admin status:", adminCheckError);
+      throw new Error(`Admin check failed: ${adminCheckError.message}`);
+    }
+    
+    if (!isAdmin) {
+      console.error("User is not an admin");
       throw new Error("Administrative privileges required to perform this action");
     }
 
-    console.log("Admin user initiated sign out all users");
+    console.log("Admin user verified, proceeding with sign out all users");
 
     // Call Supabase auth API to sign out all sessions
     const { error: signOutError } = await supabase.auth.admin.signOut('*');
     
     if (signOutError) {
+      console.error("Error signing out all users:", signOutError);
       throw new Error(`Error signing out all users: ${signOutError.message}`);
     }
     

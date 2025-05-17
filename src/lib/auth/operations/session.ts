@@ -15,9 +15,25 @@ export async function signOutUser() {
 
 export async function signOutAllUsers() {
   try {
+    console.log("Starting sign out all users process");
+    
+    // Get current auth token to confirm we're authenticated
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (!session) {
+      console.error("No active session found");
+      toast.error("You need to be logged in to perform this action");
+      return { success: false, error: new Error("No active session") };
+    }
+    
+    console.log("Session found, proceeding with sign out all users");
+    
     // Call the Supabase edge function to sign out all users
     const { error, data } = await supabase.functions.invoke('sign-out-all-users', {
-      method: 'POST'
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${session.access_token}`
+      }
     });
     
     if (error) {
@@ -26,6 +42,7 @@ export async function signOutAllUsers() {
       return { success: false, error };
     }
     
+    console.log("Sign out all users successful:", data);
     toast.success("All users have been signed out successfully");
     return { success: true, error: null };
   } catch (error) {

@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Overview } from "./dashboard/Overview";
@@ -6,7 +7,7 @@ import { RecentActivity } from "./dashboard/RecentActivity";
 import { StatisticsCards } from "./dashboard/StatisticsCards";
 import { getDashboardStats } from "@/lib/supabase/dashboard";
 import { toast } from "sonner";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, AlertTriangle, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export const Dashboard = () => {
@@ -19,12 +20,9 @@ export const Dashboard = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
+  const [usingMockData, setUsingMockData] = useState(false);
 
-  useEffect(() => {
-    loadDashboardData();
-  }, [retryCount]); // Dependency on retryCount to enable manual refresh
-
-  const loadDashboardData = async () => {
+  const loadDashboardData = useCallback(async () => {
     try {
       setIsLoading(true);
       setError(null);
@@ -49,9 +47,11 @@ export const Dashboard = () => {
         if (apiData && apiData.success !== false) {
           console.log('Dashboard stats loaded successfully:', apiData);
           setStats(apiData);
+          setUsingMockData(false);
         } else {
           console.log('API returned error, using mock data');
           setStats(mockData);
+          setUsingMockData(true);
           if (apiData?.error) {
             setError(`API Error: ${apiData.error}`);
           }
@@ -59,15 +59,21 @@ export const Dashboard = () => {
       } catch (apiError) {
         console.error('API call failed, using mock data', apiError);
         setStats(mockData);
+        setUsingMockData(true);
         setError(`Failed to fetch dashboard data: ${apiError.message}`);
       }
     } catch (err) {
       console.error('Error in dashboard data loading:', err);
       setError('Failed to load dashboard data. Using default values instead.');
+      setUsingMockData(true);
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [retryCount]); // Dependency on retryCount to enable manual refresh
+
+  useEffect(() => {
+    loadDashboardData();
+  }, [loadDashboardData]);
 
   const handleRetry = () => {
     setRetryCount(prevCount => prevCount + 1);
@@ -85,7 +91,17 @@ export const Dashboard = () => {
           disabled={isLoading}
           className="flex items-center gap-2"
         >
-          {isLoading ? "Loading..." : "Refresh Data"}
+          {isLoading ? (
+            <>
+              <RefreshCw className="h-4 w-4 animate-spin" />
+              Loading...
+            </>
+          ) : (
+            <>
+              <RefreshCw className="h-4 w-4" />
+              Refresh Data
+            </>
+          )}
         </Button>
       </div>
       
@@ -97,8 +113,20 @@ export const Dashboard = () => {
             <p className="text-amber-700 text-sm">
               {error} 
               <span className="block mt-1">
-                Using demo data instead. You can refresh to try again.
+                {usingMockData ? "Using demo data instead. You can refresh to try again." : ""}
               </span>
+            </p>
+          </div>
+        </div>
+      )}
+      
+      {usingMockData && !error && (
+        <div className="bg-blue-50 border border-blue-200 rounded-md p-4 mb-4 flex items-start gap-3">
+          <AlertTriangle className="h-5 w-5 text-blue-500 mt-0.5" />
+          <div>
+            <p className="text-blue-800 font-medium">Using Demo Data</p>
+            <p className="text-blue-700 text-sm">
+              Currently displaying sample data. Click refresh to try loading real data.
             </p>
           </div>
         </div>
