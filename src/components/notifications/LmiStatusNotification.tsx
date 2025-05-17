@@ -29,11 +29,18 @@ const LmiStatusNotification = ({
   onContinue,
   onSignUp
 }: LmiStatusNotificationProps) => {
-  // We're removing the useAuth call directly in this component to avoid potential issues
-  // Instead, we'll rely on the props passed to determine whether a user is logged in
+  // Determine if user is logged in based on whether onSave handler is provided
+  // If onSave exists, user is logged in; if onSignUp exists, user is not logged in
   const isLoggedIn = onSave !== undefined;
   
-  console.log('LmiStatusNotification render:', { isApproved, address, isLoggedIn, userType });
+  console.log('LmiStatusNotification render:', { 
+    isApproved, 
+    address, 
+    isLoggedIn, 
+    userType,
+    hasSaveHandler: !!onSave,
+    hasSignUpHandler: !!onSignUp
+  });
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">

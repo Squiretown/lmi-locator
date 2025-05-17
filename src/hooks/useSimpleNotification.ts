@@ -55,7 +55,11 @@ export const showNotification = async (options: {
   const isLoggedIn = !!sessionData?.session;
   let userType = sessionData?.session?.user?.user_metadata?.user_type || null;
   
-  console.log('Notification auth status in useSimpleNotification:', { isLoggedIn, userType });
+  console.log('Notification auth status in useSimpleNotification:', { 
+    isLoggedIn, 
+    userType,
+    sessionExists: !!sessionData?.session
+  });
   
   // Handle share button click
   const handleShare = async () => {

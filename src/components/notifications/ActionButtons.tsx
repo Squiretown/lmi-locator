@@ -11,7 +11,11 @@ interface ActionButtonsProps {
 }
 
 export const ActionButtons = ({ onShare, onSave, onSignUp, isLoggedIn }: ActionButtonsProps) => {
-  console.log('ActionButtons render:', { isLoggedIn, hasSaveHandler: !!onSave, hasSignUpHandler: !!onSignUp });
+  console.log('ActionButtons render:', { 
+    isLoggedIn, 
+    hasSaveHandler: !!onSave, 
+    hasSignUpHandler: !!onSignUp 
+  });
   
   return (
     <div className="mt-6 flex flex-wrap gap-3">

@@ -81,6 +81,13 @@ export function usePropertySearch() {
       
       setLmiStatus(lmiResponse);
 
+      // Log authentication status before showing notification
+      console.log('Authentication status when showing notification:', { 
+        isLoggedIn: !!user, 
+        userId: user?.id,
+        userMetadata: user?.user_metadata
+      });
+
       // Show the notification overlay regardless of user login status
       if (lmiResponse.is_approved) {
         notification.success(
