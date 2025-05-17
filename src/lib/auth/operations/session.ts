@@ -15,8 +15,8 @@ export async function signOutUser() {
 
 export async function signOutAllUsers() {
   try {
-    // Call the Supabase admin API to sign out all users
-    const { error } = await supabase.functions.invoke('sign-out-all-users', {
+    // Call the Supabase edge function to sign out all users
+    const { error, data } = await supabase.functions.invoke('sign-out-all-users', {
       method: 'POST'
     });
     
