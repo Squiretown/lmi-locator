@@ -5,6 +5,7 @@ import { ClientHeader } from '@/components/dashboard/client/ClientHeader';
 import { ClientDashboardContent } from '@/components/dashboard/client/ClientDashboardContent';
 import { User, Settings, LogOut, HelpCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useNavigate } from 'react-router-dom';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,6 +15,16 @@ import {
 
 const ClientDashboard: React.FC = () => {
   const { user, signOut } = useAuth();
+  const navigate = useNavigate();
+  
+  const handleSignOut = async () => {
+    await signOut();
+    navigate('/login');
+  };
+  
+  const handleNavigate = (path: string) => {
+    navigate(path);
+  };
   
   return (
     <div className="relative">
@@ -26,19 +37,19 @@ const ClientDashboard: React.FC = () => {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56">
-            <DropdownMenuItem className="flex items-center gap-2">
+            <DropdownMenuItem className="flex items-center gap-2" onClick={() => handleNavigate('/settings')}>
               <User className="h-4 w-4" />
               <span>My Profile</span>
             </DropdownMenuItem>
-            <DropdownMenuItem className="flex items-center gap-2">
+            <DropdownMenuItem className="flex items-center gap-2" onClick={() => handleNavigate('/settings')}>
               <Settings className="h-4 w-4" />
               <span>Settings</span>
             </DropdownMenuItem>
-            <DropdownMenuItem className="flex items-center gap-2" onClick={signOut}>
+            <DropdownMenuItem className="flex items-center gap-2" onClick={handleSignOut}>
               <LogOut className="h-4 w-4" />
               <span>Sign Out</span>
             </DropdownMenuItem>
-            <DropdownMenuItem className="flex items-center gap-2">
+            <DropdownMenuItem className="flex items-center gap-2" onClick={() => handleNavigate('/resources')}>
               <HelpCircle className="h-4 w-4" />
               <span>Help</span>
             </DropdownMenuItem>
@@ -47,7 +58,7 @@ const ClientDashboard: React.FC = () => {
       </div>
 
       <div className="container mx-auto px-4 py-6">
-        <ClientHeader title="Your Home Buying Dashboard" onSignOut={signOut} />
+        <ClientHeader title="Your Home Buying Dashboard" onSignOut={handleSignOut} />
         
         <div className="mt-6">
           <ClientDashboardContent />

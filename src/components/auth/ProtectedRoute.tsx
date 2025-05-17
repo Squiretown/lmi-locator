@@ -1,6 +1,6 @@
 
-import React from 'react';
-import { Navigate } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import LoadingSpinner from '@/components/LoadingSpinner';
 
@@ -14,14 +14,22 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   requiredUserType 
 }) => {
   const { session, userType, isLoading, authInitialized } = useAuth();
+  const location = useLocation();
 
   console.log("ProtectedRoute:", { 
     isLoading, 
     authInitialized,
     hasSession: !!session, 
     userType, 
-    requiredUserType 
+    requiredUserType,
+    currentPath: location.pathname
   });
+
+  useEffect(() => {
+    if (!isLoading && authInitialized && !session) {
+      console.log('No session detected, user will be redirected to login');
+    }
+  }, [isLoading, authInitialized, session]);
 
   if (!authInitialized || isLoading) {
     return (
@@ -33,7 +41,8 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
 
   if (!session) {
     console.log('No session, redirecting to login');
-    return <Navigate to="/login" replace />;
+    // Save the current location the user was trying to access
+    return <Navigate to="/login" state={{ from: location.pathname }} replace />;
   }
   
   // If a specific user type is required

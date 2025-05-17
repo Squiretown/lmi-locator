@@ -1,6 +1,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { extractRetrySeconds } from './utils';
+import { toast } from "sonner";
 
 export async function signInWithMagicLink(email: string, redirectTo?: string) {
   try {
@@ -31,11 +32,11 @@ export async function signInWithMagicLink(email: string, redirectTo?: string) {
       return { success: false, error };
     }
     
-    // Toast notification removed
+    toast.success('Magic link sent! Please check your email.');
     return { success: true, error: null };
   } catch (err) {
     console.error('Exception during magic link send:', err);
-    // Toast notification removed
+    toast.error('An unexpected error occurred');
     return { success: false, error: err as Error };
   }
 }

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { User, Session } from '@supabase/supabase-js';
@@ -11,6 +10,7 @@ import {
   deleteUserWithPassword
 } from '@/lib/auth/operations';
 import AuthContext from '@/contexts/AuthContext';
+import { toast } from 'sonner';
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -50,6 +50,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.log('Auth state changed:', event, newSession?.user?.email);
         
         if (!isMounted) return;
+        
+        if (event === 'SIGNED_OUT') {
+          // Don't show toast here as it's handled in signOutUser
+        } else if (event === 'SIGNED_IN') {
+          toast.success("Signed in successfully");
+        }
         
         safeSetState.setSession(newSession);
         safeSetState.setUser(newSession?.user || null);
@@ -155,6 +161,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUserType(null);
     } catch (error) {
       console.error('Error during sign out:', error);
+      // Toast is already handled in signOutUser
     } finally {
       setIsLoading(false);
     }

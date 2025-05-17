@@ -31,22 +31,25 @@ const LoginForm: React.FC = () => {
     if (userType) {
       console.log('User type detected after login:', userType);
       
-      switch (userType) {
-        case 'admin':
-          navigate('/admin');
-          break;
-        case 'mortgage_professional':
-          navigate('/dashboard/mortgage');
-          break;
-        case 'realtor':
-          navigate('/dashboard/realtor');
-          break;
-        case 'client':
-          navigate('/dashboard/client');
-          break;
-        default:
-          navigate('/');
-      }
+      // Use a short delay to allow toast notifications to be seen
+      setTimeout(() => {
+        switch (userType) {
+          case 'admin':
+            navigate('/admin');
+            break;
+          case 'mortgage_professional':
+            navigate('/dashboard/mortgage');
+            break;
+          case 'realtor':
+            navigate('/dashboard/realtor');
+            break;
+          case 'client':
+            navigate('/dashboard/client');
+            break;
+          default:
+            navigate('/');
+        }
+      }, 500);
     }
   }, [userType, navigate]);
 
