@@ -1,8 +1,10 @@
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import LoadingSpinner from '@/components/LoadingSpinner';
+import { verifyAdminAccess } from '@/lib/auth/operations/session';
+import { toast } from 'sonner';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -15,6 +17,8 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
 }) => {
   const { session, userType, isLoading, authInitialized } = useAuth();
   const location = useLocation();
+  const [isVerifyingAdmin, setIsVerifyingAdmin] = useState(false);
+  const [hasAdminAccess, setHasAdminAccess] = useState<boolean | null>(null);
 
   console.log("ProtectedRoute:", { 
     isLoading, 
@@ -22,8 +26,40 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     hasSession: !!session, 
     userType, 
     requiredUserType,
-    currentPath: location.pathname
+    currentPath: location.pathname,
+    isVerifyingAdmin,
+    hasAdminAccess
   });
+
+  // Special handling for admin routes
+  useEffect(() => {
+    if (!isLoading && authInitialized && session && requiredUserType === 'admin') {
+      const checkAdminAccess = async () => {
+        try {
+          setIsVerifyingAdmin(true);
+          const { isAdmin, error } = await verifyAdminAccess();
+          
+          if (error) {
+            console.error('Admin verification error:', error);
+            toast.error('Failed to verify admin access');
+            setHasAdminAccess(false);
+          } else {
+            setHasAdminAccess(isAdmin);
+            if (!isAdmin) {
+              toast.error('You do not have admin access');
+            }
+          }
+        } catch (err) {
+          console.error('Exception during admin verification:', err);
+          setHasAdminAccess(false);
+        } finally {
+          setIsVerifyingAdmin(false);
+        }
+      };
+      
+      checkAdminAccess();
+    }
+  }, [isLoading, authInitialized, session, requiredUserType]);
 
   useEffect(() => {
     if (!isLoading && authInitialized && !session) {
@@ -31,7 +67,8 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     }
   }, [isLoading, authInitialized, session]);
 
-  if (!authInitialized || isLoading) {
+  // Show loading state during authentication or admin verification
+  if (!authInitialized || isLoading || (requiredUserType === 'admin' && isVerifyingAdmin)) {
     return (
       <div className="flex h-screen items-center justify-center">
         <LoadingSpinner />
@@ -39,20 +76,30 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     );
   }
 
+  // If no session, redirect to login
   if (!session) {
     console.log('No session, redirecting to login');
     // Save the current location the user was trying to access
     return <Navigate to="/login" state={{ from: location.pathname }} replace />;
   }
   
-  // If a specific user type is required
-  if (requiredUserType && userType !== requiredUserType) {
-    // Admin can access all areas
-    if (userType === 'admin') {
+  // Special case for admin routes
+  if (requiredUserType === 'admin') {
+    // If admin verification is complete and access is denied
+    if (!isVerifyingAdmin && hasAdminAccess === false) {
+      console.log('Admin access denied, redirecting');
+      return <Navigate to="/" replace />;
+    }
+    
+    // If admin verification is complete and access is granted
+    if (!isVerifyingAdmin && hasAdminAccess === true) {
       console.log('Admin access granted');
       return <>{children}</>;
     }
-    
+  }
+  
+  // For non-admin routes, proceed with normal user type check
+  if (requiredUserType && userType !== requiredUserType) {
     // If user has a session but userType isn't loaded yet, try to get it from session
     if (!userType && session) {
       // Try to extract user_type from session metadata

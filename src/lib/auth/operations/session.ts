@@ -34,3 +34,25 @@ export async function signOutAllUsers() {
     return { success: false, error: error as Error };
   }
 }
+
+// Add a function to verify admin status directly
+export async function verifyAdminAccess() {
+  try {
+    // First check session
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) return { isAdmin: false, error: "No active session" };
+
+    // Then verify admin status
+    const { data: isAdmin, error } = await supabase.rpc('user_is_admin');
+    
+    if (error) {
+      console.error('Error verifying admin status:', error);
+      return { isAdmin: false, error: error.message };
+    }
+    
+    return { isAdmin: !!isAdmin, error: null };
+  } catch (error) {
+    console.error('Exception during admin verification:', error);
+    return { isAdmin: false, error: error as Error };
+  }
+}

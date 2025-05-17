@@ -11,6 +11,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import FormErrorDisplay from './form-sections/FormErrorDisplay';
+import { verifyAdminAccess } from '@/lib/auth/operations/session';
 
 // Define the form schema
 const formSchema = z.object({
@@ -23,6 +24,7 @@ type FormValues = z.infer<typeof formSchema>;
 const LoginForm: React.FC = () => {
   const [authError, setAuthError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
+  const [isAdminAttempt, setIsAdminAttempt] = useState(false);
   const { signIn, isLoading, userType } = useAuth();
   const navigate = useNavigate();
 
@@ -64,6 +66,7 @@ const LoginForm: React.FC = () => {
 
   const handleLogin = async (values: FormValues) => {
     setAuthError(null);
+    setIsAdminAttempt(values.email.toLowerCase().includes('admin'));
     
     try {
       console.log('Attempting login with:', values.email);
@@ -79,8 +82,26 @@ const LoginForm: React.FC = () => {
         } else {
           setAuthError(error.message || 'Failed to login. Please try again.');
         }
+        return;
       }
-      // Redirection will be handled by the useEffect hook above
+      
+      // If it's an admin login attempt, verify admin access
+      if (isAdminAttempt) {
+        const { isAdmin, error: adminError } = await verifyAdminAccess();
+        
+        if (adminError || !isAdmin) {
+          console.error('Admin verification failed:', adminError);
+          setAuthError('Admin access verification failed. You may not have admin privileges.');
+          // Sign out as this user doesn't have admin access
+          await signIn(values.email, values.password);
+          return;
+        }
+        
+        // Admin verified, redirect will be handled by the useEffect above
+        console.log('Admin access verified successfully');
+      }
+      
+      // Non-admin redirects will be handled by the useEffect above
     } catch (err) {
       console.error('Exception during login:', err);
       setAuthError('An unexpected error occurred. Please try again.');
