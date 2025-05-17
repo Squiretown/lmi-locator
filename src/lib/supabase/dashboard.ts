@@ -15,6 +15,8 @@ import { toast } from "sonner";
  */
 export const getDashboardStats = async () => {
   try {
+    console.log('Fetching dashboard statistics...');
+    
     // Use the census-db edge function to get dashboard stats
     const { data, error } = await supabase.functions.invoke('census-db', {
       body: {
@@ -24,24 +26,17 @@ export const getDashboardStats = async () => {
     });
     
     if (error) {
-      console.error('Error in edge function:', error);
-      toast.error('Failed to load dashboard statistics');
-      throw error;
+      console.error('Error invoking edge function:', error);
+      throw new Error(error.message || 'Failed to load dashboard statistics');
     }
     
     // If the edge function returned an error
     if (data && data.success === false) {
-      console.error('Edge function error:', data.error);
-      toast.error('Failed to retrieve dashboard data');
-      return { 
-        userCount: 0, 
-        propertyCount: 0, 
-        realtorCount: 0, 
-        searchHistory: [],
-        success: false,
-        error: data.error
-      };
+      console.error('Edge function returned error:', data.error);
+      throw new Error(data.error || 'Failed to retrieve dashboard data');
     }
+    
+    console.log('Dashboard stats retrieved successfully:', data);
     
     // Return the dashboard stats
     return data || { 
@@ -51,9 +46,9 @@ export const getDashboardStats = async () => {
       searchHistory: [] 
     };
   } catch (error) {
-    console.error('Error retrieving dashboard stats:', error);
-    toast.error('Error loading dashboard data');
+    console.error('Exception in getDashboardStats:', error);
     
+    // Don't show toast here - let the component handle UI feedback
     return { 
       userCount: 0, 
       propertyCount: 0, 
