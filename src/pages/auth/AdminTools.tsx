@@ -3,7 +3,8 @@ import React from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { UserManagement, ApiKeys, SystemLogs, DatabaseTools } from "@/components/admin/tools";
-import { Database, FileText, Key, Users } from "lucide-react";
+import { Database, FileText, Key, Users, Trash2 } from "lucide-react";
+import RemoveAllUsers from '@/components/admin/RemoveAllUsers';
 
 const AdminTools: React.FC = () => {
   return (
@@ -35,6 +36,10 @@ const AdminTools: React.FC = () => {
                 <Database className="h-4 w-4" />
                 Database Tools
               </TabsTrigger>
+              <TabsTrigger value="danger-zone" className="flex items-center gap-1 text-red-600">
+                <Trash2 className="h-4 w-4" />
+                Danger Zone
+              </TabsTrigger>
             </TabsList>
             
             {/* User Management Tab */}
@@ -55,6 +60,13 @@ const AdminTools: React.FC = () => {
             {/* Database Tools Tab */}
             <TabsContent value="database">
               <DatabaseTools />
+            </TabsContent>
+            
+            {/* Danger Zone Tab */}
+            <TabsContent value="danger-zone">
+              <div className="space-y-6">
+                <RemoveAllUsers />
+              </div>
             </TabsContent>
           </Tabs>
         </CardContent>
