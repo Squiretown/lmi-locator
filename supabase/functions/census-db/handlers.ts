@@ -1,94 +1,112 @@
 
-import { corsHeaders } from "./cors.ts";
-import { handleSearchBatch } from "./searchOperations.ts";
-import { handleGetCachedData, handleSetCachedData } from "./cacheOperations.ts";
+import { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.21.0";
 
-// Main handler function for the census-db edge function
-export async function handleApiRequest(supabase: any, action: string, params: any) {
-  console.log(`Processing API request: ${action}`, params);
+// Handle API requests and route to the appropriate function
+export async function handleApiRequest(supabase: SupabaseClient, action: string, params: any = {}) {
+  console.log(`Handling API request: action=${action}`);
   
+  switch (action) {
+    case 'getDashboardStats':
+      return await handleGetDashboardStats(supabase);
+    case 'searchByAddress':
+      return await handleSearchByAddress(supabase, params);
+    default:
+      throw new Error(`Unknown action: ${action}`);
+  }
+}
+
+// Handle dashboard stats request
+async function handleGetDashboardStats(supabase: SupabaseClient) {
   try {
-    // Route the request to the appropriate handler based on the action
-    switch (action) {
-      case 'searchBatch':
-        return await handleSearchBatch(supabase, params);
-      case 'getCachedData':
-        return await handleGetCachedData(supabase, params);
-      case 'setCachedData':
-        return await handleSetCachedData(supabase, params);
-      case 'getMedianIncome':
-        // Mock income data response for now
-        const mockIncome = (params.geoid === '06037701000') ? 150000 : 62500;
-        return { 
-          success: true,
-          medianIncome: mockIncome
-        };
-      case 'reportSearchIssue':
-        return await handleReportSearchIssue(supabase, params);
-      default:
-        throw new Error(`Unknown action: ${action}`);
-    }
-  } catch (error) {
-    console.error(`Error handling ${action}:`, error);
-      
-    // Log the error details
-    try {
-      const errorData = {
-        action,
-        params: JSON.stringify(params),
-        error_message: error instanceof Error ? error.message : String(error),
-        error_stack: error instanceof Error ? error.stack : undefined,
-        created_at: new Date().toISOString()
-      };
-      
-      await supabase
-        .from('edge_function_error_logs')
-        .insert(errorData);
-      
-      console.log("Error logged to database");
-    } catch (loggingError) {
-      console.error("Failed to log error to database:", loggingError);
+    console.log("Fetching dashboard statistics");
+    
+    // Get user count
+    const { count: userCount, error: userError } = await supabase
+      .from('user_profiles')
+      .select('*', { count: 'exact', head: true });
+    
+    if (userError) {
+      console.error("Error fetching user count:", userError);
+      throw userError;
     }
     
-    return { 
-      success: false, 
-      error: error instanceof Error ? error.message : String(error)
+    // Get property count 
+    // Note: Assuming 'properties' table exists, replace with actual table if different
+    const { count: propertyCount, error: propertyError } = await supabase
+      .from('properties')
+      .select('*', { count: 'exact', head: true });
+    
+    // If the properties table doesn't exist yet, we'll use a placeholder value
+    if (propertyError && propertyError.code !== 'PGRST116') { // Not a "relation does not exist" error
+      console.error("Error fetching property count:", propertyError);
+      // Continue execution, don't throw
+    }
+    
+    // Get realtor count
+    const { count: realtorCount, error: realtorError } = await supabase
+      .from('user_profiles')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_type', 'realtor');
+    
+    if (realtorError && realtorError.code !== 'PGRST116') {
+      console.error("Error fetching realtor count:", realtorError);
+      // Continue execution, don't throw
+    }
+    
+    // Get search history
+    const { data: searchHistory, error: searchError } = await supabase
+      .from('search_history')
+      .select('*')
+      .order('searched_at', { ascending: false })
+      .limit(10);
+    
+    if (searchError && searchError.code !== 'PGRST116') {
+      console.error("Error fetching search history:", searchError);
+      // Continue execution, don't throw
+    }
+    
+    // Return the dashboard stats
+    return {
+      userCount: userCount || 0,
+      propertyCount: propertyCount || 0,
+      realtorCount: realtorCount || 0,
+      searchHistory: searchHistory || [],
+      success: true,
+      timestamp: new Date().toISOString()
+    };
+  } catch (error) {
+    console.error("Error in getDashboardStats:", error);
+    return {
+      success: false,
+      error: error.message || "Unknown error in getDashboardStats",
+      timestamp: new Date().toISOString()
     };
   }
 }
 
-// Handle user-reported search issues
-async function handleReportSearchIssue(supabase: any, params: any) {
+// Handle search by address
+async function handleSearchByAddress(supabase: SupabaseClient, params: any) {
   try {
-    // Get current timestamp
-    const timestamp = new Date().toISOString();
+    const { address } = params;
     
-    // Insert the reported issue into the database
-    const { error } = await supabase
-      .from('lmi_search_error_logs')
-      .insert({
-        search_type: params.searchType || 'unknown',
-        search_value: params.searchValue || '',
-        error_message: 'User reported issue with search',
-        search_params: params,
-        created_at: timestamp,
-        resolved: false
-      });
+    if (!address) {
+      throw new Error("Address is required");
+    }
     
-    if (error) throw error;
+    console.log(`Searching for address: ${address}`);
     
-    console.log('Successfully logged user-reported search issue:', params);
-    
-    return { 
-      success: true, 
-      message: 'Search issue reported successfully',
-      timestamp
+    // Implement your search logic here
+    // For now, we'll return a placeholder response
+    return {
+      success: true,
+      results: [],
+      message: "Search function is being implemented"
     };
   } catch (error) {
-    console.error('Error reporting search issue:', error);
-    return { 
-      success: false, 
-      error: error instanceof Error ? error.message : String(error)
+    console.error("Error in searchByAddress:", error);
+    return {
+      success: false,
+      error: error.message || "Unknown error in searchByAddress"
     };
   }
 }

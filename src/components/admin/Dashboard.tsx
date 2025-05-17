@@ -6,6 +6,8 @@ import { RecentActivity } from "./dashboard/RecentActivity";
 import { StatisticsCards } from "./dashboard/StatisticsCards";
 import { getDashboardStats } from "@/lib/supabase/dashboard";
 import { toast } from "sonner";
+import { AlertCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 export const Dashboard = () => {
   const [stats, setStats] = useState({
@@ -16,63 +18,91 @@ export const Dashboard = () => {
   });
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
 
   useEffect(() => {
-    const loadDashboardData = async () => {
-      try {
-        setIsLoading(true);
-        setError(null); // Reset error state before new request
-        
-        // Using a mock response for now since edge functions are causing issues
-        // When edge functions are working, replace this with the actual call
-        
-        // Mock data for development until edge function issues are resolved
-        const mockData = {
-          userCount: 156,
-          propertyCount: 2874,
-          realtorCount: 42,
-          searchHistory: [
-            { id: '1', user_id: 'user1', address: '123 Main St', timestamp: new Date().toISOString(), result: 'Eligible' },
-            { id: '2', user_id: 'user2', address: '456 Elm St', timestamp: new Date().toISOString(), result: 'Not eligible' },
-            { id: '3', user_id: 'user3', address: '789 Oak Ave', timestamp: new Date().toISOString(), result: 'Eligible' }
-          ],
-          success: true
-        };
-        
-        setStats(mockData);
-        
-        // Try the real API call, but fall back to mock data if it fails
-        try {
-          const apiData = await getDashboardStats();
-          
-          if (apiData && apiData.success !== false) {
-            console.log('Dashboard stats loaded successfully:', apiData);
-            setStats(apiData);
-          } else {
-            console.log('Using mock data due to API issue');
-            // Keep using mock data, already set above
-          }
-        } catch (apiError) {
-          console.error('API call failed, using mock data', apiError);
-          // Keep using mock data, already set above
-        }
-      } catch (err) {
-        console.error('Error in dashboard data loading:', err);
-        setError('Failed to load dashboard data. Using default values instead.');
-        toast.error('Could not load latest dashboard statistics');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
     loadDashboardData();
-  }, []);
+  }, [retryCount]); // Dependency on retryCount to enable manual refresh
+
+  const loadDashboardData = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      
+      // Mock data for fallback
+      const mockData = {
+        userCount: 156,
+        propertyCount: 2874,
+        realtorCount: 42,
+        searchHistory: [
+          { id: '1', user_id: 'user1', address: '123 Main St', timestamp: new Date().toISOString(), result: 'Eligible' },
+          { id: '2', user_id: 'user2', address: '456 Elm St', timestamp: new Date().toISOString(), result: 'Not eligible' },
+          { id: '3', user_id: 'user3', address: '789 Oak Ave', timestamp: new Date().toISOString(), result: 'Eligible' }
+        ]
+      };
+      
+      console.log("Attempting to load dashboard data");
+      
+      try {
+        const apiData = await getDashboardStats();
+        
+        if (apiData && apiData.success !== false) {
+          console.log('Dashboard stats loaded successfully:', apiData);
+          setStats(apiData);
+        } else {
+          console.log('API returned error, using mock data');
+          setStats(mockData);
+          if (apiData?.error) {
+            setError(`API Error: ${apiData.error}`);
+          }
+        }
+      } catch (apiError) {
+        console.error('API call failed, using mock data', apiError);
+        setStats(mockData);
+        setError(`Failed to fetch dashboard data: ${apiError.message}`);
+      }
+    } catch (err) {
+      console.error('Error in dashboard data loading:', err);
+      setError('Failed to load dashboard data. Using default values instead.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleRetry = () => {
+    setRetryCount(prevCount => prevCount + 1);
+    toast.info("Refreshing dashboard data...");
+  };
 
   return (
     <div className="flex-1 space-y-4 p-8 pt-6">
       <div className="flex items-center justify-between space-y-2">
         <h2 className="text-3xl font-bold tracking-tight">Admin Dashboard</h2>
+        
+        <Button 
+          variant="outline" 
+          onClick={handleRetry}
+          disabled={isLoading}
+          className="flex items-center gap-2"
+        >
+          {isLoading ? "Loading..." : "Refresh Data"}
+        </Button>
       </div>
+      
+      {error && (
+        <div className="bg-amber-50 border border-amber-200 rounded-md p-4 mb-4 flex items-start gap-3">
+          <AlertCircle className="h-5 w-5 text-amber-500 mt-0.5" />
+          <div>
+            <p className="text-amber-800 font-medium">Note</p>
+            <p className="text-amber-700 text-sm">
+              {error} 
+              <span className="block mt-1">
+                Using demo data instead. You can refresh to try again.
+              </span>
+            </p>
+          </div>
+        </div>
+      )}
       
       <Tabs defaultValue="overview" className="space-y-4">
         <TabsList>
