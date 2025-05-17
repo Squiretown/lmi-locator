@@ -1,8 +1,7 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { ClientHeader } from '@/components/dashboard/client/ClientHeader';
-import { ClientTabs } from '@/components/dashboard/client/ClientTabs';
 import { ClientDashboardContent } from '@/components/dashboard/client/ClientDashboardContent';
 import { User, Settings, LogOut, HelpCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -12,12 +11,9 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { TeamContent } from '@/components/dashboard/client/TeamContent';
-import { JourneyTrackerContent } from '@/components/dashboard/client/JourneyTrackerContent';
 
 const ClientDashboard: React.FC = () => {
   const { user, signOut } = useAuth();
-  const [activeTab, setActiveTab] = useState('dashboard');
   
   return (
     <div className="relative">
@@ -53,15 +49,8 @@ const ClientDashboard: React.FC = () => {
       <div className="container mx-auto px-4 py-6">
         <ClientHeader title="Your Home Buying Dashboard" onSignOut={signOut} />
         
-        <ClientTabs 
-          activeTab={activeTab} 
-          setActiveTab={setActiveTab} 
-        />
-        
         <div className="mt-6">
-          {activeTab === 'dashboard' && <ClientDashboardContent />}
-          {activeTab === 'journey' && <JourneyTrackerContent />}
-          {activeTab === 'team' && <TeamContent />}
+          <ClientDashboardContent />
         </div>
       </div>
     </div>
