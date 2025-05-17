@@ -44,8 +44,8 @@ const PropertyCheckerContent: React.FC = () => {
     setCurrentData(null);
     resetProcess();
     
-    // Only show toast when notification is closed by a logged-in user
-    if (user) {
+    // Only navigate when notification is closed by a logged-in user on dashboard pages
+    if (user && window.location.pathname.includes('/dashboard/')) {
       toast.info('Search closed', { 
         description: 'Property search results cleared' 
       });

@@ -64,7 +64,7 @@ const PropertyChecker: React.FC = () => {
 
   return (
     <div className="bg-blue-50/50 rounded-lg p-6 shadow-sm mb-8">
-      {!lmiStatus && displayMode === 'form' && (
+      {(!lmiStatus && displayMode === 'form') && (
         <PropertySearchCard 
           onSubmit={onSubmit}
           isLoading={isLoading}

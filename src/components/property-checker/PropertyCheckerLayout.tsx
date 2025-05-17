@@ -4,6 +4,7 @@ import { CheckLmiStatusResponse } from '@/lib/types';
 import PropertyResults from './PropertyResults';
 import PropertyScreener from './PropertyScreener';
 import { usePropertyWorkflow } from '@/hooks/usePropertyWorkflow';
+import { PropertySearchForm } from '../property-form/PropertySearchForm';
 
 interface PropertyCheckerLayoutProps {
   currentData: CheckLmiStatusResponse | null;
