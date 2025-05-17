@@ -15,7 +15,7 @@ interface ProfileFormValues {
 }
 
 const ProfileSettings: React.FC = () => {
-  const { user } = useAuth();
+  const { user, session } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
 
   const form = useForm<ProfileFormValues>({
@@ -43,6 +43,8 @@ const ProfileSettings: React.FC = () => {
     setIsLoading(true);
     
     try {
+      console.log('Updating profile with data:', data);
+      
       // Update user metadata first
       const { error: metadataError } = await supabase.auth.updateUser({
         data: {
@@ -51,7 +53,10 @@ const ProfileSettings: React.FC = () => {
         }
       });
       
-      if (metadataError) throw metadataError;
+      if (metadataError) {
+        console.error('Metadata update error:', metadataError);
+        throw metadataError;
+      }
       
       // Only update email if it actually changed
       if (data.email !== user.email) {
@@ -73,6 +78,13 @@ const ProfileSettings: React.FC = () => {
       }
       
       toast.success('Profile updated successfully');
+      
+      // Force refresh of user data
+      const { data: refreshData } = await supabase.auth.getUser();
+      if (refreshData?.user) {
+        console.log('Updated user data:', refreshData.user);
+      }
+      
     } catch (error: any) {
       console.error('Error updating profile:', error);
       toast.error(`Failed to update profile: ${error.message}`);
