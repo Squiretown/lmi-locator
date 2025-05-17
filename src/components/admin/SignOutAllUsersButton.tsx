@@ -23,6 +23,7 @@ const SignOutAllUsersButton: React.FC = () => {
   const { session } = useAuth();
   
   const handleSignOutAll = async () => {
+    if (isLoading) return;
     setIsLoading(true);
     
     try {
@@ -34,7 +35,7 @@ const SignOutAllUsersButton: React.FC = () => {
         return;
       }
       
-      console.log("Attempting to sign out all users with token:", session.access_token.substring(0, 10) + "...");
+      console.log("Attempting to sign out all users");
       
       const result = await signOutAllUsers();
       

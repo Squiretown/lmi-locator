@@ -38,12 +38,13 @@ export const getDashboardStats = async () => {
     console.log('Dashboard stats retrieved successfully:', data);
     
     // Return the dashboard stats
-    return data || { 
-      userCount: 0, 
-      propertyCount: 0, 
-      realtorCount: 0, 
-      searchHistory: [],
-      success: true
+    return {
+      userCount: data?.userCount || 0, 
+      propertyCount: data?.propertyCount || 0, 
+      realtorCount: data?.realtorCount || 0, 
+      searchHistory: data?.searchHistory || [],
+      success: true,
+      timestamp: data?.timestamp || new Date().toISOString()
     };
   } catch (error) {
     console.error('Exception in getDashboardStats:', error);
@@ -55,7 +56,8 @@ export const getDashboardStats = async () => {
       realtorCount: 0, 
       searchHistory: [],
       success: false, 
-      error: error.message || 'Unknown error occurred'
+      error: error.message || 'Unknown error occurred',
+      timestamp: new Date().toISOString()
     };
   }
 };

@@ -21,6 +21,7 @@ export const Dashboard = () => {
   const [error, setError] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
   const [usingMockData, setUsingMockData] = useState(false);
+  const [hasInitiallyLoaded, setHasInitiallyLoaded] = useState(false);
 
   const loadDashboardData = useCallback(async () => {
     try {
@@ -48,10 +49,12 @@ export const Dashboard = () => {
           console.log('Dashboard stats loaded successfully:', apiData);
           setStats(apiData);
           setUsingMockData(false);
+          setHasInitiallyLoaded(true);
         } else {
           console.log('API returned error, using mock data');
           setStats(mockData);
           setUsingMockData(true);
+          setHasInitiallyLoaded(true);
           if (apiData?.error) {
             setError(`API Error: ${apiData.error}`);
           }
@@ -60,20 +63,25 @@ export const Dashboard = () => {
         console.error('API call failed, using mock data', apiError);
         setStats(mockData);
         setUsingMockData(true);
+        setHasInitiallyLoaded(true);
         setError(`Failed to fetch dashboard data: ${apiError.message}`);
       }
     } catch (err) {
       console.error('Error in dashboard data loading:', err);
       setError('Failed to load dashboard data. Using default values instead.');
       setUsingMockData(true);
+      setHasInitiallyLoaded(true);
     } finally {
       setIsLoading(false);
     }
   }, [retryCount]); // Dependency on retryCount to enable manual refresh
 
+  // Initial data load
   useEffect(() => {
-    loadDashboardData();
-  }, [loadDashboardData]);
+    if (!hasInitiallyLoaded) {
+      loadDashboardData();
+    }
+  }, [loadDashboardData, hasInitiallyLoaded]);
 
   const handleRetry = () => {
     setRetryCount(prevCount => prevCount + 1);

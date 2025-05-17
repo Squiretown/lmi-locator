@@ -40,16 +40,21 @@ async function handleGetDashboardStats(supabase: SupabaseClient) {
   
   try {
     // Get user count
-    const { count: userCount, error: userError } = await supabase
-      .from('user_profiles')
-      .select('*', { count: 'exact', head: true });
-    
-    if (userError) {
-      console.error("Error fetching user count:", userError);
-      // Continue execution, set default value
+    try {
+      const { count: userCount, error: userError } = await supabase
+        .from('user_profiles')
+        .select('*', { count: 'exact', head: true });
+      
+      if (userError) {
+        console.error("Error fetching user count:", userError);
+        // Continue execution, set default value
+        response.userCount = 0;
+      } else {
+        response.userCount = userCount || 0;
+      }
+    } catch (userCountError) {
+      console.error("Exception fetching user count:", userCountError);
       response.userCount = 0;
-    } else {
-      response.userCount = userCount || 0;
     }
     
     // Get property count 
