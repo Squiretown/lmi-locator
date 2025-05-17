@@ -14,20 +14,19 @@ export async function signOutUser() {
 
 export async function signOutAllUsers() {
   try {
-    // Fix: Pass a string instead of an object to match the expected type
-    const { error } = await supabase.auth.admin.signOut('*');
+    // Call the Supabase admin API to sign out all users
+    const { error } = await supabase.functions.invoke('sign-out-all-users', {
+      method: 'POST'
+    });
     
     if (error) {
       console.error('Error signing out all users:', error);
-      // Toast notification removed
       return { success: false, error };
     }
     
-    // Toast notification removed
     return { success: true, error: null };
   } catch (error) {
     console.error('Exception during sign out all users:', error);
-    // Toast notification removed
     return { success: false, error: error as Error };
   }
 }

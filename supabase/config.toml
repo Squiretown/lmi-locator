@@ -29,3 +29,7 @@ enabled = true
 [functions]
 [functions.remove-all-users]
 verify_jwt = true
+
+[functions.sign-out-all-users]
+verify_jwt = true
+

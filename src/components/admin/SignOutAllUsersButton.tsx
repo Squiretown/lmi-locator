@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { AlertCircle, LogOut } from "lucide-react";
 import { toast } from "sonner";
-import { signOutAllUsers } from "@/lib/auth/auth-operations";
+import { signOutAllUsers } from "@/lib/auth/operations/session";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -27,7 +27,9 @@ const SignOutAllUsersButton: React.FC = () => {
       const result = await signOutAllUsers();
       
       if (result.success) {
-        toast.success("All users have been signed out successfully");
+        toast.success("All users have been signed out successfully", {
+          description: "Users will need to sign in again at their next session"
+        });
       } else {
         toast.error(`Operation failed: ${result.error?.message || 'Unknown error'}`);
       }
@@ -56,7 +58,7 @@ const SignOutAllUsersButton: React.FC = () => {
           </AlertDialogTitle>
           <AlertDialogDescription>
             This action will immediately terminate all user sessions across the entire platform.
-            All users will need to sign in again.
+            All users will need to sign in again. Your own session will remain active.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
