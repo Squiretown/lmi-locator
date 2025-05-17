@@ -58,7 +58,7 @@ const ClientDashboard: React.FC = () => {
       </div>
 
       <div className="container mx-auto px-4 py-6">
-        <ClientHeader title="Your Home Buying Dashboard" onSignOut={handleSignOut} />
+        <ClientHeader onSignOut={handleSignOut} />
         
         <div className="mt-6">
           <ClientDashboardContent />
