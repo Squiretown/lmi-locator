@@ -20,11 +20,20 @@ export function useMortgageDashboard() {
             .eq('user_id', user.id)
             .single();
           
-          // Set the first name from the user profile or metadata
-          if (profile) {
-            setFirstName(profile.first_name);
-          } else if (user.user_metadata && user.user_metadata.first_name) {
+          // Set the first name - check user metadata first as it definitely has first_name
+          // Then fall back to other profile fields if available
+          if (user.user_metadata && user.user_metadata.first_name) {
             setFirstName(user.user_metadata.first_name as string);
+          } else if (profile) {
+            // Try different possible field names based on our database structure
+            if ('first_name' in profile) {
+              setFirstName(profile.first_name as string);
+            } else {
+              // If no direct first_name field, perhaps it's stored in another field
+              // or we can extract it from another field like "name" or "full_name"
+              const name = profile.job_title || profile.company_name || 'User';
+              setFirstName(name);
+            }
           }
         } catch (error) {
           console.error('Error fetching user profile:', error);
