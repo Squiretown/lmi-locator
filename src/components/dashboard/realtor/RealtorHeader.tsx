@@ -2,6 +2,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { UserCog } from 'lucide-react';
+import ProfileMenu from '@/components/auth/ProfileMenu';
 
 interface RealtorHeaderProps {
   onEditProfile: () => void;
@@ -22,7 +23,7 @@ export const RealtorHeader: React.FC<RealtorHeaderProps> = ({
           <UserCog className="mr-2 h-4 w-4" />
           {showCreateProfile ? 'Create Profile' : 'Edit Profile'}
         </Button>
-        <Button variant="outline" onClick={onSignOut}>Sign Out</Button>
+        <ProfileMenu />
       </div>
     </div>
   );

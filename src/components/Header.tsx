@@ -5,6 +5,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { MapPinIcon, Home } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import ProfileMenu from '@/components/auth/ProfileMenu';
 
 const Header = () => {
   const { pathname } = useLocation();
@@ -97,13 +98,9 @@ const Header = () => {
                     <Link to="/admin">Admin Panel</Link>
                   </Button>
                 )}
-                <Button 
-                  variant="ghost" 
-                  className="text-white hover:text-primary" 
-                  onClick={() => signOut()}
-                >
-                  Log out
-                </Button>
+                
+                {/* Profile Menu */}
+                <ProfileMenu />
               </>
             ) : (
               <>

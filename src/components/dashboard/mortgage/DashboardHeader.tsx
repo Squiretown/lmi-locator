@@ -2,6 +2,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { NotificationBell } from '@/components/notifications/NotificationBell';
+import ProfileMenu from '@/components/auth/ProfileMenu';
 
 interface DashboardHeaderProps {
   onSignOut: () => void;
@@ -16,7 +17,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({ onSignOut, fir
       </h1>
       <div className="flex items-center gap-3">
         <NotificationBell />
-        <Button variant="outline" onClick={onSignOut}>Sign Out</Button>
+        <ProfileMenu />
       </div>
     </div>
   );

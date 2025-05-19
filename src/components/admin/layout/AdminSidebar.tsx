@@ -18,6 +18,7 @@ import {
   AdminSidebarSettingsMenu
 } from './AdminSidebarMenus';
 import AdminStatusFooter from './AdminStatusFooter';
+import ProfileMenu from '@/components/auth/ProfileMenu';
 
 const AdminSidebar: React.FC = () => {
   const { userType } = useAdminPermissions();
@@ -31,11 +32,14 @@ const AdminSidebar: React.FC = () => {
   return (
     <Sidebar>
       <SidebarHeader>
-        <div className="flex items-center gap-2 px-2">
-          <div className="flex items-center justify-center w-8 h-8 rounded-md bg-primary text-primary-foreground">
-            <Building className="h-5 w-5" />
+        <div className="flex items-center justify-between px-2">
+          <div className="flex items-center gap-2">
+            <div className="flex items-center justify-center w-8 h-8 rounded-md bg-primary text-primary-foreground">
+              <Building className="h-5 w-5" />
+            </div>
+            <div className="font-bold text-lg">LMI Check Admin</div>
           </div>
-          <div className="font-bold text-lg">LMI Check Admin</div>
+          <ProfileMenu />
         </div>
         {userType && (
           <div className="px-4 mt-1">

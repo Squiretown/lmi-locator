@@ -11,11 +11,13 @@ import { PropertyActivityChart } from '@/components/dashboard/realtor/PropertyAc
 import { ClientList } from '@/components/dashboard/realtor/ClientList';
 import { ProfileWarning } from '@/components/dashboard/realtor/ProfileWarning';
 import { TeamContent } from '@/components/dashboard/client/TeamContent';
+import { useNavigate } from 'react-router-dom';
 
 const RealtorDashboard: React.FC = () => {
   const { user, signOut } = useAuth();
   const [profileDialogOpen, setProfileDialogOpen] = useState(false);
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   
   const { data: realtorProfile, isLoading: isLoadingProfile } = useQuery({
     queryKey: ['realtorProfile'],
@@ -67,11 +69,16 @@ const RealtorDashboard: React.FC = () => {
     }
   };
 
+  const handleSignOut = async () => {
+    await signOut();
+    navigate('/login');
+  };
+
   return (
     <div className="container mx-auto px-4 py-6">
       <RealtorHeader
         onEditProfile={() => setProfileDialogOpen(true)}
-        onSignOut={signOut}
+        onSignOut={handleSignOut}
         showCreateProfile={!realtorProfile}
       />
       

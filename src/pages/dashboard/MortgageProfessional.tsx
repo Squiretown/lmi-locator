@@ -1,22 +1,27 @@
+
 import React from 'react';
-import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { User, Settings, HelpCircle } from 'lucide-react';
 import { DashboardStats, PropertyCheckSection, MarketingSection, RecentActivitySection, RecentContactsSection, DashboardHeader } from '@/components/dashboard/mortgage';
 import { useMortgageDashboard } from '@/hooks/useMortgageDashboard';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
+
 const MortgageProfessionalDashboard: React.FC = () => {
   const {
     signOut,
     firstName
   } = useMortgageDashboard();
   const navigate = useNavigate();
-  return <div className="relative">
-      {/* Header with main content and user menu */}
+  
+  const handleSignOut = async () => {
+    await signOut();
+    navigate('/login');
+  };
+  
+  return (
+    <div className="relative">
       <div className="container mx-auto px-4 py-6 max-w-7xl">
         {/* Header */}
-        <DashboardHeader onSignOut={signOut} firstName={firstName} />
+        <DashboardHeader onSignOut={handleSignOut} firstName={firstName} />
 
         {/* Navigation */}
         <div className="flex justify-between items-center mb-6">
@@ -44,6 +49,8 @@ const MortgageProfessionalDashboard: React.FC = () => {
           </div>
         </div>
       </div>
-    </div>;
+    </div>
+  );
 };
+
 export default MortgageProfessionalDashboard;
