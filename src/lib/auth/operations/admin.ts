@@ -12,6 +12,9 @@ export async function createInitialAdminUser() {
     
     if (existingAdmins) {
       console.log('Admin user already exists');
+      toast.info("Admin exists", {
+        description: "An admin user already exists in the system"
+      });
       return null;
     }
 
@@ -35,12 +38,17 @@ export async function createInitialAdminUser() {
 
     if (error) {
       console.error('Error creating admin user:', error);
-      toast.error('Failed to create initial admin user');
+      toast.error("Admin creation failed", {
+        description: error.message || "Failed to create initial admin user"
+      });
       return null;
     }
 
     if (data?.user) {
-      toast.success('Initial admin user created successfully');
+      toast.success('Admin user created', {
+        description: 'Initial admin user created successfully',
+        duration: 6000
+      });
       console.log('Initial admin user created:', data.user.email);
       return { email: adminEmail, password: adminPassword };
     }
@@ -48,7 +56,9 @@ export async function createInitialAdminUser() {
     return null;
   } catch (error) {
     console.error('Exception during admin user creation:', error);
-    toast.error('An unexpected error occurred');
+    toast.error("Admin creation failed", {
+      description: "An unexpected error occurred while creating admin user"
+    });
     return null;
   }
 }

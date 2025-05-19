@@ -37,6 +37,36 @@ export const showToast = (
   }
 };
 
+export const showAuthToast = {
+  loginSuccess: (userName?: string) => {
+    showToast('success', `Welcome back${userName ? ', ' + userName : ''}!`, {
+      description: 'You have successfully signed in',
+      duration: 4000
+    });
+  },
+  
+  signupSuccess: (userName?: string) => {
+    showToast('success', `Welcome${userName ? ', ' + userName : ''}!`, {
+      description: 'Your account has been created successfully',
+      duration: 4000
+    });
+  },
+  
+  logoutSuccess: () => {
+    showToast('success', 'Signed out successfully', {
+      description: 'You have been logged out of your account',
+      duration: 4000
+    });
+  },
+  
+  authError: (error: string) => {
+    showToast('error', 'Authentication failed', {
+      description: error || 'Please check your credentials and try again',
+      duration: 5000
+    });
+  }
+};
+
 export const showSearchStarted = (count: number) => {
   showToast('info', 'Search started', {
     description: `Processing ${count} addresses...`,

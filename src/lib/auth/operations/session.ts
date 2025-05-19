@@ -5,10 +5,14 @@ import { toast } from "sonner";
 export async function signOutUser() {
   try {
     await supabase.auth.signOut();
-    toast.success("Signed out successfully");
+    toast.success("Signed out successfully", {
+      description: "You have been logged out of your account"
+    });
   } catch (error) {
     console.error('Error signing out:', error);
-    toast.error("Failed to sign out");
+    toast.error("Failed to sign out", {
+      description: "There was a problem signing you out. Please try again."
+    });
     throw error;
   }
 }
@@ -22,7 +26,9 @@ export async function signOutAllUsers() {
     
     if (!session) {
       console.error("No active session found");
-      toast.error("You need to be logged in to perform this action");
+      toast.error("Authentication error", {
+        description: "You need to be logged in to perform this action"
+      });
       return { success: false, error: new Error("No active session") };
     }
     
@@ -38,16 +44,22 @@ export async function signOutAllUsers() {
     
     if (error) {
       console.error('Error signing out all users:', error);
-      toast.error(`Failed to sign out all users: ${error.message || 'Unknown error'}`);
+      toast.error("Operation failed", {
+        description: `Failed to sign out all users: ${error.message || 'Unknown error'}`
+      });
       return { success: false, error };
     }
     
     console.log("Sign out all users successful:", data);
-    toast.success("All users have been signed out successfully");
+    toast.success("Operation successful", {
+      description: "All users have been signed out successfully"
+    });
     return { success: true, error: null };
   } catch (error) {
     console.error('Exception during sign out all users:', error);
-    toast.error("An unexpected error occurred while signing out all users");
+    toast.error("Unexpected error", {
+      description: "An unexpected error occurred while signing out all users"
+    });
     return { success: false, error: error as Error };
   }
 }
