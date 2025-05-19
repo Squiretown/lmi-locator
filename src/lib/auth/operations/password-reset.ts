@@ -1,6 +1,5 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from 'sonner';
 import { extractRetrySeconds } from './utils';
 
 export async function resetPassword(email: string, redirectTo?: string) {
@@ -16,10 +15,6 @@ export async function resetPassword(email: string, redirectTo?: string) {
       
       // Special handling for rate limit errors
       if (error.message.includes('security purposes') || error.message.includes('rate limit')) {
-        toast.error("Rate limit reached", {
-          description: "Please wait before requesting another password reset",
-          duration: 6000
-        });
         return { 
           success: false, 
           error: {
@@ -30,22 +25,12 @@ export async function resetPassword(email: string, redirectTo?: string) {
         };
       }
       
-      toast.error("Password reset failed", {
-        description: error.message || "Unable to send password reset email"
-      });
       return { success: false, error };
     }
     
-    toast.success('Password reset instructions sent!', {
-      description: 'Please check your email to complete the process',
-      duration: 6000
-    });
     return { success: true, error: null };
   } catch (err) {
     console.error('Exception during password reset:', err);
-    toast.error('An unexpected error occurred', {
-      description: 'Unable to send password reset. Please try again later.'
-    });
     return { success: false, error: err as Error };
   }
 }
@@ -60,22 +45,12 @@ export async function updatePasswordWithToken(newPassword: string) {
     
     if (error) {
       console.error('Password update error:', error.message);
-      toast.error("Password update failed", {
-        description: error.message || "Unable to update your password"
-      });
       return { success: false, error };
     }
     
-    toast.success('Password updated successfully!', {
-      description: 'You can now log in with your new password',
-      duration: 6000
-    });
     return { success: true, error: null };
   } catch (err) {
     console.error('Exception during password update:', err);
-    toast.error('An unexpected error occurred', {
-      description: 'Unable to update your password. Please try again later.'
-    });
     return { success: false, error: err as Error };
   }
 }
