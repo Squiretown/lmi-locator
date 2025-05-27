@@ -11,7 +11,7 @@ export const PropertyCheckSection: React.FC = () => {
   const [showComingSoon, setShowComingSoon] = useState(false);
 
   const handleCheckProperty = () => {
-    navigate('/property-checker');
+    navigate('/dashboard/client');
   };
 
   const handleSearchListings = () => {
