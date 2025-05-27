@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
@@ -25,12 +26,12 @@ const CancelAccountDialog: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { user } = useAuth();
 
-  const handleCancel = async () => {
+  const handleCancelRequest = async () => {
     setError(null);
     
     // Check confirmation text
     if (confirmText !== 'CANCEL') {
-      setError('Please type CANCEL to confirm account cancellation');
+      setError('Please type CANCEL to confirm account cancellation request');
       return;
     }
     
@@ -54,29 +55,56 @@ const CancelAccountDialog: React.FC = () => {
         return;
       }
 
-      // Update user profile to mark as cancelled/inactive
-      const { error: updateError } = await supabase
-        .from('user_profiles')
-        .update({ 
-          user_type: 'cancelled',
-          // Keep the account but mark it as cancelled
-        })
-        .eq('user_id', user?.id);
+      // Create a cancellation request notification for admins
+      const { error: notificationError } = await supabase
+        .from('notifications')
+        .insert({
+          user_id: user?.id,
+          notification_type: 'account_cancellation_request',
+          title: 'Account Cancellation Request',
+          message: `User ${user?.email} has requested account cancellation. Please review and approve.`,
+          data: {
+            requesting_user_id: user?.id,
+            requesting_user_email: user?.email,
+            request_type: 'account_cancellation'
+          }
+        });
 
-      if (updateError) {
-        console.error('Error cancelling account:', updateError);
-        setError('Failed to cancel account. Please try again.');
+      if (notificationError) {
+        console.error('Error creating cancellation request:', notificationError);
+        setError('Failed to submit cancellation request. Please try again.');
         return;
       }
 
-      toast.success('Account cancelled successfully. You can reactivate it by logging in again.');
+      // Also create notifications for all admin users
+      const { data: adminUsers, error: adminError } = await supabase
+        .from('user_profiles')
+        .select('user_id')
+        .eq('user_type', 'admin');
+
+      if (!adminError && adminUsers && adminUsers.length > 0) {
+        const adminNotifications = adminUsers.map(admin => ({
+          user_id: admin.user_id,
+          notification_type: 'account_cancellation_request',
+          title: 'Account Cancellation Request',
+          message: `User ${user?.email} has requested account cancellation. Please review and approve.`,
+          data: {
+            requesting_user_id: user?.id,
+            requesting_user_email: user?.email,
+            request_type: 'account_cancellation'
+          }
+        }));
+
+        await supabase
+          .from('notifications')
+          .insert(adminNotifications);
+      }
+
+      toast.success('Account cancellation request submitted successfully. An admin will review your request.');
       setIsOpen(false);
       
-      // Sign out the user
-      await supabase.auth.signOut();
-      
     } catch (error) {
-      console.error('Error cancelling account:', error);
+      console.error('Error submitting cancellation request:', error);
       setError('An unexpected error occurred. Please try again.');
     } finally {
       setIsLoading(false);
@@ -95,13 +123,15 @@ const CancelAccountDialog: React.FC = () => {
       if (!open) resetForm();
     }}>
       <DialogTrigger asChild>
-        <Button variant="outline">Cancel Account</Button>
+        <Button variant="outline" className="border-orange-200 text-orange-700 hover:bg-orange-50">
+          Request Account Cancellation
+        </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="text-orange-600">Cancel Account</DialogTitle>
+          <DialogTitle className="text-orange-600">Request Account Cancellation</DialogTitle>
           <DialogDescription>
-            This will deactivate your account temporarily. You can reactivate it by logging in again later. Your data will be preserved.
+            This will submit a request to cancel your account. An administrator will review your request and process the cancellation if approved.
           </DialogDescription>
         </DialogHeader>
         
@@ -144,10 +174,10 @@ const CancelAccountDialog: React.FC = () => {
           <Button 
             variant="outline"
             className="border-orange-200 text-orange-700 hover:bg-orange-50"
-            onClick={handleCancel}
+            onClick={handleCancelRequest}
             disabled={isLoading || confirmText !== 'CANCEL' || !password}
           >
-            {isLoading ? 'Cancelling...' : 'Cancel Account'}
+            {isLoading ? 'Submitting Request...' : 'Submit Cancellation Request'}
           </Button>
         </DialogFooter>
       </DialogContent>
