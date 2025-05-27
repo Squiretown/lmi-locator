@@ -15,20 +15,23 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 const DeleteAccountDialog: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [password, setPassword] = useState('');
   const [confirmText, setConfirmText] = useState('');
   const [error, setError] = useState<string | null>(null);
-  const { deleteAccount, isLoading } = useAuth();
+  const [isLoading, setIsLoading] = useState(false);
+  const { user } = useAuth();
 
-  const handleDelete = async () => {
+  const handleDeleteRequest = async () => {
     setError(null);
     
     // Check confirmation text
     if (confirmText !== 'DELETE') {
-      setError('Please type DELETE to confirm account deletion');
+      setError('Please type DELETE to confirm account deletion request');
       return;
     }
     
@@ -38,12 +41,73 @@ const DeleteAccountDialog: React.FC = () => {
       return;
     }
     
-    const { success, error } = await deleteAccount(password);
-    if (success) {
+    setIsLoading(true);
+    
+    try {
+      // Verify password first
+      const { error: verifyError } = await supabase.auth.signInWithPassword({
+        email: user?.email || "",
+        password: password,
+      });
+
+      if (verifyError) {
+        setError('Incorrect password. Please verify your current password and try again.');
+        return;
+      }
+
+      // Create a deletion request notification for admins
+      const { error: notificationError } = await supabase
+        .from('notifications')
+        .insert({
+          user_id: user?.id,
+          notification_type: 'account_deletion_request',
+          title: 'Account Deletion Request',
+          message: `User ${user?.email} has requested account deletion. Please review and approve.`,
+          data: {
+            requesting_user_id: user?.id,
+            requesting_user_email: user?.email,
+            request_type: 'account_deletion'
+          }
+        });
+
+      if (notificationError) {
+        console.error('Error creating deletion request:', notificationError);
+        setError('Failed to submit deletion request. Please try again.');
+        return;
+      }
+
+      // Also create notifications for all admin users
+      const { data: adminUsers, error: adminError } = await supabase
+        .from('user_profiles')
+        .select('user_id')
+        .eq('user_type', 'admin');
+
+      if (!adminError && adminUsers && adminUsers.length > 0) {
+        const adminNotifications = adminUsers.map(admin => ({
+          user_id: admin.user_id,
+          notification_type: 'account_deletion_request',
+          title: 'Account Deletion Request',
+          message: `User ${user?.email} has requested account deletion. Please review and approve.`,
+          data: {
+            requesting_user_id: user?.id,
+            requesting_user_email: user?.email,
+            request_type: 'account_deletion'
+          }
+        }));
+
+        await supabase
+          .from('notifications')
+          .insert(adminNotifications);
+      }
+
+      toast.success('Account deletion request submitted successfully. An admin will review your request.');
       setIsOpen(false);
-      // No need to navigate - auth state change will redirect to login
-    } else if (error) {
-      setError(error.message);
+      
+    } catch (error) {
+      console.error('Error submitting deletion request:', error);
+      setError('An unexpected error occurred. Please try again.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -63,9 +127,9 @@ const DeleteAccountDialog: React.FC = () => {
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="text-destructive">Delete Account</DialogTitle>
+          <DialogTitle className="text-destructive">Request Account Deletion</DialogTitle>
           <DialogDescription>
-            This action cannot be undone. This will permanently delete your account and remove all your data from our servers.
+            This will submit a request to delete your account. An administrator will review your request and permanently delete your account and all associated data.
           </DialogDescription>
         </DialogHeader>
         
@@ -107,10 +171,10 @@ const DeleteAccountDialog: React.FC = () => {
           </Button>
           <Button 
             variant="destructive" 
-            onClick={handleDelete}
+            onClick={handleDeleteRequest}
             disabled={isLoading || confirmText !== 'DELETE' || !password}
           >
-            {isLoading ? 'Deleting...' : 'Delete Account'}
+            {isLoading ? 'Submitting Request...' : 'Request Account Deletion'}
           </Button>
         </DialogFooter>
       </DialogContent>

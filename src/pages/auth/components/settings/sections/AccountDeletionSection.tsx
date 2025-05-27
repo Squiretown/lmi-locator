@@ -21,9 +21,9 @@ const AccountDeletionSection: React.FC = () => {
         </div>
         
         <div>
-          <h4 className="text-sm font-medium mb-1">Delete Account</h4>
+          <h4 className="text-sm font-medium mb-1">Request Account Deletion</h4>
           <p className="text-xs text-muted-foreground mb-2">
-            Permanently delete your account and all associated data.
+            Submit a request to permanently delete your account. An administrator will review and process your request.
           </p>
           <DeleteAccountDialog />
         </div>
