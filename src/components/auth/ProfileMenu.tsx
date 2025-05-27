@@ -1,18 +1,14 @@
-
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger
-} from '@/components/ui/dropdown-menu';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 import { User, Settings, LogOut, HelpCircle } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
-
 export const ProfileMenu = () => {
-  const { signOut, user } = useAuth();
+  const {
+    signOut,
+    user
+  } = useAuth();
   const navigate = useNavigate();
 
   // Handle navigation to different pages
@@ -25,11 +21,8 @@ export const ProfileMenu = () => {
     await signOut();
     navigate('/login');
   };
-
   if (!user) return null;
-
-  return (
-    <DropdownMenu>
+  return <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="icon" className="rounded-full">
           <User className="h-5 w-5" />
@@ -42,8 +35,8 @@ export const ProfileMenu = () => {
           <span>My Profile</span>
         </DropdownMenuItem>
         <DropdownMenuItem className="flex items-center gap-2" onClick={() => handleNavigate('/settings')}>
-          <Settings className="h-4 w-4" />
-          <span>Settings</span>
+          
+          
         </DropdownMenuItem>
         <DropdownMenuItem className="flex items-center gap-2" onClick={handleSignOut}>
           <LogOut className="h-4 w-4" />
@@ -54,8 +47,6 @@ export const ProfileMenu = () => {
           <span>Help</span>
         </DropdownMenuItem>
       </DropdownMenuContent>
-    </DropdownMenu>
-  );
+    </DropdownMenu>;
 };
-
 export default ProfileMenu;
