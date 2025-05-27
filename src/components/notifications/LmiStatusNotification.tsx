@@ -5,6 +5,7 @@ import { NotificationHeader } from './NotificationHeader';
 import { AddressSection } from './AddressSection';
 import { RoleSpecificContent } from './RoleSpecificContent';
 import { ActionButtons } from './ActionButtons';
+import { useAuth } from '@/hooks/useAuth';
 
 interface LmiStatusNotificationProps {
   isApproved: boolean;
@@ -29,9 +30,10 @@ const LmiStatusNotification = ({
   onContinue,
   onSignUp
 }: LmiStatusNotificationProps) => {
-  // Determine if user is logged in based on whether onSave handler is provided
-  // If onSave exists, user is logged in; if onSignUp exists, user is not logged in
-  const isLoggedIn = onSave !== undefined;
+  const { user } = useAuth();
+  
+  // User is logged in if we have a user object
+  const isLoggedIn = !!user;
   
   console.log('LmiStatusNotification render:', { 
     isApproved, 
@@ -39,7 +41,8 @@ const LmiStatusNotification = ({
     isLoggedIn, 
     userType,
     hasSaveHandler: !!onSave,
-    hasSignUpHandler: !!onSignUp
+    hasSignUpHandler: !!onSignUp,
+    userId: user?.id
   });
 
   return (
@@ -64,8 +67,8 @@ const LmiStatusNotification = ({
 
           <ActionButtons 
             onShare={onShare}
-            onSave={onSave}
-            onSignUp={onSignUp}
+            onSave={isLoggedIn ? onSave : undefined}
+            onSignUp={!isLoggedIn ? onSignUp : undefined}
             isLoggedIn={isLoggedIn}
           />
         </div>

@@ -3,8 +3,8 @@ import React, { useState, useEffect } from 'react';
 import { CheckLmiStatusResponse } from '@/lib/types';
 import LmiStatusNotification from '@/components/notifications/LmiStatusNotification';
 import { useRoleSpecificNotifications } from '@/hooks/useRoleSpecificNotifications';
-import { toast } from 'sonner';
-import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
+import { useNavigate } from 'react-router-dom';
 
 interface ResultsSectionProps {
   data: CheckLmiStatusResponse;
@@ -20,40 +20,22 @@ const ResultsSection: React.FC<ResultsSectionProps> = ({
   onCloseNotification
 }) => {
   const { createLmiNotification } = useRoleSpecificNotifications();
-  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
+  const { user } = useAuth();
+  const navigate = useNavigate();
   const [userType, setUserType] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState<boolean>(false);
   
-  // Check authentication status
+  // Check authentication status and get user type
   useEffect(() => {
-    const checkAuthStatus = async () => {
-      try {
-        // Get the current session
-        const { data: sessionData, error } = await supabase.auth.getSession();
-        
-        if (error) {
-          throw error;
-        }
-        
-        const isAuthenticated = !!sessionData.session;
-        setIsLoggedIn(isAuthenticated);
-        
-        // Get user type if authenticated
-        if (isAuthenticated && sessionData.session) {
-          const userMeta = sessionData.session.user.user_metadata;
-          setUserType(userMeta?.user_type || null);
-          console.log("User is logged in as type:", userMeta?.user_type || "client");
-        } else {
-          console.log("User is not logged in");
-        }
-      } catch (error) {
-        console.error('Error checking authentication status:', error);
-        setIsLoggedIn(false);
-      }
-    };
-    
-    checkAuthStatus();
-  }, []);
+    if (user) {
+      const userMeta = user.user_metadata;
+      setUserType(userMeta?.user_type || 'client');
+      console.log("User is logged in as type:", userMeta?.user_type || "client");
+    } else {
+      setUserType(null);
+      console.log("User is not logged in");
+    }
+  }, [user]);
 
   const handleShare = async () => {
     const shareText = `Property LMI Status Check Results:
@@ -70,20 +52,14 @@ Census Tract: ${data.tract_id || 'Unknown'}`;
         console.log('Content shared successfully');
       } catch (err) {
         await navigator.clipboard.writeText(shareText);
-        toast("Results copied to clipboard", {
-          description: "Property details have been copied to your clipboard"
-        });
       }
     } else {
       await navigator.clipboard.writeText(shareText);
-      toast("Results copied to clipboard", {
-        description: "Property details have been copied to your clipboard"
-      });
     }
   };
 
   const handleSaveProperty = async () => {
-    console.log("Save pressed in ResultsSection, user logged in:", isLoggedIn);
+    console.log("Save pressed in ResultsSection, user logged in:", !!user);
     
     if (isSaving) return; // Prevent multiple saves
     
@@ -91,7 +67,7 @@ Census Tract: ${data.tract_id || 'Unknown'}`;
     
     try {
       // Create notification if user is logged in
-      if (isLoggedIn) {
+      if (user) {
         await createLmiNotification(data.address, data.is_approved);
       }
       
@@ -101,7 +77,6 @@ Census Tract: ${data.tract_id || 'Unknown'}`;
       console.log("Property saved successfully via ResultsSection");
     } catch (error) {
       console.error("Error saving property:", error);
-      toast.error("Failed to save property");
     } finally {
       setIsSaving(false);
     }
@@ -109,10 +84,7 @@ Census Tract: ${data.tract_id || 'Unknown'}`;
 
   const handleSignUp = () => {
     onCloseNotification();
-    window.location.href = '/login';
-    toast("Please sign in to save properties", {
-      description: 'Create an account to save and track properties'
-    });
+    navigate('/login');
   };
 
   return (
@@ -123,8 +95,8 @@ Census Tract: ${data.tract_id || 'Unknown'}`;
       userType={userType}
       onClose={onCloseNotification}
       onShare={handleShare}
-      onSave={isLoggedIn ? handleSaveProperty : undefined}
-      onSignUp={!isLoggedIn ? handleSignUp : undefined}
+      onSave={user ? handleSaveProperty : undefined}
+      onSignUp={!user ? handleSignUp : undefined}
     />
   );
 };

@@ -26,18 +26,18 @@ export const ActionButtons = ({ onShare, onSave, onSignUp, isLoggedIn }: ActionB
         </Button>
       )}
       
-      {!isLoggedIn && onSignUp && (
-        <Button onClick={onSignUp} className="flex-1 bg-blue-600 hover:bg-blue-700">
-          <LogIn className="mr-2 h-4 w-4" />
-          Create Account
-        </Button>
-      )}
-      
-      {isLoggedIn && onSave && (
-        <Button onClick={onSave} variant="success" className="flex-1">
+      {isLoggedIn && onSave ? (
+        <Button onClick={onSave} variant="default" className="flex-1 bg-green-600 hover:bg-green-700">
           <Save className="mr-2 h-4 w-4" />
           Save Property
         </Button>
+      ) : (
+        !isLoggedIn && onSignUp && (
+          <Button onClick={onSignUp} className="flex-1 bg-blue-600 hover:bg-blue-700">
+            <LogIn className="mr-2 h-4 w-4" />
+            Create Account
+          </Button>
+        )
       )}
     </div>
   );
