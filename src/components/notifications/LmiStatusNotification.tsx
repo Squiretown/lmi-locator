@@ -5,13 +5,13 @@ import { NotificationHeader } from './NotificationHeader';
 import { AddressSection } from './AddressSection';
 import { RoleSpecificContent } from './RoleSpecificContent';
 import { ActionButtons } from './ActionButtons';
-import { useAuth } from '@/hooks/useAuth';
 
 interface LmiStatusNotificationProps {
   isApproved: boolean;
   address: string;
   tractId: string;
   userType?: string | null;
+  isLoggedIn: boolean;
   onClose: () => void;
   onShare?: () => void;
   onSave?: () => void;
@@ -24,25 +24,20 @@ const LmiStatusNotification = ({
   address,
   tractId,
   userType,
+  isLoggedIn,
   onClose,
   onShare,
   onSave,
   onContinue,
   onSignUp
 }: LmiStatusNotificationProps) => {
-  const { user } = useAuth();
-  
-  // User is logged in if we have a user object
-  const isLoggedIn = !!user;
-  
   console.log('LmiStatusNotification render:', { 
     isApproved, 
     address, 
     isLoggedIn, 
     userType,
     hasSaveHandler: !!onSave,
-    hasSignUpHandler: !!onSignUp,
-    userId: user?.id
+    hasSignUpHandler: !!onSignUp
   });
 
   return (

@@ -93,6 +93,7 @@ Census Tract: ${data.tract_id || 'Unknown'}`;
       address={data.address}
       tractId={data.tract_id || 'Unknown'}
       userType={userType}
+      isLoggedIn={!!user}
       onClose={onCloseNotification}
       onShare={handleShare}
       onSave={user ? handleSaveProperty : undefined}

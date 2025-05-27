@@ -125,6 +125,7 @@ Census Tract: ${data.tractId || 'Unknown'}`;
         address: data.address,
         tractId: data.tractId || 'Unknown',
         userType: userType,
+        isLoggedIn: isLoggedIn,
         onClose: handleClose,
         onShare: handleShare,
         onSave: isLoggedIn ? handleSave : undefined,
