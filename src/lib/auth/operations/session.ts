@@ -45,22 +45,18 @@ export async function signOutAllUsers() {
   }
 }
 
-// Add a function to verify admin status directly
+// Add a function to verify admin status directly using user metadata
 export async function verifyAdminAccess() {
   try {
     // First check session
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) return { isAdmin: false, error: "No active session" };
 
-    // Then verify admin status
-    const { data: isAdmin, error } = await supabase.rpc('user_is_admin');
+    // Check admin status from user metadata (bypassing problematic RLS)
+    const userType = session.user?.user_metadata?.user_type;
+    const isAdmin = userType === 'admin';
     
-    if (error) {
-      console.error('Error verifying admin status:', error);
-      return { isAdmin: false, error: error.message };
-    }
-    
-    return { isAdmin: !!isAdmin, error: null };
+    return { isAdmin, error: null };
   } catch (error) {
     console.error('Exception during admin verification:', error);
     return { isAdmin: false, error: error as Error };

@@ -16,7 +16,7 @@ export async function checkUserPermission(permission: string): Promise<boolean> 
     // Use edge function when database is fully set up
     // return await checkPermissionFromEdgeFunction(permission);
     
-    // Temporary implementation
+    // Temporary implementation using user metadata
     const userType = user.user_metadata?.user_type as string || 'client';
     const permissions = getTemporaryPermissions(userType);
     return permissions.includes(permission) || userType === 'admin';
