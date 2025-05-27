@@ -4,6 +4,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { EmailPreferencesDialog, EmailPreferences } from './EmailPreferencesDialog';
 
 export const MarketingSection: React.FC = () => {
   const [showComingSoon, setShowComingSoon] = useState(false);
@@ -16,25 +17,35 @@ export const MarketingSection: React.FC = () => {
     }, 3000);
   };
 
-  const handleInviteContact = () => {
-    const subject = encodeURIComponent('Check if Your Home Qualifies for LMI Assistance');
-    const body = encodeURIComponent(`Hi there,
+  const handleSendEmail = (preferences: EmailPreferences) => {
+    const { emailProgram, subject, message, recipientEmail } = preferences;
+    
+    const encodedSubject = encodeURIComponent(subject);
+    const encodedBody = encodeURIComponent(message);
+    const toEmail = recipientEmail ? encodeURIComponent(recipientEmail) : '';
 
-I wanted to share a helpful resource with you. You can now check if a property qualifies for Low-to-Moderate Income (LMI) assistance programs and discover available benefits.
+    let emailUrl = '';
 
-Click here to check property eligibility: ${window.location.origin}/dashboard/client
+    switch (emailProgram) {
+      case 'gmail':
+        emailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${toEmail}&su=${encodedSubject}&body=${encodedBody}`;
+        break;
+      case 'outlook':
+        emailUrl = `https://outlook.live.com/mail/0/deeplink/compose?to=${toEmail}&subject=${encodedSubject}&body=${encodedBody}`;
+        break;
+      case 'yahoo':
+        emailUrl = `https://compose.mail.yahoo.com/?to=${toEmail}&subject=${encodedSubject}&body=${encodedBody}`;
+        break;
+      default:
+        emailUrl = `mailto:${toEmail}?subject=${encodedSubject}&body=${encodedBody}`;
+        break;
+    }
 
-This tool will help you:
-- Determine if a property is in an LMI area
-- Find available assistance programs
-- Explore potential benefits and savings
-
-Feel free to reach out if you have any questions!
-
-Best regards`);
-
-    const mailtoLink = `mailto:?subject=${subject}&body=${body}`;
-    window.location.href = mailtoLink;
+    if (emailProgram === 'default') {
+      window.location.href = emailUrl;
+    } else {
+      window.open(emailUrl, '_blank');
+    }
   };
 
   return (
@@ -71,10 +82,7 @@ Best regards`);
           <p className="text-sm text-muted-foreground mb-4">
             Send clients a link to check LMI property eligibility
           </p>
-          <Button variant="outline" className="gap-2" onClick={handleInviteContact}>
-            <Plus className="w-4 h-4" />
-            Create
-          </Button>
+          <EmailPreferencesDialog onSendEmail={handleSendEmail} />
         </CardContent>
       </Card>
     </div>
