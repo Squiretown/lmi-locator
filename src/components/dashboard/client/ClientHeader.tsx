@@ -1,7 +1,5 @@
 
 import React from 'react';
-import { NotificationBell } from '@/components/notifications/NotificationBell';
-import ProfileMenu from '@/components/auth/ProfileMenu';
 import { useAuth } from '@/hooks/useAuth';
 
 interface ClientHeaderProps {
@@ -24,10 +22,6 @@ export const ClientHeader: React.FC<ClientHeaderProps> = ({
   return (
     <div className="flex justify-between items-center mb-6">
       <h1 className="text-2xl font-bold">{welcomeMessage}</h1>
-      <div className="flex items-center gap-3">
-        <NotificationBell />
-        <ProfileMenu />
-      </div>
     </div>
   );
 };
