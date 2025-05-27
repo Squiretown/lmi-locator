@@ -34,7 +34,7 @@ Feel free to reach out if you have any questions!
 Best regards`);
 
     const mailtoLink = `mailto:?subject=${subject}&body=${body}`;
-    window.open(mailtoLink);
+    window.location.href = mailtoLink;
   };
 
   return (
