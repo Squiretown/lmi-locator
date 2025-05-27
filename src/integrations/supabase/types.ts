@@ -640,6 +640,45 @@ export type Database = {
           },
         ]
       }
+      contacts_invited: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          invitation_token: string | null
+          invited_at: string
+          inviter_id: string
+          name: string | null
+          registered_user_id: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          invitation_token?: string | null
+          invited_at?: string
+          inviter_id: string
+          name?: string | null
+          registered_user_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          invitation_token?: string | null
+          invited_at?: string
+          inviter_id?: string
+          name?: string | null
+          registered_user_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       lmi_search_error_logs: {
         Row: {
           browser_info: string | null
