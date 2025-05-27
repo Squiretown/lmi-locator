@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -11,7 +12,6 @@ import {
   ContentManagement 
 } from './index';
 import { MapView } from './map-view';
-import { MarketingContent } from '../tools/marketing/MarketingContent';
 import { useMarketingDashboardData } from './useMarketingDashboardData';
 import { MarketingSidebar } from './MarketingSidebar';
 import { BulkAddressSearch } from './bulk-search/BulkAddressSearch';
@@ -82,7 +82,7 @@ export const MarketingDashboard: React.FC = () => {
       case 'content':
         return <ContentManagement />;
       case 'create':
-        return <MarketingContent />;
+        return <ComingSoonSection title="Create Content" />;
       default:
         // For unimplemented sections, show a "coming soon" message
         if (['jobs', 'lists', 'users', 'notifications', 'properties'].includes(activeSection)) {
