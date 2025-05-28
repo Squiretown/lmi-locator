@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { LayoutDashboard, Users, Settings, ShieldCheck, Building, Kanban, Search, Briefcase, History, UserCheck } from 'lucide-react';
@@ -19,7 +20,7 @@ export function AdminSidebarMainMenu() {
               <NavLink to="/admin" end className={({
                 isActive
               }) => isActive ? 'data-[active=true]' : ''}>
-                <LayoutDashboard />
+                <LayoutDashboard size={16} />
                 <span>Dashboard</span>
               </NavLink>
             </SidebarMenuButton>
