@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { useLocation, useNavigate } from "react-router-dom";
+import { NavLink } from 'react-router-dom';
 import { 
   SidebarMenu, 
   SidebarMenuItem, 
@@ -12,30 +12,33 @@ import {
 } from "lucide-react";
 
 export const AdminSidebarSettingsMenu: React.FC = () => {
-  const location = useLocation();
-  const navigate = useNavigate();
-  
   return (
     <SidebarMenu>
       <SidebarMenuItem>
-        <SidebarMenuButton 
-          isActive={location.pathname === '/admin/settings'} 
-          tooltip="Settings"
-          onClick={() => navigate('/admin/settings')}
-        >
-          <Settings className="mr-2" />
-          <span>Settings</span>
+        <SidebarMenuButton asChild tooltip="Settings">
+          <NavLink 
+            to="/admin/settings"
+            className={({ isActive }) => 
+              isActive ? 'data-[active=true]' : ''
+            }
+          >
+            <Settings className="mr-2" />
+            <span>Settings</span>
+          </NavLink>
         </SidebarMenuButton>
       </SidebarMenuItem>
       
       <SidebarMenuItem>
-        <SidebarMenuButton 
-          isActive={location.pathname === '/admin/help'} 
-          tooltip="Help"
-          onClick={() => navigate('/admin/help')}
-        >
-          <HelpCircle className="mr-2" />
-          <span>Help</span>
+        <SidebarMenuButton asChild tooltip="Help">
+          <NavLink 
+            to="/admin/help"
+            className={({ isActive }) => 
+              isActive ? 'data-[active=true]' : ''
+            }
+          >
+            <HelpCircle className="mr-2" />
+            <span>Help</span>
+          </NavLink>
         </SidebarMenuButton>
       </SidebarMenuItem>
     </SidebarMenu>

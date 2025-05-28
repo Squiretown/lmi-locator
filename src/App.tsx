@@ -67,6 +67,11 @@ function App() {
             <Route path="contacts" element={<ContactsPage />} />
             <Route path="users" element={<UserManagement />} />
             <Route path="search-history" element={<SearchHistoryPage />} />
+            <Route path="tools" element={<AdminTools />} />
+            <Route path="permissions" element={<AdminTools />} />
+            <Route path="security" element={<AdminTools />} />
+            <Route path="settings" element={<SettingsPage />} />
+            <Route path="help" element={<AdminTools />} />
           </Route>
           
           {/* 404 route */}
