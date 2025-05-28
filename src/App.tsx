@@ -37,6 +37,9 @@ import ContactsPage from "./pages/admin/ContactsPage";
 import SearchHistoryPage from "./pages/admin/SearchHistoryPage";
 import MarketingDashboard from "./components/admin/marketing-dashboard/MarketingDashboard";
 import SystemLogsPage from "./pages/admin/SystemLogsPage";
+import PermissionsPage from "./pages/admin/PermissionsPage";
+import DatabasePage from "./pages/admin/DatabasePage";
+import ApiKeysPage from "./pages/admin/ApiKeysPage";
 
 // Auth pages
 import SettingsPage from "./pages/auth/SettingsPage";
@@ -105,6 +108,9 @@ const App = () => (
                 <Route path="search-history" element={<SearchHistoryPage />} />
                 <Route path="marketing" element={<MarketingDashboard />} />
                 <Route path="system/logs" element={<SystemLogsPage />} />
+                <Route path="system/permissions" element={<PermissionsPage />} />
+                <Route path="system/database" element={<DatabasePage />} />
+                <Route path="system/api-keys" element={<ApiKeysPage />} />
               </Route>
 
               {/* Settings routes */}
