@@ -29,17 +29,22 @@ serve(async (req) => {
   try {
     console.log("Processing sign out all users request");
 
-    // Initialize Supabase client with admin privileges
+    // Initialize Supabase client with service role for admin operations
     const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
-    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
     
-    if (!supabaseUrl || !supabaseKey) {
+    if (!supabaseUrl || !supabaseServiceKey) {
       throw new Error("Missing required environment variables for Supabase connection");
     }
     
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false
+      }
+    });
 
-    // Get user JWT from request
+    // Get user JWT from request to verify admin status
     const authHeader = req.headers.get('Authorization') || '';
     const token = authHeader.replace('Bearer ', '');
     
@@ -48,9 +53,12 @@ serve(async (req) => {
       throw new Error("No authorization token provided");
     }
 
+    // Create a regular client to verify the user's token
+    const supabaseAnon = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY") || "");
+
     // Verify the JWT and get the user
     console.log("Verifying user authentication");
-    const { data: { user }, error: userError } = await supabase.auth.getUser(token);
+    const { data: { user }, error: userError } = await supabaseAnon.auth.getUser(token);
     
     if (userError || !user) {
       console.error("Invalid or expired token:", userError);
@@ -59,14 +67,8 @@ serve(async (req) => {
 
     console.log(`User authenticated: ${user.id}`);
 
-    // Check if user is admin
-    console.log("Checking admin privileges");
-    const { data: isAdmin, error: adminCheckError } = await supabase.rpc('user_is_admin');
-    
-    if (adminCheckError) {
-      console.error("Error checking admin status:", adminCheckError);
-      throw new Error(`Admin check failed: ${adminCheckError.message}`);
-    }
+    // Check if user is admin by checking user metadata
+    const isAdmin = user.user_metadata?.user_type === 'admin';
     
     if (!isAdmin) {
       console.error("User is not an admin");
@@ -75,8 +77,8 @@ serve(async (req) => {
 
     console.log("Admin user verified, proceeding with sign out all users");
 
-    // Call Supabase auth API to sign out all sessions
-    const { error: signOutError } = await supabase.auth.admin.signOut('*');
+    // Use the admin client with service role to sign out all sessions
+    const { error: signOutError } = await supabaseAdmin.auth.admin.signOut('global');
     
     if (signOutError) {
       console.error("Error signing out all users:", signOutError);
