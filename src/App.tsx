@@ -65,6 +65,7 @@ function App() {
             <Route path="mortgage-brokers" element={<MortgageBrokersPage />} />
             <Route path="realtors" element={<RealtorsPage />} />
             <Route path="contacts" element={<ContactsPage />} />
+            <Route path="users" element={<UserManagement />} />
             <Route path="search-history" element={<SearchHistoryPage />} />
           </Route>
           
