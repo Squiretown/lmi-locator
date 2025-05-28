@@ -1,11 +1,9 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   UserTypeCard, 
   MarketingJobStatusCard, 
-  MarketingStatsCards, 
   NotificationStatsCard,
   RecentActivityCard, 
   VerificationChallengesCard,
@@ -40,10 +38,6 @@ const OverviewSection = ({
   verificationChallenges 
 }: ReturnType<typeof useMarketingDashboardData>) => (
   <>
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-      <MarketingStatsCards marketingStats={marketingStats} />
-    </div>
-    
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       <MarketingJobStatusCard marketingStats={marketingStats} />
       <UserTypeCard userTypeCounts={userTypeCounts} />
