@@ -77,7 +77,8 @@ export const Dashboard = () => {
             isLoading={isLoading} 
             userCount={stats.userCount} 
             propertyCount={stats.propertyCount} 
-            realtorCount={stats.realtorCount} 
+            realtorCount={stats.realtorCount}
+            mortgageBrokerCount={stats.mortgageBrokerCount}
           />
           
           <DashboardOverview 
