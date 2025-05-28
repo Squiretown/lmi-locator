@@ -3,21 +3,23 @@ import { NavLink } from 'react-router-dom';
 import { LayoutDashboard, Users, Settings, ShieldCheck, Building, Kanban, Search, Briefcase, History, UserCheck } from 'lucide-react';
 import { SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarMenu, SidebarMenuBadge, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { useAdminPermissions } from '../AdminPermissionsContext';
+
 export function AdminSidebarMainMenu() {
   const {
     hasPermission,
     unreadNotifications
   } = useAdminPermissions();
-  return <SidebarGroup>
-      
+
+  return (
+    <SidebarGroup>
       <SidebarGroupContent>
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton asChild tooltip="Dashboard">
               <NavLink to="/admin" end className={({
-              isActive
-            }) => isActive ? 'data-[active=true]' : ''}>
-                <LayoutDashboard className="py-0" />
+                isActive
+              }) => isActive ? 'data-[active=true]' : ''}>
+                <LayoutDashboard />
                 <span>Dashboard</span>
               </NavLink>
             </SidebarMenuButton>
@@ -80,5 +82,6 @@ export function AdminSidebarMainMenu() {
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarGroupContent>
-    </SidebarGroup>;
+    </SidebarGroup>
+  );
 }
