@@ -35,9 +35,7 @@ export function StatisticsCards({
         </CardHeader>
         <CardContent>
           {isLoading ? <Skeleton className="h-7 w-20" /> : <div className="text-2xl font-bold">{propertyCount.toLocaleString()}</div>}
-          <p className="text-xs text-muted-foreground">
-            Properties in database
-          </p>
+          <p className="text-xs text-muted-foreground">Registered  in the system</p>
         </CardContent>
       </Card>
 
@@ -48,9 +46,7 @@ export function StatisticsCards({
         </CardHeader>
         <CardContent>
           {isLoading ? <Skeleton className="h-7 w-20" /> : <div className="text-2xl font-bold">{realtorCount.toLocaleString()}</div>}
-          <p className="text-xs text-muted-foreground">
-            Registered real estate agents
-          </p>
+          <p className="text-xs text-muted-foreground">Registered in the system</p>
         </CardContent>
       </Card>
 
