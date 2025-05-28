@@ -68,14 +68,6 @@ const AdminHeader: React.FC = () => {
         </Button>
         
         <Button 
-          variant="default" 
-          size="sm"
-          className="bg-gray-800 hover:bg-gray-700 text-white"
-        >
-          Admin Panel
-        </Button>
-        
-        <Button 
           variant="ghost" 
           size="sm"
           className="text-gray-300 hover:text-white hover:bg-gray-800"
