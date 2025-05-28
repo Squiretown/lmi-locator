@@ -35,7 +35,7 @@ import MortgageBrokersPage from "./pages/admin/MortgageBrokersPage";
 import RealtorsPage from "./pages/admin/RealtorsPage";
 import ContactsPage from "./pages/admin/ContactsPage";
 import SearchHistoryPage from "./pages/admin/SearchHistoryPage";
-import MarketingDashboard from "./components/admin/marketing-dashboard/MarketingDashboard";
+import { MarketingDashboard } from "./components/admin/marketing-dashboard/MarketingDashboard";
 import SystemLogsPage from "./pages/admin/SystemLogsPage";
 
 // Auth pages
