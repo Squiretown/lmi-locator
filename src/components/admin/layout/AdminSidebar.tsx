@@ -1,42 +1,45 @@
+
 import React from 'react';
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
-import { Building } from "lucide-react";
 import { useAdminPermissions } from './AdminPermissionsContext';
-import { Sidebar, SidebarHeader, SidebarContent, SidebarFooter, SidebarSeparator } from "@/components/ui/sidebar";
 import { AdminSidebarMainMenu, AdminSidebarSystemMenu, AdminSidebarSettingsMenu } from './AdminSidebarMenus';
 import AdminStatusFooter from './AdminStatusFooter';
-import ProfileMenu from '@/components/auth/ProfileMenu';
+
 const AdminSidebar: React.FC = () => {
-  const {
-    userType
-  } = useAdminPermissions();
+  const { userType } = useAdminPermissions();
   const navigate = useNavigate();
+  
   const handleLogout = async () => {
     await supabase.auth.signOut();
     navigate('/login');
   };
-  return <Sidebar>
-      <SidebarHeader>
-        
-        {userType && <div className="px-4 mt-1">
+
+  return (
+    <div className="w-64 bg-sidebar text-sidebar-foreground border-r flex flex-col h-full">
+      <div className="p-4 pt-8">
+        {userType && (
+          <div className="mt-1">
             <Badge variant="outline" className="capitalize">
               {userType.replace('_', ' ')}
             </Badge>
-          </div>}
-      </SidebarHeader>
+          </div>
+        )}
+      </div>
       
-      <SidebarContent>
+      <div className="flex-1 px-4 space-y-6">
         <AdminSidebarMainMenu />
         <AdminSidebarSystemMenu />
-        <SidebarSeparator />
+        <div className="border-t border-sidebar-border my-4"></div>
         <AdminSidebarSettingsMenu />
-      </SidebarContent>
+      </div>
       
-      <SidebarFooter>
+      <div className="p-4">
         <AdminStatusFooter onLogout={handleLogout} />
-      </SidebarFooter>
-    </Sidebar>;
+      </div>
+    </div>
+  );
 };
+
 export default AdminSidebar;

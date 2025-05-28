@@ -1,88 +1,98 @@
 
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, Users, Settings, ShieldCheck, Building, Kanban, Search, Briefcase, History, UserCheck } from 'lucide-react';
-import { SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarMenu, SidebarMenuBadge, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
+import { LayoutDashboard, Users, Kanban, Search, Briefcase, History, UserCheck } from 'lucide-react';
 import { useAdminPermissions } from '../AdminPermissionsContext';
 
 export function AdminSidebarMainMenu() {
-  const {
-    hasPermission,
-    unreadNotifications
-  } = useAdminPermissions();
+  const { hasPermission } = useAdminPermissions();
 
   return (
-    <SidebarGroup>
-      <SidebarGroupContent>
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild tooltip="Dashboard">
-              <NavLink to="/admin" end className={({
-                isActive
-              }) => isActive ? 'data-[active=true]' : ''}>
-                <LayoutDashboard size={16} />
-                <span>Dashboard</span>
-              </NavLink>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild tooltip="Users">
-              <NavLink to="/admin/users" className={({
-              isActive
-            }) => isActive ? 'data-[active=true]' : ''}>
-                <Users />
-                <span>Users</span>
-              </NavLink>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild tooltip="Mortgage Brokers">
-              <NavLink to="/admin/mortgage-brokers" className={({
-              isActive
-            }) => isActive ? 'data-[active=true]' : ''}>
-                <Briefcase />
-                <span>Mortgage Brokers</span>
-              </NavLink>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild tooltip="Realtors">
-              <NavLink to="/admin/realtors" className={({
-              isActive
-            }) => isActive ? 'data-[active=true]' : ''}>
-                <UserCheck />
-                <span>Realtors</span>
-              </NavLink>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild tooltip="Marketing">
-              <NavLink to="/admin/marketing" className={({
-              isActive
-            }) => isActive ? 'data-[active=true]' : ''}>
-                <Kanban />
-                <span>Marketing</span>
-                
-              </NavLink>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild tooltip="Search History">
-              <NavLink to="/admin/search-history" className={({
-              isActive
-            }) => isActive ? 'data-[active=true]' : ''}>
-                <History />
-                <span>Search History</span>
-              </NavLink>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
-      </SidebarGroupContent>
-    </SidebarGroup>
+    <div className="space-y-1">
+      <NavLink 
+        to="/admin" 
+        end 
+        className={({ isActive }) => 
+          `flex items-center space-x-3 px-3 py-2 text-sm rounded-md transition-colors ${
+            isActive 
+              ? 'bg-primary text-primary-foreground' 
+              : 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
+          }`
+        }
+      >
+        <LayoutDashboard size={16} />
+        <span>Dashboard</span>
+      </NavLink>
+      
+      <NavLink 
+        to="/admin/users" 
+        className={({ isActive }) => 
+          `flex items-center space-x-3 px-3 py-2 text-sm rounded-md transition-colors ${
+            isActive 
+              ? 'bg-primary text-primary-foreground' 
+              : 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
+          }`
+        }
+      >
+        <Users size={16} />
+        <span>Users</span>
+      </NavLink>
+      
+      <NavLink 
+        to="/admin/mortgage-brokers" 
+        className={({ isActive }) => 
+          `flex items-center space-x-3 px-3 py-2 text-sm rounded-md transition-colors ${
+            isActive 
+              ? 'bg-primary text-primary-foreground' 
+              : 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
+          }`
+        }
+      >
+        <Briefcase size={16} />
+        <span>Mortgage Brokers</span>
+      </NavLink>
+      
+      <NavLink 
+        to="/admin/realtors" 
+        className={({ isActive }) => 
+          `flex items-center space-x-3 px-3 py-2 text-sm rounded-md transition-colors ${
+            isActive 
+              ? 'bg-primary text-primary-foreground' 
+              : 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
+          }`
+        }
+      >
+        <UserCheck size={16} />
+        <span>Realtors</span>
+      </NavLink>
+      
+      <NavLink 
+        to="/admin/marketing" 
+        className={({ isActive }) => 
+          `flex items-center space-x-3 px-3 py-2 text-sm rounded-md transition-colors ${
+            isActive 
+              ? 'bg-primary text-primary-foreground' 
+              : 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
+          }`
+        }
+      >
+        <Kanban size={16} />
+        <span>Marketing</span>
+      </NavLink>
+      
+      <NavLink 
+        to="/admin/search-history" 
+        className={({ isActive }) => 
+          `flex items-center space-x-3 px-3 py-2 text-sm rounded-md transition-colors ${
+            isActive 
+              ? 'bg-primary text-primary-foreground' 
+              : 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
+          }`
+        }
+      >
+        <History size={16} />
+        <span>Search History</span>
+      </NavLink>
+    </div>
   );
 }

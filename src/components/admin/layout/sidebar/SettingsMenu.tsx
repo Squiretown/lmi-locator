@@ -1,46 +1,38 @@
 
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { 
-  SidebarMenu, 
-  SidebarMenuItem, 
-  SidebarMenuButton 
-} from "@/components/ui/sidebar";
-import {
-  Settings,
-  HelpCircle
-} from "lucide-react";
+import { Settings, HelpCircle } from "lucide-react";
 
 export const AdminSidebarSettingsMenu: React.FC = () => {
   return (
-    <SidebarMenu>
-      <SidebarMenuItem>
-        <SidebarMenuButton asChild tooltip="Settings">
-          <NavLink 
-            to="/admin/settings"
-            className={({ isActive }) => 
-              isActive ? 'data-[active=true]' : ''
-            }
-          >
-            <Settings className="mr-2" />
-            <span>Settings</span>
-          </NavLink>
-        </SidebarMenuButton>
-      </SidebarMenuItem>
+    <div className="space-y-1">
+      <NavLink 
+        to="/admin/settings"
+        className={({ isActive }) => 
+          `flex items-center space-x-3 px-3 py-2 text-sm rounded-md transition-colors ${
+            isActive 
+              ? 'bg-primary text-primary-foreground' 
+              : 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
+          }`
+        }
+      >
+        <Settings size={16} />
+        <span>Settings</span>
+      </NavLink>
       
-      <SidebarMenuItem>
-        <SidebarMenuButton asChild tooltip="Help">
-          <NavLink 
-            to="/admin/help"
-            className={({ isActive }) => 
-              isActive ? 'data-[active=true]' : ''
-            }
-          >
-            <HelpCircle className="mr-2" />
-            <span>Help</span>
-          </NavLink>
-        </SidebarMenuButton>
-      </SidebarMenuItem>
-    </SidebarMenu>
+      <NavLink 
+        to="/admin/help"
+        className={({ isActive }) => 
+          `flex items-center space-x-3 px-3 py-2 text-sm rounded-md transition-colors ${
+            isActive 
+              ? 'bg-primary text-primary-foreground' 
+              : 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
+          }`
+        }
+      >
+        <HelpCircle size={16} />
+        <span>Help</span>
+      </NavLink>
+    </div>
   );
 };
