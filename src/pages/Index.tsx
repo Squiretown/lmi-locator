@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { Helmet } from 'react-helmet';
+import Header from '@/components/Header';
 import PropertyChecker from '@/components/PropertyChecker';
 import { Card, CardContent } from '@/components/ui/card';
 import { Home, CheckCircle } from 'lucide-react';
@@ -44,6 +45,8 @@ const Index = () => {
         <meta property="og:description" content={OG_DESCRIPTION} />
         <meta property="og:image" content="/og-image.png" />
       </Helmet>
+      
+      <Header />
       
       <div className="container mx-auto px-4 py-8">
         {/* Hero section */}
