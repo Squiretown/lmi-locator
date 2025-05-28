@@ -62,7 +62,7 @@ function App() {
           <Route path="/admin" element={<AdminLayout />}>
             <Route index element={<AdminDashboard />} />
             <Route path="marketing" element={<MarketingDashboard />} />
-            <Route path="brokers" element={<MortgageBrokersPage />} />
+            <Route path="mortgage-brokers" element={<MortgageBrokersPage />} />
             <Route path="realtors" element={<RealtorsPage />} />
             <Route path="contacts" element={<ContactsPage />} />
             <Route path="search-history" element={<SearchHistoryPage />} />

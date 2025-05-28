@@ -1,132 +1,123 @@
 
 import React, { useState } from 'react';
-import { toast } from 'sonner';
-import type { MortgageBroker, BrokerFormValues } from '@/lib/api/types';
+import { Card, CardContent } from '@/components/ui/card';
+import { useQuery } from '@tanstack/react-query';
+import { fetchBrokers, MortgageBroker, BrokerFormValues } from '@/lib/api/brokers';
 import BrokerDialog from '@/components/brokers/BrokerDialog';
-import BrokerTable from '@/components/brokers/BrokerTable';
-import BrokerHeader from '@/components/brokers/BrokerHeader';
-import BrokerSearch from '@/components/brokers/BrokerSearch';
-import BrokerPermissionsDialog from '@/components/brokers/BrokerPermissionsDialog';
-import { useBrokers } from '@/hooks/useBrokers';
+import { InviteBrokerDialog } from '@/components/brokers/InviteBrokerDialog';
+import { BrokersPageHeader } from '@/components/brokers/BrokersPageHeader';
+import { BrokersSearch } from '@/components/brokers/BrokersSearch';
+import { BrokersTable } from '@/components/brokers/BrokersTable';
+import { DeleteBrokerDialog } from '@/components/brokers/DeleteBrokerDialog';
+import { useBrokerOperations } from '@/hooks/useBrokerOperations';
 
 const MortgageBrokersPage: React.FC = () => {
-  const [selectedBroker, setSelectedBroker] = useState<MortgageBroker | null>(null);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [isEditMode, setIsEditMode] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [isPermissionsDialogOpen, setIsPermissionsDialogOpen] = useState(false);
+  const [addDialogOpen, setAddDialogOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
+  const [selectedBroker, setSelectedBroker] = useState<MortgageBroker | null>(null);
   
-  const { 
-    brokers, 
-    isLoadingBrokers, 
-    createBroker, 
-    updateBroker, 
-    deleteBroker, 
-    getBrokerPermissionsQuery 
-  } = useBrokers();
+  const { data: brokers, isLoading, error } = useQuery({
+    queryKey: ['brokers'],
+    queryFn: fetchBrokers
+  });
 
-  // Get broker permissions when a broker is selected
-  const { data: brokerPermissions = [] } = getBrokerPermissionsQuery(
-    selectedBroker?.id || ''
-  );
+  const {
+    createBrokerMutation,
+    updateBrokerMutation,
+    deleteBrokerMutation,
+  } = useBrokerOperations();
 
-  const handleCreateBroker = () => {
-    setSelectedBroker(null);
-    setIsEditMode(false);
-    setIsDialogOpen(true);
+  const handleAddBroker = async (data: BrokerFormValues) => {
+    await createBrokerMutation.mutateAsync(data);
+    setAddDialogOpen(false);
   };
 
-  const handleEditBroker = (broker: MortgageBroker) => {
+  const handleEditBroker = async (data: BrokerFormValues) => {
+    if (!selectedBroker) return;
+    await updateBrokerMutation.mutateAsync({ id: selectedBroker.id, data });
+    setEditDialogOpen(false);
+  };
+
+  const handleDeleteBroker = async () => {
+    if (!selectedBroker) return;
+    await deleteBrokerMutation.mutateAsync(selectedBroker.id);
+    setDeleteDialogOpen(false);
+  };
+
+  const openEditDialog = (broker: MortgageBroker) => {
     setSelectedBroker(broker);
-    setIsEditMode(true);
-    setIsDialogOpen(true);
+    setEditDialogOpen(true);
   };
 
-  const handleDeleteBroker = async (id: string) => {
-    try {
-      await deleteBroker(id);
-      toast.success('Broker deleted', {
-        description: 'Broker successfully deleted.'
-      });
-    } catch (error: any) {
-      toast.error('Error deleting broker', {
-        description: error.message
-      });
-    }
+  const openDeleteDialog = (broker: MortgageBroker) => {
+    setSelectedBroker(broker);
+    setDeleteDialogOpen(true);
   };
 
-  const handleDialogClose = () => {
-    setIsDialogOpen(false);
-    setSelectedBroker(null);
-  };
-
-  const handleSaveBroker = async (values: BrokerFormValues) => {
-    try {
-      if (isEditMode && selectedBroker) {
-        await updateBroker({ id: selectedBroker.id, broker: values });
-      } else {
-        await createBroker(values);
-      }
-      
-      setIsDialogOpen(false);
-    } catch (error: any) {
-      toast.error('Error saving broker', {
-        description: error.message
-      });
-    }
-  };
-
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(e.target.value);
-  };
-
-  const filteredBrokers = brokers.filter((broker) =>
+  const filteredBrokers = brokers?.filter(broker => 
     broker.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     broker.company.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    broker.license_number.toLowerCase().includes(searchQuery.toLowerCase()) ||
     broker.email.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
-  const handleOpenPermissionsDialog = async (broker: MortgageBroker) => {
-    setSelectedBroker(broker);
-    setIsPermissionsDialogOpen(true);
-  };
-
-  const handleClosePermissionsDialog = () => {
-    setIsPermissionsDialogOpen(false);
-    setSelectedBroker(null);
-  };
+  ) || [];
 
   return (
-    <div className="container mx-auto p-4">
-      <BrokerHeader onCreate={handleCreateBroker} />
-      <BrokerSearch value={searchQuery} onChange={handleSearchChange} />
-      {isLoadingBrokers ? (
-        <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
-        </div>
-      ) : (
-        <BrokerTable
-          brokers={filteredBrokers}
-          onEdit={handleEditBroker}
-          onDelete={handleDeleteBroker}
-          onOpenPermissions={handleOpenPermissionsDialog}
-        />
-      )}
+    <div className="p-4 space-y-4">
+      <Card>
+        <CardContent className="p-6">
+          <BrokersPageHeader
+            onInviteClick={() => setInviteDialogOpen(true)}
+            onAddClick={() => setAddDialogOpen(true)}
+          />
+
+          <BrokersSearch
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+          />
+
+          <BrokersTable
+            brokers={filteredBrokers}
+            isLoading={isLoading}
+            error={error}
+            onEditBroker={openEditDialog}
+            onDeleteBroker={openDeleteDialog}
+          />
+        </CardContent>
+      </Card>
+
       <BrokerDialog
-        isOpen={isDialogOpen}
-        onClose={handleDialogClose}
-        onSave={handleSaveBroker}
-        isEditMode={isEditMode}
-        initialValues={selectedBroker}
+        isOpen={addDialogOpen}
+        onClose={() => setAddDialogOpen(false)}
+        onSave={handleAddBroker}
+        isEditMode={false}
+        initialValues={null}
       />
+
       {selectedBroker && (
-        <BrokerPermissionsDialog
-          isOpen={isPermissionsDialogOpen}
-          onClose={handleClosePermissionsDialog}
-          brokerId={selectedBroker.id}
-          initialPermissions={brokerPermissions}
+        <BrokerDialog
+          isOpen={editDialogOpen}
+          onClose={() => setEditDialogOpen(false)}
+          onSave={handleEditBroker}
+          isEditMode={true}
+          initialValues={selectedBroker}
         />
       )}
+
+      <DeleteBrokerDialog
+        isOpen={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        broker={selectedBroker}
+        onConfirm={handleDeleteBroker}
+        isDeleting={deleteBrokerMutation.isPending}
+      />
+
+      <InviteBrokerDialog
+        isOpen={inviteDialogOpen}
+        setIsOpen={setInviteDialogOpen}
+      />
     </div>
   );
 };
