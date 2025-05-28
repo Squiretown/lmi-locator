@@ -3,7 +3,6 @@ import React from 'react';
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
-import { Building } from "lucide-react";
 import { useAdminPermissions } from './AdminPermissionsContext';
 import { 
   Sidebar, 
@@ -34,9 +33,6 @@ const AdminSidebar: React.FC = () => {
       <SidebarHeader>
         <div className="flex items-center justify-between px-2">
           <div className="flex items-center gap-2">
-            <div className="flex items-center justify-center w-8 h-8 rounded-md bg-primary text-primary-foreground">
-              <Building className="h-5 w-5" />
-            </div>
             <div className="font-bold text-lg">LMI Check Admin</div>
           </div>
           <ProfileMenu />
