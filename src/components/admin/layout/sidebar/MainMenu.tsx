@@ -5,7 +5,6 @@ import {
   LayoutDashboard, 
   Users, 
   Settings,
-  Home,
   ShieldCheck,
   Building,
   Kanban,
@@ -58,20 +57,6 @@ export function AdminSidebarMainMenu() {
               >
                 <Users />
                 <span>Users</span>
-              </NavLink>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild tooltip="Properties">
-              <NavLink 
-                to="/admin/properties" 
-                className={({ isActive }) => 
-                  isActive ? 'data-[active=true]' : ''
-                }
-              >
-                <Home />
-                <span>Properties</span>
               </NavLink>
             </SidebarMenuButton>
           </SidebarMenuItem>
