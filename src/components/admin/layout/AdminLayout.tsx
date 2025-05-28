@@ -14,9 +14,7 @@ const AdminLayout: React.FC = () => {
         <AdminHeader />
         <SidebarProvider defaultOpen={true}>
           <div className="flex h-[calc(100vh-3.5rem)] overflow-hidden">
-            <div className="pt-8">
-              <AdminSidebar />
-            </div>
+            <AdminSidebar />
             
             <main className="flex-1 overflow-auto bg-background">
               <ScrollArea className="h-full w-full">
