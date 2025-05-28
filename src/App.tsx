@@ -38,27 +38,8 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <Router>
         <Toaster closeButton position="top-center" />
-        <Header />
         <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/reset-password" element={<ResetPasswordPage />} />
-          <Route path="/settings" element={<SettingsPage />} />
-          <Route path="/user-management" element={<UserManagement />} />
-          <Route path="/admin-tools" element={<AdminTools />} />
-          <Route path="/contact" element={<ContactPage />} />
-          <Route path="/resources" element={<ResourcesPage />} />
-          <Route path="/customers" element={<CustomerPage />} />
-          <Route path="/blog" element={<BlogPage />} />
-          <Route path="/pricing" element={<PricingPage />} />
-          <Route path="/product" element={<ProductPage />} />
-          <Route path="/dashboard/client" element={<Client />} />
-          <Route path="/dashboard/mortgage" element={<MortgageProfessional />} />
-          <Route path="/dashboard/realtor" element={<Realtor />} />
-          <Route path="/marketing" element={<LmiMarketingList />} />
-          <Route path="/bulk-search" element={<BulkSearch />} />
-          
-          {/* Admin routes - Use Route nesting with parent element and child routes */}
+          {/* Admin routes - No Header/Footer wrapper */}
           <Route path="/admin" element={<AdminLayout />}>
             <Route index element={<AdminDashboard />} />
             <Route path="marketing" element={<MarketingDashboard />} />
@@ -74,10 +55,34 @@ function App() {
             <Route path="help" element={<AdminTools />} />
           </Route>
           
-          {/* 404 route */}
-          <Route path="*" element={<NotFound />} />
+          {/* All other routes - With Header/Footer wrapper */}
+          <Route path="/*" element={
+            <>
+              <Header />
+              <Routes>
+                <Route path="/" element={<Index />} />
+                <Route path="/login" element={<LoginPage />} />
+                <Route path="/reset-password" element={<ResetPasswordPage />} />
+                <Route path="/settings" element={<SettingsPage />} />
+                <Route path="/user-management" element={<UserManagement />} />
+                <Route path="/admin-tools" element={<AdminTools />} />
+                <Route path="/contact" element={<ContactPage />} />
+                <Route path="/resources" element={<ResourcesPage />} />
+                <Route path="/customers" element={<CustomerPage />} />
+                <Route path="/blog" element={<BlogPage />} />
+                <Route path="/pricing" element={<PricingPage />} />
+                <Route path="/product" element={<ProductPage />} />
+                <Route path="/dashboard/client" element={<Client />} />
+                <Route path="/dashboard/mortgage" element={<MortgageProfessional />} />
+                <Route path="/dashboard/realtor" element={<Realtor />} />
+                <Route path="/marketing" element={<LmiMarketingList />} />
+                <Route path="/bulk-search" element={<BulkSearch />} />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+              <Footer />
+            </>
+          } />
         </Routes>
-        <Footer />
       </Router>
     </QueryClientProvider>
   );

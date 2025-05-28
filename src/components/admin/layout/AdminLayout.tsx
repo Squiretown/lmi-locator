@@ -13,7 +13,7 @@ const AdminLayout: React.FC = () => {
       <div className="min-h-screen w-full">
         <AdminHeader />
         <SidebarProvider defaultOpen={true}>
-          <div className="flex h-[calc(100vh-56px)] overflow-hidden">
+          <div className="flex h-[calc(100vh-3.5rem)] overflow-hidden">
             <AdminSidebar />
             
             <main className="flex-1 overflow-auto bg-background">
