@@ -8,13 +8,15 @@ import RealtorDialog from '@/components/realtors/RealtorDialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableHeader, TableBody, TableFooter, TableHead, TableRow, TableCell } from '@/components/ui/table';
-import { UserPlus, Search, Pencil, Trash2 } from 'lucide-react';
+import { UserPlus, Search, Pencil, Trash2, Mail } from 'lucide-react';
+import { InviteRealtorDialog } from '@/components/realtors/InviteRealtorDialog';
 
 const RealtorsPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
   const [selectedRealtor, setSelectedRealtor] = useState<Realtor | null>(null);
   
   const queryClient = useQueryClient();
@@ -101,10 +103,16 @@ const RealtorsPage: React.FC = () => {
               <h2 className="text-2xl font-bold">Realtors</h2>
               <p className="text-muted-foreground">Manage real estate agents in the system</p>
             </div>
-            <Button onClick={() => setAddDialogOpen(true)}>
-              <UserPlus className="mr-2 h-4 w-4" />
-              Add New Realtor
-            </Button>
+            <div className="flex gap-2">
+              <Button onClick={() => setInviteDialogOpen(true)} variant="outline">
+                <Mail className="mr-2 h-4 w-4" />
+                Invite Realtor
+              </Button>
+              <Button onClick={() => setAddDialogOpen(true)}>
+                <UserPlus className="mr-2 h-4 w-4" />
+                Add New Realtor
+              </Button>
+            </div>
           </div>
 
           <div className="relative mb-4">
@@ -236,6 +244,11 @@ const RealtorsPage: React.FC = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <InviteRealtorDialog
+        isOpen={inviteDialogOpen}
+        setIsOpen={setInviteDialogOpen}
+      />
     </div>
   );
 };
