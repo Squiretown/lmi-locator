@@ -102,3 +102,6 @@ export const MarketingDashboard: React.FC = () => {
     </div>
   );
 };
+
+// Add default export
+export default MarketingDashboard;
