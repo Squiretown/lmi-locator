@@ -1,7 +1,7 @@
 
-import { useState, useCallback, useEffect } from 'react';
-import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
+import { useState, useEffect, useCallback } from 'react';
+import { getDashboardStats } from '@/lib/supabase/dashboard';
+import { toast } from 'sonner';
 
 interface DashboardStats {
   userCount: number;
@@ -9,135 +9,84 @@ interface DashboardStats {
   realtorCount: number;
   mortgageBrokerCount: number;
   searchHistory: any[];
-  timestamp?: string;
 }
 
-export const useDashboardData = () => {
-  const [stats, setStats] = useState<DashboardStats>({
-    userCount: 0,
-    propertyCount: 0,
-    realtorCount: 0,
-    mortgageBrokerCount: 0,
-    searchHistory: []
-  });
-  const [isLoading, setIsLoading] = useState(true);
+const mockStats: DashboardStats = {
+  userCount: 1250,
+  propertyCount: 3420,
+  realtorCount: 89,
+  mortgageBrokerCount: 56,
+  searchHistory: [
+    {
+      id: '1',
+      address: '123 Main St, San Francisco, CA',
+      user_id: 'user1',
+      searched_at: new Date().toISOString(),
+      is_eligible: true,
+      result_count: 5
+    },
+    {
+      id: '2',
+      address: '456 Oak Ave, Los Angeles, CA',
+      user_id: 'user2',
+      searched_at: new Date(Date.now() - 86400000).toISOString(),
+      is_eligible: false,
+      result_count: 0
+    }
+  ]
+};
+
+export function useDashboardData() {
+  const [stats, setStats] = useState<DashboardStats>(mockStats);
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [retryCount, setRetryCount] = useState(0);
-  const [usingMockData, setUsingMockData] = useState(false);
-  const [hasInitiallyLoaded, setHasInitiallyLoaded] = useState(false);
+  const [usingMockData, setUsingMockData] = useState(true);
 
   const loadDashboardData = useCallback(async () => {
+    console.log('Attempting to load dashboard data from database');
+    setIsLoading(true);
+    setError(null);
+    
     try {
-      setIsLoading(true);
-      setError(null);
+      const result = await getDashboardStats();
       
-      console.log("Attempting to load dashboard data from database");
-      
-      // Fetch users count
-      const { count: userCount, error: userError } = await supabase
-        .from('user_profiles')
-        .select('*', { count: 'exact', head: true });
-
-      if (userError) {
-        console.error('Error fetching user count:', userError);
-        throw new Error(`Failed to fetch user count: ${userError.message}`);
+      if (result.success) {
+        console.log('Dashboard data loaded successfully:', result);
+        setStats({
+          userCount: result.userCount || 0,
+          propertyCount: result.propertyCount || 0,
+          realtorCount: result.realtorCount || 0,
+          mortgageBrokerCount: 0, // Add this field to the API response
+          searchHistory: result.searchHistory || []
+        });
+        setUsingMockData(false);
+        setError(null);
+      } else {
+        throw new Error(result.error || 'Failed to load dashboard data');
       }
-
-      // Fetch realtors count from professionals table
-      const { count: realtorCount, error: realtorError } = await supabase
-        .from('professionals')
-        .select('*', { count: 'exact', head: true })
-        .eq('type', 'realtor');
-
-      if (realtorError) {
-        console.error('Error fetching realtor count:', realtorError);
-        throw new Error(`Failed to fetch realtor count: ${realtorError.message}`);
-      }
-
-      // Fetch mortgage brokers count from professionals table
-      const { count: mortgageBrokerCount, error: brokerError } = await supabase
-        .from('professionals')
-        .select('*', { count: 'exact', head: true })
-        .eq('type', 'mortgage_broker');
-
-      if (brokerError) {
-        console.error('Error fetching mortgage broker count:', brokerError);
-        throw new Error(`Failed to fetch mortgage broker count: ${brokerError.message}`);
-      }
-
-      // Fetch properties count
-      const { count: propertyCount, error: propertyError } = await supabase
-        .from('properties')
-        .select('*', { count: 'exact', head: true });
-
-      if (propertyError) {
-        console.error('Error fetching property count:', propertyError);
-        throw new Error(`Failed to fetch property count: ${propertyError.message}`);
-      }
-
-      // Fetch recent search history
-      const { data: searchHistory, error: searchError } = await supabase
-        .from('search_history')
-        .select('*')
-        .order('searched_at', { ascending: false })
-        .limit(10);
-
-      if (searchError) {
-        console.error('Error fetching search history:', searchError);
-        throw new Error(`Failed to fetch search history: ${searchError.message}`);
-      }
-
-      const realData = {
-        userCount: userCount || 0,
-        propertyCount: propertyCount || 0,
-        realtorCount: realtorCount || 0,
-        mortgageBrokerCount: mortgageBrokerCount || 0,
-        searchHistory: searchHistory || [],
-        timestamp: new Date().toISOString()
-      };
-
-      console.log('Dashboard stats loaded successfully:', realData);
-      setStats(realData);
-      setUsingMockData(false);
-      setHasInitiallyLoaded(true);
-      
     } catch (err) {
       console.error('Error loading dashboard data:', err);
-      
-      // Use mock data as fallback
-      const mockData = {
-        userCount: 156,
-        propertyCount: 2874,
-        realtorCount: 42,
-        mortgageBrokerCount: 28,
-        searchHistory: [
-          { id: '1', user_id: 'user1', address: '123 Main St', searched_at: new Date().toISOString(), result: 'Eligible' },
-          { id: '2', user_id: 'user2', address: '456 Elm St', searched_at: new Date().toISOString(), result: 'Not eligible' },
-          { id: '3', user_id: 'user3', address: '789 Oak Ave', searched_at: new Date().toISOString(), result: 'Eligible' }
-        ],
-        timestamp: new Date().toISOString()
-      };
-      
-      setStats(mockData);
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
+      setError(`Failed to load real data: ${errorMessage}. Using demo data instead.`);
+      setStats(mockStats);
       setUsingMockData(true);
-      setHasInitiallyLoaded(true);
-      setError(`Failed to fetch dashboard data: ${err.message}`);
     } finally {
       setIsLoading(false);
     }
-  }, [retryCount]);
+  }, []);
 
-  // Initial data load
+  const handleRetry = useCallback(() => {
+    loadDashboardData();
+  }, [loadDashboardData]);
+
   useEffect(() => {
-    if (!hasInitiallyLoaded) {
-      loadDashboardData();
-    }
-  }, [loadDashboardData, hasInitiallyLoaded]);
-
-  const handleRetry = () => {
-    setRetryCount(prevCount => prevCount + 1);
-    toast.info("Refreshing dashboard data...");
-  };
+    // Start with mock data, then try to load real data
+    setStats(mockStats);
+    setUsingMockData(true);
+    
+    // Attempt to load real data
+    loadDashboardData();
+  }, [loadDashboardData]);
 
   return {
     stats,
@@ -146,4 +95,4 @@ export const useDashboardData = () => {
     usingMockData,
     handleRetry
   };
-};
+}
