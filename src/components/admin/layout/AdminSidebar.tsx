@@ -40,10 +40,12 @@ const AdminSidebar: React.FC = () => {
       </SidebarHeader>
       
       <SidebarContent>
-        <AdminSidebarMainMenu />
-        <AdminSidebarSystemMenu />
-        <SidebarSeparator />
-        <AdminSidebarSettingsMenu />
+        <div className="mt-16">
+          <AdminSidebarMainMenu />
+          <AdminSidebarSystemMenu />
+          <SidebarSeparator />
+          <AdminSidebarSettingsMenu />
+        </div>
       </SidebarContent>
       
       <SidebarFooter>
