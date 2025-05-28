@@ -12,9 +12,6 @@ const AdminHeader: React.FC = () => {
       {/* Left side - Logo and navigation */}
       <div className="flex items-center space-x-8">
         <div className="flex items-center space-x-2">
-          <div className="w-8 h-8 bg-blue-600 rounded flex items-center justify-center">
-            <span className="text-white font-bold text-sm">📍</span>
-          </div>
           <span className="text-white font-semibold text-lg">LMICHECK.COM</span>
         </div>
         
