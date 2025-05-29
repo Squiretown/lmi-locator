@@ -40,6 +40,7 @@ import SystemLogsPage from "./pages/admin/SystemLogsPage";
 import PermissionsPage from "./pages/admin/PermissionsPage";
 import DatabasePage from "./pages/admin/DatabasePage";
 import ApiKeysPage from "./pages/admin/ApiKeysPage";
+import AdminSettingsPage from "./pages/admin/SettingsPage";
 
 // Auth pages
 import SettingsPage from "./pages/auth/SettingsPage";
@@ -107,6 +108,7 @@ const App = () => (
                 <Route path="contacts" element={<ContactsPage />} />
                 <Route path="search-history" element={<SearchHistoryPage />} />
                 <Route path="marketing" element={<MarketingDashboard />} />
+                <Route path="settings" element={<AdminSettingsPage />} />
                 <Route path="system/logs" element={<SystemLogsPage />} />
                 <Route path="system/permissions" element={<PermissionsPage />} />
                 <Route path="system/database" element={<DatabasePage />} />
