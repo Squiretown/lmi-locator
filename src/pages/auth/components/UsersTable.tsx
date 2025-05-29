@@ -5,25 +5,10 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { UserActionMenu } from './UserActionMenu';
 import { UserTypeBadge } from './UserTypeBadge';
-
-interface User {
-  id: string;
-  email: string;
-  created_at: string;
-  last_sign_in_at: string | null;
-  user_metadata: {
-    first_name?: string;
-    last_name?: string;
-    user_type?: string;
-  };
-  app_metadata: {
-    provider?: string;
-    providers?: string[];
-  };
-}
+import type { AdminUser } from '../types/admin-user';
 
 interface UsersTableProps {
-  users: User[];
+  users: AdminUser[];
   isLoading: boolean;
   error: string | null;
   onResetPassword: (userId: string) => void;
@@ -75,7 +60,7 @@ export const UsersTable: React.FC<UsersTableProps> = ({
     );
   }
 
-  const formatDate = (dateString: string | null) => {
+  const formatDate = (dateString: string | null | undefined) => {
     if (!dateString) return 'Never';
     try {
       return new Date(dateString).toLocaleDateString();
@@ -84,7 +69,7 @@ export const UsersTable: React.FC<UsersTableProps> = ({
     }
   };
 
-  const getDisplayName = (user: User) => {
+  const getDisplayName = (user: AdminUser) => {
     const { first_name, last_name } = user.user_metadata || {};
     if (first_name || last_name) {
       return `${first_name || ''} ${last_name || ''}`.trim();
@@ -114,7 +99,7 @@ export const UsersTable: React.FC<UsersTableProps> = ({
               </TableCell>
               <TableCell>
                 <div className="max-w-[200px] truncate">
-                  {user.email}
+                  {user.email || 'No email'}
                 </div>
               </TableCell>
               <TableCell>

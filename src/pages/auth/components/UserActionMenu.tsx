@@ -9,17 +9,10 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { MoreHorizontal, Key, UserX, Shield, Mail } from 'lucide-react';
-
-interface User {
-  id: string;
-  email: string;
-  user_metadata: {
-    user_type?: string;
-  };
-}
+import type { AdminUser } from '../types/admin-user';
 
 interface UserActionMenuProps {
-  user: User;
+  user: AdminUser;
   onResetPassword: () => void;
   onDisableUser: () => void;
 }

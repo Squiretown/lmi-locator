@@ -2,22 +2,8 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-
-interface AdminUser {
-  id: string;
-  email: string;
-  created_at: string;
-  last_sign_in_at: string | null;
-  user_metadata: {
-    first_name?: string;
-    last_name?: string;
-    user_type?: string;
-  };
-  app_metadata: {
-    provider?: string;
-    providers?: string[];
-  };
-}
+import type { User } from '@supabase/supabase-js';
+import type { AdminUser } from '../types/admin-user';
 
 export const useUserManagement = () => {
   const [users, setUsers] = useState<AdminUser[]>([]);
@@ -48,7 +34,7 @@ export const useUserManagement = () => {
         }
 
         // If we only have profiles, create minimal user objects
-        const minimalUsers = profiles?.map(profile => ({
+        const minimalUsers: AdminUser[] = profiles?.map(profile => ({
           id: profile.user_id,
           email: 'Email not available',
           created_at: new Date().toISOString(),
@@ -65,7 +51,18 @@ export const useUserManagement = () => {
       }
 
       console.log('Successfully fetched users:', authUsers?.length || 0);
-      setUsers(authUsers || []);
+      
+      // Transform Supabase User objects to AdminUser objects
+      const transformedUsers: AdminUser[] = (authUsers || []).map((user: User) => ({
+        id: user.id,
+        email: user.email,
+        created_at: user.created_at,
+        last_sign_in_at: user.last_sign_in_at,
+        user_metadata: user.user_metadata,
+        app_metadata: user.app_metadata
+      }));
+      
+      setUsers(transformedUsers);
 
     } catch (err) {
       console.error('Error in fetchUsers:', err);
