@@ -33,25 +33,37 @@ const RealtorsPage: React.FC = () => {
   } = useRealtorOperations();
 
   const handleAddRealtor = async (data: RealtorFormValues) => {
-    await createRealtorMutation.mutateAsync(data);
-    setAddDialogOpen(false);
+    try {
+      await createRealtorMutation.mutateAsync(data);
+      setAddDialogOpen(false);
+      console.log('Realtor added successfully');
+    } catch (error) {
+      console.error('Failed to add realtor:', error);
+    }
   };
 
   const handleEditRealtor = async (data: RealtorFormValues) => {
     if (!selectedRealtor) return;
-    await updateRealtorMutation.mutateAsync({ id: selectedRealtor.id, data });
-    setEditDialogOpen(false);
-    setSelectedRealtor(null);
+    try {
+      await updateRealtorMutation.mutateAsync({ id: selectedRealtor.id, data });
+      setEditDialogOpen(false);
+      setSelectedRealtor(null);
+      console.log('Realtor updated successfully');
+    } catch (error) {
+      console.error('Failed to update realtor:', error);
+    }
   };
 
   const handleDeleteRealtor = async () => {
     if (!selectedRealtor) return;
     try {
+      console.log('Attempting to delete realtor:', selectedRealtor.id);
       await deleteRealtorMutation.mutateAsync(selectedRealtor.id);
       setDeleteDialogOpen(false);
       setSelectedRealtor(null);
       // Force a manual refetch as backup
       refetch();
+      console.log('Delete operation completed');
     } catch (error) {
       console.error('Delete failed:', error);
     }

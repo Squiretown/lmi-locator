@@ -1,7 +1,6 @@
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { createRealtor, updateRealtor, deleteRealtor, RealtorFormValues } from '@/lib/api/realtors';
-import { toast } from 'sonner';
 
 export const useRealtorOperations = () => {
   const queryClient = useQueryClient();
@@ -10,10 +9,9 @@ export const useRealtorOperations = () => {
     mutationFn: createRealtor,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['realtors'] });
-      toast.success('Realtor added successfully');
     },
     onError: (error) => {
-      toast.error(`Failed to add realtor: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      console.error('Failed to create realtor:', error);
     }
   });
 
@@ -22,10 +20,9 @@ export const useRealtorOperations = () => {
       updateRealtor(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['realtors'] });
-      toast.success('Realtor updated successfully');
     },
     onError: (error) => {
-      toast.error(`Failed to update realtor: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      console.error('Failed to update realtor:', error);
     }
   });
 
@@ -35,10 +32,10 @@ export const useRealtorOperations = () => {
       // Force a refetch of the realtors data
       queryClient.invalidateQueries({ queryKey: ['realtors'] });
       queryClient.refetchQueries({ queryKey: ['realtors'] });
-      toast.success('Realtor deleted successfully');
+      console.log('Realtor deleted successfully');
     },
     onError: (error) => {
-      toast.error(`Failed to delete realtor: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      console.error('Failed to delete realtor:', error);
     }
   });
 
