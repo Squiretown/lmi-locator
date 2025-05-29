@@ -1,14 +1,19 @@
 
 import React, { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { useUserManagement } from './hooks/useUserManagement';
 import { UsersTable } from './components/UsersTable';
 import { UsersPageHeader } from '@/components/users/UsersPageHeader';
 import { UsersSearch } from '@/components/users/UsersSearch';
 import SignOutAllUsersButton from '@/components/admin/SignOutAllUsersButton';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { AlertCircle, UserPlus } from 'lucide-react';
 
 const UserManagement: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
+  const [addUserDialogOpen, setAddUserDialogOpen] = useState(false);
   
   const { 
     users, 
@@ -19,13 +24,12 @@ const UserManagement: React.FC = () => {
   } = useUserManagement();
 
   const handleAddUser = () => {
-    // TODO: Implement add user functionality
-    console.log('Add user clicked');
+    setAddUserDialogOpen(true);
   };
 
   const handleManageRoles = () => {
-    // TODO: Implement manage roles functionality
-    console.log('Manage roles clicked');
+    // Navigate to permissions page
+    window.location.href = '/admin/permissions';
   };
 
   const filteredUsers = users?.filter(user => {
@@ -37,6 +41,35 @@ const UserManagement: React.FC = () => {
       user.user_metadata?.user_type?.toLowerCase().includes(searchLower)
     );
   }) || [];
+
+  // If there's an authentication error, show a helpful message
+  if (error && error.includes('User not allowed')) {
+    return (
+      <div className="p-4 space-y-4">
+        <Card>
+          <CardContent className="p-6">
+            <Alert>
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                <div className="space-y-2">
+                  <p><strong>Admin Access Required</strong></p>
+                  <p>You don't have sufficient permissions to manage users. This could be due to:</p>
+                  <ul className="list-disc list-inside space-y-1 mt-2">
+                    <li>Your account doesn't have admin privileges in Supabase</li>
+                    <li>The service role key isn't properly configured</li>
+                    <li>Row Level Security policies need to be updated</li>
+                  </ul>
+                  <p className="mt-3 text-sm text-muted-foreground">
+                    Contact your system administrator to grant proper admin access.
+                  </p>
+                </div>
+              </AlertDescription>
+            </Alert>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="p-4 space-y-4">
@@ -65,6 +98,34 @@ const UserManagement: React.FC = () => {
           </div>
         </CardContent>
       </Card>
+
+      {/* Add User Dialog */}
+      <Dialog open={addUserDialogOpen} onOpenChange={setAddUserDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <UserPlus className="h-5 w-5" />
+              Add New User
+            </DialogTitle>
+            <DialogDescription>
+              User creation functionality is not yet implemented. Users can currently only be created through the sign-up process.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <Alert>
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                To add users, they need to sign up through the registration form or you can implement invitation functionality.
+              </AlertDescription>
+            </Alert>
+            <div className="flex justify-end">
+              <Button variant="outline" onClick={() => setAddUserDialogOpen(false)}>
+                Close
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

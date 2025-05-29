@@ -69,28 +69,61 @@ const transformToProfessionalForm = (realtor: RealtorFormValues): ProfessionalFo
 });
 
 export const fetchRealtors = async (): Promise<Realtor[]> => {
-  const professionals = await fetchProfessionals('realtor');
-  return professionals.map(transformToRealtor);
+  try {
+    console.log('Fetching realtors...');
+    const professionals = await fetchProfessionals('realtor');
+    console.log('Fetched professionals:', professionals.length);
+    return professionals.map(transformToRealtor);
+  } catch (error) {
+    console.error('Error in fetchRealtors:', error);
+    throw error;
+  }
 };
 
 export const createRealtor = async (realtor: RealtorFormValues): Promise<Realtor> => {
-  const professionalForm = transformToProfessionalForm(realtor);
-  const professional = await createProfessional(professionalForm);
-  return transformToRealtor(professional);
+  try {
+    console.log('Creating realtor:', realtor);
+    const professionalForm = transformToProfessionalForm(realtor);
+    const professional = await createProfessional(professionalForm);
+    console.log('Created professional:', professional);
+    return transformToRealtor(professional);
+  } catch (error) {
+    console.error('Error in createRealtor:', error);
+    throw error;
+  }
 };
 
 export const updateRealtor = async (id: string, realtor: RealtorFormValues): Promise<Realtor> => {
-  const professionalForm = transformToProfessionalForm(realtor);
-  const professional = await updateProfessional(id, professionalForm);
-  return transformToRealtor(professional);
+  try {
+    console.log('Updating realtor:', id, realtor);
+    const professionalForm = transformToProfessionalForm(realtor);
+    const professional = await updateProfessional(id, professionalForm);
+    console.log('Updated professional:', professional);
+    return transformToRealtor(professional);
+  } catch (error) {
+    console.error('Error in updateRealtor:', error);
+    throw error;
+  }
 };
 
 export const deleteRealtor = async (id: string): Promise<void> => {
-  return deleteProfessional(id);
+  try {
+    console.log('Deleting realtor with ID:', id);
+    await deleteProfessional(id);
+    console.log('Successfully deleted realtor:', id);
+  } catch (error) {
+    console.error('Error in deleteRealtor:', error);
+    throw error;
+  }
 };
 
 export const getRealtorByUserId = async (): Promise<Realtor | null> => {
-  const professional = await getProfessionalByUserId('realtor');
-  if (!professional) return null;
-  return transformToRealtor(professional);
+  try {
+    const professional = await getProfessionalByUserId('realtor');
+    if (!professional) return null;
+    return transformToRealtor(professional);
+  } catch (error) {
+    console.error('Error in getRealtorByUserId:', error);
+    return null;
+  }
 };
