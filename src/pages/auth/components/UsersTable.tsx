@@ -52,7 +52,7 @@ export const UsersTable: React.FC<UsersTableProps> = ({
         <div className="text-center">
           <p className="text-muted-foreground mb-2">No users found</p>
           <p className="text-xs text-muted-foreground">
-            No user profiles exist in the system.
+            No users exist in the system or you don't have permission to view them.
           </p>
         </div>
       </div>
@@ -73,7 +73,7 @@ export const UsersTable: React.FC<UsersTableProps> = ({
     if (first_name || last_name) {
       return `${first_name || ''} ${last_name || ''}`.trim();
     }
-    return user.id.substring(0, 8) + '...';
+    return user.email || user.id.substring(0, 8) + '...';
   };
 
   return (
@@ -82,7 +82,7 @@ export const UsersTable: React.FC<UsersTableProps> = ({
         <TableHeader>
           <TableRow>
             <TableHead>User ID</TableHead>
-            <TableHead>Name</TableHead>
+            <TableHead>Email/Name</TableHead>
             <TableHead>User Type</TableHead>
             <TableHead>Created</TableHead>
             <TableHead>Last Login</TableHead>
