@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { useQuery } from '@tanstack/react-query';
@@ -19,11 +18,11 @@ const RealtorsPage: React.FC = () => {
   const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
   const [selectedRealtor, setSelectedRealtor] = useState<Realtor | null>(null);
   
-  const { data: realtors, isLoading, error, refetch } = useQuery({
+  const { data: realtors, isLoading, error } = useQuery({
     queryKey: ['realtors'],
     queryFn: fetchRealtors,
     refetchOnWindowFocus: false,
-    staleTime: 30000, // 30 seconds
+    staleTime: 0, // Always consider data stale to ensure fresh fetches
   });
 
   const {
@@ -61,9 +60,7 @@ const RealtorsPage: React.FC = () => {
       await deleteRealtorMutation.mutateAsync(selectedRealtor.id);
       setDeleteDialogOpen(false);
       setSelectedRealtor(null);
-      // Force a manual refetch as backup
-      refetch();
-      console.log('Delete operation completed');
+      console.log('Delete operation completed - UI should refresh');
     } catch (error) {
       console.error('Delete failed:', error);
     }

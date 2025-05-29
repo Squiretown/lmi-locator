@@ -1,4 +1,5 @@
 
+
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { createRealtor, updateRealtor, deleteRealtor, RealtorFormValues } from '@/lib/api/realtors';
 
@@ -29,10 +30,10 @@ export const useRealtorOperations = () => {
   const deleteRealtorMutation = useMutation({
     mutationFn: deleteRealtor,
     onSuccess: () => {
-      // Force a refetch of the realtors data
+      // Remove the specific item from cache and invalidate
+      queryClient.removeQueries({ queryKey: ['realtors'] });
       queryClient.invalidateQueries({ queryKey: ['realtors'] });
-      queryClient.refetchQueries({ queryKey: ['realtors'] });
-      console.log('Realtor deleted successfully');
+      console.log('Realtor deleted successfully - cache cleared');
     },
     onError: (error) => {
       console.error('Failed to delete realtor:', error);
@@ -45,3 +46,4 @@ export const useRealtorOperations = () => {
     deleteRealtorMutation,
   };
 };
+
