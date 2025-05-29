@@ -14,55 +14,33 @@ export const useUserManagement = () => {
       setIsLoading(true);
       setError(null);
       
-      console.log('Fetching users from auth.users via admin API...');
+      console.log('Fetching users from user_profiles table...');
       
-      // Try to fetch from auth.users first (admin API)
-      const { data: authUsers, error: authError } = await supabase.auth.admin.listUsers();
-      
-      if (authError) {
-        console.warn('Admin API not available:', authError.message);
-        
-        // Fallback: Try to get user profiles from public schema
-        console.log('Falling back to user_profiles table...');
-        const { data: profiles, error: profilesError } = await supabase
-          .from('user_profiles')
-          .select('user_id, user_type, phone, company_name')
-          .limit(50);
+      // Fetch users from user_profiles table with proper RLS handling
+      const { data: profiles, error: profilesError } = await supabase
+        .from('user_profiles')
+        .select('user_id, user_type, phone, company_name')
+        .limit(50);
 
-        if (profilesError) {
-          throw new Error(`Failed to fetch user profiles: ${profilesError.message}`);
-        }
-
-        console.log('Successfully fetched user profiles:', profiles?.length || 0);
-        
-        // Transform profiles to AdminUser objects
-        const transformedUsers: AdminUser[] = (profiles || []).map((profile) => ({
-          id: profile.user_id,
-          email: 'Email not available',
-          created_at: new Date().toISOString(),
-          last_sign_in_at: null,
-          user_metadata: {
-            user_type: profile.user_type || 'client'
-          },
-          app_metadata: {
-            provider: 'email'
-          }
-        }));
-        
-        setUsers(transformedUsers);
-        return;
+      if (profilesError) {
+        console.error('Failed to fetch user profiles:', profilesError);
+        throw new Error(`Failed to fetch user profiles: ${profilesError.message}`);
       }
 
-      console.log('Successfully fetched users from admin API:', authUsers.users?.length || 0);
+      console.log('Successfully fetched user profiles:', profiles?.length || 0);
       
-      // Transform auth users to AdminUser objects
-      const transformedUsers: AdminUser[] = (authUsers.users || []).map((user) => ({
-        id: user.id,
-        email: user.email || 'No email',
-        created_at: user.created_at,
-        last_sign_in_at: user.last_sign_in_at,
-        user_metadata: user.user_metadata || {},
-        app_metadata: user.app_metadata || {}
+      // Transform profiles to AdminUser objects
+      const transformedUsers: AdminUser[] = (profiles || []).map((profile) => ({
+        id: profile.user_id,
+        email: 'Email not available', // Email is stored in auth.users, not accessible via RLS
+        created_at: new Date().toISOString(),
+        last_sign_in_at: null,
+        user_metadata: {
+          user_type: profile.user_type || 'client'
+        },
+        app_metadata: {
+          provider: 'email'
+        }
       }));
       
       setUsers(transformedUsers);

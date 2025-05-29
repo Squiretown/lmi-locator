@@ -62,9 +62,9 @@ const UserManagement: React.FC = () => {
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>
                 <div className="space-y-2">
-                  <p><strong>Notice:</strong> {error}</p>
+                  <p><strong>Database Error:</strong> {error}</p>
                   <p className="text-sm">
-                    Showing user profiles from the database. Some features may be limited.
+                    This usually means there's an issue with database permissions or connectivity.
                   </p>
                 </div>
               </AlertDescription>
