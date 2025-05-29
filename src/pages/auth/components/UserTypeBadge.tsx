@@ -7,18 +7,39 @@ interface UserTypeBadgeProps {
 }
 
 export const UserTypeBadge: React.FC<UserTypeBadgeProps> = ({ userType }) => {
-  if (!userType) return <Badge variant="outline">Standard</Badge>;
-  
-  switch (userType) {
-    case 'admin':
-      return <Badge className="bg-purple-600">Admin</Badge>;
-    case 'mortgage_professional':
-      return <Badge className="bg-blue-600">Mortgage Pro</Badge>;
-    case 'realtor':
-      return <Badge className="bg-green-600">Realtor</Badge>;
-    case 'client':
-      return <Badge className="bg-orange-600">Client</Badge>;
-    default:
-      return <Badge variant="outline">{userType}</Badge>;
-  }
+  const getVariant = (type?: string) => {
+    switch (type) {
+      case 'admin':
+        return 'destructive';
+      case 'realtor':
+        return 'default';
+      case 'mortgage_professional':
+        return 'secondary';
+      case 'client':
+        return 'outline';
+      default:
+        return 'outline';
+    }
+  };
+
+  const getDisplayName = (type?: string) => {
+    switch (type) {
+      case 'admin':
+        return 'Admin';
+      case 'realtor':
+        return 'Realtor';
+      case 'mortgage_professional':
+        return 'Mortgage Professional';
+      case 'client':
+        return 'Client';
+      default:
+        return type || 'Unknown';
+    }
+  };
+
+  return (
+    <Badge variant={getVariant(userType)}>
+      {getDisplayName(userType)}
+    </Badge>
+  );
 };

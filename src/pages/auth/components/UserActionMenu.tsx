@@ -1,61 +1,75 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuTrigger 
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { MoreHorizontal, Shield, Ban, UserCheck, Lock } from 'lucide-react';
+import { MoreHorizontal, Key, UserX, Shield, Mail } from 'lucide-react';
 
-interface UserActionMenuProps {
-  userId: string;
-  userType?: string;
-  onResetPassword: (userId: string) => void;
-  onDisableUser: (userId: string) => void;
+interface User {
+  id: string;
+  email: string;
+  user_metadata: {
+    user_type?: string;
+  };
 }
 
-export const UserActionMenu: React.FC<UserActionMenuProps> = ({ 
-  userId, 
-  userType, 
-  onResetPassword, 
-  onDisableUser 
+interface UserActionMenuProps {
+  user: User;
+  onResetPassword: () => void;
+  onDisableUser: () => void;
+}
+
+export const UserActionMenu: React.FC<UserActionMenuProps> = ({
+  user,
+  onResetPassword,
+  onDisableUser,
 }) => {
+  const canResetPassword = user.email && user.email !== 'Email not available';
+  const isAdmin = user.user_metadata?.user_type === 'admin';
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="sm">
+        <Button variant="ghost" className="h-8 w-8 p-0">
+          <span className="sr-only">Open menu</span>
           <MoreHorizontal className="h-4 w-4" />
-          <span className="sr-only">Actions</span>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
         <DropdownMenuItem 
-          onClick={() => onResetPassword(userId)}
-          className="flex items-center"
+          onClick={onResetPassword}
+          disabled={!canResetPassword}
         >
-          <Lock className="mr-2 h-4 w-4" />
-          <span>Reset Password</span>
+          <Key className="mr-2 h-4 w-4" />
+          Reset Password
         </DropdownMenuItem>
-        {userType !== 'admin' && (
-          <DropdownMenuItem 
-            onClick={() => onDisableUser(userId)}
-            className="flex items-center text-red-600"
-          >
-            <Ban className="mr-2 h-4 w-4" />
-            <span>Disable User</span>
-          </DropdownMenuItem>
-        )}
-        {userType !== 'admin' && (
-          <DropdownMenuItem className="flex items-center">
+        
+        <DropdownMenuItem disabled>
+          <Mail className="mr-2 h-4 w-4" />
+          Send Email
+        </DropdownMenuItem>
+        
+        {isAdmin && (
+          <DropdownMenuItem disabled>
             <Shield className="mr-2 h-4 w-4" />
-            <span>Change Role</span>
+            Admin User
           </DropdownMenuItem>
         )}
-        <DropdownMenuItem className="flex items-center">
-          <UserCheck className="mr-2 h-4 w-4" />
-          <span>View Profile</span>
+        
+        <DropdownMenuSeparator />
+        
+        <DropdownMenuItem 
+          onClick={onDisableUser}
+          disabled={isAdmin}
+          className="text-red-600"
+        >
+          <UserX className="mr-2 h-4 w-4" />
+          Disable User
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
