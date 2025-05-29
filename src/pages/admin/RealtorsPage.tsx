@@ -19,9 +19,11 @@ const RealtorsPage: React.FC = () => {
   const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
   const [selectedRealtor, setSelectedRealtor] = useState<Realtor | null>(null);
   
-  const { data: realtors, isLoading, error } = useQuery({
+  const { data: realtors, isLoading, error, refetch } = useQuery({
     queryKey: ['realtors'],
-    queryFn: fetchRealtors
+    queryFn: fetchRealtors,
+    refetchOnWindowFocus: false,
+    staleTime: 30000, // 30 seconds
   });
 
   const {
@@ -39,12 +41,20 @@ const RealtorsPage: React.FC = () => {
     if (!selectedRealtor) return;
     await updateRealtorMutation.mutateAsync({ id: selectedRealtor.id, data });
     setEditDialogOpen(false);
+    setSelectedRealtor(null);
   };
 
   const handleDeleteRealtor = async () => {
     if (!selectedRealtor) return;
-    await deleteRealtorMutation.mutateAsync(selectedRealtor.id);
-    setDeleteDialogOpen(false);
+    try {
+      await deleteRealtorMutation.mutateAsync(selectedRealtor.id);
+      setDeleteDialogOpen(false);
+      setSelectedRealtor(null);
+      // Force a manual refetch as backup
+      refetch();
+    } catch (error) {
+      console.error('Delete failed:', error);
+    }
   };
 
   const openEditDialog = (realtor: Realtor) => {
@@ -99,7 +109,10 @@ const RealtorsPage: React.FC = () => {
       {selectedRealtor && (
         <RealtorDialog
           isOpen={editDialogOpen}
-          setIsOpen={setEditDialogOpen}
+          setIsOpen={(open) => {
+            setEditDialogOpen(open);
+            if (!open) setSelectedRealtor(null);
+          }}
           onSubmit={handleEditRealtor}
           defaultValues={selectedRealtor}
           isLoading={updateRealtorMutation.isPending}
@@ -109,7 +122,10 @@ const RealtorsPage: React.FC = () => {
 
       <DeleteRealtorDialog
         isOpen={deleteDialogOpen}
-        onOpenChange={setDeleteDialogOpen}
+        onOpenChange={(open) => {
+          setDeleteDialogOpen(open);
+          if (!open) setSelectedRealtor(null);
+        }}
         realtor={selectedRealtor}
         onConfirm={handleDeleteRealtor}
         isDeleting={deleteRealtorMutation.isPending}

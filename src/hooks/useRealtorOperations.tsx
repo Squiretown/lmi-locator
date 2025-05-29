@@ -32,7 +32,9 @@ export const useRealtorOperations = () => {
   const deleteRealtorMutation = useMutation({
     mutationFn: deleteRealtor,
     onSuccess: () => {
+      // Force a refetch of the realtors data
       queryClient.invalidateQueries({ queryKey: ['realtors'] });
+      queryClient.refetchQueries({ queryKey: ['realtors'] });
       toast.success('Realtor deleted successfully');
     },
     onError: (error) => {
