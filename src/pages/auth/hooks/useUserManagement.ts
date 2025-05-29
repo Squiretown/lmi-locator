@@ -2,7 +2,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import type { User } from '@supabase/supabase-js';
 import type { AdminUser } from '../types/admin-user';
 
 export const useUserManagement = () => {
@@ -15,51 +14,34 @@ export const useUserManagement = () => {
       setIsLoading(true);
       setError(null);
       
-      console.log('Fetching users from auth.users...');
+      console.log('Fetching users from user_profiles...');
       
-      // Try to fetch users using the admin API
-      const { data: { users: authUsers }, error: usersError } = await supabase.auth.admin.listUsers();
-      
-      if (usersError) {
-        console.error('Error fetching users from auth.users:', usersError);
-        
-        // Fallback: try to get basic user info from user_profiles table
-        const { data: profiles, error: profilesError } = await supabase
-          .from('user_profiles')
-          .select('user_id, user_type')
-          .order('created_at', { ascending: false });
+      // Fetch users from user_profiles table instead of auth.users
+      const { data: profiles, error: profilesError } = await supabase
+        .from('user_profiles')
+        .select('*')
+        .order('id', { ascending: false });
 
-        if (profilesError) {
-          throw new Error(`Failed to fetch users: ${profilesError.message}`);
-        }
-
-        // If we only have profiles, create minimal user objects
-        const minimalUsers: AdminUser[] = profiles?.map(profile => ({
-          id: profile.user_id,
-          email: 'Email not available',
-          created_at: new Date().toISOString(),
-          last_sign_in_at: null,
-          user_metadata: {
-            user_type: profile.user_type
-          },
-          app_metadata: {}
-        })) || [];
-
-        setUsers(minimalUsers);
-        setError('Limited user data available. Admin access may be restricted.');
-        return;
+      if (profilesError) {
+        throw new Error(`Failed to fetch user profiles: ${profilesError.message}`);
       }
 
-      console.log('Successfully fetched users:', authUsers?.length || 0);
+      console.log('Successfully fetched user profiles:', profiles?.length || 0);
       
-      // Transform Supabase User objects to AdminUser objects
-      const transformedUsers: AdminUser[] = (authUsers || []).map((user: User) => ({
-        id: user.id,
-        email: user.email,
-        created_at: user.created_at,
-        last_sign_in_at: user.last_sign_in_at,
-        user_metadata: user.user_metadata,
-        app_metadata: user.app_metadata
+      // Transform profiles to AdminUser objects
+      const transformedUsers: AdminUser[] = (profiles || []).map((profile) => ({
+        id: profile.user_id,
+        email: 'Not available', // Email is not stored in user_profiles
+        created_at: new Date().toISOString(),
+        last_sign_in_at: null,
+        user_metadata: {
+          user_type: profile.user_type,
+          first_name: profile.first_name || undefined,
+          last_name: profile.last_name || undefined
+        },
+        app_metadata: {
+          provider: 'email'
+        }
       }));
       
       setUsers(transformedUsers);
@@ -76,24 +58,8 @@ export const useUserManagement = () => {
 
   const handleResetPassword = async (userId: string) => {
     try {
-      console.log('Resetting password for user:', userId);
-      
-      const user = users.find(u => u.id === userId);
-      if (!user?.email || user.email === 'Email not available') {
-        toast.error('Cannot reset password: email not available');
-        return;
-      }
-
-      const { error } = await supabase.auth.admin.generateLink({
-        type: 'recovery',
-        email: user.email,
-      });
-
-      if (error) {
-        throw error;
-      }
-
-      toast.success('Password reset link generated successfully');
+      console.log('Reset password functionality not implemented for user:', userId);
+      toast.error('Password reset functionality requires admin API access');
     } catch (err) {
       console.error('Error resetting password:', err);
       const errorMessage = err instanceof Error ? err.message : 'Failed to reset password';
@@ -103,21 +69,55 @@ export const useUserManagement = () => {
 
   const handleDisableUser = async (userId: string) => {
     try {
-      console.log('Disabling user:', userId);
+      console.log('Attempting to delete user profile:', userId);
       
-      const { error } = await supabase.auth.admin.updateUserById(userId, {
-        ban_duration: 'none' // This will disable the user
-      });
+      // Delete from user_profiles table
+      const { error: deleteError } = await supabase
+        .from('user_profiles')
+        .delete()
+        .eq('user_id', userId);
 
-      if (error) {
-        throw error;
+      if (deleteError) {
+        throw deleteError;
       }
 
-      toast.success('User disabled successfully');
+      toast.success('User profile deleted successfully');
       await fetchUsers(); // Refresh the list
     } catch (err) {
-      console.error('Error disabling user:', err);
-      const errorMessage = err instanceof Error ? err.message : 'Failed to disable user';
+      console.error('Error deleting user profile:', err);
+      const errorMessage = err instanceof Error ? err.message : 'Failed to delete user profile';
+      toast.error(errorMessage);
+    }
+  };
+
+  const handleDeleteUser = async (userId: string) => {
+    try {
+      console.log('Attempting to completely remove user:', userId);
+      
+      // First try to delete the auth user using the edge function
+      const { error: authDeleteError } = await supabase.functions.invoke('delete-user', {
+        body: { userId }
+      });
+
+      if (authDeleteError) {
+        console.warn('Could not delete auth user, removing profile only:', authDeleteError);
+      }
+
+      // Delete from user_profiles table
+      const { error: profileDeleteError } = await supabase
+        .from('user_profiles')
+        .delete()
+        .eq('user_id', userId);
+
+      if (profileDeleteError) {
+        throw profileDeleteError;
+      }
+
+      toast.success('User removed successfully');
+      await fetchUsers(); // Refresh the list
+    } catch (err) {
+      console.error('Error removing user:', err);
+      const errorMessage = err instanceof Error ? err.message : 'Failed to remove user';
       toast.error(errorMessage);
     }
   };
@@ -132,6 +132,7 @@ export const useUserManagement = () => {
     error,
     handleResetPassword,
     handleDisableUser,
+    handleDeleteUser,
     refetch: fetchUsers
   };
 };

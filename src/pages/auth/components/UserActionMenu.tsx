@@ -8,21 +8,22 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { MoreHorizontal, Key, UserX, Shield, Mail } from 'lucide-react';
+import { MoreHorizontal, Key, UserX, Shield, Mail, Trash2 } from 'lucide-react';
 import type { AdminUser } from '../types/admin-user';
 
 interface UserActionMenuProps {
   user: AdminUser;
   onResetPassword: () => void;
   onDisableUser: () => void;
+  onDeleteUser?: () => void;
 }
 
 export const UserActionMenu: React.FC<UserActionMenuProps> = ({
   user,
   onResetPassword,
   onDisableUser,
+  onDeleteUser,
 }) => {
-  const canResetPassword = user.email && user.email !== 'Email not available';
   const isAdmin = user.user_metadata?.user_type === 'admin';
 
   return (
@@ -36,7 +37,7 @@ export const UserActionMenu: React.FC<UserActionMenuProps> = ({
       <DropdownMenuContent align="end">
         <DropdownMenuItem 
           onClick={onResetPassword}
-          disabled={!canResetPassword}
+          disabled
         >
           <Key className="mr-2 h-4 w-4" />
           Reset Password
@@ -59,11 +60,22 @@ export const UserActionMenu: React.FC<UserActionMenuProps> = ({
         <DropdownMenuItem 
           onClick={onDisableUser}
           disabled={isAdmin}
-          className="text-red-600"
+          className="text-orange-600"
         >
           <UserX className="mr-2 h-4 w-4" />
-          Disable User
+          Remove Profile
         </DropdownMenuItem>
+
+        {onDeleteUser && (
+          <DropdownMenuItem 
+            onClick={onDeleteUser}
+            disabled={isAdmin}
+            className="text-red-600"
+          >
+            <Trash2 className="mr-2 h-4 w-4" />
+            Delete User
+          </DropdownMenuItem>
+        )}
       </DropdownMenuContent>
     </DropdownMenu>
   );

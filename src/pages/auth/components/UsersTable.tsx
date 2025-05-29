@@ -13,6 +13,7 @@ interface UsersTableProps {
   error: string | null;
   onResetPassword: (userId: string) => void;
   onDisableUser: (userId: string) => void;
+  onDeleteUser?: (userId: string) => void;
 }
 
 export const UsersTable: React.FC<UsersTableProps> = ({
@@ -21,6 +22,7 @@ export const UsersTable: React.FC<UsersTableProps> = ({
   error,
   onResetPassword,
   onDisableUser,
+  onDeleteUser,
 }) => {
   if (isLoading) {
     return (
@@ -39,9 +41,6 @@ export const UsersTable: React.FC<UsersTableProps> = ({
         <div className="text-center">
           <div className="text-red-500 mb-2">⚠️ Error loading users</div>
           <p className="text-sm text-muted-foreground mb-4">{error}</p>
-          <p className="text-xs text-muted-foreground">
-            This may be due to insufficient admin permissions or RLS policies.
-          </p>
         </div>
       </div>
     );
@@ -53,7 +52,7 @@ export const UsersTable: React.FC<UsersTableProps> = ({
         <div className="text-center">
           <p className="text-muted-foreground mb-2">No users found</p>
           <p className="text-xs text-muted-foreground">
-            Users may exist but are not visible due to permission restrictions.
+            No user profiles exist in the system.
           </p>
         </div>
       </div>
@@ -74,7 +73,7 @@ export const UsersTable: React.FC<UsersTableProps> = ({
     if (first_name || last_name) {
       return `${first_name || ''} ${last_name || ''}`.trim();
     }
-    return user.email?.split('@')[0] || 'Unknown';
+    return user.id.substring(0, 8) + '...';
   };
 
   return (
@@ -82,8 +81,8 @@ export const UsersTable: React.FC<UsersTableProps> = ({
       <Table>
         <TableHeader>
           <TableRow>
+            <TableHead>User ID</TableHead>
             <TableHead>Name</TableHead>
-            <TableHead>Email</TableHead>
             <TableHead>User Type</TableHead>
             <TableHead>Created</TableHead>
             <TableHead>Last Login</TableHead>
@@ -94,13 +93,13 @@ export const UsersTable: React.FC<UsersTableProps> = ({
         <TableBody>
           {users.map((user) => (
             <TableRow key={user.id}>
+              <TableCell>
+                <div className="font-mono text-xs max-w-[120px] truncate" title={user.id}>
+                  {user.id.substring(0, 8)}...
+                </div>
+              </TableCell>
               <TableCell className="font-medium">
                 {getDisplayName(user)}
-              </TableCell>
-              <TableCell>
-                <div className="max-w-[200px] truncate">
-                  {user.email || 'No email'}
-                </div>
               </TableCell>
               <TableCell>
                 <UserTypeBadge userType={user.user_metadata?.user_type} />
@@ -121,6 +120,7 @@ export const UsersTable: React.FC<UsersTableProps> = ({
                   user={user}
                   onResetPassword={() => onResetPassword(user.id)}
                   onDisableUser={() => onDisableUser(user.id)}
+                  onDeleteUser={onDeleteUser ? () => onDeleteUser(user.id) : undefined}
                 />
               </TableCell>
             </TableRow>

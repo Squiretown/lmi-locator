@@ -1,7 +1,6 @@
 
 import React, { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { useUserManagement } from './hooks/useUserManagement';
 import { UsersTable } from './components/UsersTable';
 import { UsersPageHeader } from '@/components/users/UsersPageHeader';
@@ -10,6 +9,7 @@ import SignOutAllUsersButton from '@/components/admin/SignOutAllUsersButton';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertCircle, UserPlus } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 const UserManagement: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -20,7 +20,8 @@ const UserManagement: React.FC = () => {
     isLoading, 
     error, 
     handleResetPassword, 
-    handleDisableUser 
+    handleDisableUser,
+    handleDeleteUser
   } = useUserManagement();
 
   const handleAddUser = () => {
@@ -34,42 +35,13 @@ const UserManagement: React.FC = () => {
 
   const filteredUsers = users?.filter(user => {
     const searchLower = searchQuery.toLowerCase();
+    const displayName = user.user_metadata?.first_name || user.user_metadata?.last_name || user.id;
     return (
-      user.email?.toLowerCase().includes(searchLower) ||
-      user.user_metadata?.first_name?.toLowerCase().includes(searchLower) ||
-      user.user_metadata?.last_name?.toLowerCase().includes(searchLower) ||
+      user.id.toLowerCase().includes(searchLower) ||
+      displayName.toLowerCase().includes(searchLower) ||
       user.user_metadata?.user_type?.toLowerCase().includes(searchLower)
     );
   }) || [];
-
-  // If there's an authentication error, show a helpful message
-  if (error && error.includes('User not allowed')) {
-    return (
-      <div className="p-4 space-y-4">
-        <Card>
-          <CardContent className="p-6">
-            <Alert>
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>
-                <div className="space-y-2">
-                  <p><strong>Admin Access Required</strong></p>
-                  <p>You don't have sufficient permissions to manage users. This could be due to:</p>
-                  <ul className="list-disc list-inside space-y-1 mt-2">
-                    <li>Your account doesn't have admin privileges in Supabase</li>
-                    <li>The service role key isn't properly configured</li>
-                    <li>Row Level Security policies need to be updated</li>
-                  </ul>
-                  <p className="mt-3 text-sm text-muted-foreground">
-                    Contact your system administrator to grant proper admin access.
-                  </p>
-                </div>
-              </AlertDescription>
-            </Alert>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
 
   return (
     <div className="p-4 space-y-4">
@@ -85,12 +57,27 @@ const UserManagement: React.FC = () => {
             onSearchChange={setSearchQuery}
           />
 
+          {error && (
+            <Alert className="mb-4">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                <div className="space-y-2">
+                  <p><strong>Notice:</strong> {error}</p>
+                  <p className="text-sm">
+                    Showing user profiles from the database. Some features may be limited.
+                  </p>
+                </div>
+              </AlertDescription>
+            </Alert>
+          )}
+
           <UsersTable
             users={filteredUsers}
             isLoading={isLoading}
-            error={error}
+            error={null} // Don't show error in table since we show it above
             onResetPassword={handleResetPassword}
             onDisableUser={handleDisableUser}
+            onDeleteUser={handleDeleteUser}
           />
           
           <div className="mt-4 flex justify-end">
