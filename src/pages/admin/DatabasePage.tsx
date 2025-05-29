@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,7 +7,6 @@ import { Progress } from "@/components/ui/progress";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Database, RefreshCw, AlertCircle, CheckCircle, Download, Upload, Activity, HardDrive } from "lucide-react";
-import { toast } from "sonner";
 
 const DatabasePage: React.FC = () => {
   const [isRunningBackup, setIsRunningBackup] = useState(false);
@@ -45,7 +43,6 @@ const DatabasePage: React.FC = () => {
     // Simulate backup process
     setTimeout(() => {
       setIsRunningBackup(false);
-      toast.success("Database backup completed successfully");
     }, 3000);
   };
 
@@ -54,7 +51,6 @@ const DatabasePage: React.FC = () => {
     // Simulate maintenance task
     setTimeout(() => {
       setIsRunningMaintenance(false);
-      toast.success(`${task} completed successfully`);
     }, 2000);
   };
 

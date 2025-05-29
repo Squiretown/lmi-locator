@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -104,11 +103,9 @@ const ApiKeysPage: React.FC = () => {
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
-    toast.success("API key copied to clipboard");
   };
 
   const handleAddKey = () => {
-    toast.success("API key added successfully");
     setIsAddKeyOpen(false);
   };
 

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,7 +8,6 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Settings, Save, AlertCircle, CheckCircle } from "lucide-react";
-import { toast } from "sonner";
 
 const AdminSettingsPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -32,7 +30,6 @@ const AdminSettingsPage: React.FC = () => {
     // Simulate API call
     setTimeout(() => {
       setIsLoading(false);
-      toast.success("Settings saved successfully");
     }, 1000);
   };
 

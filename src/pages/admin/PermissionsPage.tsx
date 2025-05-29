@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -36,12 +35,10 @@ const PermissionsPage: React.FC = () => {
   ];
 
   const handleAddRole = () => {
-    toast.success("Role added successfully");
     setIsAddRoleOpen(false);
   };
 
   const handleEditPermission = () => {
-    toast.success("Permission updated successfully");
     setIsEditPermissionOpen(false);
   };
 
