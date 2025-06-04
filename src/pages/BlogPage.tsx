@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
 import PageHeader from '@/components/PageHeader';
+import Header from '@/components/Header';
 import { CalendarIcon, UserIcon } from 'lucide-react';
 import { format } from 'date-fns';
 import { getBlogPosts, BlogPost } from '@/lib/supabase/marketing';
@@ -95,9 +96,12 @@ const BlogPage: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="container mx-auto px-4 py-12 flex justify-center">
-        <LoadingSpinner />
-      </div>
+      <>
+        <Header />
+        <div className="container mx-auto px-4 py-12 flex justify-center">
+          <LoadingSpinner />
+        </div>
+      </>
     );
   }
 
@@ -110,6 +114,8 @@ const BlogPage: React.FC = () => {
           content="Read our latest articles about LMI programs, property investment, and homebuying tips." 
         />
       </Helmet>
+      
+      <Header />
       
       <div className="container mx-auto px-4 py-12">
         <PageHeader 

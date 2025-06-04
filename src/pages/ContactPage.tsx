@@ -9,8 +9,10 @@ import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import PageHeader from '@/components/PageHeader';
+import Header from '@/components/Header';
 import { MailIcon, PhoneIcon, MapPinIcon, ClockIcon } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+
 const contactFormSchema = z.object({
   name: z.string().min(2, 'Name is required'),
   email: z.string().email('Please enter a valid email address'),
@@ -18,6 +20,7 @@ const contactFormSchema = z.object({
   message: z.string().min(10, 'Message must be at least 10 characters')
 });
 type ContactFormValues = z.infer<typeof contactFormSchema>;
+
 const ContactPage: React.FC = () => {
   const {
     toast
@@ -40,11 +43,14 @@ const ContactPage: React.FC = () => {
     });
     form.reset();
   };
-  return <>
+  return (
+    <>
       <Helmet>
         <title>Contact Us | LMICHECK.COM</title>
         <meta name="description" content="Get in touch with our team for support, questions, or partnership opportunities." />
       </Helmet>
+      
+      <Header />
       
       <div className="container mx-auto px-4 py-12">
         <PageHeader title="Contact Us" description="Get in touch with our team for any questions or support" />
@@ -195,6 +201,8 @@ const ContactPage: React.FC = () => {
           </div>
         </div>
       </div>
-    </>;
+    </>
+  );
 };
+
 export default ContactPage;

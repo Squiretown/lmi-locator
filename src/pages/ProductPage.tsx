@@ -3,6 +3,7 @@ import React from 'react';
 import { Helmet } from 'react-helmet';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import PageHeader from '@/components/PageHeader';
+import Header from '@/components/Header';
 
 const ProductPage: React.FC = () => {
   return (
@@ -14,6 +15,8 @@ const ProductPage: React.FC = () => {
           content="Learn about our LMI property checking product, features, and how it can benefit you." 
         />
       </Helmet>
+      
+      <Header />
       
       <div className="container mx-auto px-4 py-12">
         <PageHeader 

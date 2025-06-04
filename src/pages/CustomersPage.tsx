@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import PageHeader from '@/components/PageHeader';
+import Header from '@/components/Header';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { StarIcon } from 'lucide-react';
 import { getTestimonials, Testimonial } from '@/lib/supabase/marketing';
@@ -119,9 +120,12 @@ const CustomersPage: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="container mx-auto px-4 py-12 flex justify-center">
-        <LoadingSpinner />
-      </div>
+      <>
+        <Header />
+        <div className="container mx-auto px-4 py-12 flex justify-center">
+          <LoadingSpinner />
+        </div>
+      </>
     );
   }
 
@@ -134,6 +138,8 @@ const CustomersPage: React.FC = () => {
           content="Read success stories from our customers who have used our LMI property checking tools." 
         />
       </Helmet>
+      
+      <Header />
       
       <div className="container mx-auto px-4 py-12">
         <PageHeader 

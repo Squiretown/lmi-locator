@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import PageHeader from '@/components/PageHeader';
+import Header from '@/components/Header';
 import { FileTextIcon, BookOpenIcon, InfoIcon, MapIcon } from 'lucide-react';
 import { getResources, Resource } from '@/lib/supabase/marketing';
 import LoadingSpinner from '@/components/LoadingSpinner';
@@ -96,9 +97,12 @@ const ResourcesPage: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="container mx-auto px-4 py-12 flex justify-center">
-        <LoadingSpinner />
-      </div>
+      <>
+        <Header />
+        <div className="container mx-auto px-4 py-12 flex justify-center">
+          <LoadingSpinner />
+        </div>
+      </>
     );
   }
 
@@ -111,6 +115,8 @@ const ResourcesPage: React.FC = () => {
           content="Access helpful resources about Low-to-Moderate Income programs, eligibility, and benefits." 
         />
       </Helmet>
+      
+      <Header />
       
       <div className="container mx-auto px-4 py-12">
         <PageHeader 
