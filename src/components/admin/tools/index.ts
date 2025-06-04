@@ -1,6 +1,6 @@
 
-export * from './UserManagement';
-export * from './ApiKeys';
-export * from './SystemLogs';
-export * from './DatabaseTools';
-export * from './marketing/MarketingContent';
+export { ApiKeys } from './ApiKeys';
+export { DatabaseTools } from './DatabaseTools';
+export { SystemLogs } from './SystemLogs';
+export { MarketingContent } from './MarketingContent';
+export { DataProtectionTools } from './DataProtectionTools';
