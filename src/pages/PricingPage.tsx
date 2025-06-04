@@ -5,6 +5,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter }
 import { Button } from '@/components/ui/button';
 import { CheckIcon } from 'lucide-react';
 import PageHeader from '@/components/PageHeader';
+import Header from '@/components/Header';
 import { Link } from 'react-router-dom';
 
 const PricingTier: React.FC<{
@@ -57,6 +58,8 @@ const PricingPage: React.FC = () => {
           content="Explore our pricing plans for LMI property checking and find the right plan for your needs." 
         />
       </Helmet>
+      
+      <Header />
       
       <div className="container mx-auto px-4 py-12">
         <PageHeader 
