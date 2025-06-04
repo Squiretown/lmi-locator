@@ -1,8 +1,9 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { UsersTable } from './UsersTable';
 import { UserPagination } from '@/components/users/UserPagination';
 import { UserRecentActivity } from '@/components/users/UserRecentActivity';
+import { UserDetailedView } from './UserDetailedView';
 import type { AdminUser } from '../types/admin-user';
 
 interface UserManagementTableProps {
@@ -34,6 +35,19 @@ export const UserManagementTable: React.FC<UserManagementTableProps> = ({
   usersPerPage,
   onPageChange,
 }) => {
+  const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null);
+  const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
+
+  const handleViewDetails = (user: AdminUser) => {
+    setSelectedUser(user);
+    setDetailsDialogOpen(true);
+  };
+
+  const handleCloseDetails = () => {
+    setSelectedUser(null);
+    setDetailsDialogOpen(false);
+  };
+
   return (
     <>
       <div className="rounded-md border">
@@ -49,6 +63,7 @@ export const UserManagementTable: React.FC<UserManagementTableProps> = ({
           selectedUsers={selectedUsers}
           onUserSelection={onUserSelection}
           onSelectAll={onSelectAll}
+          onViewDetails={handleViewDetails}
         />
 
         {totalPages > 1 && (
@@ -63,6 +78,12 @@ export const UserManagementTable: React.FC<UserManagementTableProps> = ({
       </div>
 
       <UserRecentActivity activities={[]} />
+
+      <UserDetailedView
+        user={selectedUser}
+        open={detailsDialogOpen}
+        onClose={handleCloseDetails}
+      />
     </>
   );
 };
