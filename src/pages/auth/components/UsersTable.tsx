@@ -77,12 +77,7 @@ export const UsersTable: React.FC<UsersTableProps> = ({
         <TableRow>
           <TableHead className="w-12">
             <Checkbox
-              checked={allSelected}
-              ref={(el) => {
-                if (el) {
-                  el.indeterminate = someSelected;
-                }
-              }}
+              checked={allSelected ? true : someSelected ? 'indeterminate' : false}
               onCheckedChange={(checked) => onSelectAll(!!checked)}
             />
           </TableHead>
