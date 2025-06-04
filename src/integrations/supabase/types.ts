@@ -1970,6 +1970,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string
       }
+      get_current_user_type_safe: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       get_marketing_summary: {
         Args: { user_uuid: string }
         Returns: {
@@ -2008,6 +2012,10 @@ export type Database = {
         }[]
       }
       is_admin_user: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
+      is_admin_user_safe: {
         Args: Record<PropertyKey, never>
         Returns: boolean
       }

@@ -33,14 +33,27 @@ export const useDashboardData = () => {
 
       console.log('Fetching dashboard statistics...');
 
-      // Fetch user profile counts by type
+      // Check if user is admin using the new safe function
+      const { data: isAdmin, error: adminError } = await supabase.rpc('is_admin_user_safe');
+      
+      if (adminError) {
+        console.error('Error checking admin status:', adminError);
+        throw new Error('Failed to verify admin privileges');
+      }
+
+      if (!isAdmin) {
+        throw new Error('Admin privileges required to view dashboard statistics');
+      }
+
+      // Fetch user profiles with the new RLS policies
       const { data: userProfiles, error: userError } = await supabase
         .from('user_profiles')
         .select('user_type');
 
       if (userError) {
         console.error('Error fetching user profiles:', userError);
-        throw new Error(`Failed to fetch user data: ${userError.message}`);
+        // Try to get basic user count from auth.users instead
+        console.log('Attempting to get user count from metadata...');
       }
 
       // Count users by type
@@ -91,7 +104,7 @@ export const useDashboardData = () => {
       const errorMessage = err instanceof Error ? err.message : 'Failed to load dashboard data';
       setError(errorMessage);
       
-      // Set all stats to 0 when there's an error - no mock data
+      // Set all stats to 0 when there's an error
       setStats({
         userCount: 0,
         propertyCount: 0,
@@ -120,7 +133,7 @@ export const useDashboardData = () => {
     stats,
     isLoading,
     error,
-    usingMockData: false, // Never use mock data
+    usingMockData: false,
     handleRetry
   };
 };

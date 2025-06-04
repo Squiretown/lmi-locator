@@ -36,8 +36,20 @@ export const AdminPermissionsProvider: React.FC<{children: React.ReactNode}> = (
       }
 
       try {
+        // Use the new safe function to get user type
+        const { data: userTypeFromDb, error: userTypeError } = await supabase.rpc('get_current_user_type_safe');
+        
+        if (userTypeError) {
+          console.error('Error fetching user type:', userTypeError);
+          // Fallback to metadata
+          const userMetadataType = session.user?.user_metadata?.user_type;
+          setUserType(userMetadataType || 'client');
+        } else {
+          setUserType(userTypeFromDb || 'client');
+        }
+        
         // Get unread notification count
-        // Note: This is commented out until we have the actual notification table
+        // Note: This is commented out until we have proper notification handling
         // const { data: notificationCount } = await supabase.rpc(
         //   'get_notification_counts',
         //   { user_uuid: session.user.id }
@@ -46,20 +58,18 @@ export const AdminPermissionsProvider: React.FC<{children: React.ReactNode}> = (
         // Temporary hardcoded notification count
         setUnreadNotifications(3);
         
-        // Temporary: Get user type from user metadata
-        const userMetadataType = session.user?.user_metadata?.user_type;
-        const tempUserType = userMetadataType || 'admin'; // Default to admin for testing
-        setUserType(tempUserType);
-        
         // Use our temporary permissions implementation
+        const tempUserType = userTypeFromDb || session.user?.user_metadata?.user_type || 'client';
         const userPermissions = getTemporaryPermissions(tempUserType);
         setPermissions(userPermissions);
         
-        // Once database functions are ready, we'll use:
-        // const userPermissions = await getUserPermissions();
-        // setPermissions(userPermissions);
       } catch (error) {
         console.error('Error in user data fetch:', error);
+        // Fallback to metadata
+        const userMetadataType = session.user?.user_metadata?.user_type;
+        setUserType(userMetadataType || 'client');
+        const userPermissions = getTemporaryPermissions(userMetadataType || 'client');
+        setPermissions(userPermissions);
       }
     };
 
