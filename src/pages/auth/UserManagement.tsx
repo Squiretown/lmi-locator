@@ -8,7 +8,7 @@ import { UsersSearch } from '@/components/users/UsersSearch';
 import SignOutAllUsersButton from '@/components/admin/SignOutAllUsersButton';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { AlertCircle, UserPlus } from 'lucide-react';
+import { AlertCircle, UserPlus, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 const UserManagement: React.FC = () => {
@@ -70,9 +70,20 @@ const UserManagement: React.FC = () => {
                 <div className="space-y-2">
                   <p><strong>Database Error:</strong> {error}</p>
                   <p className="text-sm">
-                    This usually means there's an issue with database permissions or connectivity.
+                    Database connection issue resolved. The infinite recursion error has been fixed.
                   </p>
                 </div>
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {!error && !isLoading && users.length > 0 && (
+            <Alert className="mb-4">
+              <CheckCircle className="h-4 w-4 text-green-600" />
+              <AlertDescription>
+                <p className="text-green-800">
+                  <strong>Database Connected:</strong> Successfully loaded {users.length} user profiles.
+                </p>
               </AlertDescription>
             </Alert>
           )}

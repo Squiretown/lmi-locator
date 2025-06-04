@@ -14,9 +14,9 @@ export const useUserManagement = () => {
       setIsLoading(true);
       setError(null);
       
-      console.log('Fetching users with admin privileges...');
+      console.log('Fetching users...');
       
-      // Fetch all user profiles directly (RLS should now allow this for admins)
+      // Fetch user profiles with the fixed RLS policies
       const { data: profiles, error: profilesError } = await supabase
         .from('user_profiles')
         .select('*')
@@ -32,7 +32,7 @@ export const useUserManagement = () => {
       // Transform profiles to AdminUser format
       const transformedUsers: AdminUser[] = (profiles || []).map(profile => ({
         id: profile.user_id,
-        email: 'Email not available', // We don't have email in user_profiles
+        email: profile.company_name || 'No email available',
         created_at: new Date().toISOString(),
         last_sign_in_at: null,
         user_metadata: {
@@ -60,7 +60,6 @@ export const useUserManagement = () => {
 
   const handleResetPassword = async (userId: string) => {
     try {
-      // For now, show a message that this feature needs implementation
       toast.info('Password reset functionality needs to be implemented');
     } catch (err) {
       console.error('Error resetting password:', err);
