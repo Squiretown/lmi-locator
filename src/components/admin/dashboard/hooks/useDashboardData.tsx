@@ -33,7 +33,7 @@ export const useDashboardData = () => {
 
       console.log('Fetching dashboard statistics...');
 
-      // Check if user is admin using the new safe function
+      // Check if user is admin using the safe function
       const { data: isAdmin, error: adminError } = await supabase.rpc('is_admin_user_safe');
       
       if (adminError) {
@@ -45,24 +45,24 @@ export const useDashboardData = () => {
         throw new Error('Admin privileges required to view dashboard statistics');
       }
 
-      // Fetch user profiles with the new RLS policies
-      const { data: userProfiles, error: userError } = await supabase
-        .from('user_profiles')
-        .select('user_type');
-
-      if (userError) {
-        console.error('Error fetching user profiles:', userError);
-        // Try to get basic user count from auth.users instead
-        console.log('Attempting to get user count from metadata...');
+      // Fetch users from the list-users edge function instead of user_profiles
+      const { data: userListResponse, error: userListError } = await supabase.functions.invoke('list-users');
+      
+      if (userListError) {
+        console.error('Error fetching users:', userListError);
+        throw new Error('Failed to fetch user data');
       }
 
-      // Count users by type
+      const users = userListResponse?.users || [];
+      console.log('Fetched users:', users.length);
+
+      // Count users by type from the actual user metadata
       const userCounts = {
-        total: userProfiles?.length || 0,
-        admin: userProfiles?.filter(u => u.user_type === 'admin').length || 0,
-        realtor: userProfiles?.filter(u => u.user_type === 'realtor').length || 0,
-        mortgage_professional: userProfiles?.filter(u => u.user_type === 'mortgage_professional').length || 0,
-        client: userProfiles?.filter(u => u.user_type === 'client').length || 0
+        total: users.length,
+        admin: users.filter(u => u.user_metadata?.user_type === 'admin').length,
+        realtor: users.filter(u => u.user_metadata?.user_type === 'realtor').length,
+        mortgage_professional: users.filter(u => u.user_metadata?.user_type === 'mortgage_professional').length,
+        client: users.filter(u => u.user_metadata?.user_type === 'client' || !u.user_metadata?.user_type).length
       };
 
       console.log('User counts by type:', userCounts);
@@ -97,7 +97,14 @@ export const useDashboardData = () => {
         searchHistory: searchHistory || []
       });
 
-      console.log('Dashboard data fetched successfully');
+      console.log('Dashboard data fetched successfully', {
+        userCount: userCounts.total,
+        realtorCount: userCounts.realtor,
+        mortgageBrokerCount: userCounts.mortgage_professional,
+        clientCount: userCounts.client,
+        adminCount: userCounts.admin,
+        propertyCount: propertyCount || 0
+      });
 
     } catch (err) {
       console.error('Error fetching dashboard data:', err);
