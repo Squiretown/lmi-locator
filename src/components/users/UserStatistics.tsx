@@ -16,33 +16,36 @@ export const UserStatistics: React.FC<UserStatisticsProps> = ({
   newSignups,
   pendingVerifications,
 }) => {
+  // Calculate inactive users
+  const inactiveUsers = totalUsers - activeUsers;
+  
   const stats = [
     {
       label: 'Total Users',
       value: totalUsers,
       icon: Users,
-      trend: '+12% this month',
-      trendUp: true,
+      trend: null,
+      trendUp: null,
     },
     {
       label: 'Active Users',
       value: activeUsers,
       icon: UserCheck,
-      trend: '+8% this month',
-      trendUp: true,
+      trend: null,
+      trendUp: null,
     },
     {
-      label: 'New Signups',
-      value: newSignups,
+      label: 'Inactive Users',
+      value: inactiveUsers,
       icon: Users,
-      trend: '-3% this month',
-      trendUp: false,
+      trend: null,
+      trendUp: null,
     },
     {
       label: 'Pending Verifications',
       value: pendingVerifications,
       icon: AlertTriangle,
-      trend: 'Needs attention',
+      trend: null,
       trendUp: null,
     },
   ];
@@ -59,16 +62,6 @@ export const UserStatistics: React.FC<UserStatisticsProps> = ({
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stat.value}</div>
-            <div className={`text-xs flex items-center gap-1 mt-1 ${
-              stat.trendUp === true ? 'text-green-600' : 
-              stat.trendUp === false ? 'text-red-600' : 
-              'text-amber-600'
-            }`}>
-              {stat.trendUp === true && <span>↗</span>}
-              {stat.trendUp === false && <span>↘</span>}
-              {stat.trendUp === null && <Clock className="h-3 w-3" />}
-              {stat.trend}
-            </div>
           </CardContent>
         </Card>
       ))}

@@ -25,13 +25,11 @@ export const useDashboardData = () => {
   });
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [usingMockData, setUsingMockData] = useState(false);
 
   const fetchDashboardData = async () => {
     try {
       setIsLoading(true);
       setError(null);
-      setUsingMockData(false);
 
       console.log('Fetching dashboard statistics...');
 
@@ -93,19 +91,18 @@ export const useDashboardData = () => {
       const errorMessage = err instanceof Error ? err.message : 'Failed to load dashboard data';
       setError(errorMessage);
       
-      // Use mock data as fallback
+      // Set all stats to 0 when there's an error - no mock data
       setStats({
-        userCount: 4,
-        propertyCount: 150,
-        realtorCount: 1,
-        mortgageBrokerCount: 1,
-        clientCount: 2,
+        userCount: 0,
+        propertyCount: 0,
+        realtorCount: 0,
+        mortgageBrokerCount: 0,
+        clientCount: 0,
         adminCount: 0,
         searchHistory: []
       });
-      setUsingMockData(true);
       
-      toast.error('Failed to load dashboard data, showing sample data');
+      toast.error('Failed to load dashboard data');
     } finally {
       setIsLoading(false);
     }
@@ -123,7 +120,7 @@ export const useDashboardData = () => {
     stats,
     isLoading,
     error,
-    usingMockData,
+    usingMockData: false, // Never use mock data
     handleRetry
   };
 };

@@ -38,11 +38,11 @@ const UserManagement: React.FC = () => {
     handleDeleteUser
   } = useUserManagement();
 
-  // Calculate statistics
+  // Calculate statistics from real data only
   const totalUsers = users?.length || 0;
   const activeUsers = users?.filter(user => user.user_metadata?.user_type !== 'inactive').length || 0;
-  const newSignups = 47; // This would come from actual data
-  const pendingVerifications = 23; // This would come from actual data
+  const newSignups = 0; // This would need to be calculated from actual signup dates
+  const pendingVerifications = 0; // This would need to be calculated from actual verification status
 
   const handleAddUser = () => {
     setAddUserDialogOpen(true);
@@ -58,7 +58,7 @@ const UserManagement: React.FC = () => {
 
   const handleFiltersChange = (newFilters: any) => {
     setFilters(newFilters);
-    setCurrentPage(1); // Reset to first page when filters change
+    setCurrentPage(1);
   };
 
   const handleBulkAction = (action: string, userIds: string[]) => {
@@ -138,7 +138,7 @@ const UserManagement: React.FC = () => {
             </div>
           </div>
 
-          {/* Statistics */}
+          {/* Statistics - only real data */}
           <UserStatistics
             totalUsers={totalUsers}
             activeUsers={activeUsers}
@@ -221,8 +221,8 @@ const UserManagement: React.FC = () => {
         </CardContent>
       </Card>
 
-      {/* Recent Activity */}
-      <UserRecentActivity />
+      {/* Recent Activity - only real data, empty state if no data */}
+      <UserRecentActivity activities={[]} />
 
       {/* Add User Dialog */}
       <Dialog open={addUserDialogOpen} onOpenChange={setAddUserDialogOpen}>

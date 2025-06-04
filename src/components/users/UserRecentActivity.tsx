@@ -16,32 +16,6 @@ interface UserRecentActivityProps {
 }
 
 export const UserRecentActivity: React.FC<UserRecentActivityProps> = ({ activities = [] }) => {
-  const defaultActivities: ActivityItem[] = [
-    {
-      id: '1',
-      type: 'signup',
-      message: 'New user registered',
-      timestamp: '2 minutes ago',
-      user: 'jane.smith@example.com',
-    },
-    {
-      id: '2',
-      type: 'login',
-      message: 'User login',
-      timestamp: '5 minutes ago',
-      user: 'john.doe@example.com',
-    },
-    {
-      id: '3',
-      type: 'update',
-      message: 'Profile updated',
-      timestamp: '12 minutes ago',
-      user: 'sarah.miller@example.com',
-    },
-  ];
-
-  const displayActivities = activities.length > 0 ? activities : defaultActivities;
-
   const getActivityIcon = (type: string) => {
     switch (type) {
       case 'signup':
@@ -68,13 +42,28 @@ export const UserRecentActivity: React.FC<UserRecentActivityProps> = ({ activiti
     }
   };
 
+  if (activities.length === 0) {
+    return (
+      <Card className="mt-6">
+        <CardHeader>
+          <CardTitle className="text-lg">Recent Activity</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="text-center py-8 text-muted-foreground">
+            No recent activity data available
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card className="mt-6">
       <CardHeader>
         <CardTitle className="text-lg">Recent Activity</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        {displayActivities.map((activity) => (
+        {activities.map((activity) => (
           <div key={activity.id} className="flex items-center gap-3 pb-3 border-b border-gray-100 last:border-b-0">
             <div className={`p-2 rounded-lg ${getActivityColor(activity.type)}`}>
               {getActivityIcon(activity.type)}
