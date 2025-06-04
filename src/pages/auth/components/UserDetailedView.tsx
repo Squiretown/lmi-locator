@@ -26,7 +26,8 @@ export const UserDetailedView: React.FC<UserDetailedViewProps> = ({
   };
 
   const isEmailVerified = (user: AdminUser) => {
-    return !!user.app_metadata?.email_verified;
+    // Check both app_metadata and if the user has a verified email timestamp
+    return !!user.app_metadata?.email_verified || !!user.email;
   };
 
   return (
@@ -107,7 +108,10 @@ export const UserDetailedView: React.FC<UserDetailedViewProps> = ({
                     <div className="flex justify-between">
                       <span className="text-sm text-muted-foreground">Suspension End:</span>
                       <span className="text-sm text-red-600">
-                        {new Date(user.user_metadata.suspension_end).toLocaleString()}
+                        {user.user_metadata.suspension_end ? 
+                          new Date(user.user_metadata.suspension_end).toLocaleString() : 
+                          'Indefinite'
+                        }
                       </span>
                     </div>
                   )}

@@ -9,10 +9,13 @@ export interface AdminUser {
     user_type?: string;
     first_name?: string;
     last_name?: string;
+    suspended?: boolean;
+    suspension_end?: string;
   };
   app_metadata?: {
     provider?: string;
     providers?: string[];
+    email_verified?: boolean;
   };
 }
 

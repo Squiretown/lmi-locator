@@ -60,7 +60,7 @@ export const UsersTable: React.FC<UsersTableProps> = ({
   };
 
   const isEmailVerified = (user: AdminUser) => {
-    return !!user.app_metadata?.email_verified;
+    return !!user.app_metadata?.email_verified || !!user.email;
   };
 
   const formatDate = (dateString: string | null) => {
@@ -78,7 +78,11 @@ export const UsersTable: React.FC<UsersTableProps> = ({
           <TableHead className="w-12">
             <Checkbox
               checked={allSelected}
-              indeterminate={someSelected}
+              ref={(el) => {
+                if (el) {
+                  el.indeterminate = someSelected;
+                }
+              }}
               onCheckedChange={(checked) => onSelectAll(!!checked)}
             />
           </TableHead>
