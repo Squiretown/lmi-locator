@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { useUserManagement } from '../hooks/useUserManagement';
@@ -10,7 +9,7 @@ import { UserManagementTable } from './UserManagementTable';
 import { UserManagementDialogs } from './UserManagementDialogs';
 import { UserManagementFooter } from './UserManagementFooter';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { AlertCircle, CheckCircle } from 'lucide-react';
+import { CheckCircle, AlertCircle } from 'lucide-react';
 
 export const UserManagementContainer: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -137,9 +136,9 @@ export const UserManagementContainer: React.FC = () => {
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>
                 <div className="space-y-2">
-                  <p><strong>Database Error:</strong> {error}</p>
+                  <p><strong>Error:</strong> {error}</p>
                   <p className="text-sm">
-                    The RLS infinite recursion issue has been fixed. Try refreshing if you still see this error.
+                    This might be due to missing admin permissions or the users not being properly authenticated.
                   </p>
                 </div>
               </AlertDescription>
@@ -151,7 +150,7 @@ export const UserManagementContainer: React.FC = () => {
               <CheckCircle className="h-4 w-4 text-green-600" />
               <AlertDescription>
                 <p className="text-green-800">
-                  <strong>Database Connected:</strong> Successfully loaded {users.length} user profiles with fixed RLS policies.
+                  <strong>Successfully Connected:</strong> Loaded {users.length} auth users from Supabase. You can now view and delete users directly from the authentication system.
                 </p>
               </AlertDescription>
             </Alert>
