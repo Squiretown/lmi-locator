@@ -191,6 +191,20 @@ export const UserManagementContainer: React.FC = () => {
     }
   };
 
+  const handleBulkActionWrapper = async (action: string, userIds: string[], data?: any) => {
+    try {
+      await handleBulkAction(action, userIds, data);
+      // Clear selections after successful bulk action
+      setSelectedUsers([]);
+      // Refresh the user list
+      await refetch();
+      toast.success(`Bulk action "${action}" completed successfully`);
+    } catch (error) {
+      console.error('Error performing bulk action:', error);
+      toast.error('Failed to perform bulk action');
+    }
+  };
+
   // Enhanced search functionality
   const filteredUsers = users?.filter(user => {
     const searchLower = searchQuery.toLowerCase();
@@ -237,7 +251,7 @@ export const UserManagementContainer: React.FC = () => {
 
           <UserBulkActions
             selectedUsers={selectedUsers}
-            onBulkAction={handleBulkAction}
+            onBulkAction={handleBulkActionWrapper}
             totalUsers={filteredUsers.length}
           />
 
