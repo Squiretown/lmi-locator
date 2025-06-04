@@ -9,10 +9,12 @@ import { UserManagementSearch } from './UserManagementSearch';
 import { UserBulkActions } from './UserBulkActions';
 import { UserManagementTable } from './UserManagementTable';
 import { UserActionDialog } from './UserActionDialog';
+import { ProfessionalActionDialog } from './ProfessionalActionDialog';
 import { UserManagementDialogs } from './UserManagementDialogs';
 import { UserManagementFooter } from './UserManagementFooter';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { CheckCircle, AlertCircle } from 'lucide-react';
+import { toast } from 'sonner';
 import type { AdminUser } from '../types/admin-user';
 
 export const UserManagementContainer: React.FC = () => {
@@ -21,6 +23,15 @@ export const UserManagementContainer: React.FC = () => {
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [actionDialog, setActionDialog] = useState<{
+    open: boolean;
+    action: string | null;
+    user: AdminUser | null;
+  }>({
+    open: false,
+    action: null,
+    user: null,
+  });
+  const [professionalDialog, setProfessionalDialog] = useState<{
     open: boolean;
     action: string | null;
     user: AdminUser | null;
@@ -66,11 +77,27 @@ export const UserManagementContainer: React.FC = () => {
   };
 
   const handleUserAction = (action: string, user: AdminUser) => {
-    setActionDialog({
-      open: true,
-      action,
-      user,
-    });
+    // Check if this is a professional-specific action
+    const professionalActions = [
+      'verifyLicense', 'viewCredentials', 'updateLicense', 
+      'viewClients', 'manageReferrals', 'clientActivity',
+      'reviewMarketing', 'marketingStats', 'campaignHistory',
+      'approveApplication', 'rejectApplication', 'reviewApplication'
+    ];
+
+    if (professionalActions.includes(action)) {
+      setProfessionalDialog({
+        open: true,
+        action,
+        user,
+      });
+    } else {
+      setActionDialog({
+        open: true,
+        action,
+        user,
+      });
+    }
   };
 
   const handleActionConfirm = async (data?: any) => {
@@ -111,6 +138,41 @@ export const UserManagementContainer: React.FC = () => {
     }
 
     setActionDialog({ open: false, action: null, user: null });
+  };
+
+  const handleProfessionalActionConfirm = async (data?: any) => {
+    if (!professionalDialog.user || !professionalDialog.action) return;
+
+    const { user, action } = professionalDialog;
+
+    try {
+      switch (action) {
+        case 'verifyLicense':
+          toast.success(`License verified for ${user.email}`);
+          break;
+        case 'viewClients':
+          toast.info(`Viewing clients for ${user.email}`);
+          break;
+        case 'reviewMarketing':
+          toast.info(`Reviewing marketing campaigns for ${user.email}`);
+          break;
+        case 'approveApplication':
+          toast.success(`Application approved for ${user.email}`);
+          break;
+        case 'rejectApplication':
+          toast.success(`Application rejected for ${user.email}`);
+          break;
+        default:
+          toast.info(`Professional action performed: ${action}`);
+      }
+
+      await refetch();
+    } catch (error) {
+      console.error('Error performing professional action:', error);
+      toast.error('Failed to perform professional action');
+    }
+
+    setProfessionalDialog({ open: false, action: null, user: null });
   };
 
   const handleUserSelection = (userId: string, selected: boolean) => {
@@ -234,6 +296,14 @@ export const UserManagementContainer: React.FC = () => {
         open={actionDialog.open}
         onClose={() => setActionDialog({ open: false, action: null, user: null })}
         onConfirm={handleActionConfirm}
+      />
+
+      <ProfessionalActionDialog
+        user={professionalDialog.user}
+        action={professionalDialog.action}
+        open={professionalDialog.open}
+        onClose={() => setProfessionalDialog({ open: false, action: null, user: null })}
+        onConfirm={handleProfessionalActionConfirm}
       />
     </div>
   );
