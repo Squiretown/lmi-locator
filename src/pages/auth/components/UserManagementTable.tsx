@@ -48,6 +48,17 @@ export const UserManagementTable: React.FC<UserManagementTableProps> = ({
     setDetailsDialogOpen(false);
   };
 
+  const handleUserAction = (action: string, user: AdminUser) => {
+    // Handle view details action separately to avoid triggering the action dialog
+    if (action === 'viewDetails') {
+      handleViewDetails(user);
+      return;
+    }
+    
+    // For all other actions, use the parent handler
+    onUserAction(action, user);
+  };
+
   return (
     <>
       <div className="rounded-md border">
@@ -59,7 +70,7 @@ export const UserManagementTable: React.FC<UserManagementTableProps> = ({
           users={users}
           isLoading={isLoading}
           error={error}
-          onUserAction={onUserAction}
+          onUserAction={handleUserAction}
           selectedUsers={selectedUsers}
           onUserSelection={onUserSelection}
           onSelectAll={onSelectAll}

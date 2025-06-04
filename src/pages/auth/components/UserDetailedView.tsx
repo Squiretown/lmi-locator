@@ -35,7 +35,7 @@ export const UserDetailedView: React.FC<UserDetailedViewProps> = ({
       <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-3">
-            <span>User Details: {user.email}</span>
+            <span>User Details: {user.email || 'No email'}</span>
             <UserStatusBadge 
               status={getUserType(user)}
               isEmailVerified={isEmailVerified(user)}
@@ -64,7 +64,7 @@ export const UserDetailedView: React.FC<UserDetailedViewProps> = ({
                   </div>
                   <div className="flex justify-between">
                     <span className="text-sm text-muted-foreground">Email:</span>
-                    <span className="text-sm">{user.email}</span>
+                    <span className="text-sm">{user.email || 'Not provided'}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-sm text-muted-foreground">User Type:</span>
@@ -83,6 +83,18 @@ export const UserDetailedView: React.FC<UserDetailedViewProps> = ({
                       }
                     </span>
                   </div>
+                  {user.user_metadata?.first_name && (
+                    <div className="flex justify-between">
+                      <span className="text-sm text-muted-foreground">First Name:</span>
+                      <span className="text-sm">{user.user_metadata.first_name}</span>
+                    </div>
+                  )}
+                  {user.user_metadata?.last_name && (
+                    <div className="flex justify-between">
+                      <span className="text-sm text-muted-foreground">Last Name:</span>
+                      <span className="text-sm">{user.user_metadata.last_name}</span>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -106,13 +118,22 @@ export const UserDetailedView: React.FC<UserDetailedViewProps> = ({
                   </div>
                   {user.user_metadata?.suspended && (
                     <div className="flex justify-between">
+                      <span className="text-sm text-muted-foreground">Suspension Status:</span>
+                      <Badge variant="destructive">Suspended</Badge>
+                    </div>
+                  )}
+                  {user.user_metadata?.suspension_end && (
+                    <div className="flex justify-between">
                       <span className="text-sm text-muted-foreground">Suspension End:</span>
                       <span className="text-sm text-red-600">
-                        {user.user_metadata.suspension_end ? 
-                          new Date(user.user_metadata.suspension_end).toLocaleString() : 
-                          'Indefinite'
-                        }
+                        {new Date(user.user_metadata.suspension_end).toLocaleString()}
                       </span>
+                    </div>
+                  )}
+                  {user.app_metadata?.provider && (
+                    <div className="flex justify-between">
+                      <span className="text-sm text-muted-foreground">Auth Provider:</span>
+                      <Badge variant="outline">{user.app_metadata.provider}</Badge>
                     </div>
                   )}
                 </div>
@@ -127,7 +148,7 @@ export const UserDetailedView: React.FC<UserDetailedViewProps> = ({
                   {user.user_metadata && Object.keys(user.user_metadata).length > 0 && (
                     <div>
                       <h4 className="font-medium mb-2">User Metadata</h4>
-                      <pre className="bg-muted p-3 rounded text-xs overflow-auto">
+                      <pre className="bg-muted p-3 rounded text-xs overflow-auto max-h-40">
                         {JSON.stringify(user.user_metadata, null, 2)}
                       </pre>
                     </div>
@@ -135,7 +156,7 @@ export const UserDetailedView: React.FC<UserDetailedViewProps> = ({
                   {user.app_metadata && Object.keys(user.app_metadata).length > 0 && (
                     <div>
                       <h4 className="font-medium mb-2">App Metadata</h4>
-                      <pre className="bg-muted p-3 rounded text-xs overflow-auto">
+                      <pre className="bg-muted p-3 rounded text-xs overflow-auto max-h-40">
                         {JSON.stringify(user.app_metadata, null, 2)}
                       </pre>
                     </div>
