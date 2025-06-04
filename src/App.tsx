@@ -22,7 +22,7 @@ import MortgageBrokersPage from "./pages/admin/MortgageBrokersPage";
 import PermissionsPage from "./pages/admin/PermissionsPage";
 import SystemLogsPage from "./pages/admin/SystemLogsPage";
 import DatabasePage from "./pages/admin/DatabasePage";
-import SettingsPage as AdminSettingsPage from "./pages/admin/SettingsPage";
+import AdminSettingsPage from "./pages/admin/SettingsPage";
 import SearchHistoryPage from "./pages/admin/search-history/SearchHistoryPage";
 import ClientDashboard from "./pages/dashboard/Client";
 import RealtorDashboard from "./pages/dashboard/Realtor";
