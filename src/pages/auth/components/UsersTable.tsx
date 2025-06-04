@@ -122,21 +122,15 @@ export const UsersTable: React.FC<UsersTableProps> = ({
   };
 
   const getDisplayName = (user: AdminUser) => {
-    // Try multiple sources for user name
     const metadata = user.user_metadata || {};
-    const rawMetadata = user.raw_user_meta_data || {};
     
-    // Check various name fields
-    const firstName = metadata.first_name || rawMetadata.first_name || metadata.firstName || rawMetadata.firstName;
-    const lastName = metadata.last_name || rawMetadata.last_name || metadata.lastName || rawMetadata.lastName;
-    const fullName = metadata.full_name || rawMetadata.full_name || metadata.fullName || rawMetadata.fullName;
-    const name = metadata.name || rawMetadata.name;
+    // Check for name fields in user_metadata
+    const firstName = metadata.first_name;
+    const lastName = metadata.last_name;
     
-    if (fullName) return fullName;
     if (firstName || lastName) {
       return `${firstName || ''} ${lastName || ''}`.trim();
     }
-    if (name) return name;
     
     // Fallback to email or user ID
     return user.email || `User ${user.id.substring(0, 8)}`;
@@ -148,44 +142,14 @@ export const UsersTable: React.FC<UsersTableProps> = ({
   };
 
   const getUserStatus = (user: AdminUser) => {
-    // Check multiple ways to determine user status
-    const metadata = user.user_metadata || {};
-    const rawMetadata = user.raw_user_meta_data || {};
-    
-    // Check for explicit status fields
-    if (metadata.status) return metadata.status;
-    if (rawMetadata.status) return rawMetadata.status;
-    if (metadata.user_status) return metadata.user_status;
-    if (rawMetadata.user_status) return rawMetadata.user_status;
-    
-    // Check if user is banned/blocked
-    if (user.banned_until) return 'banned';
-    
-    // Check email confirmation
-    if (!user.email_confirmed_at) return 'pending';
-    
-    // Check last sign in (consider inactive if no recent activity)
-    if (user.last_sign_in_at) {
-      const lastSignIn = new Date(user.last_sign_in_at);
-      const sixMonthsAgo = new Date();
-      sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
-      if (lastSignIn < sixMonthsAgo) return 'inactive';
-    }
-    
+    // Since we don't have email_confirmed_at or banned_until in AdminUser,
+    // we'll use a simple status based on what we have
     return 'active';
   };
 
   const getUserType = (user: AdminUser) => {
     const metadata = user.user_metadata || {};
-    const rawMetadata = user.raw_user_meta_data || {};
-    
-    return metadata.user_type || 
-           rawMetadata.user_type || 
-           metadata.userType || 
-           rawMetadata.userType || 
-           metadata.role || 
-           rawMetadata.role || 
-           'user';
+    return metadata.user_type || 'user';
   };
 
   const isAllSelected = users.length > 0 && selectedUsers.length === users.length;
@@ -249,9 +213,6 @@ export const UsersTable: React.FC<UsersTableProps> = ({
                     <div>
                       <div className="font-medium">{getDisplayName(user)}</div>
                       <div className="text-sm text-muted-foreground">{user.email}</div>
-                      {user.phone && (
-                        <div className="text-xs text-muted-foreground">{user.phone}</div>
-                      )}
                     </div>
                   </div>
                 </TableCell>
@@ -286,9 +247,6 @@ export const UsersTable: React.FC<UsersTableProps> = ({
                 <TableCell>
                   <div>
                     {formatDate(user.created_at)}
-                    {!user.email_confirmed_at && (
-                      <div className="text-xs text-yellow-600">Unverified</div>
-                    )}
                   </div>
                 </TableCell>
                 <TableCell className="text-right">
