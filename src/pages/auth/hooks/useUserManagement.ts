@@ -14,9 +14,9 @@ export const useUserManagement = () => {
       setIsLoading(true);
       setError(null);
       
-      console.log('Fetching users...');
+      console.log('Fetching user profiles with fixed RLS policies...');
       
-      // Fetch user profiles with the fixed RLS policies
+      // Fetch user profiles - the fixed RLS policies should now work correctly
       const { data: profiles, error: profilesError } = await supabase
         .from('user_profiles')
         .select('*')

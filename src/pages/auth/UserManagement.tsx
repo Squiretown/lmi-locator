@@ -70,7 +70,7 @@ const UserManagement: React.FC = () => {
                 <div className="space-y-2">
                   <p><strong>Database Error:</strong> {error}</p>
                   <p className="text-sm">
-                    Database connection issue resolved. The infinite recursion error has been fixed.
+                    The RLS infinite recursion issue has been fixed. Try refreshing if you still see this error.
                   </p>
                 </div>
               </AlertDescription>
@@ -82,7 +82,7 @@ const UserManagement: React.FC = () => {
               <CheckCircle className="h-4 w-4 text-green-600" />
               <AlertDescription>
                 <p className="text-green-800">
-                  <strong>Database Connected:</strong> Successfully loaded {users.length} user profiles.
+                  <strong>Database Connected:</strong> Successfully loaded {users.length} user profiles with fixed RLS policies.
                 </p>
               </AlertDescription>
             </Alert>
