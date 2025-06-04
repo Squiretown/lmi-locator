@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -91,10 +90,19 @@ const HelpManagementPage: React.FC = () => {
 
   const handleSubmit = async (data: HelpItemFormData) => {
     try {
+      // Ensure all required fields are present
+      const insertData = {
+        title: data.title,
+        content: data.content,
+        category: data.category,
+        order_index: data.order_index,
+        is_published: data.is_published
+      };
+
       if (editingItem) {
         const { error } = await supabase
           .from('help_items')
-          .update(data)
+          .update(insertData)
           .eq('id', editingItem.id);
 
         if (error) throw error;
@@ -102,7 +110,7 @@ const HelpManagementPage: React.FC = () => {
       } else {
         const { error } = await supabase
           .from('help_items')
-          .insert(data);
+          .insert(insertData);
 
         if (error) throw error;
         toast.success('Help item created successfully');

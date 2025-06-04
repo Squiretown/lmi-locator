@@ -18,7 +18,7 @@ export const AdminSidebarSystemMenu: React.FC = () => {
       </div>
       
       <NavLink 
-        to="/admin/system/permissions" 
+        to="/admin/permissions" 
         className={({ isActive }) => 
           `flex items-center space-x-3 px-3 py-2 text-sm rounded-md transition-colors ${
             isActive 
@@ -32,7 +32,7 @@ export const AdminSidebarSystemMenu: React.FC = () => {
       </NavLink>
       
       <NavLink 
-        to="/admin/system/database" 
+        to="/admin/database" 
         className={({ isActive }) => 
           `flex items-center space-x-3 px-3 py-2 text-sm rounded-md transition-colors ${
             isActive 
@@ -46,7 +46,7 @@ export const AdminSidebarSystemMenu: React.FC = () => {
       </NavLink>
       
       <NavLink 
-        to="/admin/system/api-keys" 
+        to="/admin/api-keys" 
         className={({ isActive }) => 
           `flex items-center space-x-3 px-3 py-2 text-sm rounded-md transition-colors ${
             isActive 
@@ -60,7 +60,7 @@ export const AdminSidebarSystemMenu: React.FC = () => {
       </NavLink>
       
       <NavLink 
-        to="/admin/system/logs" 
+        to="/admin/logs" 
         className={({ isActive }) => 
           `flex items-center space-x-3 px-3 py-2 text-sm rounded-md transition-colors ${
             isActive 
