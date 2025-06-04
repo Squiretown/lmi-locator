@@ -35,6 +35,10 @@ export const UserDetailedView: React.FC<UserDetailedViewProps> = ({
     return user.user_metadata?.user_type || 'client';
   };
 
+  const isEmailVerified = () => {
+    return !!user.app_metadata?.email_verified || !!user.email;
+  };
+
   const getDisplayName = () => {
     const firstName = user.user_metadata?.first_name;
     const lastName = user.user_metadata?.last_name;
@@ -101,8 +105,8 @@ export const UserDetailedView: React.FC<UserDetailedViewProps> = ({
 
             <div className="mt-6 space-y-6">
               <TabsContent value="basic" className="space-y-6">
-                <BasicInformation user={user} />
-                <AccountStatus user={user} />
+                <BasicInformation user={user} getUserType={getUserType} />
+                <AccountStatus user={user} getUserType={getUserType} isEmailVerified={isEmailVerified} />
                 <ReferralInformation user={user} />
               </TabsContent>
 
