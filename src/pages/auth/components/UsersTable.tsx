@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
@@ -97,12 +96,14 @@ export const UsersTable: React.FC<UsersTableProps> = ({
         <TableRow>
           {onUserSelection && (
             <TableHead className="w-12">
-              <Checkbox
+              <input
+                type="checkbox"
+                className="h-4 w-4"
                 checked={isAllSelected}
                 ref={(el) => {
                   if (el) el.indeterminate = isIndeterminate;
                 }}
-                onCheckedChange={(checked) => onSelectAll?.(!!checked)}
+                onChange={(e) => onSelectAll?.(e.target.checked)}
               />
             </TableHead>
           )}
@@ -119,9 +120,11 @@ export const UsersTable: React.FC<UsersTableProps> = ({
           <TableRow key={user.id}>
             {onUserSelection && (
               <TableCell>
-                <Checkbox
+                <input
+                  type="checkbox"
+                  className="h-4 w-4"
                   checked={selectedUsers.includes(user.id)}
-                  onCheckedChange={(checked) => onUserSelection(user.id, !!checked)}
+                  onChange={(e) => onUserSelection(user.id, e.target.checked)}
                 />
               </TableCell>
             )}
