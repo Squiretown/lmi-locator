@@ -105,10 +105,10 @@ export const UserManagementTable: React.FC<UserManagementTableProps> = ({
   }
 
   return (
-    <div className="border rounded-lg">
-      <ScrollArea className="h-[600px] w-full">
+    <div className="border rounded-lg overflow-hidden">
+      <div className="max-h-[600px] overflow-y-auto">
         <Table>
-          <TableHeader>
+          <TableHeader className="sticky top-0 bg-background z-10">
             <TableRow>
               <TableHead className="w-12">
                 <Checkbox
@@ -173,7 +173,7 @@ export const UserManagementTable: React.FC<UserManagementTableProps> = ({
             ))}
           </TableBody>
         </Table>
-      </ScrollArea>
+      </div>
     </div>
   );
 };
