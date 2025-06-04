@@ -136,18 +136,86 @@ export const UserDetailedView: React.FC<UserDetailedViewProps> = ({
                       <Badge variant="outline">{user.app_metadata.provider}</Badge>
                     </div>
                   )}
+                  {user.app_metadata?.providers && user.app_metadata.providers.length > 0 && (
+                    <div className="flex justify-between">
+                      <span className="text-sm text-muted-foreground">All Providers:</span>
+                      <div className="flex gap-1">
+                        {user.app_metadata.providers.map((provider, index) => (
+                          <Badge key={index} variant="outline" className="text-xs">
+                            {provider}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
 
-            {/* Metadata */}
-            {(user.user_metadata || user.app_metadata) && (
+            {/* Additional User Information */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* User Metadata Details */}
               <div className="space-y-4">
-                <h3 className="font-semibold text-lg">Metadata</h3>
+                <h3 className="font-semibold text-lg">User Metadata</h3>
+                <div className="space-y-2">
+                  {Object.entries(user.user_metadata || {}).map(([key, value]) => {
+                    if (key === 'first_name' || key === 'last_name' || key === 'user_type' || key === 'suspended' || key === 'suspension_end') {
+                      return null; // Already displayed above
+                    }
+                    return (
+                      <div key={key} className="flex justify-between">
+                        <span className="text-sm text-muted-foreground capitalize">
+                          {key.replace(/_/g, ' ')}:
+                        </span>
+                        <span className="text-sm">
+                          {typeof value === 'boolean' ? (value ? 'Yes' : 'No') : String(value)}
+                        </span>
+                      </div>
+                    );
+                  })}
+                  {(!user.user_metadata || Object.keys(user.user_metadata).length === 0) && (
+                    <p className="text-sm text-muted-foreground">No additional user metadata</p>
+                  )}
+                </div>
+              </div>
+
+              {/* App Metadata Details */}
+              <div className="space-y-4">
+                <h3 className="font-semibold text-lg">App Metadata</h3>
+                <div className="space-y-2">
+                  {Object.entries(user.app_metadata || {}).map(([key, value]) => {
+                    if (key === 'provider' || key === 'providers' || key === 'email_verified') {
+                      return null; // Already displayed above
+                    }
+                    return (
+                      <div key={key} className="flex justify-between">
+                        <span className="text-sm text-muted-foreground capitalize">
+                          {key.replace(/_/g, ' ')}:
+                        </span>
+                        <span className="text-sm">
+                          {typeof value === 'boolean' ? (value ? 'Yes' : 'No') : 
+                           Array.isArray(value) ? value.join(', ') : 
+                           String(value)}
+                        </span>
+                      </div>
+                    );
+                  })}
+                  {(!user.app_metadata || Object.keys(user.app_metadata).length === 0) && (
+                    <p className="text-sm text-muted-foreground">No additional app metadata</p>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Raw Metadata for Technical Reference */}
+            {(user.user_metadata && Object.keys(user.user_metadata).length > 0) || 
+             (user.app_metadata && Object.keys(user.app_metadata).length > 0) && (
+              <div className="space-y-4">
+                <h3 className="font-semibold text-lg">Raw Metadata (Technical Reference)</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {user.user_metadata && Object.keys(user.user_metadata).length > 0 && (
                     <div>
-                      <h4 className="font-medium mb-2">User Metadata</h4>
+                      <h4 className="font-medium mb-2">User Metadata JSON</h4>
                       <pre className="bg-muted p-3 rounded text-xs overflow-auto max-h-40">
                         {JSON.stringify(user.user_metadata, null, 2)}
                       </pre>
@@ -155,7 +223,7 @@ export const UserDetailedView: React.FC<UserDetailedViewProps> = ({
                   )}
                   {user.app_metadata && Object.keys(user.app_metadata).length > 0 && (
                     <div>
-                      <h4 className="font-medium mb-2">App Metadata</h4>
+                      <h4 className="font-medium mb-2">App Metadata JSON</h4>
                       <pre className="bg-muted p-3 rounded text-xs overflow-auto max-h-40">
                         {JSON.stringify(user.app_metadata, null, 2)}
                       </pre>
