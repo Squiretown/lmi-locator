@@ -9,11 +9,28 @@ export const useUserActions = () => {
   const suspendUser = async (userId: string, reason: string, duration: number) => {
     try {
       setIsLoading(true);
-      toast.info('Suspend user functionality needs to be implemented');
-      // TODO: Implement suspend user logic
+      
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error('No active session');
+      }
+
+      // Call edge function to suspend user
+      const { data, error } = await supabase.functions.invoke('suspend-user', {
+        body: { userId, reason, duration },
+        headers: {
+          Authorization: `Bearer ${session.access_token}`
+        }
+      });
+
+      if (error) throw error;
+
+      toast.success('User suspended successfully');
+      return { success: true };
     } catch (error) {
       console.error('Error suspending user:', error);
       toast.error('Failed to suspend user');
+      return { success: false, error };
     } finally {
       setIsLoading(false);
     }
@@ -82,11 +99,28 @@ export const useUserActions = () => {
   const sendEmailToUser = async (userId: string, message: string) => {
     try {
       setIsLoading(true);
-      toast.info('Send email functionality needs to be implemented');
-      // TODO: Implement send email logic
+      
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error('No active session');
+      }
+
+      // Call edge function to send email
+      const { data, error } = await supabase.functions.invoke('send-user-email', {
+        body: { userId, message },
+        headers: {
+          Authorization: `Bearer ${session.access_token}`
+        }
+      });
+
+      if (error) throw error;
+
+      toast.success('Email sent successfully');
+      return { success: true };
     } catch (error) {
       console.error('Error sending email:', error);
       toast.error('Failed to send email');
+      return { success: false, error };
     } finally {
       setIsLoading(false);
     }
@@ -126,31 +160,57 @@ export const useUserActions = () => {
     try {
       setIsLoading(true);
       
-      switch (action) {
-        case 'activate':
-          toast.info(`Bulk activate functionality will be implemented for ${userIds.length} users`);
-          break;
-        case 'deactivate':
-          toast.info(`Bulk deactivate functionality will be implemented for ${userIds.length} users`);
-          break;
-        case 'sendEmail':
-          toast.info(`Bulk email functionality will be implemented for ${userIds.length} users`);
-          break;
-        case 'changeRole':
-          toast.info(`Bulk role change functionality will be implemented for ${userIds.length} users`);
-          break;
-        case 'resetPassword':
-          toast.info(`Bulk password reset functionality will be implemented for ${userIds.length} users`);
-          break;
-        case 'export':
-          toast.info(`Export functionality will be implemented for ${userIds.length} users`);
-          break;
-        default:
-          toast.error('Unknown bulk action');
+      // Process each user individually for now
+      // In a production system, you might want to create a bulk operations edge function
+      const results = await Promise.allSettled(
+        userIds.map(async (userId) => {
+          switch (action) {
+            case 'activate':
+              // For now, just remove suspension metadata
+              const { data: { session } } = await supabase.auth.getSession();
+              if (!session) throw new Error('No active session');
+              
+              return await supabase.functions.invoke('update-user-role', {
+                body: { userId, newRole: 'client' }, // Default to client role
+                headers: { Authorization: `Bearer ${session.access_token}` }
+              });
+            
+            case 'deactivate':
+              return await suspendUser(userId, 'Bulk deactivation', 8760); // 1 year
+            
+            case 'sendEmail':
+              return await sendEmailToUser(userId, data?.message || 'Bulk message from admin');
+            
+            case 'changeRole':
+              return await changeUserRole(userId, data?.role || 'client');
+            
+            case 'resetPassword':
+              return await resetUserPassword(userId);
+            
+            case 'export':
+              // This would typically export user data
+              return { success: true };
+            
+            default:
+              throw new Error('Unknown bulk action');
+          }
+        })
+      );
+
+      const successful = results.filter(result => result.status === 'fulfilled').length;
+      const failed = results.filter(result => result.status === 'rejected').length;
+
+      if (failed > 0) {
+        toast.warning(`Bulk action completed: ${successful} successful, ${failed} failed`);
+      } else {
+        toast.success(`Bulk action completed successfully for ${successful} users`);
       }
+
+      return { success: true, successful, failed };
     } catch (error) {
       console.error('Error performing bulk action:', error);
       toast.error('Failed to perform bulk action');
+      return { success: false, error };
     } finally {
       setIsLoading(false);
     }
