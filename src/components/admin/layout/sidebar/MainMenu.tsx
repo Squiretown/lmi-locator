@@ -5,8 +5,7 @@ import {
   BarChart3, 
   Users, 
   TrendingUp, 
-  Settings, 
-  HelpCircle
+  Settings
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -61,14 +60,6 @@ export const AdminSidebarMainMenu: React.FC = () => {
         isActive={location.pathname === '/admin/users'}
       >
         Users
-      </MenuLink>
-
-      <MenuLink 
-        to="/admin/help" 
-        icon={HelpCircle}
-        isActive={location.pathname === '/admin/help'}
-      >
-        Help Management
       </MenuLink>
     </div>
   );
