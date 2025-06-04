@@ -30,6 +30,19 @@ export const UserDetailedView: React.FC<UserDetailedViewProps> = ({
     return !!user.app_metadata?.email_verified || !!user.email;
   };
 
+  const getReferralTypeLabel = (type?: string) => {
+    switch (type) {
+      case 'mortgage_broker':
+        return 'Mortgage Broker';
+      case 'realtor':
+        return 'Realtor';
+      case 'professional':
+        return 'Professional';
+      default:
+        return 'Not specified';
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
@@ -152,6 +165,43 @@ export const UserDetailedView: React.FC<UserDetailedViewProps> = ({
               </div>
             </div>
 
+            {/* Referral Information */}
+            {(user.user_metadata?.referred_by_type || user.user_metadata?.referral_code) && (
+              <div className="space-y-4">
+                <h3 className="font-semibold text-lg">Referral Information</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    {user.user_metadata?.referral_code && (
+                      <div className="flex justify-between">
+                        <span className="text-sm text-muted-foreground">Referral Code:</span>
+                        <span className="text-sm font-mono">{user.user_metadata.referral_code}</span>
+                      </div>
+                    )}
+                    {user.user_metadata?.referred_by_type && (
+                      <div className="flex justify-between">
+                        <span className="text-sm text-muted-foreground">Referred By Type:</span>
+                        <Badge variant="secondary">
+                          {getReferralTypeLabel(user.user_metadata.referred_by_type)}
+                        </Badge>
+                      </div>
+                    )}
+                    {user.user_metadata?.referred_by_name && (
+                      <div className="flex justify-between">
+                        <span className="text-sm text-muted-foreground">Professional Name:</span>
+                        <span className="text-sm">{user.user_metadata.referred_by_name}</span>
+                      </div>
+                    )}
+                    {user.user_metadata?.referred_by_id && (
+                      <div className="flex justify-between">
+                        <span className="text-sm text-muted-foreground">Professional ID:</span>
+                        <span className="text-sm font-mono">{user.user_metadata.referred_by_id}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Additional User Information */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* User Metadata Details */}
@@ -159,7 +209,10 @@ export const UserDetailedView: React.FC<UserDetailedViewProps> = ({
                 <h3 className="font-semibold text-lg">User Metadata</h3>
                 <div className="space-y-2">
                   {Object.entries(user.user_metadata || {}).map(([key, value]) => {
-                    if (key === 'first_name' || key === 'last_name' || key === 'user_type' || key === 'suspended' || key === 'suspension_end') {
+                    if (key === 'first_name' || key === 'last_name' || key === 'user_type' || 
+                        key === 'suspended' || key === 'suspension_end' || 
+                        key === 'referred_by_type' || key === 'referred_by_id' || 
+                        key === 'referred_by_name' || key === 'referral_code') {
                       return null; // Already displayed above
                     }
                     return (

@@ -9,7 +9,7 @@ export const passwordRegex = {
   hasSpecialChar: /[^A-Za-z0-9]/
 };
 
-// Define the form schema with advanced password validation
+// Define the form schema with advanced password validation and referral fields
 export const signupFormSchema = z.object({
   firstName: z.string().min(1, 'First name is required'),
   lastName: z.string().min(1, 'Last name is required'),
@@ -28,7 +28,10 @@ export const signupFormSchema = z.object({
     .refine(val => passwordRegex.hasSpecialChar.test(val), {
       message: 'Password must include at least one special character'
     }),
-  userRole: z.enum(['client', 'realtor', 'mortgage_professional'])
+  userRole: z.enum(['client', 'realtor', 'mortgage_professional']),
+  referralCode: z.string().optional(),
+  referredByType: z.enum(['mortgage_broker', 'realtor', 'professional', 'none']).optional(),
+  referredByName: z.string().optional()
 });
 
 // Form values type derived from the schema

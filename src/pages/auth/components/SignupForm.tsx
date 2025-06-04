@@ -25,7 +25,10 @@ const SignupForm: React.FC = () => {
       lastName: '',
       email: '',
       password: '',
-      userRole: 'client'
+      userRole: 'client',
+      referralCode: '',
+      referredByType: 'none',
+      referredByName: ''
     }
   });
 
@@ -38,7 +41,12 @@ const SignupForm: React.FC = () => {
       const metadata = {
         first_name: values.firstName,
         last_name: values.lastName,
-        user_type: values.userRole
+        user_type: values.userRole,
+        ...(values.referralCode && { referral_code: values.referralCode }),
+        ...(values.referredByType && values.referredByType !== 'none' && { 
+          referred_by_type: values.referredByType,
+          referred_by_name: values.referredByName || ''
+        })
       };
       
       const { error } = await signUp(values.email, values.password, metadata);
@@ -63,6 +71,8 @@ const SignupForm: React.FC = () => {
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
   };
+
+  const watchReferredByType = form.watch('referredByType');
 
   return (
     <Form {...form}>
@@ -174,6 +184,67 @@ const SignupForm: React.FC = () => {
               </FormItem>
             )}
           />
+
+          <div className="space-y-4 border-t pt-4">
+            <h3 className="text-sm font-medium text-muted-foreground">Referral Information (Optional)</h3>
+            
+            <FormField
+              control={form.control}
+              name="referralCode"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Referral Code</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Enter referral code if you have one" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="referredByType"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Were you referred by a professional?</FormLabel>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select referral type" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="none">No referral</SelectItem>
+                      <SelectItem value="mortgage_broker">Mortgage Broker</SelectItem>
+                      <SelectItem value="realtor">Realtor</SelectItem>
+                      <SelectItem value="professional">Other Professional</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {watchReferredByType && watchReferredByType !== 'none' && (
+              <FormField
+                control={form.control}
+                name="referredByName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Professional's Name</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Enter the name of who referred you" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
+          </div>
           
           <Button 
             className="w-full bg-blue-600 hover:bg-blue-700 mt-4" 

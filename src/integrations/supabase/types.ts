@@ -1757,6 +1757,10 @@ export type Database = {
           phone: string | null
           professional_bio: string | null
           profile_image: string | null
+          referral_code: string | null
+          referred_by_id: string | null
+          referred_by_name: string | null
+          referred_by_type: string | null
           state: string | null
           subscription_end_date: string | null
           subscription_ends_at: string | null
@@ -1784,6 +1788,10 @@ export type Database = {
           phone?: string | null
           professional_bio?: string | null
           profile_image?: string | null
+          referral_code?: string | null
+          referred_by_id?: string | null
+          referred_by_name?: string | null
+          referred_by_type?: string | null
           state?: string | null
           subscription_end_date?: string | null
           subscription_ends_at?: string | null
@@ -1811,6 +1819,10 @@ export type Database = {
           phone?: string | null
           professional_bio?: string | null
           profile_image?: string | null
+          referral_code?: string | null
+          referred_by_id?: string | null
+          referred_by_name?: string | null
+          referred_by_type?: string | null
           state?: string | null
           subscription_end_date?: string | null
           subscription_ends_at?: string | null
