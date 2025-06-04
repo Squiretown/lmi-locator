@@ -3,6 +3,7 @@ import React from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
 import { UserActionMenu } from './UserActionMenu';
 import { UserTypeBadge } from './UserTypeBadge';
 import type { AdminUser } from '../types/admin-user';
@@ -14,6 +15,9 @@ interface UsersTableProps {
   onResetPassword: (userId: string) => void;
   onDisableUser: (userId: string) => void;
   onDeleteUser?: (userId: string) => void;
+  selectedUsers?: string[];
+  onUserSelection?: (userId: string, selected: boolean) => void;
+  onSelectAll?: (selected: boolean) => void;
 }
 
 export const UsersTable: React.FC<UsersTableProps> = ({
@@ -23,6 +27,9 @@ export const UsersTable: React.FC<UsersTableProps> = ({
   onResetPassword,
   onDisableUser,
   onDeleteUser,
+  selectedUsers = [],
+  onUserSelection,
+  onSelectAll,
 }) => {
   if (isLoading) {
     return (
@@ -76,61 +83,84 @@ export const UsersTable: React.FC<UsersTableProps> = ({
     return user.email || `User ${user.id.substring(0, 8)}`;
   };
 
+  const getUserAvatar = (user: AdminUser) => {
+    const name = getDisplayName(user);
+    return name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
+  };
+
+  const isAllSelected = users.length > 0 && selectedUsers.length === users.length;
+  const isIndeterminate = selectedUsers.length > 0 && selectedUsers.length < users.length;
+
   return (
-    <div className="rounded-md border">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>User ID</TableHead>
-            <TableHead>Display Name</TableHead>
-            <TableHead>User Type</TableHead>
-            <TableHead>Created</TableHead>
-            <TableHead>Last Login</TableHead>
-            <TableHead>Provider</TableHead>
-            <TableHead className="text-right">Actions</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {users.map((user) => (
-            <TableRow key={user.id}>
+    <Table>
+      <TableHeader>
+        <TableRow>
+          {onUserSelection && (
+            <TableHead className="w-12">
+              <Checkbox
+                checked={isAllSelected}
+                ref={(el) => {
+                  if (el) el.indeterminate = isIndeterminate;
+                }}
+                onCheckedChange={(checked) => onSelectAll?.(!!checked)}
+              />
+            </TableHead>
+          )}
+          <TableHead>User</TableHead>
+          <TableHead>Role</TableHead>
+          <TableHead>Status</TableHead>
+          <TableHead>Last Login</TableHead>
+          <TableHead>Registration</TableHead>
+          <TableHead className="text-right">Actions</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {users.map((user) => (
+          <TableRow key={user.id}>
+            {onUserSelection && (
               <TableCell>
-                <div className="font-mono text-xs max-w-[120px] truncate" title={user.id}>
-                  {user.id.substring(0, 8)}...
-                </div>
-              </TableCell>
-              <TableCell className="font-medium">
-                {getDisplayName(user)}
-              </TableCell>
-              <TableCell>
-                <UserTypeBadge userType={user.user_metadata?.user_type} />
-              </TableCell>
-              <TableCell>
-                {formatDate(user.created_at)}
-              </TableCell>
-              <TableCell>
-                {formatDate(user.last_sign_in_at)}
-              </TableCell>
-              <TableCell>
-                <Badge variant="outline">
-                  {user.app_metadata?.provider || 'email'}
-                </Badge>
-              </TableCell>
-              <TableCell className="text-right">
-                <UserActionMenu
-                  user={user}
-                  onResetPassword={() => onResetPassword(user.id)}
-                  onDisableUser={() => onDisableUser(user.id)}
-                  onDeleteUser={onDeleteUser ? () => onDeleteUser(user.id) : undefined}
+                <Checkbox
+                  checked={selectedUsers.includes(user.id)}
+                  onCheckedChange={(checked) => onUserSelection(user.id, !!checked)}
                 />
               </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-      
-      <div className="px-4 py-3 text-sm text-muted-foreground border-t">
-        Showing {users.length} user{users.length !== 1 ? 's' : ''}
-      </div>
-    </div>
+            )}
+            <TableCell>
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-xs font-medium">
+                  {getUserAvatar(user)}
+                </div>
+                <div>
+                  <div className="font-medium">{getDisplayName(user)}</div>
+                  <div className="text-sm text-muted-foreground">{user.email}</div>
+                </div>
+              </div>
+            </TableCell>
+            <TableCell>
+              <UserTypeBadge userType={user.user_metadata?.user_type} />
+            </TableCell>
+            <TableCell>
+              <Badge variant={user.user_metadata?.user_type !== 'inactive' ? 'success' : 'destructive'}>
+                {user.user_metadata?.user_type !== 'inactive' ? 'Active' : 'Inactive'}
+              </Badge>
+            </TableCell>
+            <TableCell>
+              {formatDate(user.last_sign_in_at)}
+            </TableCell>
+            <TableCell>
+              {formatDate(user.created_at)}
+            </TableCell>
+            <TableCell className="text-right">
+              <UserActionMenu
+                user={user}
+                onResetPassword={() => onResetPassword(user.id)}
+                onDisableUser={() => onDisableUser(user.id)}
+                onDeleteUser={onDeleteUser ? () => onDeleteUser(user.id) : undefined}
+              />
+            </TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
   );
 };

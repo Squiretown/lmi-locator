@@ -5,15 +5,29 @@ import { useUserManagement } from './hooks/useUserManagement';
 import { UsersTable } from './components/UsersTable';
 import { UsersPageHeader } from '@/components/users/UsersPageHeader';
 import { UsersSearch } from '@/components/users/UsersSearch';
+import { UserStatistics } from '@/components/users/UserStatistics';
+import { UserAdvancedFilters } from '@/components/users/UserAdvancedFilters';
+import { UserRecentActivity } from '@/components/users/UserRecentActivity';
+import { UserPagination } from '@/components/users/UserPagination';
 import SignOutAllUsersButton from '@/components/admin/SignOutAllUsersButton';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { AlertCircle, UserPlus, CheckCircle } from 'lucide-react';
+import { AlertCircle, UserPlus, CheckCircle, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
 
 const UserManagement: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [addUserDialogOpen, setAddUserDialogOpen] = useState(false);
+  const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [filters, setFilters] = useState({
+    status: 'all',
+    role: 'all',
+    timeRange: 'all',
+  });
+  
+  const usersPerPage = 20;
   
   const { 
     users, 
@@ -24,13 +38,48 @@ const UserManagement: React.FC = () => {
     handleDeleteUser
   } = useUserManagement();
 
+  // Calculate statistics
+  const totalUsers = users?.length || 0;
+  const activeUsers = users?.filter(user => user.user_metadata?.user_type !== 'inactive').length || 0;
+  const newSignups = 47; // This would come from actual data
+  const pendingVerifications = 23; // This would come from actual data
+
   const handleAddUser = () => {
     setAddUserDialogOpen(true);
   };
 
   const handleManageRoles = () => {
-    // Navigate to permissions page
     window.location.href = '/admin/permissions';
+  };
+
+  const handleExportUsers = () => {
+    toast.info('Export functionality will be implemented');
+  };
+
+  const handleFiltersChange = (newFilters: any) => {
+    setFilters(newFilters);
+    setCurrentPage(1); // Reset to first page when filters change
+  };
+
+  const handleBulkAction = (action: string, userIds: string[]) => {
+    console.log('Bulk action:', action, 'for users:', userIds);
+    toast.info(`Bulk action "${action}" will be implemented for ${userIds.length} users`);
+  };
+
+  const handleUserSelection = (userId: string, selected: boolean) => {
+    if (selected) {
+      setSelectedUsers([...selectedUsers, userId]);
+    } else {
+      setSelectedUsers(selectedUsers.filter(id => id !== userId));
+    }
+  };
+
+  const handleSelectAll = (selected: boolean) => {
+    if (selected) {
+      setSelectedUsers(filteredUsers.map(user => user.id));
+    } else {
+      setSelectedUsers([]);
+    }
   };
 
   // Enhanced search functionality
@@ -41,26 +90,74 @@ const UserManagement: React.FC = () => {
     const userType = user.user_metadata?.user_type?.toLowerCase() || '';
     const email = user.email?.toLowerCase() || '';
     
-    return (
+    const matchesSearch = (
       userId.includes(searchLower) ||
       displayName.toLowerCase().includes(searchLower) ||
       userType.includes(searchLower) ||
       email.includes(searchLower)
     );
+
+    // Apply filters
+    const matchesStatus = filters.status === 'all' || 
+      (filters.status === 'active' && userType !== 'inactive') ||
+      (filters.status === 'inactive' && userType === 'inactive');
+
+    const matchesRole = filters.role === 'all' || userType === filters.role;
+
+    return matchesSearch && matchesStatus && matchesRole;
   }) || [];
 
+  // Pagination
+  const totalPages = Math.ceil(filteredUsers.length / usersPerPage);
+  const paginatedUsers = filteredUsers.slice(
+    (currentPage - 1) * usersPerPage,
+    currentPage * usersPerPage
+  );
+
   return (
-    <div className="p-4 space-y-4">
+    <div className="p-4 space-y-6">
       <Card>
         <CardContent className="p-6">
-          <UsersPageHeader
-            onAddClick={handleAddUser}
-            onManageRolesClick={handleManageRoles}
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+            <div>
+              <h2 className="text-2xl font-bold">User Management</h2>
+              <p className="text-muted-foreground">Manage users and their access permissions</p>
+            </div>
+            <div className="flex gap-2">
+              <Button onClick={handleExportUsers} variant="outline">
+                <Download className="mr-2 h-4 w-4" />
+                Export Users
+              </Button>
+              <Button onClick={handleManageRoles} variant="outline">
+                Manage Roles
+              </Button>
+              <Button onClick={handleAddUser}>
+                <UserPlus className="mr-2 h-4 w-4" />
+                Add New User
+              </Button>
+            </div>
+          </div>
+
+          {/* Statistics */}
+          <UserStatistics
+            totalUsers={totalUsers}
+            activeUsers={activeUsers}
+            newSignups={newSignups}
+            pendingVerifications={pendingVerifications}
           />
 
+          {/* Search */}
           <UsersSearch
             searchQuery={searchQuery}
             onSearchChange={setSearchQuery}
+          />
+
+          {/* Advanced Filters */}
+          <UserAdvancedFilters
+            onFiltersChange={handleFiltersChange}
+            onBulkAction={handleBulkAction}
+            selectedUsers={selectedUsers}
+            totalUsers={filteredUsers.length}
           />
 
           {error && (
@@ -88,20 +185,44 @@ const UserManagement: React.FC = () => {
             </Alert>
           )}
 
-          <UsersTable
-            users={filteredUsers}
-            isLoading={isLoading}
-            error={null} // Don't show error in table since we show it above
-            onResetPassword={handleResetPassword}
-            onDisableUser={handleDisableUser}
-            onDeleteUser={handleDeleteUser}
-          />
+          {/* Users Table */}
+          <div className="rounded-md border">
+            <div className="flex justify-between items-center p-4 border-b">
+              <h3 className="font-semibold">Users ({filteredUsers.length})</h3>
+            </div>
+            
+            <UsersTable
+              users={paginatedUsers}
+              isLoading={isLoading}
+              error={null}
+              onResetPassword={handleResetPassword}
+              onDisableUser={handleDisableUser}
+              onDeleteUser={handleDeleteUser}
+              selectedUsers={selectedUsers}
+              onUserSelection={handleUserSelection}
+              onSelectAll={handleSelectAll}
+            />
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <UserPagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                totalUsers={filteredUsers.length}
+                usersPerPage={usersPerPage}
+                onPageChange={setCurrentPage}
+              />
+            )}
+          </div>
           
           <div className="mt-4 flex justify-end">
             <SignOutAllUsersButton />
           </div>
         </CardContent>
       </Card>
+
+      {/* Recent Activity */}
+      <UserRecentActivity />
 
       {/* Add User Dialog */}
       <Dialog open={addUserDialogOpen} onOpenChange={setAddUserDialogOpen}>
