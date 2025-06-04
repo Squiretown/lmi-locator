@@ -1,25 +1,33 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { useUserManagement } from '../hooks/useUserManagement';
+import { useUserActions } from '../hooks/useUserActions';
 import { UserManagementHeader } from './UserManagementHeader';
 import { UserManagementStats } from './UserManagementStats';
 import { UserManagementSearch } from './UserManagementSearch';
-import { UserManagementFilters } from './UserManagementFilters';
+import { UserBulkActions } from './UserBulkActions';
 import { UserManagementTable } from './UserManagementTable';
+import { UserActionDialog } from './UserActionDialog';
 import { UserManagementDialogs } from './UserManagementDialogs';
 import { UserManagementFooter } from './UserManagementFooter';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { CheckCircle, AlertCircle } from 'lucide-react';
+import type { AdminUser } from '../types/admin-user';
 
 export const UserManagementContainer: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [addUserDialogOpen, setAddUserDialogOpen] = useState(false);
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
-  const [filters, setFilters] = useState({
-    status: 'all',
-    role: 'all',
-    timeRange: 'all',
+  const [actionDialog, setActionDialog] = useState<{
+    open: boolean;
+    action: string | null;
+    user: AdminUser | null;
+  }>({
+    open: false,
+    action: null,
+    user: null,
   });
   
   const usersPerPage = 20;
@@ -30,8 +38,18 @@ export const UserManagementContainer: React.FC = () => {
     error, 
     handleResetPassword, 
     handleDisableUser,
-    handleDeleteUser
+    handleDeleteUser,
+    refetch
   } = useUserManagement();
+
+  const {
+    suspendUser,
+    changeUserEmail,
+    changeUserRole,
+    sendEmailToUser,
+    resetUserPassword,
+    handleBulkAction,
+  } = useUserActions();
 
   // Calculate statistics from real data only
   const totalUsers = users?.length || 0;
@@ -47,13 +65,52 @@ export const UserManagementContainer: React.FC = () => {
     window.location.href = '/admin/permissions';
   };
 
-  const handleFiltersChange = (newFilters: any) => {
-    setFilters(newFilters);
-    setCurrentPage(1);
+  const handleUserAction = (action: string, user: AdminUser) => {
+    setActionDialog({
+      open: true,
+      action,
+      user,
+    });
   };
 
-  const handleBulkAction = (action: string, userIds: string[]) => {
-    console.log('Bulk action:', action, 'for users:', userIds);
+  const handleActionConfirm = async (data?: any) => {
+    if (!actionDialog.user || !actionDialog.action) return;
+
+    const { user, action } = actionDialog;
+
+    try {
+      switch (action) {
+        case 'suspend':
+          await suspendUser(user.id, data.reason, parseInt(data.duration));
+          break;
+        case 'changeEmail':
+          await changeUserEmail(user.id, data.newEmail);
+          break;
+        case 'changeRole':
+          await changeUserRole(user.id, data.newRole);
+          break;
+        case 'sendEmail':
+          await sendEmailToUser(user.id, data.message);
+          break;
+        case 'resetPassword':
+          await resetUserPassword(user.id);
+          break;
+        case 'delete':
+          await handleDeleteUser(user.id);
+          break;
+        case 'disableUser':
+          await handleDisableUser(user.id);
+          break;
+        default:
+          console.log('Action not implemented:', action);
+      }
+
+      await refetch();
+    } catch (error) {
+      console.error('Error performing action:', error);
+    }
+
+    setActionDialog({ open: false, action: null, user: null });
   };
 
   const handleUserSelection = (userId: string, selected: boolean) => {
@@ -80,20 +137,12 @@ export const UserManagementContainer: React.FC = () => {
     const userType = user.user_metadata?.user_type?.toLowerCase() || '';
     const email = user.email?.toLowerCase() || '';
     
-    const matchesSearch = (
+    return (
       userId.includes(searchLower) ||
       displayName.toLowerCase().includes(searchLower) ||
       userType.includes(searchLower) ||
       email.includes(searchLower)
     );
-
-    const matchesStatus = filters.status === 'all' || 
-      (filters.status === 'active' && userType !== 'inactive') ||
-      (filters.status === 'inactive' && userType === 'inactive');
-
-    const matchesRole = filters.role === 'all' || userType === filters.role;
-
-    return matchesSearch && matchesStatus && matchesRole;
   }) || [];
 
   // Pagination
@@ -124,10 +173,9 @@ export const UserManagementContainer: React.FC = () => {
             onSearchChange={setSearchQuery}
           />
 
-          <UserManagementFilters
-            onFiltersChange={handleFiltersChange}
-            onBulkAction={handleBulkAction}
+          <UserBulkActions
             selectedUsers={selectedUsers}
+            onBulkAction={handleBulkAction}
             totalUsers={filteredUsers.length}
           />
 
@@ -150,7 +198,7 @@ export const UserManagementContainer: React.FC = () => {
               <CheckCircle className="h-4 w-4 text-green-600" />
               <AlertDescription>
                 <p className="text-green-800">
-                  <strong>Successfully Connected:</strong> Loaded {users.length} auth users from Supabase. You can now view and delete users directly from the authentication system.
+                  <strong>Successfully Connected:</strong> Loaded {users.length} auth users from Supabase. You can now manage users directly from the authentication system.
                 </p>
               </AlertDescription>
             </Alert>
@@ -160,9 +208,7 @@ export const UserManagementContainer: React.FC = () => {
             users={paginatedUsers}
             isLoading={isLoading}
             error={null}
-            onResetPassword={handleResetPassword}
-            onDisableUser={handleDisableUser}
-            onDeleteUser={handleDeleteUser}
+            onUserAction={handleUserAction}
             selectedUsers={selectedUsers}
             onUserSelection={handleUserSelection}
             onSelectAll={handleSelectAll}
@@ -180,6 +226,14 @@ export const UserManagementContainer: React.FC = () => {
       <UserManagementDialogs
         addUserDialogOpen={addUserDialogOpen}
         setAddUserDialogOpen={setAddUserDialogOpen}
+      />
+
+      <UserActionDialog
+        user={actionDialog.user}
+        action={actionDialog.action}
+        open={actionDialog.open}
+        onClose={() => setActionDialog({ open: false, action: null, user: null })}
+        onConfirm={handleActionConfirm}
       />
     </div>
   );

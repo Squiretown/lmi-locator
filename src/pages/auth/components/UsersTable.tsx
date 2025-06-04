@@ -2,19 +2,16 @@
 import React from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Checkbox } from '@/components/ui/checkbox';
 import { UserActionMenu } from './UserActionMenu';
 import { UserTypeBadge } from './UserTypeBadge';
+import { UserStatusBadge } from './UserStatusBadge';
 import type { AdminUser } from '../types/admin-user';
 
 interface UsersTableProps {
   users: AdminUser[];
   isLoading: boolean;
   error: string | null;
-  onResetPassword: (userId: string) => void;
-  onDisableUser: (userId: string) => void;
-  onDeleteUser?: (userId: string) => void;
+  onUserAction: (action: string, user: AdminUser) => void;
   selectedUsers?: string[];
   onUserSelection?: (userId: string, selected: boolean) => void;
   onSelectAll?: (selected: boolean) => void;
@@ -24,24 +21,11 @@ export const UsersTable: React.FC<UsersTableProps> = ({
   users,
   isLoading,
   error,
-  onResetPassword,
-  onDisableUser,
-  onDeleteUser,
+  onUserAction,
   selectedUsers = [],
   onUserSelection,
   onSelectAll,
 }) => {
-  // Debug logging to help identify issues
-  React.useEffect(() => {
-    console.log('UsersTable Debug Info:', {
-      usersCount: users?.length || 0,
-      isLoading,
-      error,
-      users: users?.slice(0, 3), // Log first 3 users for debugging
-      selectedUsers: selectedUsers?.length || 0
-    });
-  }, [users, isLoading, error, selectedUsers]);
-
   // Loading state
   if (isLoading) {
     return (
@@ -54,7 +38,7 @@ export const UsersTable: React.FC<UsersTableProps> = ({
     );
   }
 
-  // Error state with more details
+  // Error state
   if (error) {
     return (
       <div className="flex items-center justify-center p-8">
@@ -78,7 +62,7 @@ export const UsersTable: React.FC<UsersTableProps> = ({
     );
   }
 
-  // Empty state with helpful message
+  // Empty state
   if (!users || users.length === 0) {
     return (
       <div className="flex items-center justify-center p-8">
@@ -92,15 +76,6 @@ export const UsersTable: React.FC<UsersTableProps> = ({
           <p className="text-muted-foreground mb-4">
             No users exist in the system or you don't have permission to view them.
           </p>
-          <div className="space-y-2 text-sm text-muted-foreground">
-            <p>Possible reasons:</p>
-            <ul className="list-disc list-inside space-y-1">
-              <li>Database is empty</li>
-              <li>RLS policies are blocking access</li>
-              <li>User doesn't have admin permissions</li>
-              <li>API connection issues</li>
-            </ul>
-          </div>
         </div>
       </div>
     );
@@ -123,8 +98,6 @@ export const UsersTable: React.FC<UsersTableProps> = ({
 
   const getDisplayName = (user: AdminUser) => {
     const metadata = user.user_metadata || {};
-    
-    // Check for name fields in user_metadata
     const firstName = metadata.first_name;
     const lastName = metadata.last_name;
     
@@ -132,19 +105,12 @@ export const UsersTable: React.FC<UsersTableProps> = ({
       return `${firstName || ''} ${lastName || ''}`.trim();
     }
     
-    // Fallback to email or user ID
     return user.email || `User ${user.id.substring(0, 8)}`;
   };
 
   const getUserAvatar = (user: AdminUser) => {
     const name = getDisplayName(user);
     return name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
-  };
-
-  const getUserStatus = (user: AdminUser) => {
-    // Since we don't have email_confirmed_at or banned_until in AdminUser,
-    // we'll use a simple status based on what we have
-    return 'active';
   };
 
   const getUserType = (user: AdminUser) => {
@@ -157,13 +123,6 @@ export const UsersTable: React.FC<UsersTableProps> = ({
 
   return (
     <div className="space-y-4">
-      {/* Debug info in development */}
-      {process.env.NODE_ENV === 'development' && (
-        <div className="text-xs text-muted-foreground bg-muted p-2 rounded">
-          Debug: {users.length} users loaded, {selectedUsers.length} selected
-        </div>
-      )}
-      
       <Table>
         <TableHeader>
           <TableRow>
@@ -190,7 +149,6 @@ export const UsersTable: React.FC<UsersTableProps> = ({
         </TableHeader>
         <TableBody>
           {users.map((user) => {
-            const userStatus = getUserStatus(user);
             const userType = getUserType(user);
             
             return (
@@ -220,16 +178,11 @@ export const UsersTable: React.FC<UsersTableProps> = ({
                   <UserTypeBadge userType={userType} />
                 </TableCell>
                 <TableCell>
-                  <Badge 
-                    variant={
-                      userStatus === 'active' ? 'default' :
-                      userStatus === 'pending' ? 'secondary' :
-                      userStatus === 'banned' ? 'destructive' :
-                      'outline'
-                    }
-                  >
-                    {userStatus.charAt(0).toUpperCase() + userStatus.slice(1)}
-                  </Badge>
+                  <UserStatusBadge 
+                    status="active"
+                    isEmailVerified={true}
+                    lastSignIn={user.last_sign_in_at}
+                  />
                 </TableCell>
                 <TableCell>
                   <div>
@@ -252,9 +205,7 @@ export const UsersTable: React.FC<UsersTableProps> = ({
                 <TableCell className="text-right">
                   <UserActionMenu
                     user={user}
-                    onResetPassword={() => onResetPassword(user.id)}
-                    onDisableUser={() => onDisableUser(user.id)}
-                    onDeleteUser={onDeleteUser ? () => onDeleteUser(user.id) : undefined}
+                    onAction={onUserAction}
                   />
                 </TableCell>
               </TableRow>

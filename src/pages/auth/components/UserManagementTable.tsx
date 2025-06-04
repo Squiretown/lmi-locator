@@ -9,9 +9,7 @@ interface UserManagementTableProps {
   users: AdminUser[];
   isLoading: boolean;
   error: string | null;
-  onResetPassword: (userId: string) => void;
-  onDisableUser: (userId: string) => void;
-  onDeleteUser: (userId: string) => void;
+  onUserAction: (action: string, user: AdminUser) => void;
   selectedUsers: string[];
   onUserSelection: (userId: string, selected: boolean) => void;
   onSelectAll: (selected: boolean) => void;
@@ -26,9 +24,7 @@ export const UserManagementTable: React.FC<UserManagementTableProps> = ({
   users,
   isLoading,
   error,
-  onResetPassword,
-  onDisableUser,
-  onDeleteUser,
+  onUserAction,
   selectedUsers,
   onUserSelection,
   onSelectAll,
@@ -49,9 +45,7 @@ export const UserManagementTable: React.FC<UserManagementTableProps> = ({
           users={users}
           isLoading={isLoading}
           error={error}
-          onResetPassword={onResetPassword}
-          onDisableUser={onDisableUser}
-          onDeleteUser={onDeleteUser}
+          onUserAction={onUserAction}
           selectedUsers={selectedUsers}
           onUserSelection={onUserSelection}
           onSelectAll={onSelectAll}
