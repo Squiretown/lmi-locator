@@ -8,6 +8,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -105,72 +106,74 @@ export const UserManagementTable: React.FC<UserManagementTableProps> = ({
 
   return (
     <div className="border rounded-lg">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead className="w-12">
-              <Checkbox
-                checked={selectedUsers.length === filteredUsers.length && filteredUsers.length > 0}
-                onCheckedChange={onSelectAll}
-              />
-            </TableHead>
-            <TableHead>User</TableHead>
-            <TableHead>Type</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Created</TableHead>
-            <TableHead>Last Sign In</TableHead>
-            <TableHead className="text-right">Actions</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {users.map((user) => (
-            <TableRow key={user.id}>
-              <TableCell>
+      <ScrollArea className="h-[600px] w-full">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-12">
                 <Checkbox
-                  checked={selectedUsers.includes(user.id)}
-                  onCheckedChange={(checked) => onUserSelection(user.id, checked as boolean)}
+                  checked={selectedUsers.length === filteredUsers.length && filteredUsers.length > 0}
+                  onCheckedChange={onSelectAll}
                 />
-              </TableCell>
-              <TableCell>
-                <div className="space-y-1">
-                  <div className="font-medium">{getDisplayName(user)}</div>
-                  <div className="text-sm text-muted-foreground">{user.email}</div>
-                  <div className="text-xs text-muted-foreground font-mono">{user.id}</div>
-                </div>
-              </TableCell>
-              <TableCell>
-                <UserTypeBadge userType={getUserType(user)} />
-              </TableCell>
-              <TableCell>
-                <UserStatusBadge 
-                  status={getUserType(user)}
-                  isEmailVerified={isEmailVerified(user)}
-                  lastSignIn={user.last_sign_in_at}
-                />
-              </TableCell>
-              <TableCell>
-                <div className="text-sm">
-                  {new Date(user.created_at).toLocaleDateString()}
-                </div>
-              </TableCell>
-              <TableCell>
-                <div className="text-sm">
-                  {user.last_sign_in_at 
-                    ? new Date(user.last_sign_in_at).toLocaleDateString()
-                    : 'Never'
-                  }
-                </div>
-              </TableCell>
-              <TableCell className="text-right">
-                <div className="flex items-center justify-end gap-2">
-                  <ProfessionalActions user={user} onAction={onUserAction} />
-                  <UserActionMenu user={user} onAction={onUserAction} />
-                </div>
-              </TableCell>
+              </TableHead>
+              <TableHead>User</TableHead>
+              <TableHead>Type</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Created</TableHead>
+              <TableHead>Last Sign In</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+          </TableHeader>
+          <TableBody>
+            {users.map((user) => (
+              <TableRow key={user.id}>
+                <TableCell>
+                  <Checkbox
+                    checked={selectedUsers.includes(user.id)}
+                    onCheckedChange={(checked) => onUserSelection(user.id, checked as boolean)}
+                  />
+                </TableCell>
+                <TableCell>
+                  <div className="space-y-1">
+                    <div className="font-medium">{getDisplayName(user)}</div>
+                    <div className="text-sm text-muted-foreground">{user.email}</div>
+                    <div className="text-xs text-muted-foreground font-mono">{user.id}</div>
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <UserTypeBadge userType={getUserType(user)} />
+                </TableCell>
+                <TableCell>
+                  <UserStatusBadge 
+                    status={getUserType(user)}
+                    isEmailVerified={isEmailVerified(user)}
+                    lastSignIn={user.last_sign_in_at}
+                  />
+                </TableCell>
+                <TableCell>
+                  <div className="text-sm">
+                    {new Date(user.created_at).toLocaleDateString()}
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <div className="text-sm">
+                    {user.last_sign_in_at 
+                      ? new Date(user.last_sign_in_at).toLocaleDateString()
+                      : 'Never'
+                    }
+                  </div>
+                </TableCell>
+                <TableCell className="text-right">
+                  <div className="flex items-center justify-end gap-2">
+                    <ProfessionalActions user={user} onAction={onUserAction} />
+                    <UserActionMenu user={user} onAction={onUserAction} />
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </ScrollArea>
     </div>
   );
 };
