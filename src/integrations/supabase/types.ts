@@ -1940,6 +1940,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      check_admin_status: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
       create_default_notification_preferences: {
         Args: { user_uuid: string }
         Returns: undefined

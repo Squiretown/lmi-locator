@@ -33,13 +33,19 @@ const UserManagement: React.FC = () => {
     window.location.href = '/admin/permissions';
   };
 
+  // Enhanced search functionality
   const filteredUsers = users?.filter(user => {
     const searchLower = searchQuery.toLowerCase();
-    const displayName = user.user_metadata?.first_name || user.user_metadata?.last_name || user.id;
+    const displayName = user.user_metadata?.first_name || user.user_metadata?.last_name || '';
+    const userId = user.id.toLowerCase();
+    const userType = user.user_metadata?.user_type?.toLowerCase() || '';
+    const email = user.email?.toLowerCase() || '';
+    
     return (
-      user.id.toLowerCase().includes(searchLower) ||
+      userId.includes(searchLower) ||
       displayName.toLowerCase().includes(searchLower) ||
-      user.user_metadata?.user_type?.toLowerCase().includes(searchLower)
+      userType.includes(searchLower) ||
+      email.includes(searchLower)
     );
   }) || [];
 

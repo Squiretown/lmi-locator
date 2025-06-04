@@ -1,10 +1,8 @@
 
-import type { User } from '@supabase/supabase-js';
-
-// Define our AdminUser type to match what we actually get from Supabase
+// Define our AdminUser type to match what we can get from user_profiles
 export interface AdminUser {
   id: string;
-  email?: string; // Make email optional to match Supabase User type
+  email?: string; // Make email optional since we may not have it
   created_at: string;
   last_sign_in_at?: string | null;
   user_metadata?: {

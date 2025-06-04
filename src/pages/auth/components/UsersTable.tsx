@@ -73,7 +73,7 @@ export const UsersTable: React.FC<UsersTableProps> = ({
     if (first_name || last_name) {
       return `${first_name || ''} ${last_name || ''}`.trim();
     }
-    return user.email || user.id.substring(0, 8) + '...';
+    return user.email || `User ${user.id.substring(0, 8)}`;
   };
 
   return (
@@ -82,7 +82,7 @@ export const UsersTable: React.FC<UsersTableProps> = ({
         <TableHeader>
           <TableRow>
             <TableHead>User ID</TableHead>
-            <TableHead>Email/Name</TableHead>
+            <TableHead>Display Name</TableHead>
             <TableHead>User Type</TableHead>
             <TableHead>Created</TableHead>
             <TableHead>Last Login</TableHead>
