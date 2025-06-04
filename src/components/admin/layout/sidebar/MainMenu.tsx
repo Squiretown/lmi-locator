@@ -1,98 +1,75 @@
 
 import React from 'react';
-import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, Users, Kanban, Search, Briefcase, History, UserCheck } from 'lucide-react';
-import { useAdminPermissions } from '../AdminPermissionsContext';
+import { Link, useLocation } from "react-router-dom";
+import { 
+  BarChart3, 
+  Users, 
+  TrendingUp, 
+  Settings, 
+  HelpCircle
+} from "lucide-react";
+import { cn } from "@/lib/utils";
 
-export function AdminSidebarMainMenu() {
-  const { hasPermission } = useAdminPermissions();
+const MenuLink: React.FC<{
+  to: string;
+  icon: React.ElementType;
+  children: React.ReactNode;
+  isActive?: boolean;
+}> = ({ to, icon: Icon, children, isActive }) => (
+  <Link
+    to={to}
+    className={cn(
+      "flex items-center space-x-2 px-3 py-2 rounded-md text-sm transition-colors",
+      isActive 
+        ? "bg-sidebar-accent text-sidebar-accent-foreground" 
+        : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+    )}
+  >
+    <Icon className="h-4 w-4" />
+    <span>{children}</span>
+  </Link>
+);
 
+export const AdminSidebarMainMenu: React.FC = () => {
+  const location = useLocation();
+  
   return (
     <div className="space-y-1">
-      <NavLink 
+      <h3 className="px-3 text-xs font-medium text-sidebar-foreground/70 uppercase tracking-wider mb-2">
+        Overview
+      </h3>
+      
+      <MenuLink 
         to="/admin" 
-        end 
-        className={({ isActive }) => 
-          `flex items-center space-x-3 px-3 py-2 text-sm rounded-md transition-colors ${
-            isActive 
-              ? 'bg-primary text-primary-foreground' 
-              : 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
-          }`
-        }
+        icon={BarChart3}
+        isActive={location.pathname === '/admin'}
       >
-        <LayoutDashboard size={16} />
-        <span>Dashboard</span>
-      </NavLink>
+        Dashboard
+      </MenuLink>
       
-      <NavLink 
-        to="/admin/users" 
-        className={({ isActive }) => 
-          `flex items-center space-x-3 px-3 py-2 text-sm rounded-md transition-colors ${
-            isActive 
-              ? 'bg-primary text-primary-foreground' 
-              : 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
-          }`
-        }
-      >
-        <Users size={16} />
-        <span>Users</span>
-      </NavLink>
-      
-      <NavLink 
-        to="/admin/mortgage-brokers" 
-        className={({ isActive }) => 
-          `flex items-center space-x-3 px-3 py-2 text-sm rounded-md transition-colors ${
-            isActive 
-              ? 'bg-primary text-primary-foreground' 
-              : 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
-          }`
-        }
-      >
-        <Briefcase size={16} />
-        <span>Mortgage Brokers</span>
-      </NavLink>
-      
-      <NavLink 
-        to="/admin/realtors" 
-        className={({ isActive }) => 
-          `flex items-center space-x-3 px-3 py-2 text-sm rounded-md transition-colors ${
-            isActive 
-              ? 'bg-primary text-primary-foreground' 
-              : 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
-          }`
-        }
-      >
-        <UserCheck size={16} />
-        <span>Realtors</span>
-      </NavLink>
-      
-      <NavLink 
+      <MenuLink 
         to="/admin/marketing" 
-        className={({ isActive }) => 
-          `flex items-center space-x-3 px-3 py-2 text-sm rounded-md transition-colors ${
-            isActive 
-              ? 'bg-primary text-primary-foreground' 
-              : 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
-          }`
-        }
+        icon={TrendingUp}
+        isActive={location.pathname === '/admin/marketing'}
       >
-        <Kanban size={16} />
-        <span>Marketing</span>
-      </NavLink>
+        Marketing
+      </MenuLink>
       
-      <NavLink 
-        to="/admin/search-history" 
-        className={({ isActive }) => 
-          `flex items-center space-x-3 px-3 py-2 text-sm rounded-md transition-colors ${
-            isActive 
-              ? 'bg-primary text-primary-foreground' 
-              : 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
-          }`
-        }
+      <MenuLink 
+        to="/admin/users" 
+        icon={Users}
+        isActive={location.pathname === '/admin/users'}
       >
-        <History size={16} />
-        <span>Search History</span>
-      </NavLink>
+        Users
+      </MenuLink>
+
+      <MenuLink 
+        to="/admin/help" 
+        icon={HelpCircle}
+        isActive={location.pathname === '/admin/help'}
+      >
+        Help Management
+      </MenuLink>
     </div>
   );
-}
+};
