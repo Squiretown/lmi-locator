@@ -1,72 +1,45 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { useUserManagement } from '../hooks/useUserManagement';
-import { useUserActions } from '../hooks/useUserActions';
+import { useUserManagementState } from '../hooks/useUserManagementState';
+import { useUserManagementActions } from '../hooks/useUserManagementActions';
 import { UserManagementHeader } from './UserManagementHeader';
-import { UserManagementStats } from './UserManagementStats';
-import { UserManagementSearch } from './UserManagementSearch';
-import { UserBulkActions } from './UserBulkActions';
-import { UserManagementTable } from './UserManagementTable';
+import { UserManagementContent } from './UserManagementContent';
 import { UserActionDialog } from './UserActionDialog';
 import { ProfessionalActionDialog } from './ProfessionalActionDialog';
 import { UserManagementDialogs } from './UserManagementDialogs';
 import { UserManagementFooter } from './UserManagementFooter';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { CheckCircle, AlertCircle } from 'lucide-react';
-import { toast } from 'sonner';
 import type { AdminUser } from '../types/admin-user';
 
 export const UserManagementContainer: React.FC = () => {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [addUserDialogOpen, setAddUserDialogOpen] = useState(false);
-  const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [actionDialog, setActionDialog] = useState<{
-    open: boolean;
-    action: string | null;
-    user: AdminUser | null;
-  }>({
-    open: false,
-    action: null,
-    user: null,
-  });
-  const [professionalDialog, setProfessionalDialog] = useState<{
-    open: boolean;
-    action: string | null;
-    user: AdminUser | null;
-  }>({
-    open: false,
-    action: null,
-    user: null,
-  });
-  
-  const usersPerPage = 20;
-  
-  const { 
-    users, 
-    isLoading, 
-    error, 
-    handleResetPassword, 
-    handleDisableUser,
-    handleDeleteUser,
-    refetch
-  } = useUserManagement();
+  const {
+    searchQuery,
+    setSearchQuery,
+    addUserDialogOpen,
+    setAddUserDialogOpen,
+    selectedUsers,
+    setSelectedUsers,
+    currentPage,
+    setCurrentPage,
+    actionDialog,
+    setActionDialog,
+    professionalDialog,
+    setProfessionalDialog,
+    resetActionDialog,
+    resetProfessionalDialog,
+  } = useUserManagementState();
 
   const {
-    suspendUser,
-    changeUserEmail,
-    changeUserRole,
-    sendEmailToUser,
-    resetUserPassword,
-    handleBulkAction,
-  } = useUserActions();
+    handleUserAction,
+    handleActionConfirm,
+    handleProfessionalActionConfirm,
+    handleBulkActionWrapper,
+  } = useUserManagementActions();
 
-  // Calculate statistics from real data only
-  const totalUsers = users?.length || 0;
-  const activeUsers = users?.filter(user => user.user_metadata?.user_type !== 'inactive').length || 0;
-  const newSignups = 0;
-  const pendingVerifications = 0;
+  const { users, isLoading, error } = useUserManagement();
+
+  const usersPerPage = 20;
 
   const handleAddUser = () => {
     setAddUserDialogOpen(true);
@@ -76,16 +49,10 @@ export const UserManagementContainer: React.FC = () => {
     window.location.href = '/admin/permissions';
   };
 
-  const handleUserAction = (action: string, user: AdminUser) => {
-    // Check if this is a professional-specific action
-    const professionalActions = [
-      'verifyLicense', 'viewCredentials', 'updateLicense', 
-      'viewClients', 'manageReferrals', 'clientActivity',
-      'reviewMarketing', 'marketingStats', 'campaignHistory',
-      'approveApplication', 'rejectApplication', 'reviewApplication'
-    ];
+  const handleUserActionWrapper = (action: string, user: AdminUser) => {
+    const { isProfessionalAction } = handleUserAction(action, user);
 
-    if (professionalActions.includes(action)) {
+    if (isProfessionalAction) {
       setProfessionalDialog({
         open: true,
         action,
@@ -100,79 +67,16 @@ export const UserManagementContainer: React.FC = () => {
     }
   };
 
-  const handleActionConfirm = async (data?: any) => {
+  const handleActionConfirmWrapper = async (data?: any) => {
     if (!actionDialog.user || !actionDialog.action) return;
-
-    const { user, action } = actionDialog;
-
-    try {
-      switch (action) {
-        case 'suspend':
-          await suspendUser(user.id, data.reason, parseInt(data.duration));
-          break;
-        case 'changeEmail':
-          await changeUserEmail(user.id, data.newEmail);
-          break;
-        case 'changeRole':
-          await changeUserRole(user.id, data.newRole);
-          break;
-        case 'sendEmail':
-          await sendEmailToUser(user.id, data.message);
-          break;
-        case 'resetPassword':
-          await resetUserPassword(user.id);
-          break;
-        case 'delete':
-          await handleDeleteUser(user.id);
-          break;
-        case 'disableUser':
-          await handleDisableUser(user.id);
-          break;
-        default:
-          console.log('Action not implemented:', action);
-      }
-
-      await refetch();
-    } catch (error) {
-      console.error('Error performing action:', error);
-    }
-
-    setActionDialog({ open: false, action: null, user: null });
+    await handleActionConfirm(actionDialog.user, actionDialog.action, data);
+    resetActionDialog();
   };
 
-  const handleProfessionalActionConfirm = async (data?: any) => {
+  const handleProfessionalActionConfirmWrapper = async (data?: any) => {
     if (!professionalDialog.user || !professionalDialog.action) return;
-
-    const { user, action } = professionalDialog;
-
-    try {
-      switch (action) {
-        case 'verifyLicense':
-          toast.success(`License verified for ${user.email}`);
-          break;
-        case 'viewClients':
-          toast.info(`Viewing clients for ${user.email}`);
-          break;
-        case 'reviewMarketing':
-          toast.info(`Reviewing marketing campaigns for ${user.email}`);
-          break;
-        case 'approveApplication':
-          toast.success(`Application approved for ${user.email}`);
-          break;
-        case 'rejectApplication':
-          toast.success(`Application rejected for ${user.email}`);
-          break;
-        default:
-          toast.info(`Professional action performed: ${action}`);
-      }
-
-      await refetch();
-    } catch (error) {
-      console.error('Error performing professional action:', error);
-      toast.error('Failed to perform professional action');
-    }
-
-    setProfessionalDialog({ open: false, action: null, user: null });
+    await handleProfessionalActionConfirm(professionalDialog.user, professionalDialog.action, data);
+    resetProfessionalDialog();
   };
 
   const handleUserSelection = (userId: string, selected: boolean) => {
@@ -191,17 +95,10 @@ export const UserManagementContainer: React.FC = () => {
     }
   };
 
-  const handleBulkActionWrapper = async (action: string, userIds: string[], data?: any) => {
-    try {
-      await handleBulkAction(action, userIds, data);
-      // Clear selections after successful bulk action
+  const handleBulkActionWrapperWithClear = async (action: string, userIds: string[], data?: any) => {
+    const result = await handleBulkActionWrapper(action, userIds, data);
+    if (result.success) {
       setSelectedUsers([]);
-      // Refresh the user list
-      await refetch();
-      toast.success(`Bulk action "${action}" completed successfully`);
-    } catch (error) {
-      console.error('Error performing bulk action:', error);
-      toast.error('Failed to perform bulk action');
     }
   };
 
@@ -223,10 +120,6 @@ export const UserManagementContainer: React.FC = () => {
 
   // Pagination
   const totalPages = Math.ceil(filteredUsers.length / usersPerPage);
-  const paginatedUsers = filteredUsers.slice(
-    (currentPage - 1) * usersPerPage,
-    currentPage * usersPerPage
-  );
 
   return (
     <div className="p-4 space-y-6">
@@ -237,55 +130,15 @@ export const UserManagementContainer: React.FC = () => {
             onManageRoles={handleManageRoles}
           />
 
-          <UserManagementStats
-            totalUsers={totalUsers}
-            activeUsers={activeUsers}
-            newSignups={newSignups}
-            pendingVerifications={pendingVerifications}
-          />
-
-          <UserManagementSearch
+          <UserManagementContent
+            users={users}
+            isLoading={isLoading}
+            error={error}
             searchQuery={searchQuery}
             onSearchChange={setSearchQuery}
-          />
-
-          <UserBulkActions
             selectedUsers={selectedUsers}
-            onBulkAction={handleBulkActionWrapper}
-            totalUsers={filteredUsers.length}
-          />
-
-          {error && (
-            <Alert className="mb-4">
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>
-                <div className="space-y-2">
-                  <p><strong>Error:</strong> {error}</p>
-                  <p className="text-sm">
-                    This might be due to missing admin permissions or the users not being properly authenticated.
-                  </p>
-                </div>
-              </AlertDescription>
-            </Alert>
-          )}
-
-          {!error && !isLoading && users.length > 0 && (
-            <Alert className="mb-4">
-              <CheckCircle className="h-4 w-4 text-green-600" />
-              <AlertDescription>
-                <p className="text-green-800">
-                  <strong>Successfully Connected:</strong> Loaded {users.length} auth users from Supabase. You can now manage users directly from the authentication system.
-                </p>
-              </AlertDescription>
-            </Alert>
-          )}
-
-          <UserManagementTable
-            users={paginatedUsers}
-            isLoading={isLoading}
-            error={null}
-            onUserAction={handleUserAction}
-            selectedUsers={selectedUsers}
+            onBulkAction={handleBulkActionWrapperWithClear}
+            onUserAction={handleUserActionWrapper}
             onUserSelection={handleUserSelection}
             onSelectAll={handleSelectAll}
             filteredUsers={filteredUsers}
@@ -308,16 +161,16 @@ export const UserManagementContainer: React.FC = () => {
         user={actionDialog.user}
         action={actionDialog.action}
         open={actionDialog.open}
-        onClose={() => setActionDialog({ open: false, action: null, user: null })}
-        onConfirm={handleActionConfirm}
+        onClose={resetActionDialog}
+        onConfirm={handleActionConfirmWrapper}
       />
 
       <ProfessionalActionDialog
         user={professionalDialog.user}
         action={professionalDialog.action}
         open={professionalDialog.open}
-        onClose={() => setProfessionalDialog({ open: false, action: null, user: null })}
-        onConfirm={handleProfessionalActionConfirm}
+        onClose={resetProfessionalDialog}
+        onConfirm={handleProfessionalActionConfirmWrapper}
       />
     </div>
   );
