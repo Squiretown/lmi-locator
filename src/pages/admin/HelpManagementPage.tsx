@@ -102,7 +102,7 @@ const HelpManagementPage: React.FC = () => {
       } else {
         const { error } = await supabase
           .from('help_items')
-          .insert([data]);
+          .insert(data);
 
         if (error) throw error;
         toast.success('Help item created successfully');
