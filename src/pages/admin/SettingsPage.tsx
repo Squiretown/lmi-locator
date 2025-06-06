@@ -10,6 +10,7 @@ import { NotificationsSettingsTab } from './components/settings/NotificationsSet
 import { SystemSettingsTab } from './components/settings/SystemSettingsTab';
 import { UserProfileTab } from './components/settings/UserProfileTab';
 import { PersonalSettingsTab } from './components/settings/PersonalSettingsTab';
+import { ApiKeysTab } from './components/settings/ApiKeysTab';
 
 const AdminSettingsPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -51,6 +52,13 @@ const AdminSettingsPage: React.FC = () => {
     timeFormat: '12h'
   });
 
+  // Mock API keys state
+  const [apiKeys, setApiKeys] = useState({
+    esriApiKey: '',
+    mapboxApiKey: '',
+    hudApiKey: ''
+  });
+
   const handleSaveSettings = async () => {
     setIsLoading(true);
     // Simulate API call
@@ -69,6 +77,10 @@ const AdminSettingsPage: React.FC = () => {
 
   const handlePersonalSettingChange = (key: string, value: any) => {
     setPersonalSettings(prev => ({ ...prev, [key]: value }));
+  };
+
+  const handleApiKeyChange = (key: string, value: string) => {
+    setApiKeys(prev => ({ ...prev, [key]: value }));
   };
 
   return (
@@ -92,6 +104,7 @@ const AdminSettingsPage: React.FC = () => {
               <TabsTrigger value="security">Security</TabsTrigger>
               <TabsTrigger value="notifications">Notifications</TabsTrigger>
               <TabsTrigger value="system">System</TabsTrigger>
+              <TabsTrigger value="apikeys">API Keys</TabsTrigger>
               <TabsTrigger value="profile">User Profile</TabsTrigger>
               <TabsTrigger value="personal">Personal Settings</TabsTrigger>
             </TabsList>
@@ -121,6 +134,13 @@ const AdminSettingsPage: React.FC = () => {
               <SystemSettingsTab
                 settings={settings}
                 onSettingChange={handleSettingChange}
+              />
+            </TabsContent>
+
+            <TabsContent value="apikeys" className="space-y-4">
+              <ApiKeysTab
+                apiKeys={apiKeys}
+                onApiKeyChange={handleApiKeyChange}
               />
             </TabsContent>
 
