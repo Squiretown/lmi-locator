@@ -43,9 +43,10 @@ const PropertyCheckerContent: React.FC = () => {
     resetSearch();
     setCurrentData(null);
     resetProcess();
+    setError(null);
     
-    // Refresh the page after closing the notification
-    window.location.reload();
+    // Clear any error states and reset to allow new search
+    console.log('LMI search refreshed - ready for new search');
   };
 
   return (
