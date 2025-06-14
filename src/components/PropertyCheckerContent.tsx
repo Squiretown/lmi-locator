@@ -44,21 +44,8 @@ const PropertyCheckerContent: React.FC = () => {
     setCurrentData(null);
     resetProcess();
     
-    // Only navigate when notification is closed by a logged-in user on dashboard pages
-    if (user && window.location.pathname.includes('/dashboard/')) {
-      toast.info('Search closed', { 
-        description: 'Property search results cleared' 
-      });
-      
-      // Navigate based on user type
-      if (user?.user_metadata?.user_type === 'mortgage_professional') {
-        navigate('/mortgage');
-      } else if (user?.user_metadata?.user_type === 'realtor') {
-        navigate('/realtor');
-      } else {
-        navigate('/client');
-      }
-    }
+    // Refresh the page after closing the notification
+    window.location.reload();
   };
 
   return (
