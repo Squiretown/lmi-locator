@@ -7,3 +7,4 @@ export * from './session';
 export * from './account';
 export * from './admin';
 export * from './utils';
+export * from './oauth';
