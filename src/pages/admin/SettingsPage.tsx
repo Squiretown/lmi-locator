@@ -11,6 +11,7 @@ import { SystemSettingsTab } from './components/settings/SystemSettingsTab';
 import { UserProfileTab } from './components/settings/UserProfileTab';
 import { PersonalSettingsTab } from './components/settings/PersonalSettingsTab';
 import { ApiKeysTab } from './components/settings/ApiKeysTab';
+import { ThemeSettingsTab } from './components/settings/ThemeSettingsTab';
 
 const AdminSettingsPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -104,6 +105,7 @@ const AdminSettingsPage: React.FC = () => {
               <TabsTrigger value="security">Security</TabsTrigger>
               <TabsTrigger value="notifications">Notifications</TabsTrigger>
               <TabsTrigger value="system">System</TabsTrigger>
+              <TabsTrigger value="theme">Theme & Colors</TabsTrigger>
               <TabsTrigger value="apikeys">API Keys</TabsTrigger>
               <TabsTrigger value="profile">User Profile</TabsTrigger>
               <TabsTrigger value="personal">Personal Settings</TabsTrigger>
@@ -135,6 +137,10 @@ const AdminSettingsPage: React.FC = () => {
                 settings={settings}
                 onSettingChange={handleSettingChange}
               />
+            </TabsContent>
+
+            <TabsContent value="theme" className="space-y-4">
+              <ThemeSettingsTab />
             </TabsContent>
 
             <TabsContent value="apikeys" className="space-y-4">

@@ -1704,6 +1704,78 @@ export type Database = {
         }
         Relationships: []
       }
+      theme_presets: {
+        Row: {
+          colors: Json
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          is_custom: boolean
+          is_default: boolean
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          colors: Json
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_custom?: boolean
+          is_default?: boolean
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          colors?: Json
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_custom?: boolean
+          is_default?: boolean
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      theme_settings: {
+        Row: {
+          category: string
+          created_at: string
+          dark_value: string
+          description: string | null
+          id: string
+          light_value: string
+          setting_key: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          dark_value: string
+          description?: string | null
+          id?: string
+          light_value: string
+          setting_key: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          dark_value?: string
+          description?: string | null
+          id?: string
+          light_value?: string
+          setting_key?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       tract_properties: {
         Row: {
           address: string
