@@ -26,6 +26,7 @@ export const useThemeManager = () => {
   const [themePresets, setThemePresets] = useState<ThemePreset[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [customThemesEnabled, setCustomThemesEnabled] = useState(false);
 
   // Load theme settings from database
   const loadThemeSettings = async () => {
@@ -214,10 +215,50 @@ export const useThemeManager = () => {
     return `${Math.round(h * 360)} ${Math.round(s * 100)}% ${Math.round(l * 100)}%`;
   };
 
+  // Load custom themes enabled setting
+  const loadCustomThemesEnabled = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('system_settings')
+        .select('value')
+        .eq('key', 'custom_themes_enabled')
+        .single();
+      
+      if (error) throw error;
+      setCustomThemesEnabled(data?.value === 'true');
+    } catch (err) {
+      console.warn('Custom themes setting not found, defaulting to false');
+      setCustomThemesEnabled(false);
+    }
+  };
+
+  // Toggle custom themes
+  const toggleCustomThemes = async (enabled: boolean) => {
+    try {
+      const { error } = await supabase
+        .from('system_settings')
+        .update({ value: enabled.toString() })
+        .eq('key', 'custom_themes_enabled');
+      
+      if (error) throw error;
+      setCustomThemesEnabled(enabled);
+      
+      // If disabling, remove all custom CSS variables to revert to default
+      if (!enabled) {
+        const root = document.documentElement;
+        themeSettings.forEach(setting => {
+          root.style.removeProperty(`--${setting.setting_key}`);
+        });
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to toggle custom themes');
+    }
+  };
+
   useEffect(() => {
     const loadData = async () => {
       setIsLoading(true);
-      await Promise.all([loadThemeSettings(), loadThemePresets()]);
+      await Promise.all([loadThemeSettings(), loadThemePresets(), loadCustomThemesEnabled()]);
       setIsLoading(false);
     };
 
@@ -225,20 +266,22 @@ export const useThemeManager = () => {
   }, []);
 
   useEffect(() => {
-    if (themeSettings.length > 0) {
+    if (themeSettings.length > 0 && customThemesEnabled) {
       applyAllThemeSettings();
     }
-  }, [theme, themeSettings]);
+  }, [theme, themeSettings, customThemesEnabled]);
 
   return {
     themeSettings,
     themePresets,
     isLoading,
     error,
+    customThemesEnabled,
     updateThemeSetting,
     saveThemePreset,
     applyThemePreset,
     resetToDefault,
+    toggleCustomThemes,
     hslToHex,
     hexToHsl,
     loadThemeSettings,

@@ -2,14 +2,17 @@
 import React from 'react';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Switch } from '@/components/ui/switch';
 import { useTheme } from '@/components/theme/ThemeProvider';
-import { Moon, Sun, Monitor } from 'lucide-react';
+import { useThemeManager } from '@/hooks/useThemeManager';
+import { Moon, Sun, Monitor, Palette } from 'lucide-react';
 
 const ThemeSettings: React.FC = () => {
   const { theme, setTheme } = useTheme();
+  const { customThemesEnabled, toggleCustomThemes, isLoading } = useThemeManager();
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <div>
         <h4 className="text-sm font-medium mb-3">Theme</h4>
         <p className="text-sm text-muted-foreground mb-4">
@@ -51,6 +54,28 @@ const ThemeSettings: React.FC = () => {
           </div>
         </div>
       </RadioGroup>
+
+      <div className="border-t pt-6">
+        <div className="flex items-center justify-between">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <Palette className="h-4 w-4" />
+              <Label htmlFor="custom-themes" className="font-medium">
+                Custom Theme Management
+              </Label>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Enable advanced theme customization features
+            </p>
+          </div>
+          <Switch
+            id="custom-themes"
+            checked={customThemesEnabled}
+            onCheckedChange={toggleCustomThemes}
+            disabled={isLoading}
+          />
+        </div>
+      </div>
     </div>
   );
 };
