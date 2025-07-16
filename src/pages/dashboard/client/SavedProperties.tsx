@@ -1,6 +1,12 @@
 import React from 'react';
+import { ClientSavedProperties } from '@/components/dashboard/client/ClientSavedProperties';
 
 const SavedProperties: React.FC = () => {
+  const handleAddressSelect = (address: string) => {
+    // Navigate to search page with address pre-filled
+    window.location.href = `/dashboard/client/search?address=${encodeURIComponent(address)}`;
+  };
+
   return (
     <div className="container mx-auto px-4 py-6">
       <div className="mb-6">
@@ -12,11 +18,7 @@ const SavedProperties: React.FC = () => {
         </p>
       </div>
       
-      <div className="bg-card border rounded-lg p-6">
-        <p className="text-muted-foreground">
-          Saved properties will be displayed here.
-        </p>
-      </div>
+      <ClientSavedProperties onAddressSelect={handleAddressSelect} />
     </div>
   );
 };

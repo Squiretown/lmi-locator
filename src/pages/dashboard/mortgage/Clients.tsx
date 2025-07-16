@@ -1,4 +1,5 @@
 import React from 'react';
+import { RecentContactsSection } from '@/components/dashboard/mortgage';
 
 const MortgageClients: React.FC = () => {
   return (
@@ -12,11 +13,7 @@ const MortgageClients: React.FC = () => {
         </p>
       </div>
       
-      <div className="bg-card border rounded-lg p-6">
-        <p className="text-muted-foreground">
-          Client management functionality will be implemented here.
-        </p>
-      </div>
+      <RecentContactsSection />
     </div>
   );
 };

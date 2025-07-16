@@ -1,18 +1,15 @@
 import React from 'react';
 import { Outlet } from "react-router-dom";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import DashboardSidebar from './DashboardSidebar';
+import DashboardHeader from './DashboardHeader';
 
 const DashboardLayout: React.FC = () => {
   return (
-    <div className="min-h-screen w-full flex">
-      <DashboardSidebar />
+    <div className="min-h-screen w-full">
+      <DashboardHeader />
       
-      <main className="flex-1 overflow-auto bg-background">
-        <ScrollArea className="h-full w-full">
-          {/* Outlet renders child routes */}
-          <Outlet />
-        </ScrollArea>
+      <main className="flex-1 bg-background">
+        {/* Outlet renders child routes */}
+        <Outlet />
       </main>
     </div>
   );

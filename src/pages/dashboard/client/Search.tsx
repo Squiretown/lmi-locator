@@ -1,4 +1,5 @@
 import React from 'react';
+import PropertyChecker from '@/components/PropertyChecker';
 
 const ClientSearch: React.FC = () => {
   return (
@@ -12,11 +13,7 @@ const ClientSearch: React.FC = () => {
         </p>
       </div>
       
-      <div className="bg-card border rounded-lg p-6">
-        <p className="text-muted-foreground">
-          Property search functionality will be implemented here.
-        </p>
-      </div>
+      <PropertyChecker />
     </div>
   );
 };

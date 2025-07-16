@@ -1,4 +1,5 @@
 import React from 'react';
+import { PropertyActivityChart } from '@/components/dashboard/realtor/PropertyActivityChart';
 
 const RealtorProperties: React.FC = () => {
   return (
@@ -12,10 +13,14 @@ const RealtorProperties: React.FC = () => {
         </p>
       </div>
       
-      <div className="bg-card border rounded-lg p-6">
-        <p className="text-muted-foreground">
-          Property management functionality will be implemented here.
-        </p>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <PropertyActivityChart />
+        <div className="bg-card border rounded-lg p-6">
+          <h3 className="text-lg font-semibold mb-4">Recent Listings</h3>
+          <p className="text-muted-foreground">
+            Property listings management coming soon.
+          </p>
+        </div>
       </div>
     </div>
   );
