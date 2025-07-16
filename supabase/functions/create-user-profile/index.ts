@@ -72,10 +72,7 @@ serve(async (req) => {
       user_id: user.id,
       user_type: userType,
       // Add other fields from metadata if available
-      first_name: user.raw_user_meta_data?.first_name,
-      last_name: user.raw_user_meta_data?.last_name,
       company: user.raw_user_meta_data?.company,
-      job_title: user.raw_user_meta_data?.job_title,
     });
     
     if (insertError) {

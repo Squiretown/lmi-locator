@@ -48,9 +48,10 @@ export const useUserProfile = () => {
         setProfile(data);
       } else {
         // Create profile if it doesn't exist
+        const userType = user.user_metadata?.user_type || 'client';
         const { data: newProfile, error: createError } = await supabase
           .from('user_profiles')
-          .insert([{ user_id: user.id, user_type: 'client' }])
+          .insert([{ user_id: user.id, user_type: userType }])
           .select()
           .single();
 
