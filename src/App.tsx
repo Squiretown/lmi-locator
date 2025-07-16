@@ -24,9 +24,18 @@ import SystemLogsPage from "./pages/admin/SystemLogsPage";
 import DatabasePage from "./pages/admin/DatabasePage";
 import AdminSettingsPage from "./pages/admin/SettingsPage";
 import SearchHistoryPage from "./pages/admin/search-history/SearchHistoryPage";
-import ClientDashboard from "./pages/dashboard/Client";
-import RealtorDashboard from "./pages/dashboard/Realtor";
-import MortgageProfessionalDashboard from "./pages/dashboard/MortgageProfessional";
+import DashboardLayout from "./components/dashboard/layout/DashboardLayout";
+import ClientOverview from "./pages/dashboard/client/Overview";
+import ClientSearch from "./pages/dashboard/client/Search";
+import SavedProperties from "./pages/dashboard/client/SavedProperties";
+import RealtorOverview from "./pages/dashboard/realtor/Overview";
+import RealtorClients from "./pages/dashboard/realtor/Clients";
+import RealtorProperties from "./pages/dashboard/realtor/Properties";
+import RealtorMarketing from "./pages/dashboard/realtor/Marketing";
+import RealtorAnalytics from "./pages/dashboard/realtor/Analytics";
+import MortgageOverview from "./pages/dashboard/mortgage/Overview";
+import MortgageClients from "./pages/dashboard/mortgage/Clients";
+import MortgageAnalytics from "./pages/dashboard/mortgage/Analytics";
 import BulkSearchDashboard from "./pages/dashboard/BulkSearch";
 import LmiMarketingListDashboard from "./pages/dashboard/LmiMarketingList";
 import BlogPage from "./pages/BlogPage";
@@ -62,32 +71,33 @@ function App() {
               <Route path="/pricing" element={<PricingPage />} />
               <Route path="/help" element={<HelpPage />} />
               
-              {/* Protected dashboard routes */}
-              <Route path="/dashboard/client" element={
+              {/* Protected dashboard routes with layout */}
+              <Route path="/dashboard" element={
                 <ProtectedRoute>
-                  <ClientDashboard />
+                  <DashboardLayout />
                 </ProtectedRoute>
-              } />
-              <Route path="/dashboard/realtor" element={
-                <ProtectedRoute>
-                  <RealtorDashboard />
-                </ProtectedRoute>
-              } />
-              <Route path="/dashboard/mortgage" element={
-                <ProtectedRoute>
-                  <MortgageProfessionalDashboard />
-                </ProtectedRoute>
-              } />
-              <Route path="/dashboard/bulk-search" element={
-                <ProtectedRoute>
-                  <BulkSearchDashboard />
-                </ProtectedRoute>
-              } />
-              <Route path="/dashboard/lmi-marketing" element={
-                <ProtectedRoute>
-                  <LmiMarketingListDashboard />
-                </ProtectedRoute>
-              } />
+              }>
+                {/* Client dashboard routes */}
+                <Route path="client" element={<ClientOverview />} />
+                <Route path="client/search" element={<ClientSearch />} />
+                <Route path="client/saved" element={<SavedProperties />} />
+                
+                {/* Realtor dashboard routes */}
+                <Route path="realtor" element={<RealtorOverview />} />
+                <Route path="realtor/clients" element={<RealtorClients />} />
+                <Route path="realtor/properties" element={<RealtorProperties />} />
+                <Route path="realtor/marketing" element={<RealtorMarketing />} />
+                <Route path="realtor/analytics" element={<RealtorAnalytics />} />
+                
+                {/* Mortgage professional dashboard routes */}
+                <Route path="mortgage" element={<MortgageOverview />} />
+                <Route path="mortgage/clients" element={<MortgageClients />} />
+                <Route path="mortgage/analytics" element={<MortgageAnalytics />} />
+                
+                {/* Shared dashboard routes */}
+                <Route path="bulk-search" element={<BulkSearchDashboard />} />
+                <Route path="lmi-marketing" element={<LmiMarketingListDashboard />} />
+              </Route>
               
               {/* Protected user settings */}
               <Route path="/settings" element={

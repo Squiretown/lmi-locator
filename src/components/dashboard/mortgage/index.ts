@@ -4,7 +4,6 @@ export { PropertyCheckSection } from './PropertyCheckSection';
 export { MarketingSection } from './MarketingSection';
 export { RecentActivitySection } from './RecentActivitySection';
 export { RecentContactsSection } from './RecentContactsSection';
-export { DashboardHeader } from './DashboardHeader';
 export { ApplicationTabs } from './ApplicationTabs';
 export { LmiEligibilityChart } from './LmiEligibilityChart';
 export { ClientTypeChart } from './ClientTypeChart';
