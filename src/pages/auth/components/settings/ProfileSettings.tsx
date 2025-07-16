@@ -4,18 +4,26 @@ import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { useUserProfile } from '@/hooks/useUserProfile';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { AvatarUpload } from '@/components/ui/avatar-upload';
 
 interface ProfileFormValues {
   email: string;
   first_name: string;
   last_name: string;
+  phone: string;
+  company: string;
+  bio: string;
+  website: string;
 }
 
 const ProfileSettings: React.FC = () => {
   const { user, session } = useAuth();
+  const { profile, updateProfile } = useUserProfile();
   const [isLoading, setIsLoading] = useState(false);
 
   const form = useForm<ProfileFormValues>({
@@ -23,19 +31,27 @@ const ProfileSettings: React.FC = () => {
       email: user?.email || '',
       first_name: user?.user_metadata?.first_name || '',
       last_name: user?.user_metadata?.last_name || '',
+      phone: profile?.phone || '',
+      company: profile?.company || '',
+      bio: profile?.bio || '',
+      website: profile?.website || '',
     }
   });
 
   // Update form values when user data is available
   useEffect(() => {
-    if (user) {
+    if (user && profile) {
       form.reset({
         email: user.email || '',
         first_name: user?.user_metadata?.first_name || '',
         last_name: user?.user_metadata?.last_name || '',
+        phone: profile?.phone || '',
+        company: profile?.company || '',
+        bio: profile?.bio || '',
+        website: profile?.website || '',
       });
     }
-  }, [user, form]);
+  }, [user, profile, form]);
 
   const onSubmit = async (data: ProfileFormValues) => {
     if (!user) return;
@@ -56,6 +72,16 @@ const ProfileSettings: React.FC = () => {
       if (metadataError) {
         console.error('Metadata update error:', metadataError);
         throw metadataError;
+      }
+
+      // Update profile data
+      if (profile) {
+        await updateProfile({
+          phone: data.phone,
+          company: data.company,
+          bio: data.bio,
+          website: data.website,
+        });
       }
       
       // Only update email if it actually changed
@@ -93,6 +119,12 @@ const ProfileSettings: React.FC = () => {
     }
   };
 
+  const handleAvatarUpdate = (url: string) => {
+    if (profile) {
+      updateProfile({ profile_image: url });
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div>
@@ -100,6 +132,14 @@ const ProfileSettings: React.FC = () => {
         <p className="text-sm text-muted-foreground">
           Update your personal information and how others see you on the platform.
         </p>
+      </div>
+
+      <div className="flex justify-center">
+        <AvatarUpload
+          currentAvatar={profile?.profile_image || ''}
+          onAvatarUpdate={handleAvatarUpdate}
+          size="lg"
+        />
       </div>
       
       <Form {...form}>
@@ -140,6 +180,66 @@ const ProfileSettings: React.FC = () => {
                 <FormLabel>Last Name</FormLabel>
                 <FormControl>
                   <Input {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="phone"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Phone Number</FormLabel>
+                <FormControl>
+                  <Input {...field} type="tel" placeholder="(555) 123-4567" />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="company"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Company</FormLabel>
+                <FormControl>
+                  <Input {...field} placeholder="Your company name" />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="website"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Website</FormLabel>
+                <FormControl>
+                  <Input {...field} type="url" placeholder="https://yourwebsite.com" />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="bio"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Bio</FormLabel>
+                <FormControl>
+                  <Textarea 
+                    {...field} 
+                    placeholder="Tell us about yourself and your experience..."
+                    rows={4}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>

@@ -1,6 +1,7 @@
 import React from 'react';
 import { useAuth } from "@/hooks/useAuth";
 import { ProfileMenu } from "@/components/auth/ProfileMenu";
+import { NotificationCenter } from "@/components/dashboard/NotificationCenter";
 import { Button } from "@/components/ui/button";
 import { NavLink, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
@@ -120,7 +121,8 @@ const DashboardHeader: React.FC = () => {
           <div className="w-full flex-1 md:w-auto md:flex-none">
             {/* Mobile menu could go here if needed */}
           </div>
-          <nav className="flex items-center">
+          <nav className="flex items-center space-x-2">
+            <NotificationCenter />
             <ProfileMenu />
           </nav>
         </div>
