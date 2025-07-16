@@ -1,7 +1,8 @@
 
 import React from 'react';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { DashboardStats, PropertyCheckSection, MarketingSection, RecentActivitySection, RecentContactsSection, DashboardHeader } from '@/components/dashboard/mortgage';
+import { DashboardStats, PropertyCheckSection, MarketingSection, RecentActivitySection, RecentContactsSection } from '@/components/dashboard/mortgage';
+import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
 import { useMortgageDashboard } from '@/hooks/useMortgageDashboard';
 import { useNavigate } from 'react-router-dom';
 
@@ -16,12 +17,14 @@ const MortgageProfessionalDashboard: React.FC = () => {
     await signOut();
     navigate('/login');
   };
+
+  const welcomeMessage = firstName ? `Welcome, ${firstName}` : 'Mortgage Professional Dashboard';
   
   return (
     <div className="relative">
       <div className="container mx-auto px-4 py-6 max-w-7xl">
         {/* Header */}
-        <DashboardHeader onSignOut={handleSignOut} firstName={firstName} />
+        <DashboardHeader title={welcomeMessage} />
 
         {/* Navigation */}
         <div className="flex justify-between items-center mb-6">

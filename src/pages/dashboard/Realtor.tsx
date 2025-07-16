@@ -5,13 +5,15 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getRealtorByUserId, createRealtor, updateRealtor, RealtorFormValues } from '@/lib/api/realtors';
 import { toast } from 'sonner';
 import RealtorDialog from '@/components/realtors/RealtorDialog';
-import { RealtorHeader } from '@/components/dashboard/realtor/RealtorHeader';
+import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
 import { StatCards } from '@/components/dashboard/realtor/StatCards';
 import { PropertyActivityChart } from '@/components/dashboard/realtor/PropertyActivityChart';
 import { ClientList } from '@/components/dashboard/realtor/ClientList';
 import { ProfileWarning } from '@/components/dashboard/realtor/ProfileWarning';
 import { TeamContent } from '@/components/dashboard/client/TeamContent';
 import { useNavigate } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
+import { UserCog } from 'lucide-react';
 
 const RealtorDashboard: React.FC = () => {
   const { user, signOut } = useAuth();
@@ -74,12 +76,18 @@ const RealtorDashboard: React.FC = () => {
     navigate('/login');
   };
 
+  const editProfileAction = (
+    <Button variant="outline" onClick={() => setProfileDialogOpen(true)}>
+      <UserCog className="mr-2 h-4 w-4" />
+      {!realtorProfile ? 'Create Profile' : 'Edit Profile'}
+    </Button>
+  );
+
   return (
     <div className="container mx-auto px-4 py-6">
-      <RealtorHeader
-        onEditProfile={() => setProfileDialogOpen(true)}
-        onSignOut={handleSignOut}
-        showCreateProfile={!realtorProfile}
+      <DashboardHeader 
+        title="Real Estate Agent Dashboard"
+        actions={editProfileAction}
       />
       
       {!realtorProfile && !isLoadingProfile && (

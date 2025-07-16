@@ -1,23 +1,20 @@
 
 import React from 'react';
 import { useAuth } from '@/hooks/useAuth';
-import { ClientHeader } from '@/components/dashboard/client/ClientHeader';
+import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
 import { ClientDashboardContent } from '@/components/dashboard/client/ClientDashboardContent';
-import { useNavigate } from 'react-router-dom';
 
 const ClientDashboard: React.FC = () => {
-  const { user, signOut } = useAuth();
-  const navigate = useNavigate();
+  const { user } = useAuth();
   
-  const handleSignOut = async () => {
-    await signOut();
-    navigate('/login');
-  };
+  // Get user's first name from metadata or use "there" as fallback
+  const firstName = user?.user_metadata?.first_name || "there";
+  const welcomeMessage = `Welcome, ${firstName}!`;
   
   return (
     <div className="relative">
       <div className="container mx-auto px-4 py-6">
-        <ClientHeader onSignOut={handleSignOut} />
+        <DashboardHeader title={welcomeMessage} />
         
         <div className="mt-6">
           <ClientDashboardContent />

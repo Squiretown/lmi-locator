@@ -35,8 +35,8 @@ export const ProfileMenu = () => {
           <span>My Profile</span>
         </DropdownMenuItem>
         <DropdownMenuItem className="flex items-center gap-2" onClick={() => handleNavigate('/settings')}>
-          
-          
+          <Settings className="h-4 w-4" />
+          <span>Settings</span>
         </DropdownMenuItem>
         <DropdownMenuItem className="flex items-center gap-2" onClick={handleSignOut}>
           <LogOut className="h-4 w-4" />
