@@ -2389,6 +2389,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      anonymize_user_search_history: {
+        Args: { target_user_id: string }
+        Returns: undefined
+      }
       check_admin_status: {
         Args: Record<PropertyKey, never>
         Returns: boolean

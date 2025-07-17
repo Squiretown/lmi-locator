@@ -69,6 +69,18 @@ serve(async (req) => {
 
     console.log(`Admin user ${user.id} attempting to delete user ${userId}`);
 
+    // First, anonymize user's search history to preserve analytics while removing personal data
+    const { error: anonymizeError } = await supabase.rpc('anonymize_user_search_history', {
+      target_user_id: userId
+    });
+
+    if (anonymizeError) {
+      console.error('Failed to anonymize user search history:', anonymizeError);
+      throw new Error(`Failed to anonymize user data: ${anonymizeError.message}`);
+    }
+
+    console.log(`Anonymized search history for user ${userId}`);
+
     // Delete the user from auth
     const { error: deleteError } = await supabase.auth.admin.deleteUser(userId);
     
