@@ -13,7 +13,23 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 
 const BulkSearchPage: React.FC = () => {
-  const { user } = useAuth();
+  const { user, userType } = useAuth();
+  
+  // Check if user type is allowed to access bulk search
+  if (userType === 'client') {
+    return (
+      <div className="container mx-auto px-4 py-6">
+        <div className="bg-white rounded-lg border shadow-md p-8 text-center">
+          <AlertCircle className="mx-auto h-12 w-12 text-yellow-500 mb-4" />
+          <h2 className="text-xl font-semibold mb-2">Access Restricted</h2>
+          <p className="text-muted-foreground">
+            Bulk search functionality is not available for client accounts. 
+            Please contact your real estate professional for assistance.
+          </p>
+        </div>
+      </div>
+    );
+  }
   const [isPolling, setIsPolling] = useState(false);
   const [jobStatus, setJobStatus] = useState<'pending' | 'processing' | 'completed' | 'error'>('pending');
   const [progress, setProgress] = useState(0);

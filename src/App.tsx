@@ -97,8 +97,12 @@ function App() {
                 <Route path="mortgage/clients" element={<MortgageClients />} />
                 <Route path="mortgage/analytics" element={<MortgageAnalytics />} />
                 
-                {/* Shared dashboard routes */}
-                <Route path="bulk-search" element={<BulkSearchDashboard />} />
+                {/* Shared dashboard routes - Restricted to realtors and mortgage professionals */}
+                <Route path="bulk-search" element={
+                  <ProtectedRoute allowedUserTypes={['realtor', 'mortgage_professional', 'mortgage']}>
+                    <BulkSearchDashboard />
+                  </ProtectedRoute>
+                } />
                 <Route path="lmi-marketing" element={<LmiMarketingListDashboard />} />
               </Route>
               

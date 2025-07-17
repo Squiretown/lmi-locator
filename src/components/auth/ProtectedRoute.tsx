@@ -9,11 +9,13 @@ import { toast } from 'sonner';
 interface ProtectedRouteProps {
   children: React.ReactNode;
   requiredUserType?: string;
+  allowedUserTypes?: string[];
 }
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ 
   children, 
-  requiredUserType 
+  requiredUserType,
+  allowedUserTypes 
 }) => {
   const { session, userType, isLoading, authInitialized } = useAuth();
   const location = useLocation();
@@ -98,14 +100,25 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     }
   }
   
-  // For non-admin routes, proceed with normal user type check
-  if (requiredUserType && userType !== requiredUserType) {
+  // For non-admin routes, proceed with user type check
+  const isUserTypeAllowed = () => {
+    if (requiredUserType) {
+      return userType === requiredUserType;
+    }
+    if (allowedUserTypes && allowedUserTypes.length > 0) {
+      return allowedUserTypes.includes(userType || '');
+    }
+    return true; // No specific type requirement
+  };
+  
+  if ((requiredUserType || allowedUserTypes) && !isUserTypeAllowed()) {
     // If user has a session but userType isn't loaded yet, try to get it from session
     if (!userType && session) {
       // Try to extract user_type from session metadata
       const metadataUserType = session.user?.user_metadata?.user_type;
       
-      if (metadataUserType === requiredUserType) {
+      if ((requiredUserType && metadataUserType === requiredUserType) || 
+          (allowedUserTypes && allowedUserTypes.includes(metadataUserType))) {
         console.log('Using user type from session metadata:', metadataUserType);
         return <>{children}</>;
       }
@@ -120,7 +133,8 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
       }
     }
     
-    console.log(`User type mismatch: expected ${requiredUserType}, got ${userType}. Redirecting.`);
+    const expectedTypes = requiredUserType ? requiredUserType : allowedUserTypes?.join(', ');
+    console.log(`User type not allowed: expected ${expectedTypes}, got ${userType}. Redirecting.`);
     
     // Otherwise, redirect to appropriate dashboard
     switch (userType) {

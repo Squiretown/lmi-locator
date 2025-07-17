@@ -34,7 +34,6 @@ const DashboardHeader: React.FC = () => {
           { title: "Dashboard", url: "/dashboard/client", icon: Home },
           { title: "Search", url: "/dashboard/client/search", icon: Search },
           { title: "Saved Properties", url: "/dashboard/client/saved", icon: Heart },
-          { title: "Bulk Search", url: "/dashboard/bulk-search", icon: FileSearch },
         ];
       
       case 'realtor':
