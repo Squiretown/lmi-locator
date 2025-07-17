@@ -44,7 +44,14 @@ export const CreateClientDialog: React.FC<CreateClientDialogProps> = ({
             templateType: data.templateType,
             customMessage: data.customMessage
           }
-        : { ...data, assignedRealtorId: assignedRealtorId || undefined };
+        : { 
+            ...data, 
+            assignedRealtorId: assignedRealtorId || undefined,
+            sendInvitation,
+            invitationType: data.invitationType,
+            templateType: data.templateType,
+            customMessage: data.customMessage
+          };
       
       await onSubmit(submitData);
       reset();
@@ -220,8 +227,7 @@ export const CreateClientDialog: React.FC<CreateClientDialogProps> = ({
           </div>
 
           {/* Send Invitation Section */}
-          {userType === 'realtor' && (
-            <div className="space-y-4 border-t pt-4">
+          <div className="space-y-4 border-t pt-4">
               <div className="flex items-center space-x-2">
                 <Checkbox
                   id="send_invitation"
@@ -273,7 +279,6 @@ export const CreateClientDialog: React.FC<CreateClientDialogProps> = ({
                 </div>
               )}
             </div>
-          )}
 
           <div className="flex justify-end gap-2 pt-4">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>

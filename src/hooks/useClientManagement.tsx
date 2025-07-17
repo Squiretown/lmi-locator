@@ -72,7 +72,13 @@ export function useClientManagement() {
 
   // Create new client
   const createClientMutation = useMutation({
-    mutationFn: async (clientData: CreateClientData & { assignedRealtorId?: string }) => {
+    mutationFn: async (clientData: CreateClientData & { 
+      assignedRealtorId?: string; 
+      sendInvitation?: boolean;
+      invitationType?: string;
+      templateType?: string;
+      customMessage?: string;
+    }) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('User not authenticated');
 
@@ -127,6 +133,34 @@ export function useClientManagement() {
         if (assignmentError) {
           console.error('Failed to assign team members:', assignmentError);
           // Don't throw here - client was created successfully
+        }
+      }
+
+      // Send invitation if requested
+      if (clientData.sendInvitation && clientData.email) {
+        try {
+          const { error: inviteError } = await supabase.functions.invoke('send-client-invitation', {
+            body: {
+              clientName: `${clientData.first_name} ${clientData.last_name}`,
+              clientEmail: clientData.email,
+              clientPhone: clientData.phone,
+              invitationType: clientData.invitationType || 'email',
+              templateType: clientData.templateType || 'default',
+              customMessage: clientData.customMessage,
+              invitationTargetType: 'client',
+              targetProfessionalRole: 'mortgage'
+            }
+          });
+
+          if (inviteError) {
+            console.error('Failed to send invitation:', inviteError);
+            toast.error('Client created but invitation failed to send');
+          } else {
+            toast.success('Client created and invitation sent successfully');
+          }
+        } catch (error) {
+          console.error('Error sending invitation:', error);
+          toast.error('Client created but invitation failed to send');
         }
       }
 

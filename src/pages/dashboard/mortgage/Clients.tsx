@@ -182,6 +182,7 @@ const MortgageClients: React.FC = () => {
         onOpenChange={setShowCreateDialog}
         onSubmit={createClient}
         isLoading={isCreating}
+        userType="mortgage_professional"
       />
 
       <ClientDetailsDialog
