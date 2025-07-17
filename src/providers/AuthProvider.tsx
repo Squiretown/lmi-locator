@@ -72,21 +72,45 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Then check for existing session
     const initializeAuth = async () => {
       try {
-        const { data: { session: currentSession }, error } = await supabase.auth.getSession();
+        // Wrap in a timeout to ensure that if the supabase client is slow or throws,
+        // we still set authInitialized to true eventually
+        const timeoutId = setTimeout(() => {
+          if (isMounted && !authInitialized) {
+            console.warn('Auth initialization timed out, setting initialized state anyway');
+            safeSetState.setIsLoading(false);
+            safeSetState.setAuthInitialized(true);
+          }
+        }, 3000);
         
-        if (error) {
-          console.error('Error getting session:', error);
-          safeSetState.setIsLoading(false);
-          safeSetState.setAuthInitialized(true);
-          return;
-        }
-        
-        console.log('Initial session check:', currentSession?.user?.email);
-        safeSetState.setSession(currentSession);
-        safeSetState.setUser(currentSession?.user || null);
-        
-        if (currentSession?.user) {
-          await fetchUserType();
+        try {
+          const { data: { session: currentSession }, error } = await supabase.auth.getSession();
+          
+          // Clear the timeout as we got a response
+          clearTimeout(timeoutId);
+          
+          if (error) {
+            console.error('Error getting session:', error);
+            safeSetState.setIsLoading(false);
+            safeSetState.setAuthInitialized(true);
+            return;
+          }
+          
+          console.log('Initial session check:', currentSession?.user?.email);
+          safeSetState.setSession(currentSession);
+          safeSetState.setUser(currentSession?.user || null);
+          
+          if (currentSession?.user) {
+            try {
+              await fetchUserType();
+            } catch (typeError) {
+              console.error('Error fetching user type during initialization:', typeError);
+              // Don't fail initialization if user type fetch fails
+            }
+          }
+        } catch (innerErr) {
+          console.error('Inner exception during auth initialization:', innerErr);
+          clearTimeout(timeoutId);
+          throw innerErr; // Re-throw to be caught by outer catch
         }
       } catch (err) {
         console.error('Exception during auth initialization:', err);

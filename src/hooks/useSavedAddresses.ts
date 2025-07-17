@@ -52,9 +52,15 @@ export async function fetchSavedAddresses(userId?: string): Promise<SavedAddress
 export function useSavedAddresses() {
   const [savedAddresses, setSavedAddresses] = useState<SavedAddress[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const { user } = useAuth();
+  const { user, authInitialized } = useAuth();
 
   const loadSavedAddresses = useCallback(async () => {
+    // Don't load if auth is not initialized yet
+    if (!authInitialized) {
+      console.log("Auth not initialized, skipping address load");
+      return false;
+    }
+
     setIsLoading(true);
     try {
       if (user?.id) {
@@ -87,7 +93,7 @@ export function useSavedAddresses() {
     } finally {
       setIsLoading(false);
     }
-  }, [user]);
+  }, [user, authInitialized]);
 
   useEffect(() => {
     loadSavedAddresses();
@@ -100,6 +106,28 @@ export function useSavedAddresses() {
     if (savedAddresses.some(saved => saved.address === address)) {
       toast.info('This address is already saved');
       return true;
+    }
+
+    // If auth is not initialized, fall back to localStorage only
+    if (!authInitialized) {
+      console.log("Auth not initialized, saving to localStorage");
+      try {
+        const newAddress: SavedAddress = {
+          id: crypto.randomUUID(),
+          address,
+          createdAt: new Date().toISOString(),
+          isLmiEligible
+        };
+        const updatedAddresses = [newAddress, ...savedAddresses];
+        localStorage.setItem('savedAddresses', JSON.stringify(updatedAddresses));
+        setSavedAddresses(updatedAddresses);
+        toast.success('Address saved locally');
+        return true;
+      } catch (error) {
+        console.error('Error saving to localStorage:', error);
+        toast.error('Failed to save address');
+        return false;
+      }
     }
 
     if (user?.id) {
@@ -179,6 +207,7 @@ export function useSavedAddresses() {
         // Immediately update the local state to avoid waiting for the next refresh
         setSavedAddresses(prev => [newSavedAddress, ...prev]);
         
+        toast.success('Property saved successfully');
         return true;
       } catch (error) {
         console.error('Error saving address:', error);

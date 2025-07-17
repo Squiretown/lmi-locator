@@ -19,11 +19,20 @@ const SavedProperties: React.FC<SavedPropertiesProps> = ({ onAddressSelect }) =>
 
   // Refresh addresses when component mounts or user changes
   useEffect(() => {
-    refreshAddresses();
+    // Only refresh if we have a user or auth is completely initialized
+    if (user || user === null) {
+      refreshAddresses().catch(err => {
+        console.error("Error refreshing addresses:", err);
+      });
+    }
     
-    // Also set up a refresh interval (every 30 seconds)
+    // Also set up a refresh interval (every 30 seconds) if auth is stable
     const intervalId = setInterval(() => {
-      refreshAddresses();
+      if (user || user === null) {
+        refreshAddresses().catch(err => {
+          console.error("Error in refresh interval:", err);
+        });
+      }
     }, 30000);
     
     return () => clearInterval(intervalId);

@@ -5,6 +5,7 @@ import LmiStatusNotification from '@/components/notifications/LmiStatusNotificat
 import { useRoleSpecificNotifications } from '@/hooks/useRoleSpecificNotifications';
 import { useAuth } from '@/hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 
 interface ResultsSectionProps {
   data: CheckLmiStatusResponse;
@@ -27,13 +28,18 @@ const ResultsSection: React.FC<ResultsSectionProps> = ({
   
   // Check authentication status and get user type
   useEffect(() => {
-    if (user) {
-      const userMeta = user.user_metadata;
-      setUserType(userMeta?.user_type || 'client');
-      console.log("User is logged in as type:", userMeta?.user_type || "client");
-    } else {
-      setUserType(null);
-      console.log("User is not logged in");
+    try {
+      if (user) {
+        const userMeta = user.user_metadata;
+        setUserType(userMeta?.user_type || 'client');
+        console.log("User is logged in as type:", userMeta?.user_type || "client");
+      } else {
+        setUserType(null);
+        console.log("User is not logged in");
+      }
+    } catch (error) {
+      console.error("Error accessing user metadata:", error);
+      setUserType('client'); // Default fallback
     }
   }, [user]);
 
@@ -68,7 +74,12 @@ Census Tract: ${data.tract_id || 'Unknown'}`;
     try {
       // Create notification if user is logged in
       if (user) {
-        await createLmiNotification(data.address, data.is_approved);
+        try {
+          await createLmiNotification(data.address, data.is_approved);
+        } catch (notificationError) {
+          console.error("Error creating notification but continuing:", notificationError);
+          // Don't fail the whole save operation if notification fails
+        }
       }
       
       // Call the onSaveProperty function passed from the parent component
@@ -77,6 +88,7 @@ Census Tract: ${data.tract_id || 'Unknown'}`;
       console.log("Property saved successfully via ResultsSection");
     } catch (error) {
       console.error("Error saving property:", error);
+      toast.error("Failed to save property. Please try again.");
     } finally {
       setIsSaving(false);
     }
