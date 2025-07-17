@@ -1,7 +1,7 @@
 
 import { geocodeWithCensus } from "./geocoding-services/census.ts";
 import { geocodeWithEsri } from "./geocoding-services/esri.ts";
-import { getMockGeocodeData } from "./geocoding-services/mock.ts";
+
 
 /**
  * Result from geocoding process
@@ -15,7 +15,7 @@ export interface GeocodingResult {
 
 /**
  * Orchestrates the geocoding process using multiple services
- * Implements a fallback strategy going from Census → ESRI → Mock data
+ * Implements a fallback strategy going from Census → ESRI
  * 
  * @param address The address to geocode
  * @returns Promise with geocoding result including coordinates and census tract

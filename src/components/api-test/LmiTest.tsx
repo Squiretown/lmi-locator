@@ -23,7 +23,7 @@ const LmiTest = ({
   const [useHud, setUseHud] = useState<boolean>(false);
   const [useEnhanced, setUseEnhanced] = useState<boolean>(false);
   const [useDirect, setUseDirect] = useState<boolean>(true);
-  const [useMock, setUseMock] = useState<boolean>(false);
+  
   const [errorMessage, setErrorMessage] = useState<string>("");
 
   // Handle LMI test
@@ -41,7 +41,6 @@ const LmiTest = ({
         useHud, 
         useEnhanced, 
         useDirect, 
-        useMock,
         searchType,
         level
       });
@@ -51,7 +50,7 @@ const LmiTest = ({
           useHud,
           useEnhanced,
           useDirect,
-          useMock,
+          
           searchType,
           level
         })
@@ -84,8 +83,6 @@ const LmiTest = ({
       setUseEnhanced={setUseEnhanced}
       useDirect={useDirect}
       setUseDirect={setUseDirect}
-      useMock={useMock}
-      setUseMock={setUseMock}
       errorMessage={errorMessage}
       setErrorMessage={setErrorMessage}
       setResults={setResults}

@@ -25,24 +25,44 @@ const MapView: React.FC<MapViewProps> = ({ onExportResults }) => {
   const { 
     tracts, 
     loading, 
-    states,
-    searchResults,
+    error,
     selectedTracts,
     setSelectedTracts,
     performSearch,
     exportSelectedTracts,
-    statsData,
-    getCountiesForState,
-    useRealData,
-    toggleDataSource
+    statsData
   } = useTractSearch();
 
+  // Simple state data
+  const states = [
+    { code: 'CA', name: 'California' },
+    { code: 'TX', name: 'Texas' },
+    { code: 'FL', name: 'Florida' },
+    { code: 'NY', name: 'New York' }
+  ];
+
+  const countiesByState: Record<string, Array<{ fips: string; name: string }>> = {
+    'CA': [
+      { fips: '06001', name: 'Alameda' },
+      { fips: '06075', name: 'San Francisco' },
+      { fips: '06037', name: 'Los Angeles' }
+    ],
+    'TX': [
+      { fips: '48201', name: 'Harris' },
+      { fips: '48113', name: 'Dallas' }
+    ],
+    'FL': [
+      { fips: '12086', name: 'Miami-Dade' },
+      { fips: '12103', name: 'Pinellas' }
+    ]
+  };
+
   useEffect(() => {
-    // Initialize with some defaults when component loads
-    if (states.length > 0 && !selectedState) {
-      setSelectedState("FL"); // Default to Florida if available
+    // Initialize with Florida as default
+    if (!selectedState) {
+      setSelectedState("FL");
     }
-  }, [states, selectedState]);
+  }, [selectedState]);
 
   const handleTractClick = (tract: any) => {
     setSelectedTract(tract);
@@ -78,8 +98,8 @@ const MapView: React.FC<MapViewProps> = ({ onExportResults }) => {
     }
   };
 
-  // Safely get counties for the selected state
-  const countiesForState = selectedState ? getCountiesForState(selectedState) : [];
+  // Get counties for the selected state
+  const countiesForState = selectedState ? (countiesByState[selectedState] || []) : [];
 
   return (
     <div className="flex h-full">
@@ -107,8 +127,6 @@ const MapView: React.FC<MapViewProps> = ({ onExportResults }) => {
           selectedTracts={selectedTracts}
           setSelectedTracts={setSelectedTracts}
           handleExport={handleExport}
-          useRealData={useRealData}
-          toggleDataSource={toggleDataSource}
         />
       </div>
 

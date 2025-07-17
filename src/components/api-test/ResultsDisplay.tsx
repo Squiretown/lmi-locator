@@ -13,8 +13,7 @@ const ResultsDisplay = ({ results }: ResultsDisplayProps) => {
   
   // Determine which geocoding service was used
   const geocodingService = results.geocoding_service || 
-                           (results.data_source?.includes('MOCK') ? 'Mock Data' : 
-                           (results.geoid ? 'Census' : 'ESRI'));
+                           (results.geoid ? 'Census' : 'ESRI');
   
   return (
     <Card className="mt-8">

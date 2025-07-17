@@ -19,6 +19,3 @@ export { checkEnhancedLmiStatus } from './services/enhanced-lmi-services';
 
 // Re-export direct services
 export { checkDirectLmiStatus } from './services/direct-lmi-services';
-
-// Re-export mock data function for testing
-export { getMockResponse } from './mock-data';

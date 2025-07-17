@@ -18,8 +18,6 @@ interface LmiTestContainerProps {
   setUseEnhanced: (useEnhanced: boolean) => void;
   useDirect: boolean;
   setUseDirect: (useDirect: boolean) => void;
-  useMock: boolean;
-  setUseMock: (useMock: boolean) => void;
   errorMessage: string;
   setErrorMessage: (message: string) => void;
   setResults: (results: any) => void;
@@ -41,8 +39,6 @@ const LmiTestContainer: React.FC<LmiTestContainerProps> = ({
   setUseEnhanced,
   useDirect,
   setUseDirect,
-  useMock,
-  setUseMock,
   errorMessage,
   setErrorMessage,
   loading,
@@ -65,8 +61,6 @@ const LmiTestContainer: React.FC<LmiTestContainerProps> = ({
           setUseEnhanced={setUseEnhanced}
           useDirect={useDirect}
           setUseDirect={setUseDirect}
-          useMock={useMock}
-          setUseMock={setUseMock}
         />
         
         <AddressInput 

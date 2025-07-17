@@ -15,11 +15,8 @@ export async function getMedianIncome(geoid: string): Promise<number> {
     const CENSUS_API_KEY = Deno.env.get("CENSUS_API_KEY");
     
     if (!CENSUS_API_KEY) {
-      console.warn('Census API key not found in environment variables, using mock data');
-      const mockIncome = getMockMedianIncome(geoid);
-      console.log('Using mock median income due to missing API key:', mockIncome);
-      console.log('========== INCOME DATA FETCH END (MOCK) ==========');
-      return mockIncome;
+      console.error('Census API key not found in environment variables');
+      throw new Error('Census API key not configured');
     }
     
     const apiUrl = `${CENSUS_API_BASE_URL}/${ACS_DATASET}?get=${MEDIAN_INCOME_VARIABLE}&for=tract:${tract}&in=state:${state}%20county:${county}&key=${CENSUS_API_KEY}`;
@@ -38,11 +35,8 @@ export async function getMedianIncome(geoid: string): Promise<number> {
     
     if (!response.ok) {
       console.error(`Census API request failed: ${response.status} ${response.statusText}`);
-      console.warn('Falling back to mock income data');
-      const mockIncome = getMockMedianIncome(geoid);
-      console.log('Using mock median income due to API error:', mockIncome);
-      console.log('========== INCOME DATA FETCH END (ERROR->MOCK) ==========');
-      return mockIncome;
+      console.error('Census API request failed:', response.status, response.statusText);
+      throw new Error(`Census API request failed: ${response.status}`);
     }
     
     const data = await response.json();
@@ -51,11 +45,8 @@ export async function getMedianIncome(geoid: string): Promise<number> {
     // Census API returns a 2D array with headers in the first row and data in subsequent rows
     if (!data || data.length < 2) {
       console.error('Invalid response from Census API');
-      console.warn('Falling back to mock income data');
-      const mockIncome = getMockMedianIncome(geoid);
-      console.log('Using mock median income due to invalid API response:', mockIncome);
-      console.log('========== INCOME DATA FETCH END (INVALID->MOCK) ==========');
-      return mockIncome;
+      console.error('Invalid response from Census API');
+      throw new Error('Invalid response from Census API');
     }
     
     // Extract the median income value from the response
@@ -63,11 +54,8 @@ export async function getMedianIncome(geoid: string): Promise<number> {
     
     if (isNaN(medianIncome)) {
       console.error('Census API returned non-numeric income value');
-      console.warn('Falling back to mock income data');
-      const mockIncome = getMockMedianIncome(geoid);
-      console.log('Using mock median income due to non-numeric API value:', mockIncome);
-      console.log('========== INCOME DATA FETCH END (NAN->MOCK) ==========');
-      return mockIncome;
+      console.error('Census API returned non-numeric income value');
+      throw new Error('Census API returned invalid data');
     }
     
     console.log('Successfully retrieved median income:', medianIncome);
@@ -76,11 +64,8 @@ export async function getMedianIncome(geoid: string): Promise<number> {
   } catch (error) {
     console.error('Error fetching median income from Census API:', error);
     console.error('Median income error stack:', error.stack);
-    console.warn('Falling back to mock income data');
-    const mockIncome = getMockMedianIncome(geoid);
-    console.log('Using mock median income due to caught error:', mockIncome);
-    console.log('========== INCOME DATA FETCH END (CATCH->MOCK) ==========');
-    return mockIncome;
+    console.error('Error fetching median income from Census API:', error);
+    throw error;
   }
 }
 
@@ -94,22 +79,3 @@ function parseGeoId(geoid: string): { state: string, county: string, tract: stri
   return { state, county, tract };
 }
 
-// Get mock median income when API fails
-function getMockMedianIncome(geoid: string): number {
-  console.log('Getting mock median income for tract:', geoid);
-  
-  let medianIncome: number;
-  
-  if (geoid === '06037701000') { // Beverly Hills - high income
-    medianIncome = 150000;
-    console.log('Using mock high income for Beverly Hills tract');
-  } else if (geoid === '06075010200') { // Low income tract
-    medianIncome = 30000;
-    console.log('Using mock low income for known low-income tract');
-  } else {
-    medianIncome = 62500; // Moderate income tract
-    console.log('Using mock moderate income for unknown tract');
-  }
-  
-  return medianIncome;
-}

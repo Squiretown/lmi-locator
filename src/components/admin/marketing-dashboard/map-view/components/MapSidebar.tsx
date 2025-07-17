@@ -29,8 +29,6 @@ interface MapSidebarProps {
   selectedTracts: CensusTract[];
   setSelectedTracts: (tracts: CensusTract[]) => void;
   handleExport: () => void;
-  useRealData: boolean;
-  toggleDataSource: () => void;
 }
 
 const MapSidebar: React.FC<MapSidebarProps> = ({
@@ -52,9 +50,7 @@ const MapSidebar: React.FC<MapSidebarProps> = ({
   statsData,
   selectedTracts,
   setSelectedTracts,
-  handleExport,
-  useRealData,
-  toggleDataSource
+  handleExport
 }) => {
   const [activeTab, setActiveTab] = useState("search");
 
@@ -66,15 +62,6 @@ const MapSidebar: React.FC<MapSidebarProps> = ({
     <div className="p-4 h-full flex flex-col">
       <div className="flex justify-between items-center mb-4">
         <h3 className="text-lg font-semibold">LMI Census Tract Search</h3>
-        <Button 
-          variant="outline" 
-          size="sm" 
-          onClick={toggleDataSource}
-          title={useRealData ? "Using real data (click to switch to mock)" : "Using mock data (click to switch to real)"}
-        >
-          <Database className="h-4 w-4 mr-2" />
-          {useRealData ? "Real" : "Mock"}
-        </Button>
       </div>
       
       <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1">
@@ -114,7 +101,7 @@ const MapSidebar: React.FC<MapSidebarProps> = ({
         </TabsContent>
 
         <TabsContent value="layers">
-          <LayersPanel useRealData={useRealData} />
+          <LayersPanel />
         </TabsContent>
 
         <TabsContent value="results">

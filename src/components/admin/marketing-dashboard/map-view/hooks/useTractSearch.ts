@@ -2,9 +2,7 @@
 import { useState, useCallback } from 'react';
 import { toast } from 'sonner';
 import { CensusTract, SearchParams, StatsData, SearchResults } from './types/census-tract';
-import { COUNTIES_BY_STATE, STATES } from './data/mock-data';
 import { fetchRealData } from './services/census-api';
-import { generateMockTracts } from './services/mock-data-generator';
 
 export const useTractSearch = () => {
   const [tracts, setTracts] = useState<CensusTract[]>([]);
@@ -13,14 +11,8 @@ export const useTractSearch = () => {
   const [selectedTracts, setSelectedTracts] = useState<CensusTract[]>([]);
   const [searchResults, setSearchResults] = useState<SearchResults | null>(null);
   const [statsData, setStatsData] = useState<StatsData | null>(null);
-  const [useRealData, setUseRealData] = useState(true);
 
-  // Function to get counties for a state - safely handling potential undefined values
-  const getCountiesForState = useCallback((stateCode: string) => {
-    return COUNTIES_BY_STATE[stateCode] || [];
-  }, []);
-
-  // Perform the search using real or mock data
+  // Perform the search using real data only
   const performSearch = async (params: SearchParams) => {
     setLoading(true);
     setError(null);
@@ -28,11 +20,17 @@ export const useTractSearch = () => {
     try {
       console.log('Searching with params:', params);
       
-      // Always try to get real data first regardless of useRealData flag
+      if (!params.state && !params.county && !params.zipCode) {
+        toast.error("Search parameters required", {
+          description: "Please enter at least one search parameter"
+        });
+        setLoading(false);
+        return;
+      }
+      
       const realData = await fetchRealData(params);
       
       if (realData) {
-        // If we got real data, use it
         setTracts(realData.tracts);
         setStatsData(realData.stats);
         setSearchResults({
@@ -42,42 +40,11 @@ export const useTractSearch = () => {
         });
         
         toast.success("Search Complete", {
-          description: `Found ${realData.tracts.length} census tracts using real data`
+          description: `Found ${realData.tracts.length} census tracts`
         });
-        
-        setLoading(false);
-        return;
-      } else if (useRealData) {
-        // If we want real data but didn't get any, show an error
-        console.warn('No real data available, falling back to mock data');
-        
-        if (!params.state && !params.county && !params.zipCode) {
-          toast.error("Search parameters required", {
-            description: "Please enter at least one search parameter"
-          });
-          setLoading(false);
-          return;
-        }
-        
-        toast("Using mock data", {
-          description: "Couldn't retrieve real data, using simulated results instead"
-        });
+      } else {
+        throw new Error('No census tract data found for the specified criteria');
       }
-      
-      // Fall back to mock data
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Generate mock data
-      const mockData = generateMockTracts(params);
-      
-      setTracts(mockData.tracts);
-      setStatsData(mockData.stats);
-      
-      setSearchResults({
-        params,
-        resultCount: mockData.tracts.length
-      });
       
     } catch (err) {
       console.error('Error searching tracts:', err);
@@ -113,28 +80,16 @@ export const useTractSearch = () => {
     }
   };
 
-  // Toggle between real and mock data sources
-  const toggleDataSource = () => {
-    setUseRealData(!useRealData);
-    toast.info(`Using ${!useRealData ? 'Real' : 'Mock'} Data`, {
-      description: `Switched to ${!useRealData ? 'real' : 'mock'} data source for tract searches.`
-    });
-  };
 
   return {
     tracts,
     loading,
     error,
-    counties: COUNTIES_BY_STATE,
-    states: STATES,
     selectedTracts,
     setSelectedTracts,
     searchResults,
     performSearch,
     exportSelectedTracts,
-    statsData,
-    getCountiesForState,
-    useRealData,
-    toggleDataSource
+    statsData
   };
 };

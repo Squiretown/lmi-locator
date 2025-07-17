@@ -3,7 +3,7 @@ import { orchestrateGeocoding, GeocodingResult } from "./geocoder-orchestrator.t
 
 /**
  * Geocode an address using multiple geocoding services
- * First tries Census, then ESRI, then falls back to mock data if needed
+ * First tries Census, then ESRI
  * 
  * @param address The address to geocode
  * @returns Geocoding result with coordinates and census tract info if available

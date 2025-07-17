@@ -2,11 +2,9 @@
 import React from 'react';
 import { Toggle } from "@/components/ui/toggle";
 
-interface LayersPanelProps {
-  useRealData: boolean;
-}
+interface LayersPanelProps {}
 
-const LayersPanel: React.FC<LayersPanelProps> = ({ useRealData }) => {
+const LayersPanel: React.FC<LayersPanelProps> = () => {
   return (
     <div className="flex flex-col space-y-4 mt-4">
       <div className="bg-muted p-3 rounded-md">
@@ -53,22 +51,12 @@ const LayersPanel: React.FC<LayersPanelProps> = ({ useRealData }) => {
         </div>
       </div>
 
-      {useRealData && (
-        <div className="bg-muted p-3 rounded-md">
-          <h4 className="text-sm font-medium mb-2">Data Source</h4>
-          <p className="text-xs text-muted-foreground">
-            Currently using real data from the census database. If no real data is available for a search, mock data will be used as a fallback.
-          </p>
-        </div>
-      )}
-      {!useRealData && (
-        <div className="bg-muted p-3 rounded-md">
-          <h4 className="text-sm font-medium mb-2">Data Source</h4>
-          <p className="text-xs text-muted-foreground">
-            Currently using mock data for demonstration purposes. Click the "Mock" button at the top to switch to real data.
-          </p>
-        </div>
-      )}
+      <div className="bg-muted p-3 rounded-md">
+        <h4 className="text-sm font-medium mb-2">Data Source</h4>
+        <p className="text-xs text-muted-foreground">
+          Currently using real data from the census database.
+        </p>
+      </div>
     </div>
   );
 };
