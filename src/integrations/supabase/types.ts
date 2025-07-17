@@ -617,11 +617,14 @@ export type Database = {
           expires_at: string | null
           id: string
           invitation_code: string
+          invitation_target_type: string
           invitation_type: string
           professional_id: string
           sent_at: string | null
           sms_sent: boolean | null
           status: string
+          target_professional_role: string | null
+          team_context: Json | null
           template_type: string | null
           updated_at: string | null
         }
@@ -637,11 +640,14 @@ export type Database = {
           expires_at?: string | null
           id?: string
           invitation_code?: string
+          invitation_target_type?: string
           invitation_type?: string
           professional_id: string
           sent_at?: string | null
           sms_sent?: boolean | null
           status?: string
+          target_professional_role?: string | null
+          team_context?: Json | null
           template_type?: string | null
           updated_at?: string | null
         }
@@ -657,11 +663,14 @@ export type Database = {
           expires_at?: string | null
           id?: string
           invitation_code?: string
+          invitation_target_type?: string
           invitation_type?: string
           professional_id?: string
           sent_at?: string | null
           sms_sent?: boolean | null
           status?: string
+          target_professional_role?: string | null
+          team_context?: Json | null
           template_type?: string | null
           updated_at?: string | null
         }
@@ -740,6 +749,44 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      client_team_assignments: {
+        Row: {
+          assigned_at: string
+          assigned_by: string | null
+          client_id: string
+          id: string
+          professional_id: string
+          professional_role: string
+          status: string
+        }
+        Insert: {
+          assigned_at?: string
+          assigned_by?: string | null
+          client_id: string
+          id?: string
+          professional_id: string
+          professional_role: string
+          status?: string
+        }
+        Update: {
+          assigned_at?: string
+          assigned_by?: string | null
+          client_id?: string
+          id?: string
+          professional_id?: string
+          professional_role?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_team_assignments_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "client_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       clients: {
         Row: {
@@ -1365,6 +1412,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      professional_teams: {
+        Row: {
+          created_at: string
+          id: string
+          mortgage_professional_id: string
+          notes: string | null
+          realtor_id: string
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          mortgage_professional_id: string
+          notes?: string | null
+          realtor_id: string
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          mortgage_professional_id?: string
+          notes?: string | null
+          realtor_id?: string
+          status?: string
+        }
+        Relationships: []
       }
       professionals: {
         Row: {

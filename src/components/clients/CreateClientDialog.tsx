@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,11 +8,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { useForm } from 'react-hook-form';
 import { CreateClientData } from '@/hooks/useClientManagement';
+import { TeamSelection } from '@/components/teams/TeamSelection';
 
 interface CreateClientDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSubmit: (data: CreateClientData) => Promise<any>;
+  onSubmit: (data: CreateClientData & { assignedRealtorId?: string }) => Promise<any>;
   isLoading?: boolean;
 }
 
@@ -22,12 +23,14 @@ export const CreateClientDialog: React.FC<CreateClientDialogProps> = ({
   onSubmit,
   isLoading = false,
 }) => {
+  const [assignedRealtorId, setAssignedRealtorId] = useState<string>('');
   const { register, handleSubmit, reset, watch, setValue, formState: { errors } } = useForm<CreateClientData>();
 
   const handleFormSubmit = async (data: CreateClientData) => {
     try {
-      await onSubmit(data);
+      await onSubmit({ ...data, assignedRealtorId: assignedRealtorId || undefined });
       reset();
+      setAssignedRealtorId('');
       onOpenChange(false);
     } catch (error) {
       // Error handling is done in the hook
@@ -165,6 +168,16 @@ export const CreateClientDialog: React.FC<CreateClientDialogProps> = ({
               {...register('notes')}
               placeholder="Additional notes about the client..."
               className="min-h-[80px]"
+            />
+          </div>
+
+          {/* Team Assignment */}
+          <div className="space-y-2">
+            <Label>Assign Realtor</Label>
+            <TeamSelection 
+              value={assignedRealtorId}
+              onValueChange={setAssignedRealtorId}
+              placeholder="Select a realtor to assign to this client"
             />
           </div>
 

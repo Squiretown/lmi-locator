@@ -1,35 +1,34 @@
 
 import React from 'react';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
-import { User, Phone, Mail } from 'lucide-react';
-import { useAssignedProfessionals } from '@/hooks/useAssignedProfessionals';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Badge } from '@/components/ui/badge';
+import { User, Phone, Mail, Building, Users } from 'lucide-react';
+import { useTeamManagement } from '@/hooks/useTeamManagement';
 
 export const TeamContent: React.FC = () => {
-  const { data: professionals, isLoading } = useAssignedProfessionals();
+  const { clientTeams, isLoadingClientTeams: isLoading } = useTeamManagement();
 
   if (isLoading) {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Your Specialists</CardTitle>
-          <CardDescription>Professionals helping with your home purchase</CardDescription>
+          <CardTitle className="flex items-center gap-2">
+            <Users className="h-5 w-5" />
+            Your Professional Team
+          </CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="space-y-6">
-            {[1, 2].map((i) => (
-              <div key={i} className="space-y-2">
-                <div className="flex items-start gap-3">
-                  <Skeleton className="h-8 w-8 rounded-full" />
-                  <div className="space-y-2">
-                    <Skeleton className="h-4 w-32" />
-                    <Skeleton className="h-3 w-24" />
-                    <Skeleton className="h-3 w-40" />
-                  </div>
-                </div>
+        <CardContent className="space-y-4">
+          {[1, 2].map((i) => (
+            <div key={i} className="flex items-start space-x-4 p-4 border rounded-lg">
+              <Skeleton className="h-12 w-12 rounded-full" />
+              <div className="space-y-2 flex-1">
+                <Skeleton className="h-4 w-32" />
+                <Skeleton className="h-3 w-24" />
+                <Skeleton className="h-3 w-40" />
               </div>
-            ))}
-          </div>
+            </div>
+          ))}
         </CardContent>
       </Card>
     );
@@ -38,44 +37,58 @@ export const TeamContent: React.FC = () => {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Your Specialists</CardTitle>
-        <CardDescription>Professionals helping with your home purchase</CardDescription>
+        <CardTitle className="flex items-center gap-2">
+          <Users className="h-5 w-5" />
+          Your Professional Team
+        </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="space-y-6">
-          {professionals?.map((professional) => (
-            <div key={professional.id} className="space-y-2">
-              <div className="flex items-start gap-3">
-                <div className="bg-blue-100 p-2 rounded-full">
-                  <User className="h-4 w-4 text-blue-600" />
-                </div>
-                <div>
-                  <h3 className="font-medium">{professional.name}</h3>
-                  <p className="text-sm text-muted-foreground">
-                    {professional.type === 'mortgage_broker' ? 'Mortgage Professional' : 'Real Estate Agent'}
-                  </p>
-                  <p className="text-sm">{professional.company}</p>
-                </div>
-              </div>
-              <div className="ml-9 space-y-1">
-                {professional.phone && (
-                  <a href={`tel:${professional.phone}`} className="flex items-center gap-2 text-sm text-blue-600">
-                    <Phone className="h-3 w-3" />
-                    <span>{professional.phone}</span>
-                  </a>
-                )}
-                {professional.website && (
-                  <a href={professional.website} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-sm text-blue-600">
-                    <Mail className="h-3 w-3" />
-                    <span>{professional.website}</span>
-                  </a>
-                )}
-              </div>
-              {professional !== professionals[professionals.length - 1] && (
-                <div className="border-t my-3" />
-              )}
+        <div className="space-y-4">
+          {clientTeams.length === 0 ? (
+            <div className="text-center py-8">
+              <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <p className="text-muted-foreground">
+                No professionals assigned to your account yet.
+              </p>
             </div>
-          ))}
+          ) : (
+            clientTeams.map((assignment: any) => (
+              <div key={assignment.id} className="flex items-start space-x-4 p-4 border rounded-lg hover:bg-accent/5 transition-colors">
+                <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
+                  <User className="h-6 w-6 text-primary" />
+                </div>
+                <div className="flex-1 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-semibold">{assignment.professional?.name}</h3>
+                    <Badge variant={assignment.professional_role === 'mortgage' ? 'default' : 'secondary'}>
+                      {assignment.professional_role === 'mortgage' ? 'Mortgage Professional' : 'Realtor'}
+                    </Badge>
+                  </div>
+                  
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Building className="h-4 w-4" />
+                    <span>{assignment.professional?.company}</span>
+                  </div>
+                  
+                  {assignment.professional?.phone && (
+                    <div className="flex items-center gap-2 text-sm">
+                      <Phone className="h-4 w-4 text-muted-foreground" />
+                      <a 
+                        href={`tel:${assignment.professional.phone}`} 
+                        className="text-primary hover:underline"
+                      >
+                        {assignment.professional.phone}
+                      </a>
+                    </div>
+                  )}
+                  
+                  <div className="text-xs text-muted-foreground">
+                    Assigned {new Date(assignment.assigned_at).toLocaleDateString()}
+                  </div>
+                </div>
+              </div>
+            ))
+          )}
         </div>
       </CardContent>
     </Card>

@@ -8,6 +8,7 @@ import { ClientTable } from '@/components/clients/ClientTable';
 import { CreateClientDialog } from '@/components/clients/CreateClientDialog';
 import { ClientDetailsDialog } from '@/components/clients/ClientDetailsDialog';
 import { InvitationManagement } from '@/components/clients/InvitationManagement';
+import { TeamManagement } from '@/components/teams/TeamManagement';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 
@@ -119,11 +120,12 @@ const MortgageClients: React.FC = () => {
         </Card>
       </div>
 
-      {/* Tabs for Client Management and Invitations */}
+      {/* Tabs for Client Management, Invitations, and Team */}
       <Tabs defaultValue="clients" className="w-full">
         <TabsList>
           <TabsTrigger value="clients">Client Management</TabsTrigger>
           <TabsTrigger value="invitations">Invitations</TabsTrigger>
+          <TabsTrigger value="team">Team Management</TabsTrigger>
         </TabsList>
 
         <TabsContent value="clients" className="space-y-6">
@@ -167,6 +169,10 @@ const MortgageClients: React.FC = () => {
 
         <TabsContent value="invitations">
           <InvitationManagement />
+        </TabsContent>
+
+        <TabsContent value="team">
+          <TeamManagement />
         </TabsContent>
       </Tabs>
 

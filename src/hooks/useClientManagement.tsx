@@ -72,22 +72,65 @@ export function useClientManagement() {
 
   // Create new client
   const createClientMutation = useMutation({
-    mutationFn: async (clientData: CreateClientData) => {
+    mutationFn: async (clientData: CreateClientData & { assignedRealtorId?: string }) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('User not authenticated');
 
-      const { data, error } = await supabase
+      // Create client profile
+      const { data: client, error: clientError } = await supabase
         .from('client_profiles')
         .insert({
           professional_id: user.id,
-          ...clientData,
+          first_name: clientData.first_name,
+          last_name: clientData.last_name,
+          email: clientData.email,
+          phone: clientData.phone,
+          income: clientData.income,
+          household_size: clientData.household_size,
+          military_status: clientData.military_status,
+          timeline: clientData.timeline,
+          first_time_buyer: clientData.first_time_buyer,
+          notes: clientData.notes,
           status: 'active'
         })
         .select()
         .single();
 
-      if (error) throw error;
-      return data;
+      if (clientError) throw clientError;
+
+      // Assign client to team (mortgage professional + optional realtor)
+      const assignments = [];
+      
+      // Always assign mortgage professional
+      assignments.push({
+        client_id: client.id,
+        professional_id: user.id,
+        professional_role: 'mortgage',
+        assigned_by: user.id,
+      });
+
+      // Assign realtor if specified
+      if (clientData.assignedRealtorId) {
+        assignments.push({
+          client_id: client.id,
+          professional_id: clientData.assignedRealtorId,
+          professional_role: 'realtor',
+          assigned_by: user.id,
+        });
+      }
+
+      if (assignments.length > 0) {
+        const { error: assignmentError } = await supabase
+          .from('client_team_assignments')
+          .insert(assignments);
+
+        if (assignmentError) {
+          console.error('Failed to assign team members:', assignmentError);
+          // Don't throw here - client was created successfully
+        }
+      }
+
+      return client;
     },
     onSuccess: () => {
       toast.success('Client created successfully');
