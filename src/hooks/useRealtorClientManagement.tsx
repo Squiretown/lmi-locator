@@ -1,0 +1,217 @@
+import { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
+
+export interface CreateRealtorClientData {
+  first_name: string;
+  last_name: string;
+  email?: string;
+  phone?: string;
+  notes?: string;
+  income?: number;
+  household_size?: number;
+  first_time_buyer?: boolean;
+  military_status?: string;
+  timeline?: string;
+  assignedMortgageProfessionalId?: string;
+  sendInvitation?: boolean;
+  invitationType?: 'email' | 'sms' | 'both';
+  templateType?: string;
+  customMessage?: string;
+}
+
+export interface ClientProfile {
+  id: string;
+  first_name: string;
+  last_name: string;
+  email?: string;
+  phone?: string;
+  professional_id: string;
+  status: 'active' | 'inactive' | 'lead';
+  notes?: string;
+  income?: number;
+  household_size?: number;
+  first_time_buyer?: boolean;
+  military_status?: string;
+  timeline?: string;
+  saved_properties?: any;
+  created_at: string;
+  updated_at: string;
+}
+
+export function useRealtorClientManagement() {
+  const queryClient = useQueryClient();
+  const [selectedClient, setSelectedClient] = useState<ClientProfile | null>(null);
+
+  // Fetch client profiles for realtor
+  const { data: clients = [], isLoading: isLoadingClients } = useQuery({
+    queryKey: ['realtor-client-profiles'],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('User not authenticated');
+
+      const { data, error } = await supabase
+        .from('client_profiles')
+        .select('*')
+        .eq('professional_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      return data as ClientProfile[];
+    },
+  });
+
+  // Create new client
+  const createClientMutation = useMutation({
+    mutationFn: async (clientData: CreateRealtorClientData) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('User not authenticated');
+
+      // Create client profile
+      const { data: client, error: clientError } = await supabase
+        .from('client_profiles')
+        .insert({
+          professional_id: user.id,
+          first_name: clientData.first_name,
+          last_name: clientData.last_name,
+          email: clientData.email,
+          phone: clientData.phone,
+          income: clientData.income,
+          household_size: clientData.household_size,
+          military_status: clientData.military_status,
+          timeline: clientData.timeline,
+          first_time_buyer: clientData.first_time_buyer,
+          notes: clientData.notes,
+          status: 'active'
+        })
+        .select()
+        .single();
+
+      if (clientError) throw clientError;
+
+      // Assign client to team (realtor + optional mortgage professional)
+      const assignments = [];
+      
+      // Always assign realtor
+      assignments.push({
+        client_id: client.id,
+        professional_id: user.id,
+        professional_role: 'realtor',
+        assigned_by: user.id,
+      });
+
+      // Assign mortgage professional if specified
+      if (clientData.assignedMortgageProfessionalId && clientData.assignedMortgageProfessionalId !== 'none') {
+        assignments.push({
+          client_id: client.id,
+          professional_id: clientData.assignedMortgageProfessionalId,
+          professional_role: 'mortgage',
+          assigned_by: user.id,
+        });
+      }
+
+      if (assignments.length > 0) {
+        const { error: assignmentError } = await supabase
+          .from('client_team_assignments')
+          .insert(assignments);
+
+        if (assignmentError) {
+          console.error('Failed to assign team members:', assignmentError);
+          // Don't throw here - client was created successfully
+        }
+      }
+
+      // Send invitation if requested
+      if (clientData.sendInvitation && clientData.email) {
+        try {
+          const { error: invitationError } = await supabase
+            .from('client_invitations')
+            .insert({
+              professional_id: user.id,
+              client_id: client.id,
+              client_name: `${clientData.first_name} ${clientData.last_name}`,
+              client_email: clientData.email,
+              client_phone: clientData.phone,
+              invitation_type: clientData.invitationType || 'email',
+              template_type: clientData.templateType || 'default',
+              custom_message: clientData.customMessage,
+              status: 'pending'
+            });
+
+          if (invitationError) {
+            console.error('Failed to create invitation:', invitationError);
+            toast.error('Client created but invitation failed to send');
+          }
+        } catch (error) {
+          console.error('Invitation error:', error);
+          toast.error('Client created but invitation failed to send');
+        }
+      }
+
+      return client;
+    },
+    onSuccess: () => {
+      toast.success('Client created successfully');
+      queryClient.invalidateQueries({ queryKey: ['realtor-client-profiles'] });
+    },
+    onError: (error: Error) => {
+      toast.error(`Failed to create client: ${error.message}`);
+    },
+  });
+
+  // Update client
+  const updateClientMutation = useMutation({
+    mutationFn: async ({ id, ...updates }: Partial<ClientProfile> & { id: string }) => {
+      const { data, error } = await supabase
+        .from('client_profiles')
+        .update(updates)
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      toast.success('Client updated successfully');
+      queryClient.invalidateQueries({ queryKey: ['realtor-client-profiles'] });
+    },
+    onError: (error: Error) => {
+      toast.error(`Failed to update client: ${error.message}`);
+    },
+  });
+
+  // Delete client
+  const deleteClientMutation = useMutation({
+    mutationFn: async (clientId: string) => {
+      const { error } = await supabase
+        .from('client_profiles')
+        .delete()
+        .eq('id', clientId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success('Client deleted successfully');
+      queryClient.invalidateQueries({ queryKey: ['realtor-client-profiles'] });
+      setSelectedClient(null);
+    },
+    onError: (error: Error) => {
+      toast.error(`Failed to delete client: ${error.message}`);
+    },
+  });
+
+  return {
+    clients,
+    isLoadingClients,
+    selectedClient,
+    setSelectedClient,
+    createClient: createClientMutation.mutateAsync,
+    updateClient: updateClientMutation.mutateAsync,
+    deleteClient: deleteClientMutation.mutateAsync,
+    isCreating: createClientMutation.isPending,
+    isUpdating: updateClientMutation.isPending,
+    isDeleting: deleteClientMutation.isPending,
+  };
+}

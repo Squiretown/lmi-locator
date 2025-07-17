@@ -4,7 +4,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ListFilter, Plus, Search, Users } from 'lucide-react';
-import { useClientManagement } from '@/hooks/useClientManagement';
+import { useRealtorClientManagement } from '@/hooks/useRealtorClientManagement';
 import { ClientTable } from '@/components/clients/ClientTable';
 import { CreateClientDialog } from '@/components/clients/CreateClientDialog';
 import { ClientDetailsDialog } from '@/components/clients/ClientDetailsDialog';
@@ -21,7 +21,7 @@ export const ClientList = () => {
     deleteClient,
     isCreating,
     isDeleting,
-  } = useClientManagement();
+  } = useRealtorClientManagement();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [showCreateDialog, setShowCreateDialog] = useState(false);
@@ -167,6 +167,7 @@ export const ClientList = () => {
         onOpenChange={setShowCreateDialog}
         onSubmit={createClient}
         isLoading={isCreating}
+        userType="realtor"
       />
 
       <ClientDetailsDialog

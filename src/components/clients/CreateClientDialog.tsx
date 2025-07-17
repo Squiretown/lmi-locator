@@ -6,15 +6,19 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
+import { Checkbox } from '@/components/ui/checkbox';
 import { useForm } from 'react-hook-form';
 import { CreateClientData } from '@/hooks/useClientManagement';
+import { CreateRealtorClientData } from '@/hooks/useRealtorClientManagement';
 import { TeamSelection } from '@/components/teams/TeamSelection';
+import { MortgageProfessionalSelection } from '@/components/teams/MortgageProfessionalSelection';
 
 interface CreateClientDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSubmit: (data: CreateClientData & { assignedRealtorId?: string }) => Promise<any>;
+  onSubmit: (data: any) => Promise<any>;
   isLoading?: boolean;
+  userType?: 'mortgage_professional' | 'realtor';
 }
 
 export const CreateClientDialog: React.FC<CreateClientDialogProps> = ({
@@ -22,15 +26,31 @@ export const CreateClientDialog: React.FC<CreateClientDialogProps> = ({
   onOpenChange,
   onSubmit,
   isLoading = false,
+  userType = 'mortgage_professional',
 }) => {
   const [assignedRealtorId, setAssignedRealtorId] = useState<string>('');
-  const { register, handleSubmit, reset, watch, setValue, formState: { errors } } = useForm<CreateClientData>();
+  const [assignedMortgageProfessionalId, setAssignedMortgageProfessionalId] = useState<string>('');
+  const [sendInvitation, setSendInvitation] = useState<boolean>(false);
+  const { register, handleSubmit, reset, watch, setValue, formState: { errors } } = useForm();
 
-  const handleFormSubmit = async (data: CreateClientData) => {
+  const handleFormSubmit = async (data: any) => {
     try {
-      await onSubmit({ ...data, assignedRealtorId: assignedRealtorId || undefined });
+      const submitData = userType === 'realtor' 
+        ? { 
+            ...data, 
+            assignedMortgageProfessionalId: assignedMortgageProfessionalId || undefined,
+            sendInvitation,
+            invitationType: data.invitationType,
+            templateType: data.templateType,
+            customMessage: data.customMessage
+          }
+        : { ...data, assignedRealtorId: assignedRealtorId || undefined };
+      
+      await onSubmit(submitData);
       reset();
       setAssignedRealtorId('');
+      setAssignedMortgageProfessionalId('');
+      setSendInvitation(false);
       onOpenChange(false);
     } catch (error) {
       // Error handling is done in the hook
@@ -59,7 +79,7 @@ export const CreateClientDialog: React.FC<CreateClientDialogProps> = ({
                 placeholder="John"
               />
               {errors.first_name && (
-                <p className="text-sm text-destructive">{errors.first_name.message}</p>
+                <p className="text-sm text-destructive">{String(errors.first_name.message)}</p>
               )}
             </div>
 
@@ -71,20 +91,25 @@ export const CreateClientDialog: React.FC<CreateClientDialogProps> = ({
                 placeholder="Smith"
               />
               {errors.last_name && (
-                <p className="text-sm text-destructive">{errors.last_name.message}</p>
+                <p className="text-sm text-destructive">{String(errors.last_name.message)}</p>
               )}
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">Email {sendInvitation && '*'}</Label>
               <Input
                 id="email"
                 type="email"
-                {...register('email')}
+                {...register('email', { 
+                  required: sendInvitation ? 'Email is required when sending invitation' : false 
+                })}
                 placeholder="john.smith@example.com"
               />
+              {errors.email && (
+                <p className="text-sm text-destructive">{String(errors.email.message)}</p>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -173,13 +198,82 @@ export const CreateClientDialog: React.FC<CreateClientDialogProps> = ({
 
           {/* Team Assignment */}
           <div className="space-y-2">
-            <Label>Assign Realtor</Label>
-            <TeamSelection 
-              value={assignedRealtorId}
-              onValueChange={setAssignedRealtorId}
-              placeholder="Select a realtor to assign to this client"
-            />
+            {userType === 'mortgage_professional' ? (
+              <>
+                <Label>Assign Realtor</Label>
+                <TeamSelection 
+                  value={assignedRealtorId}
+                  onValueChange={setAssignedRealtorId}
+                  placeholder="Select a realtor to assign to this client"
+                />
+              </>
+            ) : (
+              <>
+                <Label>Assign Mortgage Professional</Label>
+                <MortgageProfessionalSelection 
+                  value={assignedMortgageProfessionalId}
+                  onValueChange={setAssignedMortgageProfessionalId}
+                  placeholder="Select a mortgage professional to assign to this client"
+                />
+              </>
+            )}
           </div>
+
+          {/* Send Invitation Section */}
+          {userType === 'realtor' && (
+            <div className="space-y-4 border-t pt-4">
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="send_invitation"
+                  checked={sendInvitation}
+                  onCheckedChange={(checked) => setSendInvitation(checked === true)}
+                />
+                <Label htmlFor="send_invitation">Send invitation to client</Label>
+              </div>
+
+              {sendInvitation && (
+                <div className="space-y-4 pl-6 border-l-2 border-muted">
+                  <div className="space-y-2">
+                    <Label htmlFor="invitation_type">Invitation Type</Label>
+                    <Select onValueChange={(value) => setValue('invitationType', value)} defaultValue="email">
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select invitation type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="email">Email</SelectItem>
+                        <SelectItem value="sms">SMS</SelectItem>
+                        <SelectItem value="both">Both Email & SMS</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="template_type">Template</Label>
+                    <Select onValueChange={(value) => setValue('templateType', value)} defaultValue="default">
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select template" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="default">Default Template</SelectItem>
+                        <SelectItem value="welcome">Welcome Template</SelectItem>
+                        <SelectItem value="professional">Professional Template</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="custom_message">Custom Message (Optional)</Label>
+                    <Textarea
+                      id="custom_message"
+                      {...register('customMessage')}
+                      placeholder="Add a personal message to the invitation..."
+                      className="min-h-[80px]"
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
 
           <div className="flex justify-end gap-2 pt-4">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
