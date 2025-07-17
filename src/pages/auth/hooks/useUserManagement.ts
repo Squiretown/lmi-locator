@@ -9,6 +9,26 @@ export const useUserManagement = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const logAdminError = async (operation: string, error: any, targetUserId?: string) => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
+      await supabase.from('admin_error_logs').insert({
+        admin_user_id: session.user.id,
+        error_type: error.code || 'unknown',
+        error_message: error.message || String(error),
+        error_details: error,
+        operation,
+        target_user_id: targetUserId,
+        ip_address: null, // Client-side doesn't have access to IP
+        user_agent: navigator.userAgent
+      });
+    } catch (logError) {
+      console.error('Failed to log admin error:', logError);
+    }
+  };
+
   const fetchUsers = async () => {
     try {
       setIsLoading(true);
@@ -20,13 +40,17 @@ export const useUserManagement = () => {
       const { data: { session } } = await supabase.auth.getSession();
       
       if (!session) {
-        throw new Error('No active session found');
+        const error = new Error('No active session found');
+        await logAdminError('fetch_users', error);
+        throw error;
       }
 
       // Check if current user is admin
       const userType = session.user?.user_metadata?.user_type;
       if (userType !== 'admin') {
-        throw new Error('Admin privileges required to view users');
+        const error = new Error('Admin privileges required to view users');
+        await logAdminError('fetch_users', error);
+        throw error;
       }
 
       // Use the admin listUsers function via edge function
@@ -38,6 +62,7 @@ export const useUserManagement = () => {
 
       if (authError) {
         console.error('Failed to fetch auth users:', authError);
+        await logAdminError('fetch_users', authError);
         throw new Error(`Failed to fetch users: ${authError.message}`);
       }
 
@@ -67,9 +92,11 @@ export const useUserManagement = () => {
 
   const handleResetPassword = async (userId: string) => {
     try {
+      await logAdminError('reset_password', new Error('Password reset functionality not implemented'), userId);
       toast.info('Password reset functionality needs to be implemented');
     } catch (err) {
       console.error('Error resetting password:', err);
+      await logAdminError('reset_password', err, userId);
       const errorMessage = err instanceof Error ? err.message : 'Failed to reset password';
       toast.error(errorMessage);
     }
@@ -86,6 +113,7 @@ export const useUserManagement = () => {
         .eq('user_id', userId);
 
       if (deleteError) {
+        await logAdminError('disable_user', deleteError, userId);
         throw deleteError;
       }
 
@@ -93,6 +121,7 @@ export const useUserManagement = () => {
       await fetchUsers(); // Refresh the list
     } catch (err) {
       console.error('Error removing user profile:', err);
+      await logAdminError('disable_user', err, userId);
       const errorMessage = err instanceof Error ? err.message : 'Failed to remove user profile';
       toast.error(errorMessage);
     }
@@ -106,7 +135,9 @@ export const useUserManagement = () => {
       const { data: { session } } = await supabase.auth.getSession();
       
       if (!session) {
-        throw new Error('No active session found');
+        const error = new Error('No active session found');
+        await logAdminError('delete_user', error, userId);
+        throw error;
       }
 
       // Call the delete-user edge function
@@ -118,10 +149,13 @@ export const useUserManagement = () => {
       });
 
       if (error) {
+        await logAdminError('delete_user', error, userId);
         throw error;
       }
 
       if (!data?.success) {
+        const errorDetails = { success: data?.success, error: data?.error };
+        await logAdminError('delete_user', new Error(data?.error || 'Unknown error occurred'), userId);
         throw new Error(data?.error || 'Unknown error occurred');
       }
 
@@ -129,6 +163,7 @@ export const useUserManagement = () => {
       await fetchUsers(); // Refresh the list
     } catch (err) {
       console.error('Error deleting user:', err);
+      await logAdminError('delete_user', err, userId);
       const errorMessage = err instanceof Error ? err.message : 'Failed to delete user';
       toast.error(errorMessage);
     }
@@ -145,6 +180,7 @@ export const useUserManagement = () => {
     handleResetPassword,
     handleDisableUser,
     handleDeleteUser,
-    refetch: fetchUsers
+    refetch: fetchUsers,
+    logAdminError
   };
 };

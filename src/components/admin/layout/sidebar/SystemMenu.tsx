@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { Shield, Database, Key, FileText } from "lucide-react";
+import { Shield, Database, Key, FileText, AlertTriangle } from "lucide-react";
 import { useAdminPermissions } from '../AdminPermissionsContext';
 
 export const AdminSidebarSystemMenu: React.FC = () => {
@@ -71,6 +71,20 @@ export const AdminSidebarSystemMenu: React.FC = () => {
       >
         <FileText size={16} />
         <span>System Logs</span>
+      </NavLink>
+      
+      <NavLink 
+        to="/admin/error-logs" 
+        className={({ isActive }) => 
+          `flex items-center space-x-3 px-3 py-2 text-sm rounded-md transition-colors ${
+            isActive 
+              ? 'bg-primary text-primary-foreground' 
+              : 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
+          }`
+        }
+      >
+        <AlertTriangle size={16} />
+        <span>Error Logs</span>
       </NavLink>
     </div>
   );

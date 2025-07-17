@@ -61,6 +61,54 @@ export type Database = {
           },
         ]
       }
+      admin_error_logs: {
+        Row: {
+          admin_user_id: string
+          created_at: string
+          error_details: Json | null
+          error_message: string
+          error_type: string
+          id: string
+          ip_address: string | null
+          operation: string
+          resolved: boolean | null
+          resolved_at: string | null
+          resolved_by: string | null
+          target_user_id: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          admin_user_id: string
+          created_at?: string
+          error_details?: Json | null
+          error_message: string
+          error_type: string
+          id?: string
+          ip_address?: string | null
+          operation: string
+          resolved?: boolean | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          target_user_id?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          admin_user_id?: string
+          created_at?: string
+          error_details?: Json | null
+          error_message?: string
+          error_type?: string
+          id?: string
+          ip_address?: string | null
+          operation?: string
+          resolved?: boolean | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          target_user_id?: string | null
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
       alerts: {
         Row: {
           created_at: string

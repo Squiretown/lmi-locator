@@ -22,6 +22,7 @@ import MortgageBrokersPage from "./pages/admin/MortgageBrokersPage";
 import PermissionsPage from "./pages/admin/PermissionsPage";
 import SystemLogsPage from "./pages/admin/SystemLogsPage";
 import DatabasePage from "./pages/admin/DatabasePage";
+import ErrorLogs from "./pages/admin/ErrorLogs";
 import AdminSettingsPage from "./pages/admin/SettingsPage";
 import SearchHistoryPage from "./pages/admin/search-history/SearchHistoryPage";
 import DashboardLayout from "./components/dashboard/layout/DashboardLayout";
@@ -122,6 +123,7 @@ function App() {
                 <Route path="brokers" element={<MortgageBrokersPage />} />
                 <Route path="permissions" element={<PermissionsPage />} />
                 <Route path="logs" element={<SystemLogsPage />} />
+                <Route path="error-logs" element={<ErrorLogs />} />
                 <Route path="database" element={<DatabasePage />} />
                 <Route path="settings" element={<AdminSettingsPage />} />
                 <Route path="search-history" element={<SearchHistoryPage />} />
