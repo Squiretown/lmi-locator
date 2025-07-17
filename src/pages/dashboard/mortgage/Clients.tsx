@@ -158,6 +158,7 @@ const MortgageClients: React.FC = () => {
                 onEdit={handleEdit}
                 onDelete={handleDelete}
                 onView={handleView}
+                onRefresh={() => window.location.reload()}
                 isLoading={isLoadingClients}
               />
             </CardContent>

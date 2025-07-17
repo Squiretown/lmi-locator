@@ -149,6 +149,7 @@ export const ClientList = () => {
                 onEdit={handleEdit}
                 onDelete={handleDelete}
                 onView={handleView}
+                onRefresh={() => window.location.reload()}
                 isLoading={isLoadingClients}
               />
             </CardContent>

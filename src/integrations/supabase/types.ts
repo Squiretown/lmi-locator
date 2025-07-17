@@ -506,6 +506,104 @@ export type Database = {
         }
         Relationships: []
       }
+      client_activity_logs: {
+        Row: {
+          activity_data: Json | null
+          activity_type: string
+          client_id: string
+          created_at: string
+          description: string
+          id: string
+          professional_id: string
+        }
+        Insert: {
+          activity_data?: Json | null
+          activity_type: string
+          client_id: string
+          created_at?: string
+          description: string
+          id?: string
+          professional_id: string
+        }
+        Update: {
+          activity_data?: Json | null
+          activity_type?: string
+          client_id?: string
+          created_at?: string
+          description?: string
+          id?: string
+          professional_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_activity_logs_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "client_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      client_communications: {
+        Row: {
+          client_id: string
+          content: string
+          delivered_at: string | null
+          error_message: string | null
+          id: string
+          professional_id: string
+          recipient: string
+          sent_at: string
+          status: string
+          subject: string | null
+          template_id: string | null
+          type: string
+        }
+        Insert: {
+          client_id: string
+          content: string
+          delivered_at?: string | null
+          error_message?: string | null
+          id?: string
+          professional_id: string
+          recipient: string
+          sent_at?: string
+          status?: string
+          subject?: string | null
+          template_id?: string | null
+          type: string
+        }
+        Update: {
+          client_id?: string
+          content?: string
+          delivered_at?: string | null
+          error_message?: string | null
+          id?: string
+          professional_id?: string
+          recipient?: string
+          sent_at?: string
+          status?: string
+          subject?: string | null
+          template_id?: string | null
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_communications_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "client_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_communications_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "communication_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       client_invitations: {
         Row: {
           accepted_at: string | null
@@ -580,6 +678,8 @@ export type Database = {
       client_profiles: {
         Row: {
           created_at: string | null
+          deactivated_at: string | null
+          deactivated_by: string | null
           email: string | null
           first_name: string
           first_time_buyer: boolean | null
@@ -593,11 +693,14 @@ export type Database = {
           professional_id: string
           saved_properties: Json | null
           status: string | null
+          status_reason: string | null
           timeline: string | null
           updated_at: string | null
         }
         Insert: {
           created_at?: string | null
+          deactivated_at?: string | null
+          deactivated_by?: string | null
           email?: string | null
           first_name: string
           first_time_buyer?: boolean | null
@@ -611,11 +714,14 @@ export type Database = {
           professional_id: string
           saved_properties?: Json | null
           status?: string | null
+          status_reason?: string | null
           timeline?: string | null
           updated_at?: string | null
         }
         Update: {
           created_at?: string | null
+          deactivated_at?: string | null
+          deactivated_by?: string | null
           email?: string | null
           first_name?: string
           first_time_buyer?: boolean | null
@@ -629,6 +735,7 @@ export type Database = {
           professional_id?: string
           saved_properties?: Json | null
           status?: string | null
+          status_reason?: string | null
           timeline?: string | null
           updated_at?: string | null
         }
@@ -670,6 +777,51 @@ export type Database = {
           professional_id?: string
           status?: string | null
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      communication_templates: {
+        Row: {
+          category: string
+          content: string
+          created_at: string
+          created_by: string | null
+          id: string
+          is_global: boolean
+          name: string
+          professional_type: string
+          subject: string | null
+          type: string
+          updated_at: string
+          variables: Json | null
+        }
+        Insert: {
+          category: string
+          content: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_global?: boolean
+          name: string
+          professional_type: string
+          subject?: string | null
+          type: string
+          updated_at?: string
+          variables?: Json | null
+        }
+        Update: {
+          category?: string
+          content?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_global?: boolean
+          name?: string
+          professional_type?: string
+          subject?: string | null
+          type?: string
+          updated_at?: string
+          variables?: Json | null
         }
         Relationships: []
       }
