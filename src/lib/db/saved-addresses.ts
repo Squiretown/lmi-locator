@@ -2,6 +2,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import type { SavedAddress, SaveAddressInput } from '@/types/saved-addresses';
+import { parseAddress, generateMLSNumber, getDefaultPrice } from '@/lib/utils/address-parser';
 
 export async function fetchSavedAddresses(userId?: string): Promise<SavedAddress[]> {
   if (!userId) return [];
@@ -69,16 +70,20 @@ export async function saveAddressToDb(
           .eq('id', propertyId);
       }
     } else {
+      // Parse the address to extract components
+      const parsedAddress = parseAddress(address);
+      console.log('Parsed address:', parsedAddress);
+      
       // Create a new property record with the LMI status
       const { data: newProperty, error: propertyError } = await supabase
         .from('properties')
         .insert({
-          address: address,
-          price: 0, // Required field
-          city: '',
-          state: '',
-          zip_code: '',
-          mls_number: crypto.randomUUID(),
+          address: parsedAddress.address,
+          price: getDefaultPrice(),
+          city: parsedAddress.city,
+          state: parsedAddress.state,
+          zip_code: parsedAddress.zipCode,
+          mls_number: generateMLSNumber(),
           is_lmi_eligible: isLmiEligible
         })
         .select('id')
