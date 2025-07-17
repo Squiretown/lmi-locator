@@ -7,6 +7,8 @@ import { useClientManagement } from '@/hooks/useClientManagement';
 import { ClientTable } from '@/components/clients/ClientTable';
 import { CreateClientDialog } from '@/components/clients/CreateClientDialog';
 import { ClientDetailsDialog } from '@/components/clients/ClientDetailsDialog';
+import { InvitationManagement } from '@/components/clients/InvitationManagement';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 
 const MortgageClients: React.FC = () => {
@@ -70,7 +72,7 @@ const MortgageClients: React.FC = () => {
           Client Management
         </h1>
         <p className="text-muted-foreground mt-1">
-          Manage your mortgage clients and track their information
+          Manage your mortgage clients, track their information, and send invitations
         </p>
       </div>
 
@@ -117,41 +119,55 @@ const MortgageClients: React.FC = () => {
         </Card>
       </div>
 
-      {/* Actions Bar */}
-      <div className="flex justify-between items-center mb-6">
-        <div className="flex items-center gap-2 flex-1 max-w-md">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-            <Input
-              placeholder="Search clients..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
-            />
-          </div>
-        </div>
-        
-        <Button onClick={() => setShowCreateDialog(true)}>
-          <Plus className="mr-2 h-4 w-4" />
-          Add Client
-        </Button>
-      </div>
+      {/* Tabs for Client Management and Invitations */}
+      <Tabs defaultValue="clients" className="w-full">
+        <TabsList>
+          <TabsTrigger value="clients">Client Management</TabsTrigger>
+          <TabsTrigger value="invitations">Invitations</TabsTrigger>
+        </TabsList>
 
-      {/* Client Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Clients ({filteredClients.length})</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ClientTable
-            clients={filteredClients}
-            onEdit={handleEdit}
-            onDelete={handleDelete}
-            onView={handleView}
-            isLoading={isLoadingClients}
-          />
-        </CardContent>
-      </Card>
+        <TabsContent value="clients" className="space-y-6">
+          {/* Actions Bar */}
+          <div className="flex justify-between items-center">
+            <div className="flex items-center gap-2 flex-1 max-w-md">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                <Input
+                  placeholder="Search clients..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+            </div>
+            
+            <Button onClick={() => setShowCreateDialog(true)}>
+              <Plus className="mr-2 h-4 w-4" />
+              Add Client
+            </Button>
+          </div>
+
+          {/* Client Table */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Clients ({filteredClients.length})</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ClientTable
+                clients={filteredClients}
+                onEdit={handleEdit}
+                onDelete={handleDelete}
+                onView={handleView}
+                isLoading={isLoadingClients}
+              />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="invitations">
+          <InvitationManagement />
+        </TabsContent>
+      </Tabs>
 
       {/* Dialogs */}
       <CreateClientDialog

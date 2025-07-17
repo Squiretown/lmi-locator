@@ -9,7 +9,7 @@ const RealtorClients: React.FC = () => {
           Client Management
         </h1>
         <p className="text-muted-foreground mt-1">
-          Manage your real estate clients
+          Manage your real estate clients and send invitations
         </p>
       </div>
       

@@ -506,6 +506,77 @@ export type Database = {
         }
         Relationships: []
       }
+      client_invitations: {
+        Row: {
+          accepted_at: string | null
+          client_email: string
+          client_id: string | null
+          client_name: string | null
+          client_phone: string | null
+          created_at: string | null
+          custom_message: string | null
+          email_sent: boolean | null
+          expires_at: string | null
+          id: string
+          invitation_code: string
+          invitation_type: string
+          professional_id: string
+          sent_at: string | null
+          sms_sent: boolean | null
+          status: string
+          template_type: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          accepted_at?: string | null
+          client_email: string
+          client_id?: string | null
+          client_name?: string | null
+          client_phone?: string | null
+          created_at?: string | null
+          custom_message?: string | null
+          email_sent?: boolean | null
+          expires_at?: string | null
+          id?: string
+          invitation_code?: string
+          invitation_type?: string
+          professional_id: string
+          sent_at?: string | null
+          sms_sent?: boolean | null
+          status?: string
+          template_type?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          accepted_at?: string | null
+          client_email?: string
+          client_id?: string | null
+          client_name?: string | null
+          client_phone?: string | null
+          created_at?: string | null
+          custom_message?: string | null
+          email_sent?: boolean | null
+          expires_at?: string | null
+          id?: string
+          invitation_code?: string
+          invitation_type?: string
+          professional_id?: string
+          sent_at?: string | null
+          sms_sent?: boolean | null
+          status?: string
+          template_type?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_invitations_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "client_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       client_profiles: {
         Row: {
           created_at: string | null
@@ -697,36 +768,51 @@ export type Database = {
         Row: {
           created_at: string
           email: string
+          email_sent: boolean | null
+          expires_at: string | null
           id: string
+          invitation_code: string | null
           invitation_token: string | null
+          invitation_type: string | null
           invited_at: string
           inviter_id: string
           name: string | null
           registered_user_id: string | null
+          sms_sent: boolean | null
           status: string
           updated_at: string
         }
         Insert: {
           created_at?: string
           email: string
+          email_sent?: boolean | null
+          expires_at?: string | null
           id?: string
+          invitation_code?: string | null
           invitation_token?: string | null
+          invitation_type?: string | null
           invited_at?: string
           inviter_id: string
           name?: string | null
           registered_user_id?: string | null
+          sms_sent?: boolean | null
           status?: string
           updated_at?: string
         }
         Update: {
           created_at?: string
           email?: string
+          email_sent?: boolean | null
+          expires_at?: string | null
           id?: string
+          invitation_code?: string | null
           invitation_token?: string | null
+          invitation_type?: string | null
           invited_at?: string
           inviter_id?: string
           name?: string | null
           registered_user_id?: string | null
+          sms_sent?: boolean | null
           status?: string
           updated_at?: string
         }
@@ -2084,6 +2170,10 @@ export type Database = {
       create_default_notification_preferences: {
         Args: { user_uuid: string }
         Returns: undefined
+      }
+      generate_invitation_code: {
+        Args: Record<PropertyKey, never>
+        Returns: string
       }
       get_all_permissions: {
         Args: Record<PropertyKey, never>

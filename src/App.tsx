@@ -47,6 +47,8 @@ import ResourcesPage from "./pages/ResourcesPage";
 import PricingPage from "./pages/PricingPage";
 import HelpPage from "./pages/HelpPage";
 import HelpManagementPage from "./pages/admin/HelpManagementPage";
+import { ClientRegistration } from "./pages/ClientRegistration";
+import { RegistrationSuccess } from "./pages/RegistrationSuccess";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 
 const queryClient = new QueryClient();
@@ -129,6 +131,10 @@ function App() {
                 <Route path="search-history" element={<SearchHistoryPage />} />
                 <Route path="help" element={<HelpManagementPage />} />
               </Route>
+              
+              {/* Client registration routes */}
+              <Route path="/client-registration" element={<ClientRegistration />} />
+              <Route path="/registration-success" element={<RegistrationSuccess />} />
               
               {/* 404 route */}
               <Route path="*" element={<NotFound />} />
