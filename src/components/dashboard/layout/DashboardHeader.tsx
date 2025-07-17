@@ -43,7 +43,6 @@ const DashboardHeader: React.FC = () => {
           { title: "Properties", url: "/dashboard/realtor/properties", icon: Building },
           { title: "Marketing", url: "/dashboard/realtor/marketing", icon: Megaphone },
           { title: "Analytics", url: "/dashboard/realtor/analytics", icon: BarChart3 },
-          { title: "Bulk Search", url: "/dashboard/bulk-search", icon: FileSearch },
         ];
       
       case 'mortgage_professional':
@@ -51,7 +50,6 @@ const DashboardHeader: React.FC = () => {
         return [
           { title: "Dashboard", url: "/dashboard/mortgage", icon: Home },
           { title: "Clients", url: "/dashboard/mortgage/clients", icon: Users },
-          { title: "Bulk Search", url: "/dashboard/bulk-search", icon: FileSearch },
           { title: "Marketing", url: "/dashboard/lmi-marketing", icon: Target },
           { title: "Analytics", url: "/dashboard/mortgage/analytics", icon: BarChart3 },
         ];
