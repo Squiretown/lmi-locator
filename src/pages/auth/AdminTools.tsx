@@ -3,8 +3,9 @@ import React from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { UserManagement, ApiKeys, SystemLogs, DatabaseTools } from "@/components/admin/tools";
-import { Database, FileText, Key, Users, Trash2 } from "lucide-react";
+import { Database, FileText, Key, Users, Trash2, TestTube } from "lucide-react";
 import RemoveAllUsers from '@/components/admin/RemoveAllUsers';
+import ConnectionTester from '@/components/development/ConnectionTester';
 
 const AdminTools: React.FC = () => {
   return (
@@ -18,11 +19,11 @@ const AdminTools: React.FC = () => {
         </CardHeader>
         
         <CardContent>
-          <Tabs defaultValue="users">
-            <TabsList className="mb-4">
+          <Tabs defaultValue="users" className="w-full">
+            <TabsList className="grid w-full grid-cols-6 mb-4">
               <TabsTrigger value="users" className="flex items-center gap-1">
                 <Users className="h-4 w-4" />
-                User Management
+                Users
               </TabsTrigger>
               <TabsTrigger value="api-keys" className="flex items-center gap-1">
                 <Key className="h-4 w-4" />
@@ -30,15 +31,19 @@ const AdminTools: React.FC = () => {
               </TabsTrigger>
               <TabsTrigger value="logs" className="flex items-center gap-1">
                 <FileText className="h-4 w-4" />
-                System Logs
+                Logs
               </TabsTrigger>
               <TabsTrigger value="database" className="flex items-center gap-1">
                 <Database className="h-4 w-4" />
-                Database Tools
+                Database
+              </TabsTrigger>
+              <TabsTrigger value="testing" className="flex items-center gap-1">
+                <TestTube className="h-4 w-4" />
+                Testing
               </TabsTrigger>
               <TabsTrigger value="danger-zone" className="flex items-center gap-1 text-red-600">
                 <Trash2 className="h-4 w-4" />
-                Danger Zone
+                Danger
               </TabsTrigger>
             </TabsList>
             
@@ -60,6 +65,11 @@ const AdminTools: React.FC = () => {
             {/* Database Tools Tab */}
             <TabsContent value="database">
               <DatabaseTools />
+            </TabsContent>
+            
+            {/* Testing Tab */}
+            <TabsContent value="testing">
+              <ConnectionTester />
             </TabsContent>
             
             {/* Danger Zone Tab */}
