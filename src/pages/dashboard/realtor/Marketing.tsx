@@ -1,8 +1,6 @@
 import React from 'react';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Megaphone, Users, TrendingUp } from 'lucide-react';
+import { Rocket } from 'lucide-react';
 
 const RealtorMarketing: React.FC = () => {
   return (
@@ -16,94 +14,26 @@ const RealtorMarketing: React.FC = () => {
         </p>
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Active Campaigns
-            </CardTitle>
-            <Megaphone className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">3</div>
-            <p className="text-xs text-muted-foreground">
-              +1 from last month
+      <Card className="text-center py-12">
+        <CardContent className="space-y-6">
+          <div className="mx-auto w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
+            <Rocket className="h-8 w-8 text-primary" />
+          </div>
+          
+          <div className="space-y-2">
+            <CardTitle className="text-2xl">Marketing Campaigns Coming Soon</CardTitle>
+            <CardDescription className="text-lg max-w-md mx-auto">
+              We're building powerful marketing tools to help you reach more clients and grow your business.
+            </CardDescription>
+          </div>
+          
+          <div className="space-y-1">
+            <p className="text-sm text-muted-foreground">
+              This feature is currently under development
             </p>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Total Reach
-            </CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">2,847</div>
-            <p className="text-xs text-muted-foreground">
-              +12% from last month
+            <p className="text-sm text-muted-foreground">
+              Check back soon for updates!
             </p>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Conversion Rate
-            </CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">8.5%</div>
-            <p className="text-xs text-muted-foreground">
-              +2.1% from last month
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-      
-      <Card>
-        <CardHeader>
-          <CardTitle>Recent Campaigns</CardTitle>
-          <CardDescription>
-            Your latest marketing campaigns and their performance
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="font-medium">Luxury Home Showcase</p>
-                <p className="text-sm text-muted-foreground">Email campaign • Started 3 days ago</p>
-              </div>
-              <div className="flex items-center space-x-2">
-                <Badge>Active</Badge>
-                <Button variant="outline" size="sm">View</Button>
-              </div>
-            </div>
-            
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="font-medium">First-Time Buyer Workshop</p>
-                <p className="text-sm text-muted-foreground">Social media • Started 1 week ago</p>
-              </div>
-              <div className="flex items-center space-x-2">
-                <Badge variant="secondary">Completed</Badge>
-                <Button variant="outline" size="sm">View</Button>
-              </div>
-            </div>
-            
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="font-medium">Spring Market Update</p>
-                <p className="text-sm text-muted-foreground">Newsletter • Started 2 weeks ago</p>
-              </div>
-              <div className="flex items-center space-x-2">
-                <Badge variant="secondary">Completed</Badge>
-                <Button variant="outline" size="sm">View</Button>
-              </div>
-            </div>
           </div>
         </CardContent>
       </Card>
