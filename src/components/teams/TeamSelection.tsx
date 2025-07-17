@@ -31,7 +31,7 @@ export const TeamSelection: React.FC<TeamSelectionProps> = ({
         <SelectValue placeholder={placeholder} />
       </SelectTrigger>
       <SelectContent>
-        <SelectItem value="">No realtor assigned</SelectItem>
+        <SelectItem value="none">No realtor assigned</SelectItem>
         {teamMembers.map((member) => (
           <SelectItem key={member.realtor_id} value={member.realtor_id}>
             {member.realtor?.name} - {member.realtor?.company}
