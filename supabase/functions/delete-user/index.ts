@@ -46,10 +46,12 @@ serve(async (req) => {
       throw new Error("Invalid authorization token");
     }
 
-    // Check if user is admin
-    const { data: isAdmin } = await supabase.rpc('user_is_admin');
+    // Check if user is admin from JWT metadata
+    const userType = user.user_metadata?.user_type;
+    console.log(`User ${user.id} has user_type: ${userType}`);
     
-    if (!isAdmin) {
+    if (userType !== 'admin') {
+      console.error(`Access denied: User ${user.id} is not an admin (user_type: ${userType})`);
       throw new Error("Administrative privileges required to delete users");
     }
 

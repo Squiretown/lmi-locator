@@ -122,6 +122,67 @@ export const useAdminErrorLogs = () => {
     }
   };
 
+  const resolveBulkErrors = async (logIds: string[]) => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error('No active session');
+      }
+
+      const { error: updateError } = await supabase
+        .from('admin_error_logs')
+        .update({
+          resolved: true,
+          resolved_at: new Date().toISOString(),
+          resolved_by: session.user.id
+        })
+        .in('id', logIds);
+
+      if (updateError) {
+        throw updateError;
+      }
+
+      toast.success(`${logIds.length} errors marked as resolved`);
+      await fetchLogs();
+    } catch (err) {
+      console.error('Error resolving bulk logs:', err);
+      const errorMessage = err instanceof Error ? err.message : 'Failed to resolve errors';
+      toast.error(errorMessage);
+    }
+  };
+
+  const retryFailedOperation = async (log: AdminErrorLog) => {
+    try {
+      if (log.operation === 'delete_user' && log.target_user_id) {
+        // Retry user deletion
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+          throw new Error('No active session');
+        }
+
+        const { data, error } = await supabase.functions.invoke('delete-user', {
+          body: { userId: log.target_user_id },
+          headers: {
+            Authorization: `Bearer ${session.access_token}`
+          }
+        });
+
+        if (error || !data?.success) {
+          throw new Error(data?.error || 'Retry failed');
+        }
+
+        toast.success('User deletion retry successful');
+        await resolveError(log.id);
+      } else {
+        toast.info('Retry not available for this operation type');
+      }
+    } catch (err) {
+      console.error('Error retrying operation:', err);
+      const errorMessage = err instanceof Error ? err.message : 'Failed to retry operation';
+      toast.error(errorMessage);
+    }
+  };
+
   useEffect(() => {
     fetchLogs();
   }, []);
@@ -133,6 +194,8 @@ export const useAdminErrorLogs = () => {
     fetchLogs,
     resolveError,
     unresolveError,
-    clearResolvedLogs
+    clearResolvedLogs,
+    resolveBulkErrors,
+    retryFailedOperation
   };
 };
