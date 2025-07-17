@@ -22,6 +22,7 @@ const MortgageClients: React.FC = () => {
     deleteClient,
     isCreating,
     isDeleting,
+    refetch,
   } = useClientManagement();
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -160,7 +161,7 @@ const MortgageClients: React.FC = () => {
                 onEdit={handleEdit}
                 onDelete={handleDelete}
                 onView={handleView}
-                onRefresh={() => window.location.reload()}
+                onRefresh={() => refetch()}
                 isLoading={isLoadingClients}
               />
             </CardContent>

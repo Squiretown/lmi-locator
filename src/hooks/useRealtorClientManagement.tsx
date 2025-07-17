@@ -45,7 +45,7 @@ export function useRealtorClientManagement() {
   const [selectedClient, setSelectedClient] = useState<ClientProfile | null>(null);
 
   // Fetch client profiles for realtor
-  const { data: clients = [], isLoading: isLoadingClients } = useQuery({
+  const { data: clients = [], isLoading: isLoadingClients, refetch } = useQuery({
     queryKey: ['realtor-client-profiles'],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -213,5 +213,6 @@ export function useRealtorClientManagement() {
     isCreating: createClientMutation.isPending,
     isUpdating: updateClientMutation.isPending,
     isDeleting: deleteClientMutation.isPending,
+    refetch,
   };
 }

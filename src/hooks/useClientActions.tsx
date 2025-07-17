@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -40,6 +41,7 @@ export interface ClientCommunication {
 
 export const useClientActions = () => {
   const [isLoading, setIsLoading] = useState(false);
+  const queryClient = useQueryClient();
 
   const logActivity = async (
     clientId: string,
@@ -103,6 +105,10 @@ export const useClientActions = () => {
         `Client status changed to ${newStatus}${reason ? ` - ${reason}` : ''}`,
         { old_status: 'active', new_status: newStatus, reason }
       );
+
+      // Invalidate React Query cache to update UI without page refresh
+      await queryClient.invalidateQueries({ queryKey: ['client-profiles'] });
+      await queryClient.invalidateQueries({ queryKey: ['realtor-client-profiles'] });
 
       toast.success(`Client status updated to ${newStatus}`);
     } catch (error: any) {

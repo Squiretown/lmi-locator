@@ -21,6 +21,7 @@ export const ClientList = () => {
     deleteClient,
     isCreating,
     isDeleting,
+    refetch,
   } = useRealtorClientManagement();
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -149,7 +150,7 @@ export const ClientList = () => {
                 onEdit={handleEdit}
                 onDelete={handleDelete}
                 onView={handleView}
-                onRefresh={() => window.location.reload()}
+                onRefresh={() => refetch()}
                 isLoading={isLoadingClients}
               />
             </CardContent>
