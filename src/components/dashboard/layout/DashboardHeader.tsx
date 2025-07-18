@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useAuth } from "@/hooks/useAuth";
 import { ProfileMenu } from "@/components/auth/ProfileMenu";
@@ -32,8 +33,6 @@ const DashboardHeader: React.FC = () => {
       case 'client':
         return [
           { title: "Dashboard", url: "/dashboard/client", icon: Home },
-          { title: "Search", url: "/dashboard/client/search", icon: Search },
-          { title: "Saved Properties", url: "/dashboard/client/saved", icon: Heart },
         ];
       
       case 'realtor':
@@ -90,21 +89,23 @@ const DashboardHeader: React.FC = () => {
               {getPortalTitle()}
             </span>
           </NavLink>
-          <nav className="flex items-center space-x-6 text-sm font-medium">
-            {navigationItems.map((item) => (
-              <NavLink
-                key={item.url}
-                to={item.url}
-                className={cn(
-                  "transition-colors hover:text-foreground/80 flex items-center space-x-2",
-                  isActiveRoute(item.url) ? "text-foreground" : "text-foreground/60"
-                )}
-              >
-                <item.icon className="h-4 w-4" />
-                <span>{item.title}</span>
-              </NavLink>
-            ))}
-          </nav>
+          {navigationItems.length > 1 && (
+            <nav className="flex items-center space-x-6 text-sm font-medium">
+              {navigationItems.map((item) => (
+                <NavLink
+                  key={item.url}
+                  to={item.url}
+                  className={cn(
+                    "transition-colors hover:text-foreground/80 flex items-center space-x-2",
+                    isActiveRoute(item.url) ? "text-foreground" : "text-foreground/60"
+                  )}
+                >
+                  <item.icon className="h-4 w-4" />
+                  <span>{item.title}</span>
+                </NavLink>
+              ))}
+            </nav>
+          )}
         </div>
         
         {/* Mobile navigation */}
@@ -125,24 +126,26 @@ const DashboardHeader: React.FC = () => {
         </div>
       </div>
       
-      {/* Mobile navigation menu */}
-      <div className="border-t md:hidden">
-        <nav className="container flex items-center space-x-4 py-2 overflow-x-auto">
-          {navigationItems.map((item) => (
-            <NavLink
-              key={item.url}
-              to={item.url}
-              className={cn(
-                "flex flex-col items-center space-y-1 px-3 py-2 text-xs font-medium transition-colors hover:text-foreground/80 whitespace-nowrap",
-                isActiveRoute(item.url) ? "text-foreground" : "text-foreground/60"
-              )}
-            >
-              <item.icon className="h-4 w-4" />
-              <span>{item.title}</span>
-            </NavLink>
-          ))}
-        </nav>
-      </div>
+      {/* Mobile navigation menu - only show if there are multiple nav items */}
+      {navigationItems.length > 1 && (
+        <div className="border-t md:hidden">
+          <nav className="container flex items-center space-x-4 py-2 overflow-x-auto">
+            {navigationItems.map((item) => (
+              <NavLink
+                key={item.url}
+                to={item.url}
+                className={cn(
+                  "flex flex-col items-center space-y-1 px-3 py-2 text-xs font-medium transition-colors hover:text-foreground/80 whitespace-nowrap",
+                  isActiveRoute(item.url) ? "text-foreground" : "text-foreground/60"
+                )}
+              >
+                <item.icon className="h-4 w-4" />
+                <span>{item.title}</span>
+              </NavLink>
+            ))}
+          </nav>
+        </div>
+      )}
     </header>
   );
 };

@@ -3,11 +3,18 @@ import React, { useState } from 'react';
 import PropertyChecker from '@/components/PropertyChecker';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { RecentSearches } from '@/components/dashboard/mortgage/RecentSearches';
-import { ActivityFeed } from '@/components/dashboard/ActivityFeed';
+import { ClientSavedProperties } from './ClientSavedProperties';
 import { YourTeamCard } from './YourTeamCard';
 
 export const ClientDashboardContent = () => {
   const [activeTab, setActiveTab] = useState('search');
+
+  const handleAddressSelect = (address: string) => {
+    // Switch to search tab and let PropertyChecker handle the address
+    setActiveTab('search');
+    // The PropertyChecker component will need to handle pre-filling the address
+    // This could be enhanced later with a prop or context
+  };
 
   return (
     <div className="space-y-6">
@@ -17,7 +24,7 @@ export const ClientDashboardContent = () => {
             <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="search">Property Search</TabsTrigger>
               <TabsTrigger value="recent">Recent Searches</TabsTrigger>
-              <TabsTrigger value="activity">Activity</TabsTrigger>
+              <TabsTrigger value="saved">Saved Properties</TabsTrigger>
             </TabsList>
             
             <TabsContent value="search" className="mt-6">
@@ -28,8 +35,8 @@ export const ClientDashboardContent = () => {
               <RecentSearches />
             </TabsContent>
             
-            <TabsContent value="activity" className="mt-6">
-              <ActivityFeed />
+            <TabsContent value="saved" className="mt-6">
+              <ClientSavedProperties onAddressSelect={handleAddressSelect} />
             </TabsContent>
           </Tabs>
         </div>
