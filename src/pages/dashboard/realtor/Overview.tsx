@@ -1,8 +1,11 @@
 import React from 'react';
 import { StatCards } from '@/components/dashboard/realtor/StatCards';
-import { PropertyActivityChart } from '@/components/dashboard/realtor/PropertyActivityChart';
-import { ClientList } from '@/components/dashboard/realtor/ClientList';
+import { PropertyChecker } from '@/components/dashboard/realtor/PropertyChecker';
 import { TeamContent } from '@/components/dashboard/client/TeamContent';
+import { LMIListings } from '@/components/dashboard/realtor/LMIListings';
+import { InviteContact } from '@/components/dashboard/realtor/InviteContact';
+import { RecentActivity } from '@/components/dashboard/realtor/RecentActivity';
+import { RecentContacts } from '@/components/dashboard/realtor/RecentContacts';
 
 const RealtorOverview: React.FC = () => {
   return (
@@ -18,14 +21,20 @@ const RealtorOverview: React.FC = () => {
       
       <StatCards />
       
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-        <PropertyActivityChart />
-        <div className="md:col-span-1">
-          <TeamContent />
-        </div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        <PropertyChecker />
+        <TeamContent />
       </div>
       
-      <ClientList />
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        <LMIListings />
+        <InviteContact />
+      </div>
+      
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <RecentActivity />
+        <RecentContacts />
+      </div>
     </div>
   );
 };

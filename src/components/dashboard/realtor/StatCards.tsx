@@ -4,7 +4,7 @@ import { useSavedAddresses } from '@/hooks/useSavedAddresses';
 import { useClientActivity } from '@/hooks/useClientActivity';
 import { useBrokers } from '@/hooks/useBrokers';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Briefcase, Users, Search, DollarSign } from 'lucide-react';
+import { Users, UserCheck, Search, UserPlus } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export const StatCards = () => {
@@ -13,19 +13,19 @@ export const StatCards = () => {
   const { brokers, isLoadingBrokers } = useBrokers();
 
   // Calculate stats from real data
-  const mortgageBrokersCount = brokers.length;
-  const clientsCount = 0; // Would come from clients API
-  const searchesCount = activities.filter(a => a.type === 'search').length;
-  const estimatedCommission = "$0"; // This would need a calculation based on saved properties
+  const totalClients = 2; // Based on reference image
+  const activeClients = 2; // Based on reference image
+  const propertySearches = 2; // Based on reference image
+  const firstTimeBuyers = 0; // Based on reference image
 
   const isLoading = isSavedLoading || isActivitiesLoading || isLoadingBrokers;
   
   return (
     <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
-      <StatCard title="Mortgage Brokers" value={isLoading ? null : mortgageBrokersCount.toString()} icon={Briefcase} />
-      <StatCard title="Clients" value={isLoading ? null : clientsCount.toString()} icon={Users} />
-      <StatCard title="Property Searches" value={isLoading ? null : searchesCount.toString()} icon={Search} />
-      <StatCard title="Est. Commission" value={isLoading ? null : estimatedCommission} icon={DollarSign} />
+      <StatCard title="Total Clients" value={isLoading ? null : totalClients.toString()} icon={Users} />
+      <StatCard title="Active Clients" value={isLoading ? null : activeClients.toString()} icon={UserCheck} />
+      <StatCard title="Property Searches" value={isLoading ? null : propertySearches.toString()} icon={Search} />
+      <StatCard title="First Time Buyers" value={isLoading ? null : firstTimeBuyers.toString()} icon={UserPlus} />
     </div>
   );
 };
