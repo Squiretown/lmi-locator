@@ -2,6 +2,7 @@
 import React from 'react';
 import { useSavedAddresses } from '@/hooks/useSavedAddresses';
 import { useClientActivity } from '@/hooks/useClientActivity';
+import { useProfessionalLmiStats } from '@/hooks/useProfessionalLmiStats';
 import { Card } from '@/components/ui/card';
 import { Users, Home, FileText, Users2 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -10,14 +11,15 @@ export const DashboardStats: React.FC = () => {
   // Use real data from hooks instead of static values
   const { savedAddresses, isLoading: isSavedLoading } = useSavedAddresses();
   const { activities, isLoading: isActivitiesLoading } = useClientActivity();
+  const { stats: lmiStats, isLoading: isLmiLoading } = useProfessionalLmiStats();
   
   // Calculate stats from real data
   const totalClients = 0; // This would come from a clients API if available
-  const propertiesChecked = activities.filter(a => a.type === 'search').length;
-  const lmiEligibleProperties = savedAddresses.filter(property => property.isLmiEligible).length;
+  const propertiesChecked = activities.filter(a => a.type === 'search').length + lmiStats.totalSearches;
+  const lmiEligibleProperties = lmiStats.lmiEligibleSearches;
   const realtorPartnerships = 0; // This would come from a partnerships API if available
   
-  const isLoading = isSavedLoading || isActivitiesLoading;
+  const isLoading = isSavedLoading || isActivitiesLoading || isLmiLoading;
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-4 gap-4">

@@ -2,14 +2,47 @@
 import React from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend } from 'recharts';
+import { useProfessionalLmiStats } from '@/hooks/useProfessionalLmiStats';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export const LmiEligibilityChart: React.FC = () => {
+  const { stats, isLoading } = useProfessionalLmiStats();
+  
   const propertyData = [
-    { name: 'LMI Eligible', value: 14 },
-    { name: 'Not Eligible', value: 6 },
+    { name: 'LMI Eligible', value: stats.lmiEligibleSearches },
+    { name: 'Not Eligible', value: stats.totalSearches - stats.lmiEligibleSearches },
   ];
   
   const COLORS = ['#4ade80', '#f87171'];
+
+  if (isLoading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>LMI Eligibility</CardTitle>
+        </CardHeader>
+        <CardContent className="flex justify-center">
+          <Skeleton className="h-64 w-full" />
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (stats.totalSearches === 0) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>LMI Eligibility</CardTitle>
+        </CardHeader>
+        <CardContent className="flex justify-center items-center h-64">
+          <p className="text-muted-foreground text-center">
+            No property searches found yet.<br />
+            Start searching for properties to see LMI eligibility data.
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   const renderActiveShape = (props: any) => {
     const { cx, cy, innerRadius, outerRadius, startAngle, endAngle, fill, payload, percent, value } = props;
