@@ -17,10 +17,12 @@ export const SavedProperties: React.FC<SavedPropertiesProps> = ({ onAddressSelec
   const { savedAddresses, isLoading, removeAddress, refreshAddresses } = useSavedAddresses();
   const { user } = useAuth();
 
-  console.log('SavedProperties render:', { 
+  console.log('📋 SavedProperties render:', { 
     addressCount: savedAddresses.length, 
     isLoading, 
-    hasUser: !!user 
+    hasUser: !!user,
+    userId: user?.id,
+    addresses: savedAddresses
   });
 
   useEffect(() => {

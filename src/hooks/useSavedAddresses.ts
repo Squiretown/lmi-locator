@@ -65,73 +65,96 @@ export function useSavedAddresses() {
   }, [user]);
 
   const saveAddress = async (address: string, isLmiEligible: boolean = false): Promise<boolean> => {
-    console.log('saveAddress called:', { address, isLmiEligible, hasUser: !!user });
+    console.log('💾 SAVE ADDRESS CALLED:', { 
+      address, 
+      isLmiEligible, 
+      hasUser: !!user,
+      userId: user?.id,
+      userEmail: user?.email 
+    });
+    
+    if (!address || !address.trim()) {
+      console.error('❌ Invalid address provided');
+      return false;
+    }
     
     if (!user) {
-      console.log('Saving to localStorage for unauthenticated user');
+      console.log('📱 Saving to localStorage for unauthenticated user');
       // For unauthenticated users, use localStorage
       const newAddress: SavedAddress = {
         id: crypto.randomUUID(),
-        address,
+        address: address.trim(),
         isLmiEligible,
         createdAt: new Date().toISOString(),
       };
       
       const existing = [...savedAddresses];
       // Check for duplicates
-      if (existing.some(addr => addr.address === address)) {
-        console.log('Duplicate address found in localStorage');
+      if (existing.some(addr => addr.address.toLowerCase() === address.toLowerCase().trim())) {
+        console.log('⚠️ Duplicate address found in localStorage');
         return false;
       }
       
       const updated = [newAddress, ...existing];
       setSavedAddresses(updated);
       localStorage.setItem('savedAddresses', JSON.stringify(updated));
-      console.log('Saved to localStorage successfully');
+      console.log('✅ Saved to localStorage successfully');
       return true;
     }
 
-    console.log('Saving to Supabase for user:', user.id);
+    console.log('🔄 Saving to Supabase for user:', user.id);
     
     try {
       // Check for duplicates first
-      console.log('Checking for existing address...');
+      console.log('🔍 Checking for existing address...');
       const { data: existing, error: checkError } = await supabase
         .from('saved_addresses')
-        .select('id')
-        .eq('address', address)
+        .select('id, address')
+        .eq('address', address.trim())
         .eq('user_id', user.id);
 
+      console.log('🔍 Duplicate check result:', { existing, checkError });
+
       if (checkError) {
-        console.error('Error checking for duplicates:', checkError);
+        console.error('❌ Error checking for duplicates:', checkError);
         throw checkError;
       }
 
       if (existing && existing.length > 0) {
-        console.log('Duplicate address found in database');
+        console.log('⚠️ Duplicate address found in database:', existing);
         return false; // Already exists
       }
 
-      console.log('Inserting new address into database...');
+      console.log('📝 Inserting new address into database...');
+      const insertPayload = {
+        user_id: user.id,
+        address: address.trim(),
+        is_lmi_eligible: isLmiEligible
+      };
+      console.log('📝 Insert payload:', insertPayload);
+
       const { data: insertData, error: insertError } = await supabase
         .from('saved_addresses')
-        .insert({
-          user_id: user.id,
-          address,
-          is_lmi_eligible: isLmiEligible
-        })
-        .select();
+        .insert(insertPayload)
+        .select('*');
+
+      console.log('📝 Insert result:', { insertData, insertError });
 
       if (insertError) {
-        console.error('Insert error:', insertError);
+        console.error('❌ Insert error:', insertError);
         throw insertError;
       }
 
-      console.log('Insert successful:', insertData);
+      if (!insertData || insertData.length === 0) {
+        console.error('❌ No data returned from insert operation');
+        throw new Error('No data returned from insert');
+      }
+
+      console.log('✅ Insert successful:', insertData);
       await fetchAddresses(); // Refresh the list
       return true;
     } catch (error) {
-      console.error('Error saving address to database:', error);
+      console.error('❌ Error saving address to database:', error);
       return false;
     }
   };
