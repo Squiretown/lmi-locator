@@ -1,10 +1,11 @@
+
 import React from 'react';
 import { ClientSavedProperties } from '@/components/dashboard/client/ClientSavedProperties';
 
 const SavedProperties: React.FC = () => {
   const handleAddressSelect = (address: string) => {
-    // Navigate to search page with address pre-filled
-    window.location.href = `/dashboard/client/search?address=${encodeURIComponent(address)}`;
+    // Navigate back to main client dashboard
+    window.location.href = '/dashboard/client';
   };
 
   return (
