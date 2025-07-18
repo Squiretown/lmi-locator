@@ -41,20 +41,30 @@ const PropertyCheckerContent: React.FC = () => {
   const handleCloseNotification = () => {
     console.log('Closing notification in PropertyCheckerContent, user logged in:', !!user);
     
-    // Reset all states to initial state
+    // Don't reset the search data - keep results visible
+    // Only clear any error state
+    setError(null);
+    
+    console.log('Notification closed - search results remain visible');
+  };
+
+  const handleNewSearch = () => {
+    console.log('Starting new search - resetting all states');
+    
+    // Reset all states for a fresh search
     setCurrentData(null);
     setError(null);
     resetSearch();
     resetProcess();
     
-    console.log('LMI search refreshed - ready for new search');
+    console.log('Ready for new search');
   };
 
   return (
     <PropertyCheckerLayout
       currentData={currentData}
       error={error}
-      onReset={resetProcess}
+      onReset={handleNewSearch}
       onClose={handleCloseNotification}
     />
   );
