@@ -1891,6 +1891,33 @@ export type Database = {
         }
         Relationships: []
       }
+      saved_addresses: {
+        Row: {
+          address: string
+          created_at: string
+          id: string
+          is_lmi_eligible: boolean
+          notes: string | null
+          user_id: string
+        }
+        Insert: {
+          address: string
+          created_at?: string
+          id?: string
+          is_lmi_eligible?: boolean
+          notes?: string | null
+          user_id: string
+        }
+        Update: {
+          address?: string
+          created_at?: string
+          id?: string
+          is_lmi_eligible?: boolean
+          notes?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       saved_properties: {
         Row: {
           created_at: string

@@ -1,5 +1,5 @@
 
-export { useSavedAddresses } from './useSavedAddresses';
+export { useSavedAddresses } from '../useSavedAddresses';
 export { useClientActivity } from '@/hooks/useClientActivity';
 export { usePropertySearch } from '@/hooks/usePropertySearch';
 export { usePropertyWorkflow } from '@/hooks/usePropertyWorkflow';

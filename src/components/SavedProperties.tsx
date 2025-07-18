@@ -1,49 +1,32 @@
 
-import React, { useState, useEffect } from 'react';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import React, { useEffect } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { MapPin, X, CheckCircle, Calendar, RefreshCw } from 'lucide-react';
-import { useSavedAddresses, type SavedAddress } from '@/hooks/useSavedAddresses';
-import { useAuth } from '@/hooks/useAuth';
 import { Badge } from '@/components/ui/badge';
+import { MapPin, Trash2, RotateCcw, Plus } from 'lucide-react';
+import { formatDistanceToNow } from 'date-fns';
+import { useSavedAddresses } from '@/hooks/useSavedAddresses';
+import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 
 interface SavedPropertiesProps {
   onAddressSelect: (address: string) => void;
 }
 
-const SavedProperties: React.FC<SavedPropertiesProps> = ({ onAddressSelect }) => {
-  const { savedAddresses, removeAddress, isLoading, refreshAddresses } = useSavedAddresses();
+export const SavedProperties: React.FC<SavedPropertiesProps> = ({ onAddressSelect }) => {
+  const { savedAddresses, isLoading, removeAddress, refreshAddresses } = useSavedAddresses();
   const { user } = useAuth();
-  const [refreshing, setRefreshing] = useState(false);
 
-  // Refresh addresses when component mounts or user changes
   useEffect(() => {
-    // Only refresh if we have a user or auth is completely initialized
-    if (user || user === null) {
-      refreshAddresses().catch(err => {
-        console.error("Error refreshing addresses:", err);
-      });
-    }
-    
-    // Also set up a refresh interval (every 30 seconds) if auth is stable
-    const intervalId = setInterval(() => {
-      if (user || user === null) {
-        refreshAddresses().catch(err => {
-          console.error("Error in refresh interval:", err);
-        });
-      }
-    }, 30000);
-    
-    return () => clearInterval(intervalId);
+    refreshAddresses();
   }, [user, refreshAddresses]);
 
   const handleRemoveAddress = async (id: string) => {
     const success = await removeAddress(id);
     if (success) {
-      toast.success('Address removed from your collection');
-      // Force refresh after removal to ensure counts are updated
-      await refreshAddresses();
+      toast.success('Property removed from saved list');
+    } else {
+      toast.error('Failed to remove property');
     }
   };
 
@@ -52,120 +35,135 @@ const SavedProperties: React.FC<SavedPropertiesProps> = ({ onAddressSelect }) =>
   };
 
   const handleRefresh = async () => {
-    setRefreshing(true);
     await refreshAddresses();
-    setRefreshing(false);
     toast.success('Saved properties refreshed');
   };
 
-  // Get the count of LMI eligible properties
-  const lmiEligibleCount = savedAddresses.filter(a => a.isLmiEligible).length;
+  const lmiEligibleCount = savedAddresses.filter(addr => addr.isLmiEligible).length;
 
-  console.log("Rendering SavedProperties with", savedAddresses.length, "saved addresses");
-
-  // No saved properties state
-  if (savedAddresses.length === 0 && !isLoading) {
+  if (isLoading) {
     return (
-      <Card className="shadow-sm border border-gray-200 mb-6">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-lg flex justify-between items-center">
-            <span>Your Saved Properties</span>
-            <Badge variant="outline" className="ml-2 text-xs">0 Saved</Badge>
-          </CardTitle>
+      <Card>
+        <CardContent className="p-6">
+          <div className="animate-pulse space-y-4">
+            <div className="h-4 bg-muted rounded w-3/4"></div>
+            <div className="h-4 bg-muted rounded w-1/2"></div>
+            <div className="h-4 bg-muted rounded w-2/3"></div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (savedAddresses.length === 0) {
+    return (
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <MapPin className="w-5 h-5" />
+              Saved Properties
+            </CardTitle>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleRefresh}
+              className="gap-2"
+            >
+              <RotateCcw className="w-4 h-4" />
+              Refresh
+            </Button>
+          </div>
         </CardHeader>
-        <CardContent className="text-center py-8 text-muted-foreground">
-          <p>No properties saved yet</p>
-          <p className="text-sm mt-2">Properties you've checked for eligibility will appear here</p>
+        <CardContent>
+          <div className="text-center py-8">
+            <MapPin className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+            <h3 className="text-lg font-semibold mb-2">No properties saved yet</h3>
+            <p className="text-muted-foreground mb-4">
+              Save properties from your LMI status checks to view them here
+            </p>
+            <Button onClick={() => onAddressSelect('')} className="gap-2">
+              <Plus className="w-4 h-4" />
+              Check Another Property
+            </Button>
+          </div>
         </CardContent>
       </Card>
     );
   }
 
   return (
-    <Card className="shadow-sm border border-gray-200 mb-6">
-      <CardHeader className="pb-2">
-        <CardTitle className="text-lg flex justify-between items-center">
-          <span>Your Saved Properties</span>
-          <div className="flex items-center gap-2">
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="h-6 w-6" 
+    <div className="space-y-4">
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <MapPin className="w-5 h-5" />
+              Saved Properties ({savedAddresses.length})
+            </CardTitle>
+            <Button
+              variant="outline"
+              size="sm"
               onClick={handleRefresh}
-              disabled={refreshing || isLoading}
+              className="gap-2"
             >
-              <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
-              <span className="sr-only">Refresh</span>
+              <RotateCcw className="w-4 h-4" />
+              Refresh
             </Button>
-            <Badge variant="outline" className="text-xs">
-              {savedAddresses.length} Saved
-            </Badge>
-            {lmiEligibleCount > 0 && (
-              <Badge variant="secondary" className="text-xs bg-green-100 text-green-800 hover:bg-green-200">
-                {lmiEligibleCount} LMI Eligible
-              </Badge>
-            )}
           </div>
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="pt-4">
-        {isLoading ? (
-          <div className="py-4 text-center text-muted-foreground">Loading saved properties...</div>
-        ) : (
-          <ul className="space-y-4">
-            {savedAddresses.map((item) => (
-              <li key={item.id} className="border-b pb-4 last:border-0 last:pb-0">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-start gap-3">
-                    <div className={`p-2 rounded-full ${item.isLmiEligible ? 'bg-green-100' : 'bg-red-100'}`}>
-                      <MapPin className={`h-4 w-4 ${item.isLmiEligible ? 'text-green-600' : 'text-red-600'}`} />
-                    </div>
-                    <div>
-                      <Button 
-                        variant="link" 
-                        className="h-auto p-0 justify-start text-sm font-medium text-left hover:no-underline"
-                        onClick={() => selectAddress(item.address)}
-                      >
-                        {item.address}
-                      </Button>
-                      <div className="flex items-center mt-1">
-                        {item.isLmiEligible ? (
-                          <Badge className="bg-green-100 text-green-800 hover:bg-green-200 text-xs">
-                            <CheckCircle className="h-3 w-3 mr-1" /> LMI Eligible
-                          </Badge>
-                        ) : (
-                          <Badge variant="outline" className="text-xs border-red-200 text-red-600">
-                            Not Eligible
-                          </Badge>
-                        )}
-                        
-                        <div className="text-xs text-muted-foreground ml-3 flex items-center">
-                          <Calendar className="h-3 w-3 mr-1" />
-                          {new Date(item.createdAt).toLocaleDateString()}
-                        </div>
-                      </div>
-                    </div>
+          {lmiEligibleCount > 0 && (
+            <p className="text-sm text-muted-foreground">
+              {lmiEligibleCount} of {savedAddresses.length} properties are LMI eligible
+            </p>
+          )}
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {savedAddresses.map((savedAddress) => (
+            <div
+              key={savedAddress.id}
+              className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors"
+            >
+              <div className="flex-1">
+                <button
+                  onClick={() => selectAddress(savedAddress.address)}
+                  className="text-left w-full group"
+                >
+                  <p className="font-medium group-hover:text-primary transition-colors">
+                    {savedAddress.address}
+                  </p>
+                  <div className="flex items-center gap-2 mt-1">
+                    <Badge 
+                      variant={savedAddress.isLmiEligible ? "default" : "secondary"}
+                      className="text-xs"
+                    >
+                      {savedAddress.isLmiEligible ? 'LMI Eligible' : 'Not LMI Eligible'}
+                    </Badge>
+                    <span className="text-xs text-muted-foreground">
+                      Saved {formatDistanceToNow(new Date(savedAddress.createdAt), { addSuffix: true })}
+                    </span>
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-6 w-6 p-1"
-                    onClick={() => handleRemoveAddress(item.id)}
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
-        <div className="mt-4 flex justify-center">
-          <Button variant="outline" size="sm" className="w-full" onClick={() => onAddressSelect("")}>
-            Check Another Property
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
+                </button>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => handleRemoveAddress(savedAddress.id)}
+                className="text-destructive hover:text-destructive"
+              >
+                <Trash2 className="w-4 h-4" />
+              </Button>
+            </div>
+          ))}
+        </CardContent>
+      </Card>
+
+      <div className="text-center">
+        <Button onClick={() => onAddressSelect('')} className="gap-2">
+          <Plus className="w-4 h-4" />
+          Check Another Property
+        </Button>
+      </div>
+    </div>
   );
 };
 
