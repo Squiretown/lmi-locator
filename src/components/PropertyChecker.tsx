@@ -51,7 +51,23 @@ const PropertyChecker: React.FC = () => {
         });
         
         try {
+          // Save search history
           await saveSearch(result.address, result, user.id);
+          
+          // NEW: Also save as a property address
+          console.log('Attempting to save address:', result.address, 'LMI eligible:', result.is_approved);
+          const saved = await saveAddress(result.address, result.is_approved);
+          
+          if (saved) {
+            toast.success('Property saved!', {
+              description: `${result.address} has been added to your saved properties`
+            });
+            console.log('Property successfully saved to saved addresses');
+          } else {
+            console.log('Property not saved (likely duplicate)');
+            // Don't show error toast for duplicates as this is expected behavior
+          }
+          
         } catch (error) {
           console.error('Error saving search to database:', error);
           toast.error('Error saving search', {
