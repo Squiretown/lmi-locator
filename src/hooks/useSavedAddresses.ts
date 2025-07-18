@@ -193,10 +193,11 @@ export function useSavedAddresses() {
     }
   };
 
-  const refreshAddresses = async (): Promise<void> => {
+  // FIX: Wrap refreshAddresses in useCallback to prevent infinite re-renders
+  const refreshAddresses = useCallback(async (): Promise<void> => {
     console.log('refreshAddresses called');
     await fetchAddresses();
-  };
+  }, [fetchAddresses]);
 
   useEffect(() => {
     console.log('useSavedAddresses useEffect triggered');
