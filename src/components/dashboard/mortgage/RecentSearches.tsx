@@ -2,14 +2,11 @@
 import React from 'react';
 import { useClientActivity } from '@/hooks/useClientActivity';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Search, Loader2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
-import { useNavigate } from 'react-router-dom';
 
 export const RecentSearches: React.FC = () => {
   const { activities, isLoading } = useClientActivity();
-  const navigate = useNavigate();
   
   // Filter out only search activities and sort by timestamp (newest first)
   const searchActivities = activities
@@ -50,15 +47,6 @@ export const RecentSearches: React.FC = () => {
             ))}
           </div>
         )}
-        <Button 
-          variant="outline" 
-          size="sm" 
-          className="mt-4 w-full" 
-          onClick={() => navigate('/')}
-        >
-          <Search className="mr-2 h-4 w-4" />
-          Search More Properties
-        </Button>
       </CardContent>
     </Card>
   );

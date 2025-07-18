@@ -17,11 +17,32 @@ export const SavedProperties: React.FC<SavedPropertiesProps> = ({ onAddressSelec
   const { savedAddresses, isLoading, removeAddress, refreshAddresses } = useSavedAddresses();
   const { user } = useAuth();
 
+  console.log('SavedProperties render:', { 
+    addressCount: savedAddresses.length, 
+    isLoading, 
+    hasUser: !!user 
+  });
+
   useEffect(() => {
+    console.log('SavedProperties useEffect - refreshing addresses');
     refreshAddresses();
   }, [user, refreshAddresses]);
 
+  // Listen for property-saved events to refresh the list
+  useEffect(() => {
+    const handlePropertySaved = () => {
+      console.log('Property saved event received, refreshing addresses');
+      refreshAddresses();
+    };
+
+    window.addEventListener('property-saved', handlePropertySaved);
+    return () => {
+      window.removeEventListener('property-saved', handlePropertySaved);
+    };
+  }, [refreshAddresses]);
+
   const handleRemoveAddress = async (id: string) => {
+    console.log('Removing address with id:', id);
     const success = await removeAddress(id);
     if (success) {
       toast.success('Property removed from saved list');
@@ -31,10 +52,12 @@ export const SavedProperties: React.FC<SavedPropertiesProps> = ({ onAddressSelec
   };
 
   const selectAddress = (address: string) => {
+    console.log('Address selected:', address);
     onAddressSelect(address);
   };
 
   const handleRefresh = async () => {
+    console.log('Manual refresh triggered');
     await refreshAddresses();
     toast.success('Saved properties refreshed');
   };

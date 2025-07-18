@@ -23,49 +23,68 @@ const PropertyResults: React.FC<PropertyResultsProps> = ({
   const { user } = useAuth();
   
   const handleSaveProperty = async () => {
-    console.log("Save property initiated with data:", data);
-    if (data) {
-      // Explicitly check if is_approved is true, not just truthy
-      const isLmiEligible = data.is_approved === true;
-      console.log(`Saving address with LMI status: ${isLmiEligible}`);
+    console.log("handleSaveProperty called with data:", { 
+      address: data.address, 
+      isApproved: data.is_approved,
+      hasUser: !!user 
+    });
+    
+    if (!data || !data.address) {
+      console.error("No data or address available for saving");
+      toast.error('Cannot save property', {
+        description: 'Property data is missing'
+      });
+      return;
+    }
+
+    // Explicitly check if is_approved is true, not just truthy
+    const isLmiEligible = data.is_approved === true;
+    console.log(`Attempting to save address: "${data.address}" with LMI status: ${isLmiEligible}`);
+    
+    try {
+      const success = await saveAddress(data.address, isLmiEligible);
       
-      try {
-        const success = await saveAddress(
-          data.address || 'Unknown address', 
-          isLmiEligible
-        );
+      console.log("Save result:", success);
+      
+      if (success) {
+        console.log("Property saved successfully");
         
-        if (success) {
-          console.log("Property saved successfully");
-          
-          // Add activity immediately
+        // Add activity immediately if user is authenticated
+        if (user) {
           await addActivity({
             type: 'save',
             timestamp: new Date().toISOString(),
-            address: data.address || 'Unknown address',
+            address: data.address,
             result: isLmiEligible ? 'eligible' : 'not-eligible',
             details: 'Property saved to collection'
           });
-          
-          // Dispatch a custom event that listeners can use to trigger a refresh
-          const customEvent = new CustomEvent('property-saved', { 
-            detail: { 
-              address: data.address, 
-              isLmiEligible: isLmiEligible 
-            } 
-          });
-          window.dispatchEvent(customEvent);
-          
-          toast.success('Property saved successfully', {
-            description: isLmiEligible ? 'LMI eligible property saved to your collection' : 'Property saved to your collection'
-          });
-          
-          console.log("Property saving process completed, custom event dispatched");
         }
-      } catch (error) {
-        console.error('Error saving property:', error);
-        toast.error('Failed to save property');
+        
+        // Dispatch a custom event that listeners can use to trigger a refresh
+        const customEvent = new CustomEvent('property-saved', { 
+          detail: { 
+            address: data.address, 
+            isLmiEligible: isLmiEligible 
+          } 
+        });
+        window.dispatchEvent(customEvent);
+        
+        toast.success('Property saved successfully', {
+          description: isLmiEligible ? 'LMI eligible property saved to your collection' : 'Property saved to your collection'
+        });
+        
+        console.log("Save process completed successfully");
+      } else {
+        console.log("Save failed - likely duplicate");
+        toast.error('Property already saved', {
+          description: 'This property is already in your saved collection'
+        });
       }
+    } catch (error) {
+      console.error('Error in handleSaveProperty:', error);
+      toast.error('Failed to save property', {
+        description: 'An error occurred while saving the property. Please try again.'
+      });
     }
   };
 
