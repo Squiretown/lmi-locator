@@ -3,6 +3,7 @@ import React from 'react';
 import { useSavedAddresses } from '@/hooks/useSavedAddresses';
 import { useClientActivity } from '@/hooks/useClientActivity';
 import { useBrokers } from '@/hooks/useBrokers';
+import { useRealtorClientManagement } from '@/hooks/useRealtorClientManagement';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Users, UserCheck, Search, UserPlus } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -11,12 +12,13 @@ export const StatCards = () => {
   const { savedAddresses, isLoading: isSavedLoading } = useSavedAddresses();
   const { activities, isLoading: isActivitiesLoading } = useClientActivity();
   const { brokers, isLoadingBrokers } = useBrokers();
+  const { clients } = useRealtorClientManagement();
 
-  // Calculate stats from real data
-  const totalClients = 2; // Based on reference image
-  const activeClients = 2; // Based on reference image
-  const propertySearches = 2; // Based on reference image
-  const firstTimeBuyers = 0; // Based on reference image
+  // Calculate real statistics from actual data
+  const totalClients = clients.length;
+  const activeClients = clients.filter(client => client.status === 'active').length;
+  const propertySearches = activities.length;
+  const firstTimeBuyers = clients.filter(client => client.first_time_buyer === true).length;
 
   const isLoading = isSavedLoading || isActivitiesLoading || isLoadingBrokers;
   

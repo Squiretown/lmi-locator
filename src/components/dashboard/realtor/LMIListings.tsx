@@ -8,7 +8,12 @@ export const LMIListings: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
 
   const handleSearch = () => {
-    console.log('Searching for LMI listings:', searchQuery);
+    if (searchQuery.trim()) {
+      // This could be expanded to filter saved addresses or search properties
+      console.log('Searching for LMI listings:', searchQuery);
+      // For now, we'll just show a message
+      alert(`Searching for LMI listings with: ${searchQuery}`);
+    }
   };
 
   return (

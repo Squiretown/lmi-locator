@@ -22,10 +22,13 @@ export const RecentActivity: React.FC = () => {
               <div className="font-medium text-sm">{activity.address}</div>
               <div className="flex items-center gap-2">
                 <Badge variant={activity.result === 'eligible' ? 'default' : 'secondary'}>
-                  {activity.result === 'eligible' ? 'Eligible' : 'Eligible'}
+                  {activity.result === 'eligible' ? 'Eligible' : 'Not Eligible'}
                 </Badge>
                 <span className="text-xs text-muted-foreground">
-                  This property is in an LMI eligible area
+                  {activity.result === 'eligible' 
+                    ? 'This property is in an LMI eligible area'
+                    : 'This property is not in an LMI eligible area'
+                  }
                 </span>
               </div>
             </div>

@@ -17,16 +17,17 @@ export const RecentContacts: React.FC = () => {
         {recentContacts.length === 0 ? (
           <p className="text-sm text-muted-foreground">No recent contacts</p>
         ) : (
-          recentContacts.map((contact, index) => (
-            <div key={index} className="space-y-2">
+          recentContacts.map((contact) => (
+            <div key={contact.id} className="space-y-2">
               <div className="font-medium text-sm">
                 {contact.first_name} {contact.last_name}
               </div>
               <div className="flex items-center gap-2">
-                <Badge variant="outline">Invited</Badge>
-                <Badge variant="secondary">Invited</Badge>
+                <Badge variant={contact.status === 'active' ? 'default' : 'secondary'}>
+                  {contact.status === 'active' ? 'Active' : 'Inactive'}
+                </Badge>
                 <span className="text-xs text-muted-foreground">
-                  about 2 months ago
+                  {new Date(contact.created_at || '').toLocaleDateString()}
                 </span>
               </div>
             </div>
