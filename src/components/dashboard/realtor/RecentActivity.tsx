@@ -2,6 +2,7 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useClientActivity } from '@/hooks/useClientActivity';
+import { formatDistanceToNow } from 'date-fns';
 
 export const RecentActivity: React.FC = () => {
   const { activities } = useClientActivity();
@@ -25,10 +26,7 @@ export const RecentActivity: React.FC = () => {
                   {activity.result === 'eligible' ? 'Eligible' : 'Not Eligible'}
                 </Badge>
                 <span className="text-xs text-muted-foreground">
-                  {activity.result === 'eligible' 
-                    ? 'This property is in an LMI eligible area'
-                    : 'This property is not in an LMI eligible area'
-                  }
+                  {formatDistanceToNow(new Date(activity.timestamp), { addSuffix: true })}
                 </span>
               </div>
             </div>
