@@ -5,6 +5,7 @@ import {
   BarChart3, 
   Users, 
   TrendingUp, 
+  MessageSquare,
   Settings
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -60,6 +61,14 @@ export const AdminSidebarMainMenu: React.FC = () => {
         isActive={location.pathname === '/admin/users'}
       >
         Users
+      </MenuLink>
+      
+      <MenuLink 
+        to="/admin/messaging" 
+        icon={MessageSquare}
+        isActive={location.pathname === '/admin/messaging'}
+      >
+        Messaging
       </MenuLink>
     </div>
   );
