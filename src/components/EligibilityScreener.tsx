@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 import EligibilityForm from './eligibility/EligibilityForm';
 import { useProgramEligibilityCheck } from './eligibility/useProgramEligibilityCheck';
 import { formatAddress } from './specialist-connect/utils/addressUtils';
@@ -31,12 +31,16 @@ const EligibilityScreener: React.FC<EligibilityScreenerProps> = ({
       // Call the onComplete callback with results
       onComplete(result);
       
-      // Call toast without arguments since it's now an empty function
-      toast();
+      toast({
+        title: "Eligibility Check Complete",
+        description: "Your eligibility results are ready."
+      });
     } catch (error) {
       console.error('Error during eligibility check:', error);
-      // Call toast without arguments since it's now an empty function
-      toast();
+      toast({
+        title: "Error",
+        description: "There was an error checking your eligibility. Please try again."
+      });
     }
   };
 

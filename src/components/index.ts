@@ -35,7 +35,7 @@ export * from "@/components/ui/switch"
 export * from "@/components/ui/table"
 export * from "@/components/ui/tabs"
 export * from "@/components/ui/textarea"
-export * from "@/components/ui/toast"
+// Removed toast export as it's been deleted
 export * from "@/components/ui/toggle"
 export * from "@/components/ui/tooltip"
 
