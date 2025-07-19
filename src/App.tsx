@@ -15,6 +15,7 @@ import AdminLayout from "./components/admin/layout/AdminLayout";
 import AdminDashboard from "./components/admin/AdminDashboard";
 import MarketingDashboard from "./components/admin/marketing-dashboard/MarketingDashboard";
 import AdminMessaging from "./pages/admin/messaging";
+import SubscriptionManagement from "./pages/admin/SubscriptionManagement";
 import ApiKeysPage from "./pages/admin/ApiKeysPage";
 import ContactsPage from "./pages/admin/ContactsPage";
 import RealtorsPage from "./pages/admin/RealtorsPage";
@@ -125,6 +126,7 @@ function App() {
                 <Route index element={<AdminDashboard />} />
                 <Route path="marketing" element={<MarketingDashboard />} />
                 <Route path="messaging" element={<AdminMessaging />} />
+                <Route path="subscriptions" element={<SubscriptionManagement />} />
                 <Route path="tools" element={<AdminTools />} />
                 <Route path="users" element={<UserManagement />} />
                 <Route path="api-keys" element={<ApiKeysPage />} />

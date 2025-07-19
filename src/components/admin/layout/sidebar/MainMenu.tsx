@@ -6,6 +6,7 @@ import {
   Users, 
   TrendingUp, 
   MessageSquare,
+  CreditCard,
   Settings
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -69,6 +70,14 @@ export const AdminSidebarMainMenu: React.FC = () => {
         isActive={location.pathname === '/admin/messaging'}
       >
         Messaging
+      </MenuLink>
+      
+      <MenuLink 
+        to="/admin/subscriptions" 
+        icon={CreditCard}
+        isActive={location.pathname === '/admin/subscriptions'}
+      >
+        Subscriptions
       </MenuLink>
     </div>
   );
