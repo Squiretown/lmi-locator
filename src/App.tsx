@@ -15,6 +15,16 @@ import DashboardLayout from "./components/dashboard/layout/DashboardLayout";
 import ClientOverview from "./pages/dashboard/client/Overview";
 import SavedProperties from "./pages/dashboard/client/SavedProperties";
 
+// Realtor Dashboard Pages
+import RealtorOverview from "./pages/dashboard/realtor/Overview";
+import RealtorClients from "./pages/dashboard/realtor/Clients";
+import RealtorProperties from "./pages/dashboard/realtor/Properties";
+import RealtorAnalytics from "./pages/dashboard/realtor/Analytics";
+
+// Mortgage Dashboard Pages
+import MortgageOverview from "./pages/dashboard/mortgage/Overview";
+import MortgageClients from "./pages/dashboard/mortgage/Clients";
+
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -30,6 +40,7 @@ const App = () => (
             
             {/* Dashboard Routes */}
             <Route path="/dashboard" element={<DashboardLayout />}>
+              {/* Client Dashboard */}
               <Route path="client" element={
                 <ProtectedRoute allowedUserTypes={['client']}>
                   <ClientOverview />
@@ -40,20 +51,38 @@ const App = () => (
                   <SavedProperties />
                 </ProtectedRoute>
               } />
+              
+              {/* Realtor Dashboard */}
               <Route path="realtor" element={
                 <ProtectedRoute allowedUserTypes={['realtor']}>
-                  <div className="container mx-auto px-4 py-6">
-                    <h1 className="text-2xl font-semibold">Realtor Dashboard</h1>
-                    <p className="text-muted-foreground mt-1">Welcome to your realtor portal</p>
-                  </div>
+                  <RealtorOverview />
                 </ProtectedRoute>
               } />
+              <Route path="realtor/clients" element={
+                <ProtectedRoute allowedUserTypes={['realtor']}>
+                  <RealtorClients />
+                </ProtectedRoute>
+              } />
+              <Route path="realtor/properties" element={
+                <ProtectedRoute allowedUserTypes={['realtor']}>
+                  <RealtorProperties />
+                </ProtectedRoute>
+              } />
+              <Route path="realtor/analytics" element={
+                <ProtectedRoute allowedUserTypes={['realtor']}>
+                  <RealtorAnalytics />
+                </ProtectedRoute>
+              } />
+              
+              {/* Mortgage Dashboard */}
               <Route path="mortgage" element={
                 <ProtectedRoute allowedUserTypes={['mortgage_professional', 'mortgage']}>
-                  <div className="container mx-auto px-4 py-6">
-                    <h1 className="text-2xl font-semibold">Mortgage Professional Dashboard</h1>
-                    <p className="text-muted-foreground mt-1">Welcome to your mortgage portal</p>
-                  </div>
+                  <MortgageOverview />
+                </ProtectedRoute>
+              } />
+              <Route path="mortgage/clients" element={
+                <ProtectedRoute allowedUserTypes={['mortgage_professional', 'mortgage']}>
+                  <MortgageClients />
                 </ProtectedRoute>
               } />
             </Route>
