@@ -19,6 +19,7 @@ interface Notification {
   is_read: boolean | null;
   created_at: string;
   link_url: string | null;
+  priority?: string | null;
 }
 
 export const NotificationCenter: React.FC = () => {
@@ -172,6 +173,13 @@ export const NotificationCenter: React.FC = () => {
         return '👤';
       case 'program_update':
         return '📋';
+      case 'billing':
+      case 'payment_due':
+        return '💳';
+      case 'account_status':
+        return '👤';
+      case 'system_maintenance':
+        return '🔧';
       default:
         return '🔔';
     }
@@ -223,7 +231,11 @@ export const NotificationCenter: React.FC = () => {
                   key={notification.id}
                   className={`p-3 cursor-pointer hover:bg-accent transition-colors border-l-2 ${
                     !notification.is_read 
-                      ? 'border-l-primary bg-accent/50' 
+                      ? notification.priority === 'urgent'
+                        ? 'border-l-destructive bg-destructive/10'
+                        : notification.priority === 'high'
+                        ? 'border-l-orange-500 bg-orange-50 dark:bg-orange-900/20'
+                        : 'border-l-primary bg-accent/50'
                       : 'border-l-transparent'
                   }`}
                   onClick={() => handleNotificationClick(notification)}

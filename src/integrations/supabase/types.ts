@@ -109,6 +109,51 @@ export type Database = {
         }
         Relationships: []
       }
+      admin_message_templates: {
+        Row: {
+          category: string
+          content: string
+          created_at: string | null
+          created_by: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          notification_type: string
+          priority: string | null
+          subject: string
+          updated_at: string | null
+          variables: Json | null
+        }
+        Insert: {
+          category: string
+          content: string
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          notification_type: string
+          priority?: string | null
+          subject: string
+          updated_at?: string | null
+          variables?: Json | null
+        }
+        Update: {
+          category?: string
+          content?: string
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          notification_type?: string
+          priority?: string | null
+          subject?: string
+          updated_at?: string | null
+          variables?: Json | null
+        }
+        Relationships: []
+      }
       alerts: {
         Row: {
           created_at: string
@@ -1244,6 +1289,7 @@ export type Database = {
       notifications: {
         Row: {
           alert_id: string | null
+          bulk_message_id: string | null
           created_at: string
           data: Json | null
           delivered_at: string | null
@@ -1253,12 +1299,16 @@ export type Database = {
           link_url: string | null
           message: string
           notification_type: string | null
+          priority: string | null
           read_at: string | null
+          scheduled_for: string | null
+          template_id: string | null
           title: string | null
           user_id: string
         }
         Insert: {
           alert_id?: string | null
+          bulk_message_id?: string | null
           created_at?: string
           data?: Json | null
           delivered_at?: string | null
@@ -1268,12 +1318,16 @@ export type Database = {
           link_url?: string | null
           message: string
           notification_type?: string | null
+          priority?: string | null
           read_at?: string | null
+          scheduled_for?: string | null
+          template_id?: string | null
           title?: string | null
           user_id: string
         }
         Update: {
           alert_id?: string | null
+          bulk_message_id?: string | null
           created_at?: string
           data?: Json | null
           delivered_at?: string | null
@@ -1283,7 +1337,10 @@ export type Database = {
           link_url?: string | null
           message?: string
           notification_type?: string | null
+          priority?: string | null
           read_at?: string | null
+          scheduled_for?: string | null
+          template_id?: string | null
           title?: string | null
           user_id?: string
         }
