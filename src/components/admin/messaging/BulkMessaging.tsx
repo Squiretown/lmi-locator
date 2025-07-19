@@ -11,8 +11,9 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Users, Mail, MessageSquare, AlertTriangle } from 'lucide-react';
+import { Users, Mail, MessageSquare, AlertTriangle, Clock, Send } from 'lucide-react';
 import { Input } from '@/components/ui/input';
+import { format } from 'date-fns';
 
 const bulkMessageSchema = z.object({
   title: z.string().min(1, 'Title is required'),
@@ -23,6 +24,8 @@ const bulkMessageSchema = z.object({
   user_type: z.string().optional(),
   send_in_app: z.boolean().default(true),
   send_email: z.boolean().default(false),
+  schedule_delivery: z.boolean().default(false),
+  scheduled_for: z.string().optional(),
 });
 
 type BulkMessageForm = z.infer<typeof bulkMessageSchema>;
@@ -38,12 +41,14 @@ export function BulkMessaging() {
       user_filter: 'all',
       send_in_app: true,
       send_email: false,
+      schedule_delivery: false,
     },
   });
 
   const userFilter = form.watch('user_filter');
   const sendEmail = form.watch('send_email');
   const sendInApp = form.watch('send_in_app');
+  const scheduleDelivery = form.watch('schedule_delivery');
 
   const previewRecipients = async () => {
     const data = form.getValues();
@@ -80,6 +85,11 @@ export function BulkMessaging() {
       return;
     }
 
+    if (data.schedule_delivery && !data.scheduled_for) {
+      toast.error('Please select a delivery date and time');
+      return;
+    }
+
     setIsLoading(true);
     try {
       let targetUsers: string[] = [];
@@ -106,84 +116,112 @@ export function BulkMessaging() {
         return;
       }
 
-      const bulkMessageId = crypto.randomUUID();
-      let notificationsCreated = 0;
-      let emailsSent = 0;
-      let emailsFailed = 0;
-
-      // Send in-app notifications if selected
-      if (data.send_in_app) {
-        const notifications = targetUsers.map(userId => ({
-          user_id: userId,
-          title: data.title,
-          message: data.message,
-          notification_type: data.notification_type,
-          priority: data.priority,
-          bulk_message_id: bulkMessageId,
-          is_read: false,
-        }));
+      if (data.schedule_delivery && data.scheduled_for) {
+        // Save as scheduled bulk message
+        const deliveryMethods = [];
+        if (data.send_in_app) deliveryMethods.push('in_app');
+        if (data.send_email) deliveryMethods.push('email');
 
         const { error } = await supabase
-          .from('notifications')
-          .insert(notifications);
-
-        if (error) throw error;
-        notificationsCreated = targetUsers.length;
-      }
-
-      // Send emails if selected
-      if (data.send_email) {
-        // Process emails in batches to avoid overwhelming the system
-        const batchSize = 5;
-        for (let i = 0; i < targetUsers.length; i += batchSize) {
-          const batch = targetUsers.slice(i, i + batchSize);
-          
-          const emailPromises = batch.map(async (userId) => {
-            try {
-              const { data: emailResult, error: emailError } = await supabase.functions.invoke('send-user-email', {
-                body: {
-                  userId: userId,
-                  subject: data.title,
-                  message: data.message,
-                }
-              });
-
-              if (emailError) throw emailError;
-              return { success: true, userId };
-            } catch (error) {
-              console.error(`Failed to send email to user ${userId}:`, error);
-              return { success: false, userId };
-            }
+          .from('scheduled_messages')
+          .insert({
+            title: data.title,
+            message: data.message,
+            scheduled_for: data.scheduled_for,
+            delivery_method: deliveryMethods.join(','),
+            recipient_type: 'bulk',
+            recipient_filter: {
+              user_filter: data.user_filter,
+              user_type: data.user_type,
+              target_count: targetUsers.length
+            },
+            status: 'scheduled',
           });
 
-          const results = await Promise.all(emailPromises);
-          emailsSent += results.filter(r => r.success).length;
-          emailsFailed += results.filter(r => !r.success).length;
+        if (error) throw error;
+        toast.success(`Bulk message scheduled for ${targetUsers.length} users`);
+      } else {
+        // Send immediately
+        const bulkMessageId = crypto.randomUUID();
+        let notificationsCreated = 0;
+        let emailsSent = 0;
+        let emailsFailed = 0;
 
-          // Add small delay between batches
-          if (i + batchSize < targetUsers.length) {
-            await new Promise(resolve => setTimeout(resolve, 1000));
+        // Send in-app notifications if selected
+        if (data.send_in_app) {
+          const notifications = targetUsers.map(userId => ({
+            user_id: userId,
+            title: data.title,
+            message: data.message,
+            notification_type: data.notification_type,
+            priority: data.priority,
+            bulk_message_id: bulkMessageId,
+            is_read: false,
+          }));
+
+          const { error } = await supabase
+            .from('notifications')
+            .insert(notifications);
+
+          if (error) throw error;
+          notificationsCreated = targetUsers.length;
+        }
+
+        // Send emails if selected
+        if (data.send_email) {
+          // Process emails in batches to avoid overwhelming the system
+          const batchSize = 5;
+          for (let i = 0; i < targetUsers.length; i += batchSize) {
+            const batch = targetUsers.slice(i, i + batchSize);
+            
+            const emailPromises = batch.map(async (userId) => {
+              try {
+                const { data: emailResult, error: emailError } = await supabase.functions.invoke('send-user-email', {
+                  body: {
+                    userId: userId,
+                    subject: data.title,
+                    message: data.message,
+                  }
+                });
+
+                if (emailError) throw emailError;
+                return { success: true, userId };
+              } catch (error) {
+                console.error(`Failed to send email to user ${userId}:`, error);
+                return { success: false, userId };
+              }
+            });
+
+            const results = await Promise.all(emailPromises);
+            emailsSent += results.filter(r => r.success).length;
+            emailsFailed += results.filter(r => !r.success).length;
+
+            // Add small delay between batches
+            if (i + batchSize < targetUsers.length) {
+              await new Promise(resolve => setTimeout(resolve, 1000));
+            }
           }
         }
+
+        // Provide detailed success message
+        let successMessage = '';
+        if (data.send_in_app && data.send_email) {
+          successMessage = `Bulk message sent to ${targetUsers.length} users. In-app notifications: ${notificationsCreated}, Emails sent: ${emailsSent}`;
+          if (emailsFailed > 0) {
+            successMessage += `, Emails failed: ${emailsFailed}`;
+          }
+        } else if (data.send_email) {
+          successMessage = `Emails sent to ${emailsSent} users`;
+          if (emailsFailed > 0) {
+            successMessage += `, ${emailsFailed} failed`;
+          }
+        } else {
+          successMessage = `In-app notifications sent to ${notificationsCreated} users`;
+        }
+
+        toast.success(successMessage);
       }
 
-      // Provide detailed success message
-      let successMessage = '';
-      if (data.send_in_app && data.send_email) {
-        successMessage = `Bulk message sent to ${targetUsers.length} users. In-app notifications: ${notificationsCreated}, Emails sent: ${emailsSent}`;
-        if (emailsFailed > 0) {
-          successMessage += `, Emails failed: ${emailsFailed}`;
-        }
-      } else if (data.send_email) {
-        successMessage = `Emails sent to ${emailsSent} users`;
-        if (emailsFailed > 0) {
-          successMessage += `, ${emailsFailed} failed`;
-        }
-      } else {
-        successMessage = `In-app notifications sent to ${notificationsCreated} users`;
-      }
-
-      toast.success(successMessage);
       form.reset();
       setPreviewUsers([]);
     } catch (error: any) {
@@ -270,12 +308,56 @@ export function BulkMessaging() {
 
               <Card>
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-sm font-medium">Delivery Methods</CardTitle>
+                  <CardTitle className="text-sm font-medium">Delivery Options</CardTitle>
                   <CardDescription className="text-xs">
-                    Choose how to deliver this message to recipients
+                    Choose how and when to deliver this bulk message
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
+                  <FormField
+                    control={form.control}
+                    name="schedule_delivery"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                        <FormControl>
+                          <Checkbox
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                        </FormControl>
+                        <div className="space-y-1 leading-none">
+                          <FormLabel className="flex items-center gap-2 font-normal">
+                            <Clock className="h-4 w-4" />
+                            Schedule for Later
+                          </FormLabel>
+                          <p className="text-xs text-muted-foreground">
+                            Schedule this bulk message to be sent at a specific date and time
+                          </p>
+                        </div>
+                      </FormItem>
+                    )}
+                  />
+
+                  {scheduleDelivery && (
+                    <FormField
+                      control={form.control}
+                      name="scheduled_for"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Delivery Date & Time</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="datetime-local"
+                              min={format(new Date(), "yyyy-MM-dd'T'HH:mm")}
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  )}
+
                   <FormField
                     control={form.control}
                     name="send_in_app"
@@ -425,7 +507,19 @@ export function BulkMessaging() {
                 disabled={isLoading || (!sendInApp && !sendEmail)} 
                 className="w-full"
               >
-                {isLoading ? 'Sending...' : `Send Bulk Message${previewUsers.length > 0 ? ` to ${previewUsers.length} users` : ''}`}
+                {isLoading ? (
+                  'Processing...'
+                ) : scheduleDelivery ? (
+                  <>
+                    <Clock className="mr-2 h-4 w-4" />
+                    Schedule Bulk Message{previewUsers.length > 0 ? ` to ${previewUsers.length} users` : ''}
+                  </>
+                ) : (
+                  <>
+                    <Send className="mr-2 h-4 w-4" />
+                    Send Bulk Message{previewUsers.length > 0 ? ` to ${previewUsers.length} users` : ''}
+                  </>
+                )}
               </Button>
             </form>
           </Form>
