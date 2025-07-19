@@ -14,7 +14,7 @@ import { MapView } from './map-view';
 import { useMarketingDashboardData } from './useMarketingDashboardData';
 import { MarketingSidebar } from './MarketingSidebar';
 import { BulkAddressSearch } from './bulk-search/BulkAddressSearch';
-import { MarketingContent } from '../../tools/marketing/MarketingContent';
+import { MarketingContent } from '@/components/admin/tools/marketing/MarketingContent';
 
 // Component for the "Coming Soon" placeholder card
 const ComingSoonSection = ({ title }: { title: string }) => (

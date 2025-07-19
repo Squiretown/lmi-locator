@@ -183,8 +183,8 @@ export function useAdminContacts() {
         'Address': contact.address || '',
         'Status': contact.status,
         'Notes': contact.notes || '',
-        'Owner': contact.ownerName || '',
-        'Owner Type': contact.ownerType || '',
+        'Owner': '',
+        'Owner Type': '',
         'Created At': new Date(contact.createdAt || '').toLocaleDateString()
       }));
 

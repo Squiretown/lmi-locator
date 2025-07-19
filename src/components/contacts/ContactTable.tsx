@@ -54,7 +54,6 @@ const ContactTable: React.FC<ContactTableProps> = ({
               <TableHead className="w-12">
                 <Checkbox
                   checked={allSelected}
-                  indeterminate={someSelected}
                   onCheckedChange={(checked) => onSelectAll?.(!!checked)}
                 />
               </TableHead>

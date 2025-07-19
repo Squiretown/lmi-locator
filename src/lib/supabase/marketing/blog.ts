@@ -64,7 +64,7 @@ export const getBlogPosts = async (): Promise<BlogPost[]> => {
     const formattedData = data.map(post => ({
       ...post,
       imageUrl: post.imageurl,
-      status: post.status || 'published'
+      status: 'published' as const
     })) as unknown as BlogPost[];
     
     return formattedData;
