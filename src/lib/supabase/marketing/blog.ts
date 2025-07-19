@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 
 /**
@@ -11,7 +12,9 @@ export interface BlogPost {
   category: string;
   imageUrl: string;
   author: string;
+  status?: 'draft' | 'published' | 'archived';
   created_at?: string;
+  updated_at?: string;
 }
 
 export const createBlogPost = async (blogPost: BlogPost) => {
@@ -34,6 +37,7 @@ export const createBlogPost = async (blogPost: BlogPost) => {
         category: blogPost.category,
         imageurl: blogPost.imageUrl, // Convert imageUrl to imageurl
         author: blogPost.author,
+        status: blogPost.status || 'published',
         user_id: userId
       })
       .select();
@@ -59,13 +63,40 @@ export const getBlogPosts = async (): Promise<BlogPost[]> => {
     // Supabase schema uses imageurl but our interface uses imageUrl
     const formattedData = data.map(post => ({
       ...post,
-      imageUrl: post.imageurl
+      imageUrl: post.imageurl,
+      status: post.status || 'published'
     })) as unknown as BlogPost[];
     
     return formattedData;
   } catch (error) {
     console.error('Error retrieving blog posts:', error);
     return [];
+  }
+};
+
+export const updateBlogPost = async (id: string, blogPost: Partial<BlogPost>) => {
+  try {
+    const updateData: any = {};
+    
+    if (blogPost.title) updateData.title = blogPost.title;
+    if (blogPost.excerpt) updateData.excerpt = blogPost.excerpt;
+    if (blogPost.content) updateData.content = blogPost.content;
+    if (blogPost.category) updateData.category = blogPost.category;
+    if (blogPost.imageUrl) updateData.imageurl = blogPost.imageUrl;
+    if (blogPost.author) updateData.author = blogPost.author;
+    if (blogPost.status) updateData.status = blogPost.status;
+
+    const { data, error } = await supabase
+      .from('blog_posts')
+      .update(updateData)
+      .eq('id', id)
+      .select();
+
+    if (error) throw error;
+    return { success: true, data };
+  } catch (error) {
+    console.error('Error updating blog post:', error);
+    return { success: false, error };
   }
 };
 

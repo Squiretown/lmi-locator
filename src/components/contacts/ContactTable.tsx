@@ -2,6 +2,7 @@
 import React from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Pencil, Trash2, MessageSquare } from 'lucide-react';
 import { Contact } from '@/lib/api/types';
 
@@ -10,13 +11,21 @@ interface ContactTableProps {
   onEdit: (contact: Contact) => void;
   onDelete: (id: string) => void;
   onViewInteractions?: (contact: Contact) => void;
+  selectedContacts?: string[];
+  onSelectContact?: (contactId: string, selected: boolean) => void;
+  onSelectAll?: (selected: boolean) => void;
+  showBulkSelect?: boolean;
 }
 
 const ContactTable: React.FC<ContactTableProps> = ({
   contacts,
   onEdit,
   onDelete,
-  onViewInteractions
+  onViewInteractions,
+  selectedContacts = [],
+  onSelectContact,
+  onSelectAll,
+  showBulkSelect = false
 }) => {
   const getStatusBadgeClass = (status: string) => {
     switch (status) {
@@ -33,28 +42,49 @@ const ContactTable: React.FC<ContactTableProps> = ({
     }
   };
 
+  const allSelected = contacts.length > 0 && selectedContacts.length === contacts.length;
+  const someSelected = selectedContacts.length > 0 && selectedContacts.length < contacts.length;
+
   return (
     <div className="rounded-md border">
       <Table>
         <TableHeader>
           <TableRow>
+            {showBulkSelect && (
+              <TableHead className="w-12">
+                <Checkbox
+                  checked={allSelected}
+                  indeterminate={someSelected}
+                  onCheckedChange={(checked) => onSelectAll?.(!!checked)}
+                />
+              </TableHead>
+            )}
             <TableHead>Name</TableHead>
             <TableHead>Email</TableHead>
             <TableHead>Phone</TableHead>
             <TableHead>Status</TableHead>
+            {showBulkSelect && <TableHead>Owner</TableHead>}
             <TableHead className="text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {contacts.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={5} className="h-24 text-center">
+              <TableCell colSpan={showBulkSelect ? 7 : 6} className="h-24 text-center">
                 No contacts found.
               </TableCell>
             </TableRow>
           ) : (
             contacts.map((contact) => (
               <TableRow key={contact.id}>
+                {showBulkSelect && (
+                  <TableCell>
+                    <Checkbox
+                      checked={selectedContacts.includes(contact.id)}
+                      onCheckedChange={(checked) => onSelectContact?.(contact.id, !!checked)}
+                    />
+                  </TableCell>
+                )}
                 <TableCell className="font-medium">
                   {contact.firstName} {contact.lastName}
                 </TableCell>
@@ -65,6 +95,14 @@ const ContactTable: React.FC<ContactTableProps> = ({
                     {contact.status.charAt(0).toUpperCase() + contact.status.slice(1)}
                   </span>
                 </TableCell>
+                {showBulkSelect && (
+                  <TableCell>
+                    <div className="text-sm">
+                      <div className="font-medium">{(contact as any).ownerName || 'Unknown'}</div>
+                      <div className="text-muted-foreground">{(contact as any).ownerType || ''}</div>
+                    </div>
+                  </TableCell>
+                )}
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-2">
                     {onViewInteractions && (

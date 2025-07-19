@@ -1,159 +1,71 @@
-
-import { Toaster as Sonner } from "sonner";
+import React from 'react';
+import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { AuthProvider } from "@/providers/AuthProvider";
 import Index from "./pages/Index";
-import LoginPage from "./pages/auth/LoginPage";
-import ResetPasswordPage from "./pages/auth/ResetPasswordPage";
-import SettingsPage from "./pages/auth/SettingsPage";
-import AdminTools from "./pages/auth/AdminTools";
-import UserManagement from "./pages/auth/UserManagement";
-import NotFound from "./pages/NotFound";
-import AdminLayout from "./components/admin/layout/AdminLayout";
-import AdminDashboard from "./components/admin/AdminDashboard";
-import MarketingDashboard from "./components/admin/marketing-dashboard/MarketingDashboard";
-import AdminMessaging from "./pages/admin/messaging";
-import SubscriptionManagement from "./pages/admin/SubscriptionManagement";
-import ApiKeysPage from "./pages/admin/ApiKeysPage";
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import ProfessionalsPage from "./pages/admin/ProfessionalsPage";
 import ContactsPage from "./pages/admin/ContactsPage";
-import RealtorsPage from "./pages/admin/RealtorsPage";
-import MortgageBrokersPage from "./pages/admin/MortgageBrokersPage";
+import AdminContactsPage from "./pages/admin/AdminContactsPage";
+import MarketingDashboard from "./pages/admin/MarketingDashboard";
+import ToolsPage from "./pages/admin/ToolsPage";
+import SettingsPage from "./pages/admin/SettingsPage";
+import MessagingPage from "./pages/admin/MessagingPage";
+import UserManagementPage from "./pages/admin/UserManagementPage";
 import PermissionsPage from "./pages/admin/PermissionsPage";
-import SystemLogsPage from "./pages/admin/SystemLogsPage";
-import DatabasePage from "./pages/admin/DatabasePage";
-import ErrorLogs from "./pages/admin/ErrorLogs";
-import AdminSettingsPage from "./pages/admin/SettingsPage";
-import SearchHistoryPage from "./pages/admin/search-history/SearchHistoryPage";
-import DashboardLayout from "./components/dashboard/layout/DashboardLayout";
-import ClientOverview from "./pages/dashboard/client/Overview";
-import ClientSearch from "./pages/dashboard/client/Search";
-import SavedProperties from "./pages/dashboard/client/SavedProperties";
-import RealtorOverview from "./pages/dashboard/realtor/Overview";
+import RealtorDashboard from "./pages/dashboard/realtor/Dashboard";
 import RealtorClients from "./pages/dashboard/realtor/Clients";
-import RealtorProperties from "./pages/dashboard/realtor/Properties";
 import RealtorMarketing from "./pages/dashboard/realtor/Marketing";
-import RealtorAnalytics from "./pages/dashboard/realtor/Analytics";
-import RealtorTeam from "./pages/dashboard/realtor/Team";
-import MortgageOverview from "./pages/dashboard/mortgage/Overview";
+import MortgageDashboard from "./pages/dashboard/mortgage/Dashboard";
 import MortgageClients from "./pages/dashboard/mortgage/Clients";
-import MortgageAnalytics from "./pages/dashboard/mortgage/Analytics";
-import MortgageTeam from "./pages/dashboard/mortgage/Team";
-import BulkSearchDashboard from "./pages/dashboard/BulkSearch";
-import LmiMarketingListDashboard from "./pages/dashboard/LmiMarketingList";
-import BlogPage from "./pages/BlogPage";
-import ContactPage from "./pages/ContactPage";
-import CustomersPage from "./pages/CustomersPage";
-import ProductPage from "./pages/ProductPage";
-import ResourcesPage from "./pages/ResourcesPage";
-import PricingPage from "./pages/PricingPage";
-import HelpPage from "./pages/HelpPage";
-import HelpManagementPage from "./pages/admin/HelpManagementPage";
-import { ClientRegistration } from "./pages/ClientRegistration";
-import { RegistrationSuccess } from "./pages/RegistrationSuccess";
-import ProtectedRoute from "./components/auth/ProtectedRoute";
+import MortgageMarketing from "./pages/dashboard/mortgage/Marketing";
+import ClientDashboard from "./pages/dashboard/client/Dashboard";
+import LMISearch from "./pages/LMISearch";
+import { AuthProvider } from "./components/auth/AuthProvider";
+import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 
 const queryClient = new QueryClient();
 
-function App() {
-  return (
-    <QueryClientProvider client={queryClient}>
+const App = () => (
+  <QueryClientProvider client={queryClient}>
+    <TooltipProvider>
+      <Toaster />
       <BrowserRouter>
         <AuthProvider>
-          <TooltipProvider>
-            <Sonner />
-            <Routes>
-              {/* Public routes */}
-              <Route path="/" element={<Index />} />
-              <Route path="/login" element={<LoginPage />} />
-              <Route path="/reset-password" element={<ResetPasswordPage />} />
-              <Route path="/blog" element={<BlogPage />} />
-              <Route path="/contact" element={<ContactPage />} />
-              <Route path="/customers" element={<CustomersPage />} />
-              <Route path="/product" element={<ProductPage />} />
-              <Route path="/resources" element={<ResourcesPage />} />
-              <Route path="/pricing" element={<PricingPage />} />
-              <Route path="/help" element={<HelpPage />} />
-              
-              {/* Protected dashboard routes with layout */}
-              <Route path="/dashboard" element={
-                <ProtectedRoute>
-                  <DashboardLayout />
-                </ProtectedRoute>
-              }>
-                {/* Client dashboard routes */}
-                <Route path="client" element={<ClientOverview />} />
-                <Route path="client/search" element={<ClientSearch />} />
-                <Route path="client/saved" element={<SavedProperties />} />
-                
-                {/* Realtor dashboard routes */}
-                <Route path="realtor" element={<RealtorOverview />} />
-                <Route path="realtor/clients" element={<RealtorClients />} />
-                <Route path="realtor/properties" element={<RealtorProperties />} />
-                <Route path="realtor/team" element={<RealtorTeam />} />
-                <Route path="realtor/marketing" element={<RealtorMarketing />} />
-                <Route path="realtor/analytics" element={<RealtorAnalytics />} />
-                
-                {/* Mortgage professional dashboard routes */}
-                <Route path="mortgage" element={<MortgageOverview />} />
-                <Route path="mortgage/clients" element={<MortgageClients />} />
-                <Route path="mortgage/team" element={<MortgageTeam />} />
-                <Route path="mortgage/analytics" element={<MortgageAnalytics />} />
-                
-                {/* Shared dashboard routes - Restricted to realtors and mortgage professionals */}
-                <Route path="bulk-search" element={
-                  <ProtectedRoute allowedUserTypes={['realtor', 'mortgage_professional', 'mortgage']}>
-                    <BulkSearchDashboard />
-                  </ProtectedRoute>
-                } />
-                <Route path="lmi-marketing" element={<LmiMarketingListDashboard />} />
-              </Route>
-              
-              {/* Protected user settings */}
-              <Route path="/settings" element={
-                <ProtectedRoute>
-                  <SettingsPage />
-                </ProtectedRoute>
-              } />
-              
-              {/* Protected admin routes */}
-              <Route path="/admin" element={
-                <ProtectedRoute>
-                  <AdminLayout />
-                </ProtectedRoute>
-              }>
-                <Route index element={<AdminDashboard />} />
-                <Route path="marketing" element={<MarketingDashboard />} />
-                <Route path="messaging" element={<AdminMessaging />} />
-                <Route path="subscriptions" element={<SubscriptionManagement />} />
-                <Route path="tools" element={<AdminTools />} />
-                <Route path="users" element={<UserManagement />} />
-                <Route path="api-keys" element={<ApiKeysPage />} />
-                <Route path="contacts" element={<ContactsPage />} />
-                <Route path="realtors" element={<RealtorsPage />} />
-                <Route path="brokers" element={<MortgageBrokersPage />} />
-                <Route path="permissions" element={<PermissionsPage />} />
-                <Route path="logs" element={<SystemLogsPage />} />
-                <Route path="error-logs" element={<ErrorLogs />} />
-                <Route path="database" element={<DatabasePage />} />
-                <Route path="settings" element={<AdminSettingsPage />} />
-                <Route path="search-history" element={<SearchHistoryPage />} />
-                <Route path="help" element={<HelpManagementPage />} />
-              </Route>
-              
-              {/* Client registration routes */}
-              <Route path="/client-registration" element={<ClientRegistration />} />
-              <Route path="/registration-success" element={<RegistrationSuccess />} />
-              
-              {/* 404 route */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </TooltipProvider>
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/search" element={<LMISearch />} />
+            
+            {/* Admin Routes */}
+            <Route path="/admin" element={<ProtectedRoute userType="admin"><AdminDashboard /></ProtectedRoute>} />
+            <Route path="/admin/professionals" element={<ProtectedRoute userType="admin"><ProfessionalsPage /></ProtectedRoute>} />
+            <Route path="/admin/professionals/:professionalId/contacts" element={<ProtectedRoute userType="admin"><ContactsPage /></ProtectedRoute>} />
+            <Route path="/admin/contacts" element={<ProtectedRoute userType="admin"><AdminContactsPage /></ProtectedRoute>} />
+            <Route path="/admin/marketing" element={<ProtectedRoute userType="admin"><MarketingDashboard /></ProtectedRoute>} />
+            <Route path="/admin/tools" element={<ProtectedRoute userType="admin"><ToolsPage /></ProtectedRoute>} />
+            <Route path="/admin/settings" element={<ProtectedRoute userType="admin"><SettingsPage /></ProtectedRoute>} />
+            <Route path="/admin/messaging" element={<ProtectedRoute userType="admin"><MessagingPage /></ProtectedRoute>} />
+            <Route path="/admin/users" element={<ProtectedRoute userType="admin"><UserManagementPage /></ProtectedRoute>} />
+            <Route path="/admin/permissions" element={<ProtectedRoute userType="admin"><PermissionsPage /></ProtectedRoute>} />
+            
+            {/* Realtor Routes */}
+            <Route path="/dashboard/realtor" element={<ProtectedRoute userType="realtor"><RealtorDashboard /></ProtectedRoute>} />
+            <Route path="/dashboard/realtor/clients" element={<ProtectedRoute userType="realtor"><RealtorClients /></ProtectedRoute>} />
+            <Route path="/dashboard/realtor/marketing" element={<ProtectedRoute userType="realtor"><RealtorMarketing /></ProtectedRoute>} />
+            
+            {/* Mortgage Professional Routes */}
+            <Route path="/dashboard/mortgage" element={<ProtectedRoute userType="mortgage_professional"><MortgageDashboard /></ProtectedRoute>} />
+            <Route path="/dashboard/mortgage/clients" element={<ProtectedRoute userType="mortgage_professional"><MortgageClients /></ProtectedRoute>} />
+            <Route path="/dashboard/mortgage/marketing" element={<ProtectedRoute userType="mortgage_professional"><MortgageMarketing /></ProtectedRoute>} />
+            
+            {/* Client Routes */}
+            <Route path="/dashboard/client" element={<ProtectedRoute userType="client"><ClientDashboard /></ProtectedRoute>} />
+          </Routes>
         </AuthProvider>
       </BrowserRouter>
-    </QueryClientProvider>
-  );
-}
+    </TooltipProvider>
+  </QueryClientProvider>
+);
 
 export default App;

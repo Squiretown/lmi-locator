@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -13,6 +14,7 @@ import { MapView } from './map-view';
 import { useMarketingDashboardData } from './useMarketingDashboardData';
 import { MarketingSidebar } from './MarketingSidebar';
 import { BulkAddressSearch } from './bulk-search/BulkAddressSearch';
+import { MarketingContent } from '../../tools/marketing/MarketingContent';
 
 // Component for the "Coming Soon" placeholder card
 const ComingSoonSection = ({ title }: { title: string }) => (
@@ -76,7 +78,7 @@ export const MarketingDashboard: React.FC = () => {
       case 'content':
         return <ContentManagement />;
       case 'create':
-        return <ComingSoonSection title="Create Content" />;
+        return <MarketingContent />;
       default:
         // For unimplemented sections, show a "coming soon" message
         if (['jobs', 'lists', 'users', 'notifications', 'properties'].includes(activeSection)) {
