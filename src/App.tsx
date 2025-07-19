@@ -1,5 +1,3 @@
-
-import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -59,7 +57,6 @@ function App() {
       <BrowserRouter>
         <AuthProvider>
           <TooltipProvider>
-            <Toaster />
             <Sonner />
             <Routes>
               {/* Public routes */}

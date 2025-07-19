@@ -1,5 +1,5 @@
 
-// Forward all toast functionality to sonner
+// Standardized toast functionality using Sonner
 import { toast as sonnerToast } from "sonner";
 
 export type ToastProps = {
@@ -19,13 +19,11 @@ export const useToast = () => ({
   toasts: []
 });
 
-// Create simple toast helpers
+// Simple toast helpers for direct usage
 export const toast = {
-  // Basic toast function
   default: (title: string, description?: string) => 
     sonnerToast(title, { description }),
   
-  // Toast variants
   success: (title: string, description?: string) => 
     sonnerToast.success(title, { description }),
   

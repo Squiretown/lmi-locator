@@ -4,7 +4,6 @@ import App from './App.tsx'
 import './index.css'
 import { MotionConfig } from 'framer-motion'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { Toaster } from "@/components/ui/toaster"
 import { ThemeProvider } from '@/components/theme/ThemeProvider'
 
 // Create a client
@@ -22,7 +21,6 @@ createRoot(document.getElementById("root")!).render(
     <QueryClientProvider client={queryClient}>
       <MotionConfig reducedMotion="user">
         <App />
-        <Toaster />
       </MotionConfig>
     </QueryClientProvider>
   </ThemeProvider>
