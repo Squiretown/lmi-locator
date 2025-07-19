@@ -6,6 +6,7 @@ import { ComposeMessage } from './ComposeMessage';
 import { MessageTemplates } from './MessageTemplates';
 import { MessageHistory } from './MessageHistory';
 import { BulkMessaging } from './BulkMessaging';
+import { ScheduledMessages } from './ScheduledMessages';
 
 export function AdminMessagingDashboard() {
   const [activeTab, setActiveTab] = useState('compose');
@@ -123,10 +124,7 @@ export function AdminMessagingDashboard() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="text-center py-8 text-muted-foreground">
-                <Calendar className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p>Scheduled messaging coming soon</p>
-              </div>
+              <ScheduledMessages />
             </CardContent>
           </Card>
         </TabsContent>

@@ -92,8 +92,33 @@ export const useUserManagement = () => {
 
   const handleResetPassword = async (userId: string) => {
     try {
-      await logAdminError('reset_password', new Error('Password reset functionality not implemented'), userId);
-      toast.info('Password reset functionality needs to be implemented');
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        const error = new Error('No active session found');
+        await logAdminError('reset_password', error, userId);
+        throw error;
+      }
+
+      const { data, error } = await supabase.functions.invoke('reset-user-password', {
+        body: { userId },
+        headers: {
+          Authorization: `Bearer ${session.access_token}`
+        }
+      });
+
+      if (error) {
+        await logAdminError('reset_password', error, userId);
+        throw error;
+      }
+
+      if (!data?.success) {
+        const errorDetails = { success: data?.success, error: data?.error };
+        await logAdminError('reset_password', new Error(data?.error || 'Password reset failed'), userId);
+        throw new Error(data?.error || 'Password reset failed');
+      }
+
+      toast.success('Password reset email sent to user');
     } catch (err) {
       console.error('Error resetting password:', err);
       await logAdminError('reset_password', err, userId);
