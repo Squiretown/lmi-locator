@@ -5,25 +5,52 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
-import AdminContactsPage from "./pages/admin/AdminContactsPage";
 import LoginPage from "./pages/auth/LoginPage";
 import { AuthProvider } from "@/providers/AuthProvider";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
+
+// Import all page components
+import ProductPage from "./pages/ProductPage";
+import ResourcesPage from "./pages/ResourcesPage";
+import PricingPage from "./pages/PricingPage";
+import CustomersPage from "./pages/CustomersPage";
+import BlogPage from "./pages/BlogPage";
+import ContactPage from "./pages/ContactPage";
 
 // Dashboard Layout and Pages
 import DashboardLayout from "./components/dashboard/layout/DashboardLayout";
 import ClientOverview from "./pages/dashboard/client/Overview";
 import SavedProperties from "./pages/dashboard/client/SavedProperties";
+import ClientSearch from "./pages/dashboard/client/Search";
 
 // Realtor Dashboard Pages
 import RealtorOverview from "./pages/dashboard/realtor/Overview";
 import RealtorClients from "./pages/dashboard/realtor/Clients";
 import RealtorProperties from "./pages/dashboard/realtor/Properties";
 import RealtorAnalytics from "./pages/dashboard/realtor/Analytics";
+import RealtorMarketing from "./pages/dashboard/realtor/Marketing";
+import RealtorTeam from "./pages/dashboard/realtor/Team";
 
 // Mortgage Dashboard Pages
 import MortgageOverview from "./pages/dashboard/mortgage/Overview";
 import MortgageClients from "./pages/dashboard/mortgage/Clients";
+import MortgageTeam from "./pages/dashboard/mortgage/Team";
+import MortgageAnalytics from "./pages/dashboard/mortgage/Analytics";
+
+// Admin Layout and Pages
+import AdminLayout from "./components/admin/layout/AdminLayout";
+import AdminContactsPage from "./pages/admin/AdminContactsPage";
+import { Dashboard as AdminDashboard } from "./components/admin/dashboard/DashboardContainer";
+import UserManagement from "./pages/auth/UserManagement";
+import AdminTools from "./pages/auth/AdminTools";
+import SettingsPage from "./pages/admin/SettingsPage";
+import SystemLogsPage from "./pages/admin/SystemLogsPage";
+import ErrorLogs from "./pages/admin/ErrorLogs";
+import DataProtectionPage from "./pages/admin/DataProtectionPage";
+import SearchHistoryPage from "./pages/admin/SearchHistoryPage";
+import RealtorsPage from "./pages/admin/RealtorsPage";
+import MortgageBrokersPage from "./pages/admin/MortgageBrokersPage";
+import ContactsPage from "./pages/admin/ContactsPage";
 
 const queryClient = new QueryClient();
 
@@ -37,6 +64,12 @@ const App = () => (
             {/* Public Routes */}
             <Route path="/" element={<Index />} />
             <Route path="/login" element={<LoginPage />} />
+            <Route path="/product" element={<ProductPage />} />
+            <Route path="/resources" element={<ResourcesPage />} />
+            <Route path="/pricing" element={<PricingPage />} />
+            <Route path="/customers" element={<CustomersPage />} />
+            <Route path="/blog" element={<BlogPage />} />
+            <Route path="/contact" element={<ContactPage />} />
             
             {/* Dashboard Routes */}
             <Route path="/dashboard" element={<DashboardLayout />}>
@@ -49,6 +82,11 @@ const App = () => (
               <Route path="client/saved-properties" element={
                 <ProtectedRoute allowedUserTypes={['client']}>
                   <SavedProperties />
+                </ProtectedRoute>
+              } />
+              <Route path="client/search" element={
+                <ProtectedRoute allowedUserTypes={['client']}>
+                  <ClientSearch />
                 </ProtectedRoute>
               } />
               
@@ -73,6 +111,16 @@ const App = () => (
                   <RealtorAnalytics />
                 </ProtectedRoute>
               } />
+              <Route path="realtor/marketing" element={
+                <ProtectedRoute allowedUserTypes={['realtor']}>
+                  <RealtorMarketing />
+                </ProtectedRoute>
+              } />
+              <Route path="realtor/team" element={
+                <ProtectedRoute allowedUserTypes={['realtor']}>
+                  <RealtorTeam />
+                </ProtectedRoute>
+              } />
               
               {/* Mortgage Dashboard */}
               <Route path="mortgage" element={
@@ -85,61 +133,52 @@ const App = () => (
                   <MortgageClients />
                 </ProtectedRoute>
               } />
+              <Route path="mortgage/team" element={
+                <ProtectedRoute allowedUserTypes={['mortgage_professional', 'mortgage']}>
+                  <MortgageTeam />
+                </ProtectedRoute>
+              } />
+              <Route path="mortgage/analytics" element={
+                <ProtectedRoute allowedUserTypes={['mortgage_professional', 'mortgage']}>
+                  <MortgageAnalytics />
+                </ProtectedRoute>
+              } />
             </Route>
             
             {/* Admin Routes */}
-            <Route path="/admin/contacts" element={
+            <Route path="/admin" element={
               <ProtectedRoute requiredUserType="admin">
-                <AdminContactsPage />
+                <AdminLayout />
               </ProtectedRoute>
-            } />
+            }>
+              {/* Admin Dashboard */}
+              <Route index element={<AdminDashboard />} />
+              
+              {/* Admin Management Pages */}
+              <Route path="users" element={<UserManagement />} />
+              <Route path="tools" element={<AdminTools />} />
+              <Route path="settings" element={<SettingsPage />} />
+              <Route path="contacts" element={<AdminContactsPage />} />
+              <Route path="realtors" element={<RealtorsPage />} />
+              <Route path="mortgage-brokers" element={<MortgageBrokersPage />} />
+              
+              {/* Admin System Pages */}
+              <Route path="system-logs" element={<SystemLogsPage />} />
+              <Route path="error-logs" element={<ErrorLogs />} />
+              <Route path="data-protection" element={<DataProtectionPage />} />
+              <Route path="search-history" element={<SearchHistoryPage />} />
+              
+              {/* Professional Contact Pages */}
+              <Route path="contacts/:professionalId" element={<ContactsPage />} />
+            </Route>
             
-            {/* Public Pages - Placeholder routes for navigation links */}
-            <Route path="/product" element={
+            {/* Catch-all route for 404 */}
+            <Route path="*" element={
               <div className="min-h-screen flex items-center justify-center">
                 <div className="text-center">
-                  <h1 className="text-4xl font-bold mb-4">Product</h1>
-                  <p className="text-muted-foreground">Product page coming soon</p>
-                </div>
-              </div>
-            } />
-            <Route path="/resources" element={
-              <div className="min-h-screen flex items-center justify-center">
-                <div className="text-center">
-                  <h1 className="text-4xl font-bold mb-4">Resources</h1>
-                  <p className="text-muted-foreground">Resources page coming soon</p>
-                </div>
-              </div>
-            } />
-            <Route path="/pricing" element={
-              <div className="min-h-screen flex items-center justify-center">
-                <div className="text-center">
-                  <h1 className="text-4xl font-bold mb-4">Pricing</h1>
-                  <p className="text-muted-foreground">Pricing page coming soon</p>
-                </div>
-              </div>
-            } />
-            <Route path="/customers" element={
-              <div className="min-h-screen flex items-center justify-center">
-                <div className="text-center">
-                  <h1 className="text-4xl font-bold mb-4">Customers</h1>
-                  <p className="text-muted-foreground">Customers page coming soon</p>
-                </div>
-              </div>
-            } />
-            <Route path="/blog" element={
-              <div className="min-h-screen flex items-center justify-center">
-                <div className="text-center">
-                  <h1 className="text-4xl font-bold mb-4">Blog</h1>
-                  <p className="text-muted-foreground">Blog page coming soon</p>
-                </div>
-              </div>
-            } />
-            <Route path="/contact" element={
-              <div className="min-h-screen flex items-center justify-center">
-                <div className="text-center">
-                  <h1 className="text-4xl font-bold mb-4">Contact</h1>
-                  <p className="text-muted-foreground">Contact page coming soon</p>
+                  <h1 className="text-4xl font-bold mb-4">404 - Page Not Found</h1>
+                  <p className="text-muted-foreground mb-4">The page you're looking for doesn't exist.</p>
+                  <a href="/" className="text-primary hover:underline">Go back home</a>
                 </div>
               </div>
             } />

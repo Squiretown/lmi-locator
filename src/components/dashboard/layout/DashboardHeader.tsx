@@ -10,12 +10,10 @@ import {
   Home, 
   Search, 
   Heart, 
-  FileSearch, 
   Users, 
   Building, 
   Megaphone, 
   BarChart3,
-  Target,
   UserCheck
 } from "lucide-react";
 
@@ -34,6 +32,8 @@ const DashboardHeader: React.FC = () => {
       case 'client':
         return [
           { title: "Dashboard", url: "/dashboard/client", icon: Home },
+          { title: "Search", url: "/dashboard/client/search", icon: Search },
+          { title: "Saved Properties", url: "/dashboard/client/saved-properties", icon: Heart },
         ];
       
       case 'realtor':
@@ -52,7 +52,6 @@ const DashboardHeader: React.FC = () => {
           { title: "Dashboard", url: "/dashboard/mortgage", icon: Home },
           { title: "Clients", url: "/dashboard/mortgage/clients", icon: Users },
           { title: "Team", url: "/dashboard/mortgage/team", icon: UserCheck },
-          { title: "Marketing", url: "/dashboard/lmi-marketing", icon: Target },
           { title: "Analytics", url: "/dashboard/mortgage/analytics", icon: BarChart3 },
         ];
       
