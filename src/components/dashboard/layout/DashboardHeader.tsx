@@ -15,7 +15,8 @@ import {
   Building, 
   Megaphone, 
   BarChart3,
-  Target
+  Target,
+  UserCheck
 } from "lucide-react";
 
 interface NavigationItem {
@@ -40,6 +41,7 @@ const DashboardHeader: React.FC = () => {
           { title: "Dashboard", url: "/dashboard/realtor", icon: Home },
           { title: "Clients", url: "/dashboard/realtor/clients", icon: Users },
           { title: "Properties", url: "/dashboard/realtor/properties", icon: Building },
+          { title: "Team", url: "/dashboard/realtor/team", icon: UserCheck },
           { title: "Marketing", url: "/dashboard/realtor/marketing", icon: Megaphone },
           { title: "Analytics", url: "/dashboard/realtor/analytics", icon: BarChart3 },
         ];
@@ -49,6 +51,7 @@ const DashboardHeader: React.FC = () => {
         return [
           { title: "Dashboard", url: "/dashboard/mortgage", icon: Home },
           { title: "Clients", url: "/dashboard/mortgage/clients", icon: Users },
+          { title: "Team", url: "/dashboard/mortgage/team", icon: UserCheck },
           { title: "Marketing", url: "/dashboard/lmi-marketing", icon: Target },
           { title: "Analytics", url: "/dashboard/mortgage/analytics", icon: BarChart3 },
         ];

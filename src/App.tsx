@@ -1,3 +1,4 @@
+
 import { Toaster as Sonner } from "sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -32,9 +33,11 @@ import RealtorClients from "./pages/dashboard/realtor/Clients";
 import RealtorProperties from "./pages/dashboard/realtor/Properties";
 import RealtorMarketing from "./pages/dashboard/realtor/Marketing";
 import RealtorAnalytics from "./pages/dashboard/realtor/Analytics";
+import RealtorTeam from "./pages/dashboard/realtor/Team";
 import MortgageOverview from "./pages/dashboard/mortgage/Overview";
 import MortgageClients from "./pages/dashboard/mortgage/Clients";
 import MortgageAnalytics from "./pages/dashboard/mortgage/Analytics";
+import MortgageTeam from "./pages/dashboard/mortgage/Team";
 import BulkSearchDashboard from "./pages/dashboard/BulkSearch";
 import LmiMarketingListDashboard from "./pages/dashboard/LmiMarketingList";
 import BlogPage from "./pages/BlogPage";
@@ -86,12 +89,14 @@ function App() {
                 <Route path="realtor" element={<RealtorOverview />} />
                 <Route path="realtor/clients" element={<RealtorClients />} />
                 <Route path="realtor/properties" element={<RealtorProperties />} />
+                <Route path="realtor/team" element={<RealtorTeam />} />
                 <Route path="realtor/marketing" element={<RealtorMarketing />} />
                 <Route path="realtor/analytics" element={<RealtorAnalytics />} />
                 
                 {/* Mortgage professional dashboard routes */}
                 <Route path="mortgage" element={<MortgageOverview />} />
                 <Route path="mortgage/clients" element={<MortgageClients />} />
+                <Route path="mortgage/team" element={<MortgageTeam />} />
                 <Route path="mortgage/analytics" element={<MortgageAnalytics />} />
                 
                 {/* Shared dashboard routes - Restricted to realtors and mortgage professionals */}
