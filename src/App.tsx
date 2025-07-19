@@ -52,6 +52,10 @@ import RealtorsPage from "./pages/admin/RealtorsPage";
 import MortgageBrokersPage from "./pages/admin/MortgageBrokersPage";
 import ContactsPage from "./pages/admin/ContactsPage";
 
+// Missing Admin Components
+import SubscriptionManagement from "./pages/admin/SubscriptionManagement";
+import { MarketingDashboard } from "./components/admin/marketing-dashboard/MarketingDashboard";
+
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -161,6 +165,10 @@ const App = () => (
               <Route path="contacts" element={<AdminContactsPage />} />
               <Route path="realtors" element={<RealtorsPage />} />
               <Route path="mortgage-brokers" element={<MortgageBrokersPage />} />
+              
+              {/* Missing Admin Routes - Now Added */}
+              <Route path="subscriptions" element={<SubscriptionManagement />} />
+              <Route path="marketing" element={<MarketingDashboard />} />
               
               {/* Admin System Pages */}
               <Route path="system-logs" element={<SystemLogsPage />} />
