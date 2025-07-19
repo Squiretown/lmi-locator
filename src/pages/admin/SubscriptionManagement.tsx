@@ -1,14 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Edit, Trash2, DollarSign, Users, Settings } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Plus, Edit2, Trash2, Loader2 } from "lucide-react";
+import { getAllSubscriptionPlans, getPlanLimits, createSubscriptionPlan, updateSubscriptionPlan, deleteSubscriptionPlan } from "@/lib/supabase/subscriptions";
 import { useToast } from "@/hooks/use-toast";
-import { getAllSubscriptionPlans, getPlanLimits, getPlanFeatures } from "@/lib/supabase/subscriptions";
 
 interface SubscriptionPlan {
   id: string;
@@ -36,6 +38,7 @@ const SubscriptionManagement: React.FC = () => {
   const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
   const [planLimits, setPlanLimits] = useState<{ [key: string]: PlanLimit[] }>({});
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [editingPlan, setEditingPlan] = useState<SubscriptionPlan | null>(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const { toast } = useToast();
@@ -45,15 +48,33 @@ const SubscriptionManagement: React.FC = () => {
     display_name: '',
     description: '',
     price: 0,
-    billing_period: 'monthly',
+    billing_period: 'monthly' as const,
     is_popular: false,
+    is_active: true,
     sort_order: 0,
-    features: [''],
-    team_members_limit: 1,
-    clients_limit: 5,
-    marketing_campaigns_limit: 0,
-    searches_per_month_limit: 10
+    features: [] as string[],
+    limits: {} as { [key: string]: number },
+    plan_features: [] as any[]
   });
+
+  const handleDeletePlan = async (planId: string, planName: string) => {
+    if (!confirm(`Are you sure you want to delete the "${planName}" plan? This action cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      const result = await deleteSubscriptionPlan(planId);
+      if (result.success) {
+        toast.success('Plan deleted successfully');
+        loadPlans(); // Reload the plans list
+      } else {
+        toast.error(result.error || 'Failed to delete plan');
+      }
+    } catch (error) {
+      console.error('Error deleting plan:', error);
+      toast.error('An unexpected error occurred');
+    }
+  };
 
   useEffect(() => {
     loadPlans();
@@ -74,10 +95,7 @@ const SubscriptionManagement: React.FC = () => {
       setPlanLimits(limitsData);
     } catch (error) {
       console.error('Error loading plans:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load subscription plans"
-      });
+      toast.error("Failed to load subscription plans");
     } finally {
       setLoading(false);
     }
@@ -92,14 +110,18 @@ const SubscriptionManagement: React.FC = () => {
       display_name: plan.display_name,
       description: plan.description || '',
       price: plan.price,
-      billing_period: plan.billing_period,
+      billing_period: plan.billing_period as 'monthly' | 'yearly',
       is_popular: plan.is_popular,
+      is_active: plan.is_active,
       sort_order: plan.sort_order,
       features: plan.features.length > 0 ? plan.features : [''],
-      team_members_limit: limits.find(l => l.resource_type === 'team_members')?.limit_value || 1,
-      clients_limit: limits.find(l => l.resource_type === 'clients')?.limit_value || 5,
-      marketing_campaigns_limit: limits.find(l => l.resource_type === 'marketing_campaigns')?.limit_value || 0,
-      searches_per_month_limit: limits.find(l => l.resource_type === 'searches_per_month')?.limit_value || 10
+      limits: {
+        team_members: limits.find(l => l.resource_type === 'team_members')?.limit_value || 1,
+        clients: limits.find(l => l.resource_type === 'clients')?.limit_value || 5,
+        marketing_campaigns: limits.find(l => l.resource_type === 'marketing_campaigns')?.limit_value || 0,
+        searches_per_month: limits.find(l => l.resource_type === 'searches_per_month')?.limit_value || 10
+      },
+      plan_features: []
     });
   };
 
@@ -113,32 +135,56 @@ const SubscriptionManagement: React.FC = () => {
       price: 0,
       billing_period: 'monthly',
       is_popular: false,
+      is_active: true,
       sort_order: plans.length,
       features: [''],
-      team_members_limit: 1,
-      clients_limit: 5,
-      marketing_campaigns_limit: 0,
-      searches_per_month_limit: 10
+      limits: {
+        team_members: 1,
+        clients: 5,
+        marketing_campaigns: 0,
+        searches_per_month: 10
+      },
+      plan_features: []
     });
   };
 
   const handleSavePlan = async () => {
+    if (!formData.display_name || !formData.name || formData.price === undefined) {
+      toast.error("Please fill in all required fields");
+      return;
+    }
+
+    setSaving(true);
     try {
-      // Here you would implement the actual save functionality
-      // For now, just show a success message
-      toast({
-        title: "Success",
-        description: editingPlan ? "Plan updated successfully" : "Plan created successfully"
-      });
-      
-      setEditingPlan(null);
-      setShowCreateForm(false);
-      loadPlans();
+      const planData = {
+        ...formData,
+        limits: Object.entries(formData.limits || {}).map(([resource_type, limit_value]) => ({
+          resource_type,
+          limit_value: Number(limit_value)
+        })),
+        plan_features: formData.plan_features || []
+      };
+
+      let result;
+      if (editingPlan) {
+        result = await updateSubscriptionPlan({ id: editingPlan.id, ...planData });
+      } else {
+        result = await createSubscriptionPlan(planData);
+      }
+
+      if (result.success) {
+        toast.success(`Plan ${editingPlan ? 'updated' : 'created'} successfully`);
+        setEditingPlan(null);
+        setShowCreateForm(false);
+        loadPlans(); // Reload the plans list
+      } else {
+        toast.error(result.error || 'Failed to save plan');
+      }
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to save plan"
-      });
+      console.error('Error saving plan:', error);
+      toast.error('An unexpected error occurred');
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -166,7 +212,8 @@ const SubscriptionManagement: React.FC = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="text-lg">Loading subscription plans...</div>
+        <Loader2 className="h-8 w-8 animate-spin" />
+        <span className="ml-2">Loading subscription plans...</span>
       </div>
     );
   }
@@ -178,15 +225,6 @@ const SubscriptionManagement: React.FC = () => {
           <h2 className="text-2xl font-bold">
             {editingPlan ? 'Edit Plan' : 'Create New Plan'}
           </h2>
-          <Button 
-            variant="outline" 
-            onClick={() => {
-              setEditingPlan(null);
-              setShowCreateForm(false);
-            }}
-          >
-            Cancel
-          </Button>
         </div>
 
         <Card>
@@ -196,21 +234,23 @@ const SubscriptionManagement: React.FC = () => {
           <CardContent className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="name">Internal Name</Label>
+                <Label htmlFor="name">Internal Name *</Label>
                 <Input
                   id="name"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   placeholder="e.g., professional"
+                  required
                 />
               </div>
               <div>
-                <Label htmlFor="display_name">Display Name</Label>
+                <Label htmlFor="display_name">Display Name *</Label>
                 <Input
                   id="display_name"
                   value={formData.display_name}
                   onChange={(e) => setFormData({ ...formData, display_name: e.target.value })}
                   placeholder="e.g., Professional"
+                  required
                 />
               </div>
             </div>
@@ -227,26 +267,27 @@ const SubscriptionManagement: React.FC = () => {
 
             <div className="grid grid-cols-3 gap-4">
               <div>
-                <Label htmlFor="price">Price</Label>
+                <Label htmlFor="price">Price *</Label>
                 <Input
                   id="price"
                   type="number"
                   step="0.01"
                   value={formData.price}
-                  onChange={(e) => setFormData({ ...formData, price: parseFloat(e.target.value) })}
+                  onChange={(e) => setFormData({ ...formData, price: parseFloat(e.target.value) || 0 })}
+                  required
                 />
               </div>
               <div>
                 <Label htmlFor="billing_period">Billing Period</Label>
-                <select
-                  id="billing_period"
-                  value={formData.billing_period}
-                  onChange={(e) => setFormData({ ...formData, billing_period: e.target.value })}
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                >
-                  <option value="monthly">Monthly</option>
-                  <option value="yearly">Yearly</option>
-                </select>
+                <Select value={formData.billing_period} onValueChange={(value) => setFormData({ ...formData, billing_period: value })}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="monthly">Monthly</SelectItem>
+                    <SelectItem value="yearly">Yearly</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
               <div>
                 <Label htmlFor="sort_order">Sort Order</Label>
@@ -254,18 +295,28 @@ const SubscriptionManagement: React.FC = () => {
                   id="sort_order"
                   type="number"
                   value={formData.sort_order}
-                  onChange={(e) => setFormData({ ...formData, sort_order: parseInt(e.target.value) })}
+                  onChange={(e) => setFormData({ ...formData, sort_order: parseInt(e.target.value) || 0 })}
                 />
               </div>
             </div>
 
-            <div className="flex items-center space-x-2">
-              <Switch
-                id="is_popular"
-                checked={formData.is_popular}
-                onCheckedChange={(checked) => setFormData({ ...formData, is_popular: checked })}
-              />
-              <Label htmlFor="is_popular">Mark as Popular</Label>
+            <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-2">
+                <Switch
+                  id="is_popular"
+                  checked={formData.is_popular}
+                  onCheckedChange={(checked) => setFormData({ ...formData, is_popular: checked })}
+                />
+                <Label htmlFor="is_popular">Mark as Popular</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Switch
+                  id="is_active"
+                  checked={formData.is_active}
+                  onCheckedChange={(checked) => setFormData({ ...formData, is_active: checked })}
+                />
+                <Label htmlFor="is_active">Active</Label>
+              </div>
             </div>
 
             <div>
@@ -276,8 +327,11 @@ const SubscriptionManagement: React.FC = () => {
                   <Input
                     id="team_members_limit"
                     type="number"
-                    value={formData.team_members_limit}
-                    onChange={(e) => setFormData({ ...formData, team_members_limit: parseInt(e.target.value) })}
+                    value={formData.limits.team_members || 1}
+                    onChange={(e) => setFormData({ 
+                      ...formData, 
+                      limits: { ...formData.limits, team_members: parseInt(e.target.value) || 1 }
+                    })}
                   />
                 </div>
                 <div>
@@ -285,8 +339,11 @@ const SubscriptionManagement: React.FC = () => {
                   <Input
                     id="clients_limit"
                     type="number"
-                    value={formData.clients_limit}
-                    onChange={(e) => setFormData({ ...formData, clients_limit: parseInt(e.target.value) })}
+                    value={formData.limits.clients || 5}
+                    onChange={(e) => setFormData({ 
+                      ...formData, 
+                      limits: { ...formData.limits, clients: parseInt(e.target.value) || 5 }
+                    })}
                   />
                 </div>
                 <div>
@@ -294,8 +351,11 @@ const SubscriptionManagement: React.FC = () => {
                   <Input
                     id="marketing_campaigns_limit"
                     type="number"
-                    value={formData.marketing_campaigns_limit}
-                    onChange={(e) => setFormData({ ...formData, marketing_campaigns_limit: parseInt(e.target.value) })}
+                    value={formData.limits.marketing_campaigns || 0}
+                    onChange={(e) => setFormData({ 
+                      ...formData, 
+                      limits: { ...formData.limits, marketing_campaigns: parseInt(e.target.value) || 0 }
+                    })}
                   />
                 </div>
                 <div>
@@ -303,8 +363,11 @@ const SubscriptionManagement: React.FC = () => {
                   <Input
                     id="searches_per_month_limit"
                     type="number"
-                    value={formData.searches_per_month_limit}
-                    onChange={(e) => setFormData({ ...formData, searches_per_month_limit: parseInt(e.target.value) })}
+                    value={formData.limits.searches_per_month || 10}
+                    onChange={(e) => setFormData({ 
+                      ...formData, 
+                      limits: { ...formData.limits, searches_per_month: parseInt(e.target.value) || 10 }
+                    })}
                     placeholder="-1 for unlimited"
                   />
                 </div>
@@ -339,9 +402,18 @@ const SubscriptionManagement: React.FC = () => {
               </div>
             </div>
 
-            <Button onClick={handleSavePlan} className="w-full">
-              {editingPlan ? 'Update Plan' : 'Create Plan'}
-            </Button>
+            <div className="flex gap-2">
+              <Button onClick={handleSavePlan} disabled={saving}>
+                {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {editingPlan ? 'Update Plan' : 'Create Plan'}
+              </Button>
+              <Button variant="outline" onClick={() => {
+                setEditingPlan(null);
+                setShowCreateForm(false);
+              }} disabled={saving}>
+                Cancel
+              </Button>
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -369,12 +441,11 @@ const SubscriptionManagement: React.FC = () => {
                   {!plan.is_active && <Badge variant="destructive">Inactive</Badge>}
                 </div>
                 <div className="flex items-center space-x-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleEditPlan(plan)}
-                  >
-                    <Edit className="h-4 w-4" />
+                  <Button variant="ghost" size="sm" onClick={() => handleEditPlan(plan)}>
+                    <Edit2 className="h-4 w-4" />
+                  </Button>
+                  <Button variant="ghost" size="sm" onClick={() => handleDeletePlan(plan.id, plan.display_name)}>
+                    <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
               </div>
@@ -382,20 +453,14 @@ const SubscriptionManagement: React.FC = () => {
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="space-y-2">
-                  <div className="flex items-center space-x-2">
-                    <DollarSign className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm text-muted-foreground">Pricing</span>
-                  </div>
+                  <div className="text-sm text-muted-foreground">Pricing</div>
                   <div className="text-lg font-semibold">
                     ${plan.price}/{plan.billing_period}
                   </div>
                 </div>
 
                 <div className="space-y-2">
-                  <div className="flex items-center space-x-2">
-                    <Users className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm text-muted-foreground">Limits</span>
-                  </div>
+                  <div className="text-sm text-muted-foreground">Limits</div>
                   <div className="text-sm space-y-1">
                     <div>Team: {getLimitDisplay(plan.id, 'team_members')}</div>
                     <div>Clients: {getLimitDisplay(plan.id, 'clients')}</div>
@@ -405,10 +470,7 @@ const SubscriptionManagement: React.FC = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <div className="flex items-center space-x-2">
-                    <Settings className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm text-muted-foreground">Features</span>
-                  </div>
+                  <div className="text-sm text-muted-foreground">Features</div>
                   <div className="text-sm">
                     {plan.features?.length || 0} features configured
                   </div>
