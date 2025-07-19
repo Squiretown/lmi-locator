@@ -52,9 +52,15 @@ import RealtorsPage from "./pages/admin/RealtorsPage";
 import MortgageBrokersPage from "./pages/admin/MortgageBrokersPage";
 import ContactsPage from "./pages/admin/ContactsPage";
 
-// Missing Admin Components
+// Previously Missing Admin Components - Now Added
 import SubscriptionManagement from "./pages/admin/SubscriptionManagement";
 import { MarketingDashboard } from "./components/admin/marketing-dashboard/MarketingDashboard";
+import AdminMessaging from "./pages/admin/messaging";
+import PermissionsPage from "./pages/admin/PermissionsPage";
+import DatabasePage from "./pages/admin/DatabasePage";
+import ApiKeysPage from "./pages/admin/ApiKeysPage";
+import LogsPage from "./pages/admin/LogsPage";
+import HelpPage from "./pages/admin/HelpPage";
 
 const queryClient = new QueryClient();
 
@@ -166,9 +172,15 @@ const App = () => (
               <Route path="realtors" element={<RealtorsPage />} />
               <Route path="mortgage-brokers" element={<MortgageBrokersPage />} />
               
-              {/* Missing Admin Routes - Now Added */}
+              {/* Previously Missing Admin Routes - Now Fixed */}
               <Route path="subscriptions" element={<SubscriptionManagement />} />
               <Route path="marketing" element={<MarketingDashboard />} />
+              <Route path="messaging" element={<AdminMessaging />} />
+              <Route path="permissions" element={<PermissionsPage />} />
+              <Route path="database" element={<DatabasePage />} />
+              <Route path="api-keys" element={<ApiKeysPage />} />
+              <Route path="logs" element={<LogsPage />} />
+              <Route path="help" element={<HelpPage />} />
               
               {/* Admin System Pages */}
               <Route path="system-logs" element={<SystemLogsPage />} />
