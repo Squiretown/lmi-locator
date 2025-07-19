@@ -48,7 +48,7 @@ const SubscriptionManagement: React.FC = () => {
     display_name: '',
     description: '',
     price: 0,
-    billing_period: 'monthly' as const,
+    billing_period: 'monthly' as 'monthly' | 'yearly',
     is_popular: false,
     is_active: true,
     sort_order: 0,
@@ -65,14 +65,23 @@ const SubscriptionManagement: React.FC = () => {
     try {
       const result = await deleteSubscriptionPlan(planId);
       if (result.success) {
-        toast.success('Plan deleted successfully');
+        toast({
+          title: "Success",
+          description: "Plan deleted successfully",
+        });
         loadPlans(); // Reload the plans list
       } else {
-        toast.error(result.error || 'Failed to delete plan');
+        toast({
+          title: "Error", 
+          description: result.error || "Failed to delete plan",
+        });
       }
     } catch (error) {
       console.error('Error deleting plan:', error);
-      toast.error('An unexpected error occurred');
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred",
+      });
     }
   };
 
@@ -95,7 +104,10 @@ const SubscriptionManagement: React.FC = () => {
       setPlanLimits(limitsData);
     } catch (error) {
       console.error('Error loading plans:', error);
-      toast.error("Failed to load subscription plans");
+      toast({
+        title: "Error",
+        description: "Failed to load subscription plans",
+      });
     } finally {
       setLoading(false);
     }
@@ -110,7 +122,7 @@ const SubscriptionManagement: React.FC = () => {
       display_name: plan.display_name,
       description: plan.description || '',
       price: plan.price,
-      billing_period: plan.billing_period as 'monthly' | 'yearly',
+      billing_period: plan.billing_period as 'monthly',
       is_popular: plan.is_popular,
       is_active: plan.is_active,
       sort_order: plan.sort_order,
@@ -150,7 +162,10 @@ const SubscriptionManagement: React.FC = () => {
 
   const handleSavePlan = async () => {
     if (!formData.display_name || !formData.name || formData.price === undefined) {
-      toast.error("Please fill in all required fields");
+      toast({
+        title: "Error",
+        description: "Please fill in all required fields",
+      });
       return;
     }
 
@@ -159,7 +174,7 @@ const SubscriptionManagement: React.FC = () => {
       const planData = {
         ...formData,
         limits: Object.entries(formData.limits || {}).map(([resource_type, limit_value]) => ({
-          resource_type,
+          resource_type: resource_type as 'team_members' | 'clients' | 'marketing_campaigns' | 'searches_per_month',
           limit_value: Number(limit_value)
         })),
         plan_features: formData.plan_features || []
@@ -173,16 +188,25 @@ const SubscriptionManagement: React.FC = () => {
       }
 
       if (result.success) {
-        toast.success(`Plan ${editingPlan ? 'updated' : 'created'} successfully`);
+        toast({
+          title: "Success",
+          description: `Plan ${editingPlan ? 'updated' : 'created'} successfully`,
+        });
         setEditingPlan(null);
         setShowCreateForm(false);
         loadPlans(); // Reload the plans list
       } else {
-        toast.error(result.error || 'Failed to save plan');
+        toast({
+          title: "Error",
+          description: result.error || "Failed to save plan",
+        });
       }
     } catch (error) {
       console.error('Error saving plan:', error);
-      toast.error('An unexpected error occurred');
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred",
+      });
     } finally {
       setSaving(false);
     }
@@ -279,7 +303,7 @@ const SubscriptionManagement: React.FC = () => {
               </div>
               <div>
                 <Label htmlFor="billing_period">Billing Period</Label>
-                <Select value={formData.billing_period} onValueChange={(value) => setFormData({ ...formData, billing_period: value })}>
+                <Select value={formData.billing_period} onValueChange={(value) => setFormData({ ...formData, billing_period: value as 'monthly' | 'yearly' })}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
