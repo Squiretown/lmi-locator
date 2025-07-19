@@ -2020,6 +2020,51 @@ export type Database = {
           },
         ]
       }
+      scheduled_messages: {
+        Row: {
+          created_at: string
+          delivery_method: string
+          error_message: string | null
+          id: string
+          message: string
+          recipient_filter: Json | null
+          recipient_id: string | null
+          recipient_type: string
+          scheduled_for: string
+          sent_at: string | null
+          status: string
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          delivery_method?: string
+          error_message?: string | null
+          id?: string
+          message: string
+          recipient_filter?: Json | null
+          recipient_id?: string | null
+          recipient_type: string
+          scheduled_for: string
+          sent_at?: string | null
+          status?: string
+          title: string
+        }
+        Update: {
+          created_at?: string
+          delivery_method?: string
+          error_message?: string | null
+          id?: string
+          message?: string
+          recipient_filter?: Json | null
+          recipient_id?: string | null
+          recipient_type?: string
+          scheduled_for?: string
+          sent_at?: string | null
+          status?: string
+          title?: string
+        }
+        Relationships: []
+      }
       search_history: {
         Row: {
           address: string

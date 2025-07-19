@@ -66,15 +66,16 @@ export function ComposeMessage() {
         if (data.send_email) deliveryMethods.push('email');
 
         const { error } = await supabase
-          .from('scheduled_messages')
+          .from('notifications')
           .insert({
+            user_id: data.recipient_id,
             title: data.title,
             message: data.message,
             scheduled_for: data.scheduled_for,
             delivery_method: deliveryMethods.join(','),
-            recipient_type: 'single',
-            recipient_id: data.recipient_id,
-            status: 'scheduled',
+            notification_type: data.notification_type,
+            priority: data.priority,
+            is_read: false,
           });
 
         if (error) throw error;

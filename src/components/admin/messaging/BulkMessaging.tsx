@@ -122,21 +122,21 @@ export function BulkMessaging() {
         if (data.send_in_app) deliveryMethods.push('in_app');
         if (data.send_email) deliveryMethods.push('email');
 
+        // For now, schedule by creating multiple notifications with scheduled_for
+        const notifications = targetUsers.map(userId => ({
+          user_id: userId,
+          title: data.title,
+          message: data.message,
+          scheduled_for: data.scheduled_for,
+          delivery_method: deliveryMethods.join(','),
+          notification_type: data.notification_type,
+          priority: data.priority,
+          is_read: false,
+        }));
+
         const { error } = await supabase
-          .from('scheduled_messages')
-          .insert({
-            title: data.title,
-            message: data.message,
-            scheduled_for: data.scheduled_for,
-            delivery_method: deliveryMethods.join(','),
-            recipient_type: 'bulk',
-            recipient_filter: {
-              user_filter: data.user_filter,
-              user_type: data.user_type,
-              target_count: targetUsers.length
-            },
-            status: 'scheduled',
-          });
+          .from('notifications')
+          .insert(notifications);
 
         if (error) throw error;
         toast.success(`Bulk message scheduled for ${targetUsers.length} users`);

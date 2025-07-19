@@ -31,20 +31,33 @@ export function ScheduledMessages() {
     queryKey: ['scheduled-messages'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('scheduled_messages')
+        .from('notifications')
         .select('*')
+        .not('scheduled_for', 'is', null)
         .order('scheduled_for', { ascending: true });
 
       if (error) throw error;
-      return data as ScheduledMessage[];
+      return data.map(notification => ({
+        id: notification.id,
+        title: notification.title || 'No title',
+        message: notification.message,
+        scheduled_for: notification.scheduled_for!,
+        delivery_method: notification.delivery_method || 'in_app',
+        recipient_type: 'single' as const,
+        recipient_id: notification.user_id,
+        status: 'scheduled' as const,
+        created_at: notification.created_at,
+        sent_at: notification.delivered_at,
+        error_message: undefined
+      })) as ScheduledMessage[];
     },
   });
 
   const cancelMessageMutation = useMutation({
     mutationFn: async (messageId: string) => {
       const { error } = await supabase
-        .from('scheduled_messages')
-        .update({ status: 'cancelled' })
+        .from('notifications')
+        .delete()
         .eq('id', messageId);
 
       if (error) throw error;
