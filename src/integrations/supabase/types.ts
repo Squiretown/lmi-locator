@@ -670,6 +670,7 @@ export type Database = {
           status: string
           target_professional_role: string | null
           team_context: Json | null
+          team_showcase: Json | null
           template_type: string | null
           updated_at: string | null
         }
@@ -693,6 +694,7 @@ export type Database = {
           status?: string
           target_professional_role?: string | null
           team_context?: Json | null
+          team_showcase?: Json | null
           template_type?: string | null
           updated_at?: string | null
         }
@@ -716,6 +718,7 @@ export type Database = {
           status?: string
           target_professional_role?: string | null
           team_context?: Json | null
+          team_showcase?: Json | null
           template_type?: string | null
           updated_at?: string | null
         }
@@ -1516,6 +1519,7 @@ export type Database = {
           status: string
           type: string
           user_id: string
+          visibility_settings: Json | null
           website: string | null
         }
         Insert: {
@@ -1536,6 +1540,7 @@ export type Database = {
           status?: string
           type: string
           user_id: string
+          visibility_settings?: Json | null
           website?: string | null
         }
         Update: {
@@ -1556,6 +1561,7 @@ export type Database = {
           status?: string
           type?: string
           user_id?: string
+          visibility_settings?: Json | null
           website?: string | null
         }
         Relationships: []

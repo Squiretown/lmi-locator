@@ -8,7 +8,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useForm } from 'react-hook-form';
 import { CreateInvitationData } from '@/hooks/useClientInvitations';
-import { Mail, MessageSquare, Users } from 'lucide-react';
+import { useMortgageTeamManagement } from '@/hooks/useMortgageTeamManagement';
+import { ClientTeamShowcase } from '@/components/clients/ClientTeamShowcase';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Mail, MessageSquare, Users, Eye } from 'lucide-react';
 
 interface InviteClientDialogProps {
   open: boolean;
@@ -23,6 +26,7 @@ export const InviteClientDialog: React.FC<InviteClientDialogProps> = ({
   onSubmit,
   isLoading = false,
 }) => {
+  const { teamMembers } = useMortgageTeamManagement();
   const { register, handleSubmit, reset, watch, setValue, formState: { errors } } = useForm<CreateInvitationData>({
     defaultValues: {
       invitation_type: 'email',
@@ -55,8 +59,18 @@ export const InviteClientDialog: React.FC<InviteClientDialogProps> = ({
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-4">
-          <div className="space-y-2">
+        <Tabs defaultValue="invite" className="space-y-4">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="invite">Client Details</TabsTrigger>
+            <TabsTrigger value="preview" className="flex items-center gap-2">
+              <Eye className="h-4 w-4" />
+              Team Preview
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="invite">
+            <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-4">
+              <div className="space-y-2">
             <Label htmlFor="client_name">Client Name</Label>
             <Input
               id="client_name"
@@ -151,15 +165,30 @@ export const InviteClientDialog: React.FC<InviteClientDialogProps> = ({
             </p>
           </div>
 
-          <div className="flex justify-end gap-2 pt-4">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-              Cancel
-            </Button>
-            <Button type="submit" disabled={isLoading}>
-              {isLoading ? 'Creating...' : 'Create Invitation'}
-            </Button>
-          </div>
-        </form>
+              <div className="flex justify-end gap-2 pt-4">
+                <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+                  Cancel
+                </Button>
+                <Button type="submit" disabled={isLoading}>
+                  {isLoading ? 'Creating...' : 'Create Invitation'}
+                </Button>
+              </div>
+            </form>
+          </TabsContent>
+
+          <TabsContent value="preview">
+            <div className="space-y-4">
+              <div className="text-sm text-muted-foreground">
+                This is how your team will appear to the client:
+              </div>
+              <ClientTeamShowcase 
+                teamMembers={teamMembers} 
+                title="Meet Your Professional Team"
+                compact={true}
+              />
+            </div>
+          </TabsContent>
+        </Tabs>
       </DialogContent>
     </Dialog>
   );

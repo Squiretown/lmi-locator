@@ -12,6 +12,11 @@ interface LendingTeamMember {
   type: string;
   status: string;
   created_at: string;
+  visibility_settings?: {
+    visible_to_clients: boolean;
+    showcase_role?: string;
+    showcase_description?: string;
+  };
 }
 
 interface RealtorPartner {
@@ -64,7 +69,16 @@ export const useMortgageTeamManagement = () => {
         return [];
       }
 
-      return teamMembers || [];
+      return (teamMembers || []).map(member => ({
+        ...member,
+        visibility_settings: typeof member.visibility_settings === 'object' && member.visibility_settings
+          ? member.visibility_settings as any
+          : {
+              visible_to_clients: true,
+              showcase_role: null,
+              showcase_description: null
+            }
+      }));
     },
   });
 
@@ -207,13 +221,70 @@ export const useMortgageTeamManagement = () => {
     },
   });
 
+  // Update professional visibility settings
+  const updateVisibilityMutation = useMutation({
+    mutationFn: async ({ 
+      professionalId, 
+      settings 
+    }: { 
+      professionalId: string; 
+      settings: any
+    }) => {
+      const { data, error } = await supabase
+        .from('professionals')
+        .update({ 
+          visibility_settings: settings 
+        })
+        .eq('id', professionalId)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['lending-team'] });
+      queryClient.invalidateQueries({ queryKey: ['realtor-partners'] });
+    }
+  });
+
+  // Combine all team members for visibility management
+  const teamMembers = [
+    ...lendingTeam.map(member => ({
+      ...member,
+      visibility_settings: member.visibility_settings || {
+        visible_to_clients: true,
+        showcase_role: null,
+        showcase_description: null
+      }
+    })),
+    ...realtorPartners.filter(p => p.realtor).map(partner => ({
+      id: partner.realtor!.id,
+      name: partner.realtor!.name,
+      company: partner.realtor!.company,
+      phone: partner.realtor!.phone,
+      user_id: '',
+      type: 'realtor',
+      status: partner.status,
+      created_at: partner.created_at,
+      visibility_settings: {
+        visible_to_clients: true,
+        showcase_role: null,
+        showcase_description: null
+      }
+    }))
+  ];
+
   return {
     lendingTeam,
     realtorPartners,
+    teamMembers,
     isLoading: isLoadingTeam || isLoadingPartners,
     inviteProfessional: inviteProfessionalMutation.mutateAsync,
     contactProfessional: contactProfessionalMutation.mutateAsync,
+    updateProfessionalVisibility: updateVisibilityMutation.mutateAsync,
     isInviting: inviteProfessionalMutation.isPending,
     isContacting: contactProfessionalMutation.isPending,
+    isUpdatingVisibility: updateVisibilityMutation.isPending,
   };
 };

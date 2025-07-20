@@ -141,9 +141,18 @@ export const useMortgageTeamStats = () => {
     },
   });
 
+  // Combine into a simple stats object for the dashboard
+  const stats = {
+    propertiesAnalyzed: (performanceMetrics?.thisMonth?.referralsReceived || 0) + (performanceMetrics?.lastMonth?.referralsReceived || 0),
+    lmiEligible: performanceMetrics?.thisMonth?.closedLoans || 0,
+    teamMembers: teamStats?.teamMembers || 0,
+    activePartners: teamStats?.partnerRealtors || 0
+  };
+
   return {
     teamStats,
     performanceMetrics,
+    stats,
     isLoading: isLoadingStats || isLoadingMetrics,
   };
 };
