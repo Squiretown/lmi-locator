@@ -3,6 +3,9 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Users, Building, TrendingUp, Calendar } from 'lucide-react';
 import { QuickActions } from '@/components/dashboard/realtor/QuickActions';
+import { PropertyChecker } from '@/components/dashboard/realtor/PropertyChecker';
+import { RecentActivity } from '@/components/dashboard/realtor/RecentActivity';
+import { RecentContacts } from '@/components/dashboard/realtor/RecentContacts';
 
 const RealtorOverview: React.FC = () => {
   const stats = [
@@ -19,6 +22,7 @@ const RealtorOverview: React.FC = () => {
         <p className="text-muted-foreground mt-1">Welcome to your realtor portal</p>
       </div>
 
+      {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
         {stats.map((stat) => (
           <Card key={stat.title}>
@@ -33,17 +37,21 @@ const RealtorOverview: React.FC = () => {
         ))}
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Recent Activity</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-muted-foreground">Your recent client interactions and property updates will appear here.</p>
-          </CardContent>
-        </Card>
+      {/* Property Checker - Full Width */}
+      <div className="mb-6">
+        <PropertyChecker />
+      </div>
 
-        <QuickActions />
+      {/* Bottom Section - Recent Activity and Quick Actions + Recent Contacts */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Recent Activity - Left Column */}
+        <RecentActivity />
+
+        {/* Right Column - Quick Actions and Recent Contacts */}
+        <div className="space-y-6">
+          <QuickActions />
+          <RecentContacts />
+        </div>
       </div>
     </div>
   );
