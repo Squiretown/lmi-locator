@@ -2,7 +2,6 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Users, Building, TrendingUp, Calendar } from 'lucide-react';
-import { QuickActions } from '@/components/dashboard/realtor/QuickActions';
 import { PropertyChecker } from '@/components/dashboard/realtor/PropertyChecker';
 import { RecentActivity } from '@/components/dashboard/realtor/RecentActivity';
 import { RecentContacts } from '@/components/dashboard/realtor/RecentContacts';
@@ -42,16 +41,13 @@ const RealtorOverview: React.FC = () => {
         <PropertyChecker />
       </div>
 
-      {/* Bottom Section - Recent Activity and Quick Actions + Recent Contacts */}
+      {/* Bottom Section - Recent Activity and Recent Contacts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Recent Activity - Left Column */}
         <RecentActivity />
 
-        {/* Right Column - Quick Actions and Recent Contacts */}
-        <div className="space-y-6">
-          <QuickActions />
-          <RecentContacts />
-        </div>
+        {/* Recent Contacts - Right Column */}
+        <RecentContacts />
       </div>
     </div>
   );
