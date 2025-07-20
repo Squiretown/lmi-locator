@@ -2,6 +2,7 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Users, Building, TrendingUp, Calendar } from 'lucide-react';
+import { QuickActions } from '@/components/dashboard/realtor/QuickActions';
 
 const RealtorOverview: React.FC = () => {
   const stats = [
@@ -42,14 +43,7 @@ const RealtorOverview: React.FC = () => {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Quick Actions</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-muted-foreground">Quick access to common tasks and workflows.</p>
-          </CardContent>
-        </Card>
+        <QuickActions />
       </div>
     </div>
   );
