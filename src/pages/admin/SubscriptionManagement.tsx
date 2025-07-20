@@ -8,8 +8,9 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Edit2, Trash2, Loader2 } from "lucide-react";
-import { getAllSubscriptionPlans, getPlanLimits, createSubscriptionPlan, updateSubscriptionPlan, deleteSubscriptionPlan } from "@/lib/supabase/subscriptions";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Plus, Edit2, Trash2, Loader2, Settings } from "lucide-react";
+import { getAllSubscriptionPlans, getPlanLimits, getPlanFeatures, createSubscriptionPlan, updateSubscriptionPlan, deleteSubscriptionPlan } from "@/lib/supabase/subscriptions";
 import { useToast } from "@/hooks/use-toast";
 
 interface SubscriptionPlan {
@@ -34,9 +35,29 @@ interface PlanLimit {
   limit_value: number;
 }
 
+interface PlanFeature {
+  id: string;
+  plan_id: string;
+  feature_name: string;
+  feature_value?: string;
+  is_enabled: boolean;
+}
+
+// Available feature definitions
+const AVAILABLE_FEATURES = [
+  { key: 'api_access', label: 'API Access', type: 'boolean' as const },
+  { key: 'crm_integrations', label: 'CRM Integration', type: 'multi-select' as const, options: ['hubspot', 'salesforce', 'pipedrive'] },
+  { key: 'iframe_embed', label: 'iFrame Embed', type: 'boolean' as const },
+  { key: 'white_label', label: 'White Label Branding', type: 'boolean' as const },
+  { key: 'ai_lead_scoring', label: 'AI Lead Scoring', type: 'boolean' as const },
+  { key: 'custom_reports', label: 'Custom Reports', type: 'boolean' as const },
+  { key: 'multi_user', label: 'Multi-user Login', type: 'boolean' as const }
+];
+
 const SubscriptionManagement: React.FC = () => {
   const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
   const [planLimits, setPlanLimits] = useState<{ [key: string]: PlanLimit[] }>({});
+  const [planFeatures, setPlanFeatures] = useState<{ [key: string]: PlanFeature[] }>({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [editingPlan, setEditingPlan] = useState<SubscriptionPlan | null>(null);
@@ -54,7 +75,7 @@ const SubscriptionManagement: React.FC = () => {
     sort_order: 0,
     features: [] as string[],
     limits: {} as { [key: string]: number },
-    plan_features: [] as any[]
+    plan_features: {} as { [key: string]: { enabled: boolean; value?: string[] } }
   });
 
   const handleDeletePlan = async (planId: string, planName: string) => {
@@ -95,13 +116,19 @@ const SubscriptionManagement: React.FC = () => {
       const plansData = await getAllSubscriptionPlans();
       setPlans(plansData);
 
-      // Load limits for each plan
+      // Load limits and features for each plan
       const limitsData: { [key: string]: PlanLimit[] } = {};
+      const featuresData: { [key: string]: PlanFeature[] } = {};
+      
       for (const plan of plansData) {
         const limits = await getPlanLimits(plan.id);
+        const features = await getPlanFeatures(plan.id);
         limitsData[plan.id] = limits;
+        featuresData[plan.id] = features;
       }
+      
       setPlanLimits(limitsData);
+      setPlanFeatures(featuresData);
     } catch (error) {
       console.error('Error loading plans:', error);
       toast({
@@ -116,6 +143,24 @@ const SubscriptionManagement: React.FC = () => {
   const handleEditPlan = (plan: SubscriptionPlan) => {
     setEditingPlan(plan);
     const limits = planLimits[plan.id] || [];
+    const features = planFeatures[plan.id] || [];
+    
+    // Convert features to the form format
+    const formFeatures: { [key: string]: { enabled: boolean; value?: string[] } } = {};
+    AVAILABLE_FEATURES.forEach(feature => {
+      const dbFeature = features.find(f => f.feature_name === feature.key);
+      if (feature.type === 'multi-select') {
+        const value = dbFeature?.feature_value ? JSON.parse(dbFeature.feature_value) : [];
+        formFeatures[feature.key] = {
+          enabled: dbFeature?.is_enabled || false,
+          value: Array.isArray(value) ? value : []
+        };
+      } else {
+        formFeatures[feature.key] = {
+          enabled: dbFeature?.is_enabled || false
+        };
+      }
+    });
     
     setFormData({
       name: plan.name,
@@ -133,13 +178,24 @@ const SubscriptionManagement: React.FC = () => {
         marketing_campaigns: limits.find(l => l.resource_type === 'marketing_campaigns')?.limit_value || 0,
         searches_per_month: limits.find(l => l.resource_type === 'searches_per_month')?.limit_value || 10
       },
-      plan_features: []
+      plan_features: formFeatures
     });
   };
 
   const handleCreateNew = () => {
     setEditingPlan(null);
     setShowCreateForm(true);
+    
+    // Initialize default features
+    const defaultFeatures: { [key: string]: { enabled: boolean; value?: string[] } } = {};
+    AVAILABLE_FEATURES.forEach(feature => {
+      if (feature.type === 'multi-select') {
+        defaultFeatures[feature.key] = { enabled: false, value: [] };
+      } else {
+        defaultFeatures[feature.key] = { enabled: false };
+      }
+    });
+    
     setFormData({
       name: '',
       display_name: '',
@@ -156,7 +212,7 @@ const SubscriptionManagement: React.FC = () => {
         marketing_campaigns: 0,
         searches_per_month: 10
       },
-      plan_features: []
+      plan_features: defaultFeatures
     });
   };
 
@@ -177,7 +233,11 @@ const SubscriptionManagement: React.FC = () => {
           resource_type: resource_type as 'team_members' | 'clients' | 'marketing_campaigns' | 'searches_per_month',
           limit_value: Number(limit_value)
         })),
-        plan_features: formData.plan_features || []
+        plan_features: Object.entries(formData.plan_features || {}).map(([feature_name, config]) => ({
+          feature_name,
+          feature_value: config.value ? JSON.stringify(config.value) : null,
+          is_enabled: config.enabled
+        }))
       };
 
       let result;
@@ -231,6 +291,57 @@ const SubscriptionManagement: React.FC = () => {
     const limits = planLimits[planId] || [];
     const limit = limits.find(l => l.resource_type === resourceType);
     return limit?.limit_value === -1 ? 'Unlimited' : limit?.limit_value?.toString() || '0';
+  };
+
+  const getFeatureDisplay = (planId: string, featureKey: string) => {
+    const features = planFeatures[planId] || [];
+    const feature = features.find(f => f.feature_name === featureKey);
+    return feature?.is_enabled || false;
+  };
+
+  const getCRMIntegrations = (planId: string) => {
+    const features = planFeatures[planId] || [];
+    const crmFeature = features.find(f => f.feature_name === 'crm_integrations');
+    if (crmFeature?.feature_value) {
+      try {
+        const integrations = JSON.parse(crmFeature.feature_value);
+        return Array.isArray(integrations) ? integrations : [];
+      } catch {
+        return [];
+      }
+    }
+    return [];
+  };
+
+  const handleFeatureToggle = (featureKey: string, enabled: boolean) => {
+    setFormData({
+      ...formData,
+      plan_features: {
+        ...formData.plan_features,
+        [featureKey]: {
+          ...formData.plan_features[featureKey],
+          enabled
+        }
+      }
+    });
+  };
+
+  const handleCRMSelection = (featureKey: string, integration: string, selected: boolean) => {
+    const currentValue = formData.plan_features[featureKey]?.value || [];
+    const newValue = selected 
+      ? [...currentValue, integration]
+      : currentValue.filter(item => item !== integration);
+    
+    setFormData({
+      ...formData,
+      plan_features: {
+        ...formData.plan_features,
+        [featureKey]: {
+          ...formData.plan_features[featureKey],
+          value: newValue
+        }
+      }
+    });
   };
 
   if (loading) {
@@ -399,14 +510,59 @@ const SubscriptionManagement: React.FC = () => {
             </div>
 
             <div>
-              <Label>Features</Label>
+              <Label>Plan Features</Label>
+              <div className="space-y-4 mt-4 p-4 border rounded-lg">
+                {AVAILABLE_FEATURES.map((feature) => (
+                  <div key={feature.key} className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id={feature.key}
+                          checked={formData.plan_features[feature.key]?.enabled || false}
+                          onCheckedChange={(checked) => handleFeatureToggle(feature.key, checked as boolean)}
+                        />
+                        <Label htmlFor={feature.key} className="font-medium">
+                          {feature.label}
+                        </Label>
+                      </div>
+                      <Badge variant="outline" className="text-xs">
+                        {feature.type === 'boolean' ? 'Toggle' : 'Multi-select'}
+                      </Badge>
+                    </div>
+                    
+                    {feature.type === 'multi-select' && formData.plan_features[feature.key]?.enabled && (
+                      <div className="ml-6 space-y-2">
+                        <Label className="text-sm text-muted-foreground">Available {feature.label} Options:</Label>
+                        <div className="grid grid-cols-3 gap-2">
+                          {feature.options?.map((option) => (
+                            <div key={option} className="flex items-center space-x-2">
+                              <Checkbox
+                                id={`${feature.key}-${option}`}
+                                checked={formData.plan_features[feature.key]?.value?.includes(option) || false}
+                                onCheckedChange={(checked) => handleCRMSelection(feature.key, option, checked as boolean)}
+                              />
+                              <Label htmlFor={`${feature.key}-${option}`} className="text-sm capitalize">
+                                {option}
+                              </Label>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <Label>Feature Descriptions (Marketing Copy)</Label>
               <div className="space-y-2 mt-2">
                 {formData.features.map((feature, index) => (
                   <div key={index} className="flex items-center space-x-2">
                     <Input
                       value={feature}
                       onChange={(e) => handleFeatureChange(index, e.target.value)}
-                      placeholder="Feature description"
+                      placeholder="Feature description for marketing"
                     />
                     <Button
                       type="button"
@@ -421,7 +577,7 @@ const SubscriptionManagement: React.FC = () => {
                 ))}
                 <Button type="button" variant="outline" size="sm" onClick={addFeature}>
                   <Plus className="h-4 w-4 mr-2" />
-                  Add Feature
+                  Add Description
                 </Button>
               </div>
             </div>
@@ -495,8 +651,30 @@ const SubscriptionManagement: React.FC = () => {
 
                 <div className="space-y-2">
                   <div className="text-sm text-muted-foreground">Features</div>
-                  <div className="text-sm">
-                    {plan.features?.length || 0} features configured
+                  <div className="space-y-1">
+                    <div className="grid grid-cols-2 gap-1 text-xs">
+                      {AVAILABLE_FEATURES.map((feature) => (
+                        <div key={feature.key} className="flex items-center space-x-1">
+                          <div className={`w-2 h-2 rounded-full ${getFeatureDisplay(plan.id, feature.key) ? 'bg-green-500' : 'bg-red-500'}`} />
+                          <span className={getFeatureDisplay(plan.id, feature.key) ? 'text-green-700' : 'text-red-700'}>
+                            {feature.label}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                    
+                    {getCRMIntegrations(plan.id).length > 0 && (
+                      <div className="text-xs text-muted-foreground mt-2">
+                        CRM: {getCRMIntegrations(plan.id).join(', ')}
+                      </div>
+                    )}
+                    
+                    {plan.features.length > 0 && (
+                      <div className="text-xs text-muted-foreground mt-2 border-t pt-2">
+                        Marketing: {plan.features.slice(0, 2).join(', ')}
+                        {plan.features.length > 2 && ` +${plan.features.length - 2} more`}
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
