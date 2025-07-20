@@ -1,11 +1,82 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Users, UserPlus, Mail, Phone, Calendar } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Users, UserPlus, Mail, Phone, Calendar, ChevronDown, Search } from "lucide-react";
+import { useClientManagement } from '@/hooks/useClientManagement';
+import { useClientInvitations } from '@/hooks/useClientInvitations';
+import { ClientTable } from '@/components/clients/ClientTable';
+import { CreateClientDialog } from '@/components/clients/CreateClientDialog';
+import { EditClientDialog } from '@/components/clients/EditClientDialog';
+import { ClientDetailsDialog } from '@/components/clients/ClientDetailsDialog';
+import { InviteClientDialog } from '@/components/clients/InviteClientDialog';
 
 const MortgageClients: React.FC = () => {
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [showDetailsDialog, setShowDetailsDialog] = useState(false);
+  const [showInviteDialog, setShowInviteDialog] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const {
+    clients,
+    isLoadingClients,
+    selectedClient,
+    setSelectedClient,
+    createClient,
+    updateClient,
+    deleteClient,
+    isCreating,
+    isUpdating,
+    refetch,
+  } = useClientManagement();
+
+  const {
+    createInvitation,
+    isCreatingInvitation,
+  } = useClientInvitations();
+
+  // Filter clients based on search query
+  const filteredClients = clients.filter(client => {
+    const searchLower = searchQuery.toLowerCase();
+    return (
+      client.first_name.toLowerCase().includes(searchLower) ||
+      client.last_name.toLowerCase().includes(searchLower) ||
+      client.email?.toLowerCase().includes(searchLower) ||
+      client.phone?.includes(searchQuery)
+    );
+  });
+
+  // Calculate statistics
+  const totalClients = clients.length;
+  const activeApplications = clients.filter(c => c.status === 'active').length;
+  const lmiEligible = clients.filter(c => 
+    c.income && c.household_size && c.income < 80000 // Example LMI criteria
+  ).length;
+  const recentlyAdded = clients.filter(c => {
+    const weekAgo = new Date();
+    weekAgo.setDate(weekAgo.getDate() - 7);
+    return new Date(c.created_at) > weekAgo;
+  }).length;
+
+  const handleEditClient = (client: any) => {
+    setSelectedClient(client);
+    setShowEditDialog(true);
+  };
+
+  const handleViewClient = (client: any) => {
+    setSelectedClient(client);
+    setShowDetailsDialog(true);
+  };
+
+  const handleDeleteClient = async (clientId: string) => {
+    if (window.confirm('Are you sure you want to delete this client?')) {
+      await deleteClient(clientId);
+    }
+  };
+
   return (
     <div className="p-6 space-y-6">
       <div className="flex justify-between items-center">
@@ -15,10 +86,38 @@ const MortgageClients: React.FC = () => {
             Manage your mortgage clients and their applications
           </p>
         </div>
-        <Button>
-          <UserPlus className="mr-2 h-4 w-4" />
-          Add Client
-        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button>
+              <UserPlus className="mr-2 h-4 w-4" />
+              Add Client
+              <ChevronDown className="ml-2 h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={() => setShowCreateDialog(true)}>
+              <UserPlus className="mr-2 h-4 w-4" />
+              Create Manually
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setShowInviteDialog(true)}>
+              <Mail className="mr-2 h-4 w-4" />
+              Send Invitation
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+
+      {/* Search Bar */}
+      <div className="flex items-center space-x-2">
+        <div className="relative flex-1 max-w-sm">
+          <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Search clients..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-8"
+          />
+        </div>
       </div>
 
       {/* Client Stats */}
@@ -29,8 +128,8 @@ const MortgageClients: React.FC = () => {
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">47</div>
-            <p className="text-xs text-muted-foreground">+3 from last month</p>
+            <div className="text-2xl font-bold">{totalClients}</div>
+            <p className="text-xs text-muted-foreground">+{recentlyAdded} from last week</p>
           </CardContent>
         </Card>
         <Card>
@@ -39,7 +138,7 @@ const MortgageClients: React.FC = () => {
             <Calendar className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">12</div>
+            <div className="text-2xl font-bold">{activeApplications}</div>
             <p className="text-xs text-muted-foreground">In process</p>
           </CardContent>
         </Card>
@@ -49,90 +148,41 @@ const MortgageClients: React.FC = () => {
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">28</div>
-            <p className="text-xs text-muted-foreground">59% of clients</p>
+            <div className="text-2xl font-bold">{lmiEligible}</div>
+            <p className="text-xs text-muted-foreground">
+              {totalClients > 0 ? Math.round((lmiEligible / totalClients) * 100) : 0}% of clients
+            </p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Closed This Month</CardTitle>
+            <CardTitle className="text-sm font-medium">This Month</CardTitle>
             <Calendar className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">8</div>
-            <p className="text-xs text-muted-foreground">+2 from last month</p>
+            <div className="text-2xl font-bold">{recentlyAdded}</div>
+            <p className="text-xs text-muted-foreground">New clients added</p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Recent Clients */}
+      {/* Client Table */}
       <Card>
         <CardHeader>
-          <CardTitle>Recent Clients</CardTitle>
+          <CardTitle>All Clients</CardTitle>
           <CardDescription>
-            Your most recent client interactions and applications
+            Manage your client relationships and track their progress
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
-            <div className="flex items-center justify-between p-4 border rounded-lg">
-              <div className="flex items-center space-x-4">
-                <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
-                  <span className="text-primary font-semibold">SM</span>
-                </div>
-                <div>
-                  <h4 className="font-semibold">Sarah Martinez</h4>
-                  <p className="text-sm text-muted-foreground">Pre-approval • $285,000 • LMI Eligible</p>
-                </div>
-              </div>
-              <div className="flex items-center space-x-2">
-                <Badge variant="secondary">In Progress</Badge>
-                <Button variant="outline" size="sm">
-                  <Mail className="h-4 w-4" />
-                </Button>
-                <Button variant="outline" size="sm">
-                  <Phone className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-            <div className="flex items-center justify-between p-4 border rounded-lg">
-              <div className="flex items-center space-x-4">
-                <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
-                  <span className="text-primary font-semibold">JD</span>
-                </div>
-                <div>
-                  <h4 className="font-semibold">John Davis</h4>
-                  <p className="text-sm text-muted-foreground">Application Review • $195,000 • LMI Eligible</p>
-                </div>
-              </div>
-              <div className="flex items-center space-x-2">
-                <Badge variant="secondary">Under Review</Badge>
-                <Button variant="outline" size="sm">
-                  <Mail className="h-4 w-4" />
-                </Button>
-                <Button variant="outline" size="sm">
-                  <Phone className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-            <div className="flex items-center justify-between p-4 border rounded-lg">
-              <div className="flex items-center space-x-4">
-                <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
-                  <span className="text-green-600 font-semibold">LB</span>
-                </div>
-                <div>
-                  <h4 className="font-semibold">Lisa Brown</h4>
-                  <p className="text-sm text-muted-foreground">Closed • $225,000 • First-time buyer</p>
-                </div>
-              </div>
-              <div className="flex items-center space-x-2">
-                <Badge variant="default" className="bg-green-600">Closed</Badge>
-                <Button variant="outline" size="sm">
-                  <Mail className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-          </div>
+          <ClientTable
+            clients={filteredClients}
+            onEdit={handleEditClient}
+            onDelete={handleDeleteClient}
+            onView={handleViewClient}
+            onRefresh={refetch}
+            isLoading={isLoadingClients}
+          />
         </CardContent>
       </Card>
 
@@ -143,17 +193,25 @@ const MortgageClients: React.FC = () => {
         </CardHeader>
         <CardContent>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            <Button variant="outline" className="h-20 flex-col">
+            <Button 
+              variant="outline" 
+              className="h-20 flex-col"
+              onClick={() => setShowCreateDialog(true)}
+            >
               <UserPlus className="h-6 w-6 mb-2" />
               Add New Client
+            </Button>
+            <Button 
+              variant="outline" 
+              className="h-20 flex-col"
+              onClick={() => setShowInviteDialog(true)}
+            >
+              <Mail className="h-6 w-6 mb-2" />
+              Send Invitation
             </Button>
             <Button variant="outline" className="h-20 flex-col">
               <Calendar className="h-6 w-6 mb-2" />
               Schedule Follow-up
-            </Button>
-            <Button variant="outline" className="h-20 flex-col">
-              <Mail className="h-6 w-6 mb-2" />
-              Send Newsletter
             </Button>
             <Button variant="outline" className="h-20 flex-col">
               <Phone className="h-6 w-6 mb-2" />
@@ -162,6 +220,36 @@ const MortgageClients: React.FC = () => {
           </div>
         </CardContent>
       </Card>
+
+      {/* Dialogs */}
+      <CreateClientDialog
+        open={showCreateDialog}
+        onOpenChange={setShowCreateDialog}
+        onSubmit={createClient}
+        isLoading={isCreating}
+        userType="mortgage_professional"
+      />
+
+      <EditClientDialog
+        open={showEditDialog}
+        onOpenChange={setShowEditDialog}
+        client={selectedClient}
+        onSubmit={updateClient}
+        isLoading={isUpdating}
+      />
+
+      <ClientDetailsDialog
+        open={showDetailsDialog}
+        onOpenChange={setShowDetailsDialog}
+        client={selectedClient}
+      />
+
+      <InviteClientDialog
+        open={showInviteDialog}
+        onOpenChange={setShowInviteDialog}
+        onSubmit={createInvitation}
+        isLoading={isCreatingInvitation}
+      />
     </div>
   );
 };
