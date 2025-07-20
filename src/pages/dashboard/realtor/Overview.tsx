@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Users, UserPlus, Calendar, Zap } from 'lucide-react';
+import { Users, UserPlus, Clock, Zap } from 'lucide-react';
 import { PropertyChecker } from '@/components/dashboard/realtor/PropertyChecker';
 import { RecentActivity } from '@/components/dashboard/realtor/RecentActivity';
 import { RecentContacts } from '@/components/dashboard/realtor/RecentContacts';
@@ -14,10 +14,11 @@ import { toast } from 'sonner';
 
 const RealtorOverview: React.FC = () => {
   const { clients } = useRealtorClientManagement();
-  const { createInvitation } = useClientInvitations();
+  const { createInvitation, stats } = useClientInvitations();
   const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
 
   const activeClients = clients.filter(client => client.status === 'active').length;
+  const activeInvites = stats.pending + stats.sent; // Invitations that need follow-up
 
   const handleComingSoon = (feature: string) => {
     toast.info(`${feature} - Coming Soon!`, {
@@ -43,20 +44,20 @@ const RealtorOverview: React.FC = () => {
       type: 'stat'
     },
     { 
+      title: 'Active Invites', 
+      value: activeInvites.toString(), 
+      icon: Clock, 
+      color: 'text-amber-500',
+      type: 'stat',
+      action: () => handleComingSoon('Invitation Management')
+    },
+    { 
       title: 'Invite Client', 
       value: 'Quick Action', 
       icon: UserPlus, 
       color: 'text-green-500',
       type: 'action',
       action: () => setInviteDialogOpen(true)
-    },
-    { 
-      title: 'Market Reports', 
-      value: 'Coming Soon', 
-      icon: Calendar, 
-      color: 'text-purple-500',
-      type: 'coming-soon',
-      action: () => handleComingSoon('Market Reports')
     },
     { 
       title: 'Lead Generator', 
@@ -80,7 +81,7 @@ const RealtorOverview: React.FC = () => {
         {actionCards.map((card) => (
           <Card 
             key={card.title}
-            className={card.type !== 'stat' ? 'cursor-pointer hover:shadow-md transition-shadow' : ''}
+            className={card.type !== 'stat' || card.action ? 'cursor-pointer hover:shadow-md transition-shadow' : ''}
             onClick={card.action}
           >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -96,6 +97,9 @@ const RealtorOverview: React.FC = () => {
               )}
               {card.type === 'coming-soon' && (
                 <p className="text-xs text-muted-foreground mt-1">Click for updates</p>
+              )}
+              {card.title === 'Active Invites' && (
+                <p className="text-xs text-muted-foreground mt-1">Pending follow-up</p>
               )}
             </CardContent>
           </Card>
