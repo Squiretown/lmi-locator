@@ -5,13 +5,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useTeamManagement } from '@/hooks/useTeamManagement';
+import { useMortgageTeamManagement } from '@/hooks/useMortgageTeamManagement';
 import { useForm } from 'react-hook-form';
 
 interface InviteProfessionalData {
   email: string;
   name?: string;
-  professionalType: 'realtor' | 'mortgage_broker' | 'inspector' | 'appraiser' | 'other';
+  professionalType: 'mortgage_professional' | 'realtor';
   customMessage?: string;
 }
 
@@ -24,7 +24,7 @@ export const InviteProfessionalDialog: React.FC<InviteProfessionalDialogProps> =
   open,
   onOpenChange,
 }) => {
-  const { inviteRealtor, isInvitingRealtor } = useTeamManagement();
+  const { inviteProfessional, isInviting } = useMortgageTeamManagement();
   const { register, handleSubmit, reset, setValue, watch, formState: { errors } } = useForm<InviteProfessionalData>({
     defaultValues: {
       professionalType: 'realtor'
@@ -35,11 +35,10 @@ export const InviteProfessionalDialog: React.FC<InviteProfessionalDialogProps> =
 
   const onInviteProfessional = async (data: InviteProfessionalData) => {
     try {
-      // For now, we'll use the existing realtor invite functionality
-      // This can be expanded later to support other professional types
-      await inviteRealtor({
+      await inviteProfessional({
         email: data.email,
         name: data.name,
+        professionalType: data.professionalType,
         customMessage: data.customMessage,
       });
       onOpenChange(false);
@@ -51,12 +50,17 @@ export const InviteProfessionalDialog: React.FC<InviteProfessionalDialogProps> =
 
   const getProfessionalTypeLabel = (type: string) => {
     switch (type) {
-      case 'realtor': return 'Real Estate Agent';
-      case 'mortgage_broker': return 'Mortgage Broker';
-      case 'inspector': return 'Home Inspector';
-      case 'appraiser': return 'Property Appraiser';
-      case 'other': return 'Other Professional';
+      case 'mortgage_professional': return 'Lending Team Member';
+      case 'realtor': return 'Realtor Partner';
       default: return 'Professional';
+    }
+  };
+
+  const getInviteDescription = (type: string) => {
+    switch (type) {
+      case 'mortgage_professional': return 'Invite a loan officer, processor, or other lending professional to join your team.';
+      case 'realtor': return 'Invite a realtor to become a referral partner for shared client opportunities.';
+      default: return 'Send an invitation to a professional to join your network.';
     }
   };
 
@@ -66,7 +70,7 @@ export const InviteProfessionalDialog: React.FC<InviteProfessionalDialogProps> =
         <DialogHeader>
           <DialogTitle>Invite Professional to Team</DialogTitle>
           <DialogDescription>
-            Send an invitation to a professional to join your team
+            {getInviteDescription(professionalType)}
           </DialogDescription>
         </DialogHeader>
         
@@ -81,11 +85,8 @@ export const InviteProfessionalDialog: React.FC<InviteProfessionalDialogProps> =
                 <SelectValue placeholder="Select professional type" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="realtor">Real Estate Agent</SelectItem>
-                <SelectItem value="mortgage_broker">Mortgage Broker</SelectItem>
-                <SelectItem value="inspector">Home Inspector</SelectItem>
-                <SelectItem value="appraiser">Property Appraiser</SelectItem>
-                <SelectItem value="other">Other Professional</SelectItem>
+                <SelectItem value="realtor">Realtor Partner</SelectItem>
+                <SelectItem value="mortgage_professional">Lending Team Member</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -119,7 +120,7 @@ export const InviteProfessionalDialog: React.FC<InviteProfessionalDialogProps> =
             <label className="text-sm font-medium">Custom Message (Optional)</label>
             <Textarea
               {...register('customMessage')}
-              placeholder="Add a personal message to the invitation..."
+              placeholder={`Add a personal message to the ${professionalType === 'realtor' ? 'realtor partnership' : 'team'} invitation...`}
               rows={3}
             />
           </div>
@@ -132,8 +133,8 @@ export const InviteProfessionalDialog: React.FC<InviteProfessionalDialogProps> =
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={isInvitingRealtor}>
-              {isInvitingRealtor ? 'Sending...' : 'Send Invitation'}
+            <Button type="submit" disabled={isInviting}>
+              {isInviting ? 'Sending...' : 'Send Invitation'}
             </Button>
           </div>
         </form>
