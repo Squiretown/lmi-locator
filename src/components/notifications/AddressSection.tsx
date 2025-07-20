@@ -2,17 +2,20 @@
 import React from 'react';
 import { MapPin } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { DataSourceInfo } from '@/components/lmi/DataSourceInfo';
 
 interface AddressSectionProps {
   address: string;
   tractId: string;
   isApproved: boolean;
+  dataSource?: any;
 }
 
 export const AddressSection: React.FC<AddressSectionProps> = ({
   address,
   tractId,
-  isApproved
+  isApproved,
+  dataSource
 }) => {
   return (
     <div className="flex items-start gap-4 mb-6">
@@ -37,6 +40,13 @@ export const AddressSection: React.FC<AddressSectionProps> = ({
             {isApproved ? 'Low Income Area' : 'Upper Income Area'}
           </Badge>
         </div>
+        
+        {/* Data Source Information */}
+        {dataSource && (
+          <div className="mt-4">
+            <DataSourceInfo result={dataSource} compact={true} />
+          </div>
+        )}
       </div>
     </div>
   );

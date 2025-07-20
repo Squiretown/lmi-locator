@@ -32,6 +32,16 @@ export interface LmiResult {
   hud_low_mod_percent?: number;
   hud_low_mod_population?: number;
   need_manual_verification?: boolean;
+  // Enhanced metadata for transparency
+  data_vintage?: string;
+  data_collection_period?: string;
+  data_provider?: string;
+  data_last_updated?: string;
+  data_methodology?: string;
+  // Census specific metadata
+  census_data_vintage?: string;
+  census_collection_period?: string;
+  census_provider?: string;
 }
 
 /**

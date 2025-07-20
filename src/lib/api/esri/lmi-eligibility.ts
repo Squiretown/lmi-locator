@@ -49,7 +49,13 @@ export async function checkEnhancedLmiEligibility(address: string): Promise<LmiR
       color_code: lmiResult.isLMI ? 'success' : 'danger',
       timestamp: new Date().toISOString(),
       data_source: 'HUD Low-to-Moderate Income (LMI) Summary Data',
-      geocoding_service: 'ESRI'
+      geocoding_service: 'ESRI',
+      // Enhanced metadata for transparency
+      data_vintage: '2024',
+      data_collection_period: '2018-2022 ACS 5-Year Estimates',
+      data_provider: 'HUD via ArcGIS',
+      data_last_updated: new Date().toISOString(),
+      data_methodology: 'Low-to-Moderate Income areas determined using American Community Survey data with 51% threshold for block groups and census tracts'
     };
     
     // Add additional data from Census API if available
@@ -57,6 +63,9 @@ export async function checkEnhancedLmiEligibility(address: string): Promise<LmiR
       const medianIncome = await getCensusTractMedianIncome(lmiResult.geographyId);
       if (medianIncome) {
         result.median_income = medianIncome;
+        result.census_data_vintage = '2022';
+        result.census_collection_period = '2018-2022 ACS 5-Year Estimates';
+        result.census_provider = 'U.S. Census Bureau';
       }
     } catch (error) {
       console.warn('Could not retrieve median income data:', error);

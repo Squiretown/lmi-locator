@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { CheckLmiStatusResponse } from '@/lib/types';
 import LmiStatusNotification from '@/components/notifications/LmiStatusNotification';
 import { useRoleSpecificNotifications } from '@/hooks/useRoleSpecificNotifications';
+import { DataSourceInfo } from '@/components/lmi/DataSourceInfo';
 import { useAuth } from '@/hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -106,6 +107,7 @@ Census Tract: ${data.tract_id || 'Unknown'}`;
       tractId={data.tract_id || 'Unknown'}
       userType={userType}
       isLoggedIn={!!user}
+      dataSource={data} // Pass the full LMI result data for transparency
       onClose={onCloseNotification}
       onShare={handleShare}
       onSave={user ? handleSaveProperty : undefined}

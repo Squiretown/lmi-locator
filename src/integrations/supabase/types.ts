@@ -1065,6 +1065,48 @@ export type Database = {
         }
         Relationships: []
       }
+      data_source_metadata: {
+        Row: {
+          collection_period: string
+          created_at: string
+          current_vintage: string
+          id: string
+          last_updated: string
+          methodology_notes: string | null
+          next_expected_update: string | null
+          provider: string
+          source_name: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          collection_period: string
+          created_at?: string
+          current_vintage: string
+          id?: string
+          last_updated: string
+          methodology_notes?: string | null
+          next_expected_update?: string | null
+          provider: string
+          source_name: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          collection_period?: string
+          created_at?: string
+          current_vintage?: string
+          id?: string
+          last_updated?: string
+          methodology_notes?: string | null
+          next_expected_update?: string | null
+          provider?: string
+          source_name?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       help_items: {
         Row: {
           category: string
@@ -2074,6 +2116,12 @@ export type Database = {
       search_history: {
         Row: {
           address: string
+          data_collection_period: string | null
+          data_last_updated: string | null
+          data_methodology: string | null
+          data_provider: string | null
+          data_source: string | null
+          data_vintage: string | null
           id: string
           income_category: string | null
           ip_address: string | null
@@ -2090,6 +2138,12 @@ export type Database = {
         }
         Insert: {
           address: string
+          data_collection_period?: string | null
+          data_last_updated?: string | null
+          data_methodology?: string | null
+          data_provider?: string | null
+          data_source?: string | null
+          data_vintage?: string | null
           id?: string
           income_category?: string | null
           ip_address?: string | null
@@ -2106,6 +2160,12 @@ export type Database = {
         }
         Update: {
           address?: string
+          data_collection_period?: string | null
+          data_last_updated?: string | null
+          data_methodology?: string | null
+          data_provider?: string | null
+          data_source?: string | null
+          data_vintage?: string | null
           id?: string
           income_category?: string | null
           ip_address?: string | null

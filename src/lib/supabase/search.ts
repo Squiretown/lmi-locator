@@ -31,7 +31,14 @@ export const saveSearch = async (address, result = null, userId = null) => {
         is_eligible: result?.is_approved || false,
         tract_id: result?.tract_id,
         income_category: result?.income_category,
-        search_params: result ? { address: validatedData.address } : null
+        search_params: result ? { address: validatedData.address } : null,
+        // Enhanced metadata for transparency
+        data_source: result?.data_source || 'HUD LMI Summary Data',
+        data_vintage: result?.data_vintage,
+        data_collection_period: result?.data_collection_period,
+        data_provider: result?.data_provider,
+        data_last_updated: result?.data_last_updated || new Date().toISOString(),
+        data_methodology: result?.data_methodology
       });
       
     if (error) {

@@ -12,6 +12,7 @@ interface LmiStatusNotificationProps {
   tractId: string;
   userType?: string | null;
   isLoggedIn: boolean;
+  dataSource?: any; // LMI result data for transparency
   onClose: () => void;
   onShare?: () => void;
   onSave?: () => void;
@@ -25,6 +26,7 @@ const LmiStatusNotification = ({
   tractId,
   userType,
   isLoggedIn,
+  dataSource,
   onClose,
   onShare,
   onSave,
@@ -53,6 +55,7 @@ const LmiStatusNotification = ({
             address={address}
             tractId={tractId}
             isApproved={isApproved}
+            dataSource={dataSource}
           />
 
           <RoleSpecificContent 
