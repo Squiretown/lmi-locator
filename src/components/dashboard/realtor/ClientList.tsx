@@ -3,8 +3,9 @@ import React, { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ListFilter, Plus, Search, Users } from 'lucide-react';
+import { ListFilter, Plus, Search, Users, Mail } from 'lucide-react';
 import { useRealtorClientManagement } from '@/hooks/useRealtorClientManagement';
+import { useClientInvitations } from '@/hooks/useClientInvitations';
 import { ClientTable } from '@/components/clients/ClientTable';
 import { CreateClientDialog } from '@/components/clients/CreateClientDialog';
 import { ClientDetailsDialog } from '@/components/clients/ClientDetailsDialog';
@@ -24,9 +25,12 @@ export const ClientList = () => {
     refetch,
   } = useRealtorClientManagement();
 
+  const { stats } = useClientInvitations();
+
   const [searchQuery, setSearchQuery] = useState('');
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showDetailsDialog, setShowDetailsDialog] = useState(false);
+  const [activeTab, setActiveTab] = useState('clients');
 
   // Filter clients based on search query
   const filteredClients = clients.filter(client => {
@@ -59,11 +63,15 @@ export const ClientList = () => {
     setShowDetailsDialog(true);
   };
 
-  const stats = {
+  const handleInvitedClientsClick = () => {
+    setActiveTab('invitations');
+  };
+
+  const clientStats = {
     total: clients.length,
     active: clients.filter(c => c.status === 'active').length,
     leads: clients.filter(c => c.status === 'lead').length,
-    firstTimeBuyers: clients.filter(c => c.first_time_buyer === true).length,
+    invitedClients: stats.total,
   };
 
   return (
@@ -76,7 +84,7 @@ export const ClientList = () => {
             <Users className="h-4 w-4 text-muted-foreground" />
           </div>
           <div className="px-4 pb-4">
-            <div className="text-2xl font-bold">{stats.total}</div>
+            <div className="text-2xl font-bold">{clientStats.total}</div>
           </div>
         </Card>
 
@@ -86,7 +94,7 @@ export const ClientList = () => {
             <div className="h-2 w-2 bg-green-500 rounded-full" />
           </div>
           <div className="px-4 pb-4">
-            <div className="text-2xl font-bold">{stats.active}</div>
+            <div className="text-2xl font-bold">{clientStats.active}</div>
           </div>
         </Card>
 
@@ -96,23 +104,27 @@ export const ClientList = () => {
             <div className="h-2 w-2 bg-blue-500 rounded-full" />
           </div>
           <div className="px-4 pb-4">
-            <div className="text-2xl font-bold">{stats.leads}</div>
+            <div className="text-2xl font-bold">{clientStats.leads}</div>
           </div>
         </Card>
 
-        <Card>
+        <Card 
+          className="cursor-pointer hover:shadow-md transition-shadow"
+          onClick={handleInvitedClientsClick}
+        >
           <div className="flex flex-row items-center justify-between space-y-0 p-4">
-            <div className="text-sm font-medium">First-Time Buyers</div>
-            <div className="h-2 w-2 bg-purple-500 rounded-full" />
+            <div className="text-sm font-medium">Invited Clients</div>
+            <Mail className="h-4 w-4 text-amber-500" />
           </div>
           <div className="px-4 pb-4">
-            <div className="text-2xl font-bold">{stats.firstTimeBuyers}</div>
+            <div className="text-2xl font-bold text-amber-500">{clientStats.invitedClients}</div>
+            <p className="text-xs text-muted-foreground mt-1">Click to manage</p>
           </div>
         </Card>
       </div>
 
       {/* Tabs for Client Management and Invitations */}
-      <Tabs defaultValue="clients" className="w-full">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList>
           <TabsTrigger value="clients">Client Management</TabsTrigger>
           <TabsTrigger value="invitations">Invitations</TabsTrigger>
