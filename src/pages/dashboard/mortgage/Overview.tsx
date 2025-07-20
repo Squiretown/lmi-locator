@@ -6,7 +6,7 @@ import { Users, UserPlus, TrendingUp, Settings } from 'lucide-react';
 import { PropertyChecker } from '@/components/dashboard/realtor/PropertyChecker';
 import { RecentActivity } from '@/components/dashboard/realtor/RecentActivity';
 import { RecentContacts } from '@/components/dashboard/realtor/RecentContacts';
-import { ClientPipeline } from '@/components/dashboard/mortgage/ClientPipeline';
+import { TeamVisibilityManager } from '@/components/teams/TeamVisibilityManager';
 import { InviteClientDialog } from '@/components/clients/InviteClientDialog';
 import { useMortgageClientManagement } from '@/hooks/useMortgageClientManagement';
 import { useClientInvitations } from '@/hooks/useClientInvitations';
@@ -61,12 +61,18 @@ const MortgageOverview: React.FC = () => {
       action: () => setInviteDialogOpen(true)
     },
     { 
-      title: 'Team Settings', 
+      title: 'Team Visibility', 
       value: 'Manage Team', 
       icon: Settings, 
       color: 'text-orange-500',
       type: 'action',
-      action: () => handleComingSoon('Team Management')
+      action: () => {
+        // Scroll to team visibility section
+        const teamSection = document.querySelector('[data-team-visibility]');
+        if (teamSection) {
+          teamSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }
     },
   ];
 
@@ -93,7 +99,7 @@ const MortgageOverview: React.FC = () => {
               <div className="text-2xl font-bold">{card.value}</div>
               {card.type === 'action' && (
                 <Button variant="ghost" size="sm" className="mt-2 p-0 h-auto font-normal">
-                  Click to {card.title.toLowerCase()}
+                  Click to {card.title === 'Team Visibility' ? 'manage' : card.title.toLowerCase()}
                 </Button>
               )}
             </CardContent>
@@ -101,10 +107,12 @@ const MortgageOverview: React.FC = () => {
         ))}
       </div>
 
-      {/* Middle Section - Property Checker and Client Pipeline */}
+      {/* Middle Section - Property Checker and Team Visibility Manager */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
         <PropertyChecker />
-        <ClientPipeline />
+        <div data-team-visibility>
+          <TeamVisibilityManager />
+        </div>
       </div>
 
       {/* Bottom Section - Recent Activity and Recent Contacts */}
