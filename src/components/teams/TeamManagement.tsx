@@ -6,9 +6,10 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
-import { Users, UserPlus, Phone, Mail, Building, Trash2 } from 'lucide-react';
+import { Users, UserPlus, Phone, Building } from 'lucide-react';
 import { useTeamManagement } from '@/hooks/useTeamManagement';
 import { useForm } from 'react-hook-form';
+import { TeamActionsDropdown } from './TeamActionsDropdown';
 
 interface InviteRealtorData {
   email: string;
@@ -24,7 +25,6 @@ export const TeamManagement: React.FC = () => {
     inviteRealtor, 
     removeTeamMember,
     isInvitingRealtor,
-    isRemovingMember
   } = useTeamManagement();
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm<InviteRealtorData>();
@@ -40,9 +40,12 @@ export const TeamManagement: React.FC = () => {
   };
 
   const handleRemoveMember = async (teamId: string) => {
-    if (window.confirm('Are you sure you want to remove this team member?')) {
-      await removeTeamMember(teamId);
-    }
+    await removeTeamMember(teamId);
+  };
+
+  const handleUpdateTeam = () => {
+    // This would typically refetch the team data
+    console.log('Team updated, refreshing data...');
   };
 
   if (isLoadingTeam) {
@@ -144,7 +147,14 @@ export const TeamManagement: React.FC = () => {
                     <CardTitle className="text-lg">{member.realtor?.name}</CardTitle>
                     <CardDescription>{member.realtor?.company}</CardDescription>
                   </div>
-                  <Badge variant="secondary">Realtor</Badge>
+                  <div className="flex items-center gap-2">
+                    <Badge variant="secondary">Realtor</Badge>
+                    <TeamActionsDropdown
+                      member={member}
+                      onRemove={handleRemoveMember}
+                      onUpdate={handleUpdateTeam}
+                    />
+                  </div>
                 </div>
               </CardHeader>
               <CardContent className="space-y-3">
@@ -166,19 +176,10 @@ export const TeamManagement: React.FC = () => {
                   </div>
                 )}
 
-                <div className="flex justify-between items-center pt-2">
+                <div className="pt-2">
                   <span className="text-xs text-muted-foreground">
                     Added {new Date(member.created_at).toLocaleDateString()}
                   </span>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="text-destructive hover:text-destructive"
-                    onClick={() => handleRemoveMember(member.id)}
-                    disabled={isRemovingMember}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
                 </div>
               </CardContent>
             </Card>
