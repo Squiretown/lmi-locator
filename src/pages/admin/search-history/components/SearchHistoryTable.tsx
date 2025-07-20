@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Eye } from "lucide-react";
 import { SearchHistory } from '../types';
-import { SearchResultDetailModal } from '../../../components/admin/search-history/SearchResultDetailModal';
+import { SearchResultDetailModal } from '../../../../components/admin/search-history/SearchResultDetailModal';
 
 interface SearchHistoryTableProps {
   filteredRecords: SearchHistory[];
