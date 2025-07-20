@@ -15,6 +15,7 @@ interface TeamMember {
   type: string;
   company: string;
   photo_url?: string;
+  isAccountOwner?: boolean;
   visibility_settings: {
     visible_to_clients: boolean;
     showcase_role?: string;
@@ -109,7 +110,12 @@ export const TeamVisibilityManager: React.FC = () => {
                     {member.name.charAt(0)}
                   </div>
                   <div>
-                    <h4 className="font-medium">{member.name}</h4>
+                    <h4 className="font-medium">
+                      {member.name}
+                      {member.isAccountOwner && (
+                        <span className="ml-2 text-sm font-normal text-muted-foreground">(You)</span>
+                      )}
+                    </h4>
                     <p className="text-sm text-muted-foreground">{member.company}</p>
                   </div>
                 </div>

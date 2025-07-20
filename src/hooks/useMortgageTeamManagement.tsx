@@ -12,6 +12,7 @@ interface LendingTeamMember {
   type: string;
   status: string;
   created_at: string;
+  isAccountOwner?: boolean;
   visibility_settings?: {
     visible_to_clients: boolean;
     showcase_role?: string;
@@ -38,7 +39,7 @@ interface RealtorPartner {
 export const useMortgageTeamManagement = () => {
   const queryClient = useQueryClient();
 
-  // Fetch lending team members
+  // Fetch lending team members (including current user)
   const { data: lendingTeam = [], isLoading: isLoadingTeam } = useQuery({
     queryKey: ['lending-team'],
     queryFn: async (): Promise<LendingTeamMember[]> => {
@@ -47,21 +48,20 @@ export const useMortgageTeamManagement = () => {
 
       const { data: currentProfessional } = await supabase
         .from('professionals')
-        .select('id, company')
+        .select('*')
         .eq('user_id', user.id)
         .eq('type', 'mortgage_professional')
         .single();
 
       if (!currentProfessional) return [];
 
-      // Get other mortgage professionals in the same company
+      // Get all mortgage professionals in the same company (including current user)
       const { data: teamMembers, error } = await supabase
         .from('professionals')
         .select('*')
         .eq('type', 'mortgage_professional')
         .eq('company', currentProfessional.company)
         .eq('status', 'active')
-        .neq('id', currentProfessional.id)
         .order('name');
 
       if (error) {
@@ -71,6 +71,7 @@ export const useMortgageTeamManagement = () => {
 
       return (teamMembers || []).map(member => ({
         ...member,
+        isAccountOwner: member.id === currentProfessional.id,
         visibility_settings: typeof member.visibility_settings === 'object' && member.visibility_settings
           ? member.visibility_settings as any
           : {
@@ -267,6 +268,7 @@ export const useMortgageTeamManagement = () => {
       type: 'realtor',
       status: partner.status,
       created_at: partner.created_at,
+      isAccountOwner: false,
       visibility_settings: {
         visible_to_clients: true,
         showcase_role: null,
