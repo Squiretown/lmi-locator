@@ -3,11 +3,17 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Users, Mail, Phone, Plus } from 'lucide-react';
+import { Users, Phone, ArrowRight } from 'lucide-react';
 import { useTeamManagement } from '@/hooks/useTeamManagement';
+import { useNavigate } from 'react-router-dom';
 
 export const ProfessionalTeam: React.FC = () => {
   const { teamMembers, isLoadingTeam } = useTeamManagement();
+  const navigate = useNavigate();
+
+  const handleManageTeam = () => {
+    navigate('/dashboard/realtor/team');
+  };
 
   if (isLoadingTeam) {
     return (
@@ -50,9 +56,9 @@ export const ProfessionalTeam: React.FC = () => {
             <p className="text-sm text-muted-foreground mb-4">
               No team members yet. Start building your professional network.
             </p>
-            <Button variant="outline" size="sm">
-              <Plus className="h-4 w-4 mr-2" />
-              Invite Professional
+            <Button onClick={handleManageTeam} variant="outline" size="sm">
+              <ArrowRight className="h-4 w-4 mr-2" />
+              Manage Team
             </Button>
           </div>
         ) : (
@@ -81,13 +87,12 @@ export const ProfessionalTeam: React.FC = () => {
               </div>
             ))}
             
-            {teamMembers.length > 3 && (
-              <div className="text-center pt-2">
-                <Button variant="ghost" size="sm">
-                  View All ({teamMembers.length})
-                </Button>
-              </div>
-            )}
+            <div className="text-center pt-2">
+              <Button onClick={handleManageTeam} variant="ghost" size="sm">
+                {teamMembers.length > 3 ? `View All (${teamMembers.length})` : 'Manage Team'}
+                <ArrowRight className="h-4 w-4 ml-2" />
+              </Button>
+            </div>
           </div>
         )}
       </CardContent>
