@@ -41,27 +41,73 @@ export const useTeamManagement = () => {
   const queryClient = useQueryClient();
 
   // Fetch team members (realtors) for current mortgage professional
-  const { data: teamMembers = [], isLoading: isLoadingTeam } = useQuery({
+  const { data: teamMembers = [], isLoading: isLoadingTeam, error: teamError } = useQuery({
     queryKey: ['team-members'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('professional_teams')
-        .select(`
-          *,
-          realtor:professionals!professional_teams_realtor_id_fkey (
-            id,
-            name,
-            phone,
-            company,
-            license_number,
-            user_id
-          )
-        `)
-        .eq('status', 'active');
+      try {
+        // Get current user's professional ID first
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error('Not authenticated');
 
-      if (error) throw error;
-      return data as any[];
+        const { data: currentProfessional } = await supabase
+          .from('professionals')
+          .select('id')
+          .eq('user_id', user.id)
+          .single();
+
+        if (!currentProfessional) {
+          console.warn('No professional profile found for current user');
+          return [];
+        }
+
+        // Fetch professional teams with manual join to handle missing relationships
+        const { data: teams, error: teamsError } = await supabase
+          .from('professional_teams')
+          .select('*')
+          .eq('mortgage_professional_id', currentProfessional.id)
+          .eq('status', 'active');
+
+        if (teamsError) {
+          console.error('Error fetching teams:', teamsError);
+          return [];
+        }
+
+        if (!teams || teams.length === 0) {
+          return [];
+        }
+
+        // Manually fetch realtor details for each team
+        const teamWithRealtors = await Promise.all(
+          teams.map(async (team) => {
+            try {
+              const { data: realtor } = await supabase
+                .from('professionals')
+                .select('id, name, phone, company, license_number, user_id')
+                .eq('id', team.realtor_id)
+                .single();
+
+              return {
+                ...team,
+                realtor: realtor || null
+              };
+            } catch (error) {
+              console.warn(`Failed to fetch realtor for team ${team.id}:`, error);
+              return {
+                ...team,
+                realtor: null
+              };
+            }
+          })
+        );
+
+        return teamWithRealtors;
+      } catch (error) {
+        console.error('Error in team members query:', error);
+        return [];
+      }
     },
+    retry: 1,
+    staleTime: 30000, // Cache for 30 seconds
   });
 
   // Fetch client team assignments

@@ -57,7 +57,37 @@ export const TeamManagement: React.FC = () => {
   };
 
   if (isLoadingTeam) {
-    return <div>Loading team...</div>;
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Button variant="ghost" size="sm" disabled>
+              <ArrowLeft className="h-4 w-4" />
+              Back to Dashboard
+            </Button>
+          </div>
+          <Button disabled>
+            <UserPlus className="mr-2 h-4 w-4" />
+            Invite Professional
+          </Button>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {[1, 2, 3].map((i) => (
+            <Card key={i} className="animate-pulse">
+              <CardHeader className="pb-3">
+                <div className="h-6 bg-muted rounded w-3/4 mb-2"></div>
+                <div className="h-4 bg-muted rounded w-1/2"></div>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="h-4 bg-muted rounded w-2/3"></div>
+                <div className="h-4 bg-muted rounded w-1/2"></div>
+                <div className="h-3 bg-muted rounded w-1/3"></div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+    );
   }
 
   return (
