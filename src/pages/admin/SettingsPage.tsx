@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Settings, Save } from "lucide-react";
+import { Settings, Save, Loader2 } from "lucide-react";
+import { toast } from "sonner";
+import { loadSystemSettings, saveSystemSettings, type GeneralSettings, type ContactInfo } from '@/lib/supabase/admin-settings';
 import { GeneralSettingsTab } from './components/settings/GeneralSettingsTab';
 import { SecuritySettingsTab } from './components/settings/SecuritySettingsTab';
 import { NotificationsSettingsTab } from './components/settings/NotificationsSettingsTab';
@@ -14,9 +16,10 @@ import { ThemeSettingsTab } from './components/settings/ThemeSettingsTab';
 
 const AdminSettingsPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
 
-  // Mock settings state
-  const [settings, setSettings] = useState({
+  // Settings state
+  const [settings, setSettings] = useState<GeneralSettings>({
     siteName: 'LMI Property Search',
     siteDescription: 'Find LMI eligible properties and assistance programs',
     maintenanceMode: false,
@@ -28,8 +31,8 @@ const AdminSettingsPage: React.FC = () => {
     apiRateLimit: '1000'
   });
 
-  // Mock contact info state
-  const [contactInfo, setContactInfo] = useState({
+  // Contact info state
+  const [contactInfo, setContactInfo] = useState<ContactInfo>({
     email: 'info@lmicheck.com',
     phone: '(555) 123-4567',
     address: 'Suffolk, NY',
@@ -68,12 +71,35 @@ const AdminSettingsPage: React.FC = () => {
     hudApiKey: ''
   });
 
+  // Load settings on component mount
+  useEffect(() => {
+    const loadSettings = async () => {
+      try {
+        const { general, contact } = await loadSystemSettings();
+        setSettings(general);
+        setContactInfo(contact);
+      } catch (error) {
+        console.error('Failed to load settings:', error);
+        toast.error('Failed to load settings. Using defaults.');
+      } finally {
+        setIsInitialLoading(false);
+      }
+    };
+
+    loadSettings();
+  }, []);
+
   const handleSaveSettings = async () => {
     setIsLoading(true);
-    // Simulate API call
-    setTimeout(() => {
+    try {
+      await saveSystemSettings(settings, contactInfo);
+      toast.success('Settings saved successfully!');
+    } catch (error) {
+      console.error('Failed to save settings:', error);
+      toast.error('Failed to save settings. Please try again.');
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
   };
 
   const handleSettingChange = (key: string, value: any) => {
@@ -95,6 +121,32 @@ const AdminSettingsPage: React.FC = () => {
   const handleApiKeyChange = (key: string, value: string) => {
     setApiKeys(prev => ({ ...prev, [key]: value }));
   };
+
+  if (isInitialLoading) {
+    return (
+      <div className="p-4 space-y-4">
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <Settings className="h-5 w-5 text-primary" />
+              <div>
+                <CardTitle>Admin Settings</CardTitle>
+                <CardDescription>
+                  Configure system-wide settings and preferences
+                </CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-center p-8">
+              <Loader2 className="h-8 w-8 animate-spin" />
+              <span className="ml-2">Loading settings...</span>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="p-4 space-y-4">
@@ -181,8 +233,17 @@ const AdminSettingsPage: React.FC = () => {
 
           <div className="mt-6 flex justify-end">
             <Button onClick={handleSaveSettings} disabled={isLoading}>
-              <Save className="h-4 w-4 mr-2" />
-              {isLoading ? 'Saving...' : 'Save Settings'}
+              {isLoading ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <Save className="h-4 w-4 mr-2" />
+                  Save Settings
+                </>
+              )}
             </Button>
           </div>
         </CardContent>
