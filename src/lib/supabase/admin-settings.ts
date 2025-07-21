@@ -73,6 +73,19 @@ export async function saveSystemSettings(
   general: GeneralSettings,
   contact: ContactInfo
 ): Promise<void> {
+  // Validate user session first
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  
+  if (authError || !user) {
+    throw new Error('Authentication required. Please log in again.');
+  }
+
+  // Check if user has active session
+  const { data: session } = await supabase.auth.getSession();
+  if (!session.session) {
+    throw new Error('No active session. Please log in again.');
+  }
+
   const updates = [
     { key: 'site_name', value: general.siteName },
     { key: 'site_description', value: general.siteDescription },
@@ -90,23 +103,29 @@ export async function saveSystemSettings(
     { key: 'business_hours', value: contact.businessHours }
   ];
 
-  for (const update of updates) {
-    const { error } = await supabase
-      .from('system_settings')
-      .upsert(
-        { 
-          key: update.key, 
-          value: update.value,
-          updated_at: new Date().toISOString()
-        },
-        { 
-          onConflict: 'key',
-          ignoreDuplicates: false 
-        }
-      );
+  const errors: string[] = [];
 
-    if (error) {
-      throw new Error(`Failed to save setting ${update.key}: ${error.message}`);
+  for (const update of updates) {
+    try {
+      const { error } = await supabase
+        .from('system_settings')
+        .update({ 
+          value: update.value
+          // Remove manual updated_at - let the trigger handle it
+        })
+        .eq('key', update.key);
+
+      if (error) {
+        console.error(`Error updating setting ${update.key}:`, error);
+        errors.push(`${update.key}: ${error.message}`);
+      }
+    } catch (err) {
+      console.error(`Unexpected error updating ${update.key}:`, err);
+      errors.push(`${update.key}: Unexpected error occurred`);
     }
+  }
+
+  if (errors.length > 0) {
+    throw new Error(`Failed to update settings:\n${errors.join('\n')}`);
   }
 }
