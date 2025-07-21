@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -27,6 +26,15 @@ const AdminSettingsPage: React.FC = () => {
     sessionTimeout: '24',
     maxFileSize: '10',
     apiRateLimit: '1000'
+  });
+
+  // Mock contact info state
+  const [contactInfo, setContactInfo] = useState({
+    email: 'info@lmicheck.com',
+    phone: '(555) 123-4567',
+    address: 'Suffolk, NY',
+    supportEmail: 'support@lmicheck.com',
+    businessHours: 'Monday - Friday: 9:00 AM - 5:00 PM EST'
   });
 
   // Mock profile state
@@ -72,6 +80,10 @@ const AdminSettingsPage: React.FC = () => {
     setSettings(prev => ({ ...prev, [key]: value }));
   };
 
+  const handleContactInfoChange = (key: string, value: string) => {
+    setContactInfo(prev => ({ ...prev, [key]: value }));
+  };
+
   const handleProfileChange = (key: string, value: any) => {
     setProfile(prev => ({ ...prev, [key]: value }));
   };
@@ -114,7 +126,9 @@ const AdminSettingsPage: React.FC = () => {
             <TabsContent value="general" className="space-y-4">
               <GeneralSettingsTab
                 settings={settings}
+                contactInfo={contactInfo}
                 onSettingChange={handleSettingChange}
+                onContactInfoChange={handleContactInfoChange}
               />
             </TabsContent>
 
