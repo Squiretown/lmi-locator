@@ -52,7 +52,6 @@ export const MarketingSidebar: React.FC<MarketingSidebarProps> = ({
     { id: 'overview', label: 'Dashboard Overview', icon: BarChart3 },
     { id: 'search', label: 'Bulk Address Search', icon: Search },
     { id: 'map', label: 'LMI Tract Map', icon: Map },
-    { id: 'ffiec', label: 'FFIEC Data Manager', icon: Database },
     { id: 'jobs', label: 'Marketing Jobs', icon: Clock },
     { id: 'lists', label: 'Saved Lists', icon: FileSpreadsheet },
     { id: 'users', label: 'User Analysis', icon: Users },

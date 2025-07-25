@@ -2,6 +2,8 @@
 import React from 'react';
 import { Database, Server, Activity, HardDrive } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { FFIECFileManager } from '@/components/admin/ffiec/FFIECFileManager';
 
 export default function DatabasePage() {
   return (
@@ -66,14 +68,18 @@ export default function DatabasePage() {
             Database Tools
           </CardTitle>
           <CardDescription>
-            Database administration and monitoring tools
+            Data import and database administration tools
           </CardDescription>
         </CardHeader>
-        <CardContent>
-          <div className="text-center py-8 text-muted-foreground">
-            <Database className="h-12 w-12 mx-auto mb-4 opacity-50" />
-            <p>Database management tools coming soon</p>
-          </div>
+        <CardContent className="p-0">
+          <Tabs defaultValue="ffiec" className="w-full">
+            <TabsList className="grid w-full grid-cols-1 m-4 mb-0">
+              <TabsTrigger value="ffiec">FFIEC Data Manager</TabsTrigger>
+            </TabsList>
+            <TabsContent value="ffiec" className="p-4 pt-6">
+              <FFIECFileManager />
+            </TabsContent>
+          </Tabs>
         </CardContent>
       </Card>
     </div>
