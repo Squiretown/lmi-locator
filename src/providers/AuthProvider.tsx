@@ -152,7 +152,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     console.log('AuthProvider signUp called with metadata:', metadata);
     
     try {
-      const result = await signUpWithEmail(email, password, metadata);
+      // Validate and sanitize user type to prevent role escalation
+      const userType = metadata.user_type || 'client';
+      const validRoles = ['client', 'professional'];
+      const sanitizedUserType = validRoles.includes(userType) ? userType : 'client';
+      
+      // Prevent admin role assignment during signup
+      if (userType === 'admin') {
+        console.warn('Attempted admin role assignment during signup blocked');
+      }
+      
+      const sanitizedMetadata = {
+        ...metadata,
+        user_type: sanitizedUserType
+      };
+      
+      const result = await signUpWithEmail(email, password, sanitizedMetadata);
       console.log('AuthProvider signUp result:', result);
       
       // If signup was successful and we got back a session (no email confirmation required)
@@ -160,11 +175,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setSession(result.data.session);
         setUser(result.data.user || null);
         
-        // Set user type from metadata
-        if (metadata.user_type) {
-          console.log('Setting user type from metadata:', metadata.user_type);
-          setUserType(metadata.user_type);
-        }
+        // Set user type from sanitized metadata
+        console.log('Setting user type from sanitized metadata:', sanitizedUserType);
+        setUserType(sanitizedUserType);
       }
       
       return result;

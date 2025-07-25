@@ -44,7 +44,7 @@ export async function signUpWithEmail(email: string, password: string, metadata:
       password, 
       options: { 
         data: formattedMetadata,
-        emailRedirectTo: `${window.location.origin}/login`
+        emailRedirectTo: `${window.location.origin}/`
       }
     });
     

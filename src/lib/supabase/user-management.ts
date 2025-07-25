@@ -2,17 +2,17 @@
 import { supabase } from "@/integrations/supabase/client";
 
 /**
- * Deletes the current user's account
+ * Deletes the current user's account using secure server-side validation
  * This will remove the user from auth.users and cascade delete related data
  * @param currentPassword Required for security - user must confirm password
  * @returns Success status and any error message
  */
 export async function deleteUserAccount(currentPassword: string): Promise<{ success: boolean; error: Error | null }> {
   try {
-    // First verify the user's password for security
-    const { data: { user }, error: sessionError } = await supabase.auth.getUser();
+    // Get current session for authentication
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
     
-    if (sessionError || !user) {
+    if (sessionError || !session) {
       console.error("Not authenticated:", sessionError);
       return { 
         success: false, 
@@ -20,28 +20,26 @@ export async function deleteUserAccount(currentPassword: string): Promise<{ succ
       };
     }
 
-    // Verify password before proceeding with deletion
-    const { error: verifyError } = await supabase.auth.signInWithPassword({
-      email: user.email || "",
-      password: currentPassword,
+    // Call the secure Edge Function for account deletion
+    const { data, error } = await supabase.functions.invoke('secure-delete-user-account', {
+      body: { currentPassword },
+      headers: {
+        Authorization: `Bearer ${session.access_token}`
+      }
     });
 
-    if (verifyError) {
-      console.error("Password verification failed:", verifyError);
+    if (error) {
+      console.error("Account deletion failed:", error);
       return { 
         success: false, 
-        error: new Error("Incorrect password. Please verify your current password and try again.")
+        error: new Error(error.message || "Failed to delete account. Please try again.")
       };
     }
 
-    // If password verified, proceed with account deletion
-    const { error: deleteError } = await supabase.auth.admin.deleteUser(user.id);
-    
-    if (deleteError) {
-      console.error("Failed to delete account:", deleteError);
+    if (!data?.success) {
       return { 
         success: false, 
-        error: deleteError 
+        error: new Error(data?.error || "Failed to delete account")
       };
     }
 
