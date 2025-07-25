@@ -15,6 +15,7 @@ import { useMarketingDashboardData } from './useMarketingDashboardData';
 import { MarketingSidebar } from './MarketingSidebar';
 import { BulkAddressSearch } from './bulk-search/BulkAddressSearch';
 import { MarketingContent } from '@/components/admin/tools/marketing/MarketingContent';
+import { FFIECFileManager } from '../ffiec/FFIECFileManager';
 
 // Component for the "Coming Soon" placeholder card
 const ComingSoonSection = ({ title }: { title: string }) => (
@@ -75,6 +76,8 @@ export const MarketingDashboard: React.FC = () => {
         return <BulkAddressSearch />;
       case 'map':
         return <MapView />;
+      case 'ffiec':
+        return <FFIECFileManager />;
       case 'content':
         return <ContentManagement />;
       case 'create':
