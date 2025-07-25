@@ -29,14 +29,12 @@ serve(async (req) => {
       });
     }
 
-    // Check if user is admin
-    const { data: profile } = await supabaseClient
-      .from('user_profiles')
-      .select('user_type')
-      .eq('user_id', user.id)
-      .single();
+    // Check if user is admin using the database function
+    const { data: userType, error: userTypeError } = await supabaseClient
+      .rpc('get_current_user_type_safe');
 
-    if (profile?.user_type !== 'admin') {
+    if (userTypeError || userType !== 'admin') {
+      console.log('Admin check failed:', { userType, userTypeError });
       return new Response(JSON.stringify({ error: 'Admin access required' }), {
         status: 403,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
