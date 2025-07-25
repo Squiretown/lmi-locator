@@ -42,17 +42,28 @@ serve(async (req) => {
       });
     }
 
-    // Check if user is admin using the database function
-    const { data: userType, error: userTypeError } = await supabaseClient
-      .rpc('get_current_user_type_safe');
-
-    if (userTypeError || userType !== 'admin') {
-      console.log('Admin check failed:', { userType, userTypeError });
-      return new Response(JSON.stringify({ error: 'Admin access required' }), {
+    // Check if user is admin using the more robust user_is_admin function
+    console.log('Checking admin permissions for user:', user.id);
+    const { data: isAdmin, error: adminCheckError } = await supabaseClient.rpc('user_is_admin');
+    console.log('Admin check result:', { isAdmin, error: adminCheckError?.message });
+    
+    if (adminCheckError) {
+      console.error('Error checking admin status:', adminCheckError);
+      return new Response(JSON.stringify({ error: 'Error checking permissions', details: adminCheckError.message }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+    
+    if (!isAdmin) {
+      console.log('User is not admin, denying access');
+      return new Response(JSON.stringify({ error: 'Forbidden - Admin access required' }), {
         status: 403,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
+    
+    console.log('Admin check passed, processing request');
 
     const { action, data } = await req.json();
 
