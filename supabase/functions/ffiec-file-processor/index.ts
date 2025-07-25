@@ -14,16 +14,29 @@ serve(async (req) => {
   }
 
   try {
+    console.log('FFIEC processor starting, checking auth header...');
+    const authHeader = req.headers.get('Authorization');
+    console.log('Auth header present:', !!authHeader);
+
+    // Use ANON_KEY instead of SERVICE_ROLE_KEY for proper user authentication
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
-      { global: { headers: { Authorization: req.headers.get('Authorization')! } } }
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      { 
+        global: { 
+          headers: authHeader ? { Authorization: authHeader } : {}
+        } 
+      }
     );
 
     // Get user from JWT
+    console.log('Attempting to get user from JWT...');
     const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
+    console.log('Auth result:', { user: !!user, error: authError?.message });
+    
     if (authError || !user) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+      console.error('Authentication failed:', authError);
+      return new Response(JSON.stringify({ error: 'Unauthorized', details: authError?.message }), {
         status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
