@@ -551,6 +551,63 @@ export type Database = {
         }
         Relationships: []
       }
+      census_tracts: {
+        Row: {
+          ami_percentage: number | null
+          center_lat: number | null
+          center_lon: number | null
+          county: string | null
+          data_vintage: string | null
+          eligibility: string | null
+          id: number
+          income_category: string | null
+          last_updated: string | null
+          median_home_value: number | null
+          median_income: number | null
+          state: string | null
+          total_households: number | null
+          total_population: number | null
+          tract_id: string
+          tract_name: string | null
+        }
+        Insert: {
+          ami_percentage?: number | null
+          center_lat?: number | null
+          center_lon?: number | null
+          county?: string | null
+          data_vintage?: string | null
+          eligibility?: string | null
+          id?: number
+          income_category?: string | null
+          last_updated?: string | null
+          median_home_value?: number | null
+          median_income?: number | null
+          state?: string | null
+          total_households?: number | null
+          total_population?: number | null
+          tract_id: string
+          tract_name?: string | null
+        }
+        Update: {
+          ami_percentage?: number | null
+          center_lat?: number | null
+          center_lon?: number | null
+          county?: string | null
+          data_vintage?: string | null
+          eligibility?: string | null
+          id?: number
+          income_category?: string | null
+          last_updated?: string | null
+          median_home_value?: number | null
+          median_income?: number | null
+          state?: string | null
+          total_households?: number | null
+          total_population?: number | null
+          tract_id?: string
+          tract_name?: string | null
+        }
+        Relationships: []
+      }
       client_activity_logs: {
         Row: {
           activity_data: Json | null
@@ -1796,6 +1853,48 @@ export type Database = {
         }
         Relationships: []
       }
+      property_cache: {
+        Row: {
+          address: string
+          data_source: string | null
+          eligibility: string | null
+          id: number
+          income_category: string | null
+          last_updated: string | null
+          lat: number | null
+          lon: number | null
+          median_income: number | null
+          search_count: number | null
+          tract_id: string | null
+        }
+        Insert: {
+          address: string
+          data_source?: string | null
+          eligibility?: string | null
+          id?: number
+          income_category?: string | null
+          last_updated?: string | null
+          lat?: number | null
+          lon?: number | null
+          median_income?: number | null
+          search_count?: number | null
+          tract_id?: string | null
+        }
+        Update: {
+          address?: string
+          data_source?: string | null
+          eligibility?: string | null
+          id?: number
+          income_category?: string | null
+          last_updated?: string | null
+          lat?: number | null
+          lon?: number | null
+          median_income?: number | null
+          search_count?: number | null
+          tract_id?: string | null
+        }
+        Relationships: []
+      }
       property_matches: {
         Row: {
           address: string | null
@@ -2182,6 +2281,42 @@ export type Database = {
         }
         Relationships: []
       }
+      security_audit_log: {
+        Row: {
+          created_at: string | null
+          details: Json | null
+          event_type: string
+          id: string
+          ip_address: string | null
+          success: boolean | null
+          target_user_id: string | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          details?: Json | null
+          event_type: string
+          id?: string
+          ip_address?: string | null
+          success?: boolean | null
+          target_user_id?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          details?: Json | null
+          event_type?: string
+          id?: string
+          ip_address?: string | null
+          success?: boolean | null
+          target_user_id?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       system_settings: {
         Row: {
           created_at: string
@@ -2468,6 +2603,42 @@ export type Database = {
         }
         Relationships: []
       }
+      user_role_changes: {
+        Row: {
+          changed_at: string | null
+          changed_by: string
+          id: string
+          ip_address: string | null
+          new_role: string
+          old_role: string | null
+          reason: string | null
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          changed_at?: string | null
+          changed_by: string
+          id?: string
+          ip_address?: string | null
+          new_role: string
+          old_role?: string | null
+          reason?: string | null
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          changed_at?: string | null
+          changed_by?: string
+          id?: string
+          ip_address?: string | null
+          new_role?: string
+          old_role?: string | null
+          reason?: string | null
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       users: {
         Row: {
           created_at: string
@@ -2584,6 +2755,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_update_user_role: {
+        Args: {
+          p_target_user_id: string
+          p_new_role: string
+          p_reason?: string
+        }
+        Returns: Json
+      }
       anonymize_user_search_history: {
         Args: { target_user_id: string }
         Returns: undefined
@@ -2658,6 +2837,18 @@ export type Database = {
       is_admin_user_safe: {
         Args: Record<PropertyKey, never>
         Returns: boolean
+      }
+      log_security_event: {
+        Args: {
+          p_event_type: string
+          p_user_id?: string
+          p_target_user_id?: string
+          p_details?: Json
+          p_ip_address?: string
+          p_user_agent?: string
+          p_success?: boolean
+        }
+        Returns: undefined
       }
       user_is_admin: {
         Args: Record<PropertyKey, never>
