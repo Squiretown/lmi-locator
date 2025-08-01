@@ -17,6 +17,7 @@ serve(async (req) => {
     console.log('FFIEC processor starting, checking auth header...');
     const authHeader = req.headers.get('Authorization');
     console.log('Auth header present:', !!authHeader);
+    console.log('Auth header value:', authHeader ? authHeader.substring(0, 20) + '...' : 'null');
 
     // Use ANON_KEY instead of SERVICE_ROLE_KEY for proper user authentication
     const supabaseClient = createClient(
@@ -32,7 +33,11 @@ serve(async (req) => {
     // Get user from JWT
     console.log('Attempting to get user from JWT...');
     const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
-    console.log('Auth result:', { user: !!user, error: authError?.message });
+    console.log('Auth result:', { 
+      user: user ? { id: user.id, email: user.email } : null, 
+      error: authError?.message,
+      userMetadata: user?.user_metadata 
+    });
     
     if (authError || !user) {
       console.error('Authentication failed:', authError);
