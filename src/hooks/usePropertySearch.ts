@@ -2,9 +2,9 @@
 import { useState } from 'react';
 import { CheckLmiStatusResponse } from '@/lib/types';
 import { z } from 'zod';
-import { checkDirectLmiStatus } from '@/lib/api/lmi';
+import { supabase } from '@/integrations/supabase/client';
 import { useSimpleNotification } from '@/hooks/useSimpleNotification';
-import { useAuth } from '@/hooks/useAuth'; 
+import { useAuth } from '@/hooks/useAuth';
 
 // Define the form schema for address search
 export const formSchema = z.object({
@@ -28,6 +28,50 @@ export function usePropertySearch() {
     setIsLoading(false);
   };
 
+  // New Edge Function-based LMI check that uses FFIEC database
+  const checkLmiWithEdgeFunction = async (address: string) => {
+    try {
+      console.log('🔍 Checking LMI status via Edge Function for:', address);
+      
+      // Call the lmi-check Edge Function instead of external APIs
+      const { data, error } = await supabase.functions.invoke('lmi-check', {
+        body: { 
+          address: address.trim(),
+          ami: 100000 // Default AMI value
+        }
+      });
+
+      if (error) {
+        console.error('❌ Edge Function error:', error);
+        throw new Error(error.message || 'Edge Function call failed');
+      }
+
+      console.log('✅ Edge Function result:', data);
+      
+      // Return the result in the format expected by the existing code
+      return {
+        status: data.status,
+        is_approved: data.is_approved,
+        address: data.address,
+        tract_id: data.tract_id,
+        median_income: data.median_income,
+        ami: data.ami,
+        income_category: data.income_category,
+        percentage_of_ami: data.percentage_of_ami,
+        eligibility: data.eligibility,
+        lmi_status: data.lmi_status,
+        approval_message: data.approval_message,
+        lat: data.lat,
+        lon: data.lon,
+        message: data.message
+      };
+
+    } catch (error) {
+      console.error('❌ LMI Edge Function check failed:', error);
+      throw error;
+    }
+  };
+
   const submitPropertySearch = async (values: FormValues) => {
     setIsLoading(true);
     try {
@@ -42,7 +86,7 @@ export function usePropertySearch() {
       
       console.log('Formatted Address:', formattedAddress);
       
-      const result = await checkDirectLmiStatus(formattedAddress);
+      const result = await checkLmiWithEdgeFunction(formattedAddress);
       
       console.log('Full Result Object:', JSON.stringify(result, null, 2));
       
