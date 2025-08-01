@@ -170,40 +170,44 @@ async function getFFIECTractData(geoid: string) {
     const formattedTractId = formatTractIdForFFIEC(geoid);
     console.log(`Formatted tract ID for FFIEC lookup: ${formattedTractId}`);
     
-    // Query the census_tracts table for FFIEC data
+    // Use the flexible database function for tract lookup
     const { data, error } = await supabase
-      .from('census_tracts')
-      .select(`
-        tract_id,
-        state,
-        county,
-        tract_name,
-        income_level,
-        median_income,
-        msa_md_median_income,
-        tract_median_family_income,
-        ami_percentage,
-        is_lmi_eligible,
-        ffiec_data_year,
-        tract_population,
-        minority_population_pct,
-        owner_occupied_units
-      `)
-      .eq('tract_id', formattedTractId)
-      .maybeSingle();
+      .rpc('find_census_tract_flexible', { input_tract_id: formattedTractId });
     
     if (error) {
-      console.error("Error querying census_tracts table:", error);
+      console.error("Error calling find_census_tract_flexible:", error);
       return null;
     }
     
-    if (!data) {
+    if (!data || data.length === 0) {
       console.log(`No FFIEC data found for tract: ${formattedTractId}`);
+      
+      // Try alternative formatting approaches
+      const alternativeFormats = [
+        geoid, // Original format
+        geoid.replace(/[^0-9]/g, ''), // Clean numeric only
+        geoid.replace(/[^0-9]/g, '').padEnd(11, '0'), // Padded to 11 digits
+        geoid.replace(/[^0-9]/g, '').substring(0, 11) // Truncated to 11 digits
+      ];
+      
+      for (const altFormat of alternativeFormats) {
+        if (altFormat !== formattedTractId) {
+          console.log(`Trying alternative format: ${altFormat}`);
+          const { data: altData, error: altError } = await supabase
+            .rpc('find_census_tract_flexible', { input_tract_id: altFormat });
+          
+          if (!altError && altData && altData.length > 0) {
+            console.log(`Found FFIEC data using alternative format ${altFormat}:`, altData[0]);
+            return altData[0];
+          }
+        }
+      }
+      
       return null;
     }
     
-    console.log(`Found FFIEC data for tract ${formattedTractId}:`, data);
-    return data;
+    console.log(`Found FFIEC data for tract ${formattedTractId}:`, data[0]);
+    return data[0];
   } catch (error) {
     console.error("Error in getFFIECTractData:", error);
     return null;
