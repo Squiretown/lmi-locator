@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { FFIECFileUpload } from './FFIECFileUpload';
+import { FFIECDataImport } from './FFIECDataImport';
 import { RefreshCw, Database, FileText, TrendingUp } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -201,11 +202,16 @@ export const FFIECFileManager: React.FC = () => {
       <Tabs defaultValue="upload" className="space-y-4">
         <TabsList>
           <TabsTrigger value="upload">File Upload</TabsTrigger>
+          <TabsTrigger value="import">Data Import</TabsTrigger>
           <TabsTrigger value="history">Import History</TabsTrigger>
         </TabsList>
 
         <TabsContent value="upload">
           <FFIECFileUpload onUploadComplete={handleUploadComplete} />
+        </TabsContent>
+
+        <TabsContent value="import">
+          <FFIECDataImport />
         </TabsContent>
 
         <TabsContent value="history">
