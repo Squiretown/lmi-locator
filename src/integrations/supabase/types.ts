@@ -1413,6 +1413,42 @@ export type Database = {
         }
         Relationships: []
       }
+      import_jobs: {
+        Row: {
+          created_at: string | null
+          current_chunk: number | null
+          error_message: string | null
+          id: string
+          processed_rows: number | null
+          status: string
+          total_chunks: number | null
+          total_rows: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          current_chunk?: number | null
+          error_message?: string | null
+          id?: string
+          processed_rows?: number | null
+          status?: string
+          total_chunks?: number | null
+          total_rows?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          current_chunk?: number | null
+          error_message?: string | null
+          id?: string
+          processed_rows?: number | null
+          status?: string
+          total_chunks?: number | null
+          total_rows?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       lmi_search_error_logs: {
         Row: {
           browser_info: string | null

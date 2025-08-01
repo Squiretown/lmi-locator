@@ -86,13 +86,13 @@ export const FFIECDataImport: React.FC = () => {
     }
   };
 
-  // Start the chunked import process
+  // Start the chunked import process using new edge function
   const startImport = async () => {
     try {
       setImportProgress({
         isRunning: true,
         progress: 0,
-        message: 'Downloading FFIEC data file...',
+        message: 'Initializing FFIEC import...',
         recordsProcessed: 0,
         totalRecords: 0,
         lmiEligible: 0,
@@ -101,102 +101,88 @@ export const FFIECDataImport: React.FC = () => {
 
       toast.info('Starting FFIEC data import...');
 
-      // Download the CSV file from storage
-      const { data: fileData, error: downloadError } = await supabase.storage
-        .from('ffiec-uploads')
-        .download('CensusFlatFile2025.csv');
-
-      if (downloadError) {
-        throw new Error(`Failed to download file: ${downloadError.message}`);
-      }
-
-      setImportProgress(prev => ({
-        ...prev,
-        message: 'Parsing CSV file...'
-      }));
-
-      // Parse CSV file
-      const text = await fileData.text();
-      const lines = text.split('\n').filter(line => line.trim());
-      const headers = lines[0].split(',').map(h => h.trim());
-      const rows = lines.slice(1);
-
-      const totalRecords = rows.length;
-      const CHUNK_SIZE = 5000; // Process 5000 records per chunk
-      const totalChunks = Math.ceil(totalRecords / CHUNK_SIZE);
-
-      setImportProgress(prev => ({
-        ...prev,
-        totalRecords,
-        message: `Creating import job for ${totalRecords.toLocaleString()} records...`
-      }));
-
-      // Create import job
-      const { data: jobResponse, error: jobError } = await supabase.functions.invoke('ffiec-file-processor', {
-        body: {
-          action: 'start_upload',
-          data: {
-            fileName: 'CensusFlatFile2025.csv',
-            fileSize: fileData.size,
-            jobType: 'census_data',
-            totalRecords
+      // Step 1: Start the import job
+      console.log('🚀 Starting import job...');
+      const startResponse = await fetch(
+        `https://llhofjbijjxkfezidxyi.supabase.co/functions/v1/import-ffiec-chunked-fixed?action=start`,
+        {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxsaG9mamJpamp4a2ZlemlkeHlpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDI0MjkzMDIsImV4cCI6MjA1ODAwNTMwMn0.sD475girHZmrVREV0AENbjvlOCeT_ArrPpS3LcOS5VQ`,
+            'Content-Type': 'application/json'
           }
         }
-      });
+      );
 
-      if (jobError || !jobResponse.success) {
-        throw new Error(jobError?.message || 'Failed to create import job');
+      if (!startResponse.ok) {
+        const errorData = await startResponse.json();
+        throw new Error(errorData.error || 'Failed to start import job');
       }
 
-      const jobId = jobResponse.jobId;
+      const startData = await startResponse.json();
+      
+      if (!startData.success) {
+        throw new Error(startData.error || 'Failed to start import job');
+      }
 
+      const { jobId, totalRows, totalChunks } = startData;
+      
       setImportProgress(prev => ({
         ...prev,
+        totalRecords: totalRows,
         message: `Processing ${totalChunks} chunks...`
       }));
 
-      // Process chunks sequentially
+      // Step 2: Process chunks sequentially
       for (let i = 0; i < totalChunks; i++) {
-        const startIdx = i * CHUNK_SIZE;
-        const endIdx = Math.min(startIdx + CHUNK_SIZE, totalRecords);
-        const chunkRows = rows.slice(startIdx, endIdx);
-        
-        // Convert CSV rows to objects
-        const records = chunkRows.map(row => {
-          const values = row.split(',').map(v => v.trim().replace(/^"|"$/g, ''));
-          const record: any = {};
-          headers.forEach((header, idx) => {
-            record[header] = values[idx] || '';
-          });
-          return record;
-        });
-
         setImportProgress(prev => ({
           ...prev,
-          message: `Processing chunk ${i + 1} of ${totalChunks}...`,
-          recordsProcessed: startIdx
+          message: `Processing chunk ${i + 1} of ${totalChunks}...`
         }));
 
-        // Send chunk to processor
-        const { error: chunkError } = await supabase.functions.invoke('ffiec-file-processor', {
-          body: {
-            action: 'process_batch',
-            data: {
-              jobId,
-              records,
-              batchNumber: i + 1,
-              isLastBatch: i === totalChunks - 1
+        const processResponse = await fetch(
+          `https://llhofjbijjxkfezidxyi.supabase.co/functions/v1/import-ffiec-chunked-fixed?action=process&jobId=${jobId}`,
+          {
+            method: 'GET',
+            headers: {
+              'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxsaG9mamJpamp4a2ZlemlkeHlpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDI0MjkzMDIsImV4cCI6MjA1ODAwNTMwMn0.sD475girHZmrVREV0AENbjvlOCeT_ArrPpS3LcOS5VQ`,
+              'Content-Type': 'application/json'
             }
           }
-        });
+        );
 
-        if (chunkError) {
-          throw new Error(`Failed to process chunk ${i + 1}: ${chunkError.message}`);
+        if (!processResponse.ok) {
+          const errorData = await processResponse.json();
+          throw new Error(errorData.error || `Failed to process chunk ${i + 1}`);
+        }
+
+        const chunkData = await processResponse.json();
+        
+        if (!chunkData.success) {
+          throw new Error(chunkData.error || `Failed to process chunk ${i + 1}`);
+        }
+
+        // Update progress
+        setImportProgress(prev => ({
+          ...prev,
+          recordsProcessed: chunkData.totalProcessed,
+          progress: chunkData.progressPercent,
+          message: chunkData.message
+        }));
+
+        if (chunkData.isCompleted) {
+          setImportProgress(prev => ({
+            ...prev,
+            isRunning: false,
+            status: 'completed',
+            message: '🎉 Import completed successfully!'
+          }));
+          
+          await checkDataStatus();
+          toast.success(`Import completed! Processed ${chunkData.totalProcessed} records.`);
+          return;
         }
       }
-
-      // Start polling for final status
-      startProgressPolling();
 
     } catch (error: any) {
       console.error('Import error:', error);
@@ -211,67 +197,33 @@ export const FFIECDataImport: React.FC = () => {
     }
   };
 
-  // Poll for import progress
-  const startProgressPolling = () => {
-    const interval = setInterval(async () => {
-      try {
-        // Check latest import job status
-        const { data: latestJob, error } = await supabase
-          .from('ffiec_import_jobs')
-          .select('*')
-          .order('created_at', { ascending: false })
-          .limit(1)
-          .single();
-
-        if (error) throw error;
-
-        if (latestJob && latestJob.status === 'processing') {
-          const progress = latestJob.records_total > 0 
-            ? Math.round((latestJob.records_processed / latestJob.records_total) * 100)
-            : 0;
-
-          setImportProgress(prev => ({
-            ...prev,
-            progress,
-            message: `Processing records... ${latestJob.records_processed}/${latestJob.records_total}`,
-            recordsProcessed: latestJob.records_processed,
-            totalRecords: latestJob.records_total,
-            status: 'running'
-          }));
-        } else if (latestJob && latestJob.status === 'completed') {
-          setImportProgress(prev => ({
-            ...prev,
-            isRunning: false,
-            progress: 100,
-            message: `Import completed successfully! Processed ${latestJob.records_successful} records.`,
-            recordsProcessed: latestJob.records_successful,
-            totalRecords: latestJob.records_total,
-            status: 'completed'
-          }));
-
-          clearInterval(interval);
-          setPollingInterval(null);
-          await checkDataStatus();
-          toast.success(`Import completed! Processed ${latestJob.records_successful} records.`);
-        } else if (latestJob && latestJob.status === 'failed') {
-          setImportProgress(prev => ({
-            ...prev,
-            isRunning: false,
-            status: 'error',
-            error: 'Import failed',
-            message: 'Import failed. Check logs for details.'
-          }));
-
-          clearInterval(interval);
-          setPollingInterval(null);
-          toast.error('Import failed. Check logs for details.');
+  // Add a reset function for clearing data
+  const resetImport = async () => {
+    try {
+      const response = await fetch(
+        `https://llhofjbijjxkfezidxyi.supabase.co/functions/v1/import-ffiec-chunked-fixed?action=reset`,
+        {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxsaG9mamJpamp4a2ZlemlkeHlpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDI0MjkzMDIsImV4cCI6MjA1ODAwNTMwMn0.sD475girHZmrVREV0AENbjvlOCeT_ArrPpS3LcOS5VQ`,
+            'Content-Type': 'application/json'
+          }
         }
-      } catch (error: any) {
-        console.error('Progress polling error:', error);
-      }
-    }, 2000); // Poll every 2 seconds
+      );
 
-    setPollingInterval(interval);
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to reset import data');
+      }
+
+      const data = await response.json();
+      if (data.success) {
+        toast.success('Import data reset successfully');
+        await checkDataStatus();
+      }
+    } catch (error: any) {
+      toast.error(`Reset failed: ${error.message}`);
+    }
   };
 
   useEffect(() => {
@@ -422,6 +374,16 @@ export const FFIECDataImport: React.FC = () => {
             >
               <RefreshCw className="h-4 w-4" />
               Refresh Status
+            </Button>
+
+            <Button 
+              variant="destructive"
+              onClick={resetImport}
+              disabled={importProgress.isRunning}
+              className="flex items-center gap-2"
+            >
+              <AlertCircle className="h-4 w-4" />
+              Reset Data
             </Button>
           </div>
 
