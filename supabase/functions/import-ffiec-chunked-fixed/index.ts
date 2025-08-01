@@ -36,7 +36,7 @@ serve(async (req) => {
     const url = new URL(req.url)
     const action = url.searchParams.get('action') || 'start'
     const jobId = url.searchParams.get('jobId')
-    const chunkSize = parseInt(url.searchParams.get('chunkSize') || '3000') // Reduced for reliability
+    const chunkSize = parseInt(url.searchParams.get('chunkSize') || '1000', 10) // Reduced for reliability
 
     console.log(`🔧 Action: ${action}, JobId: ${jobId}, ChunkSize: ${chunkSize}`)
 
@@ -339,8 +339,8 @@ function transformFFIECToCensusTracts(ffiecRow: any): any | null {
       return isNaN(num) ? null : num
     }
 
-    const parseInt = (value: any): number | null => {
-      const num = parseInt(value)
+    const parseIntSafe = (value: any): number | null => {
+      const num = parseInt(value, 10)
       return isNaN(num) ? null : num
     }
 
@@ -353,15 +353,15 @@ function transformFFIECToCensusTracts(ffiecRow: any): any | null {
       state: ffiecRow.State_Name || null,
       county: ffiecRow.County_Name || null,
       tract_name: ffiecRow.Tract_Name || null,
-      ffiec_data_year: parseInt(ffiecRow.Year) || 2025,
+      ffiec_data_year: parseIntSafe(ffiecRow.Year) || 2025,
       income_level: incomeLevel,
       is_lmi_eligible: isLmiEligible,
       msa_md_median_income: parseNumber(ffiecRow.MSA_Median_Income),
       tract_median_family_income: parseNumber(ffiecRow.Tract_Median_Income),
       ami_percentage: parseNumber(ffiecRow.Income_Percentage),
-      tract_population: parseInt(ffiecRow.Total_Population),
+      tract_population: parseIntSafe(ffiecRow.Total_Population),
       minority_population_pct: parseNumber(ffiecRow.Minority_Population_Percent),
-      owner_occupied_units: parseInt(ffiecRow.Owner_Occupied_Units),
+      owner_occupied_units: parseIntSafe(ffiecRow.Owner_Occupied_Units),
       median_income: parseNumber(ffiecRow.Median_Household_Income),
       data_vintage: '2024',
       last_updated: new Date().toISOString()
