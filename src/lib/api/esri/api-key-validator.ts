@@ -1,6 +1,7 @@
 
-// Utility to validate ESRI API keys
-import { ESRI_API_KEY } from './config';
+// DEPRECATED: This API key validator is no longer used
+// ESRI API access is now handled securely through edge functions
+// See src/lib/api/esri/secure-geocoding.ts for the new secure implementation
 import { ESRI_GEOCODE_URL } from './constants';
 
 /**

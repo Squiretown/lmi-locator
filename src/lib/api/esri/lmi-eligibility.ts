@@ -1,5 +1,6 @@
 
-import { ESRI_API_KEY } from '../esri/config';
+// DEPRECATED: Direct API access with API key
+// Use secure-geocoding.ts and secure-reverse-geocoding.ts for secure API access
 import { geocodeAddressWithEsri } from './geocoding/index';
 import { processLMIData, searchLMIByLocation } from './lmi-services';
 import { LmiResult } from '../lmi/types';
