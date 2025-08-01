@@ -35,6 +35,7 @@ export const FFIECFileUpload: React.FC<FFIECFileUploadProps> = ({ onUploadComple
   // Method 1: Direct Storage Upload + Client Processing (Recommended)
   const uploadToStorageAndProcess = async (file: File) => {
     try {
+      console.log('Starting storage upload for file:', file.name, 'Size:', file.size)
       setUploadProgress({
         phase: 'uploading',
         progress: 10,
@@ -43,6 +44,8 @@ export const FFIECFileUpload: React.FC<FFIECFileUploadProps> = ({ onUploadComple
 
       // Step 1: Upload to Supabase Storage (handles large files)
       const fileName = `ffiec-${Date.now()}-${file.name}`
+      console.log('Uploading to storage with filename:', fileName)
+      
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('ffiec-uploads')
         .upload(fileName, file, {
@@ -50,7 +53,11 @@ export const FFIECFileUpload: React.FC<FFIECFileUploadProps> = ({ onUploadComple
           upsert: false
         })
 
-      if (uploadError) throw uploadError
+      if (uploadError) {
+        console.error('Storage upload error:', uploadError)
+        throw uploadError
+      }
+      console.log('Storage upload successful:', uploadData)
 
       setUploadProgress({
         phase: 'processing',
@@ -59,32 +66,41 @@ export const FFIECFileUpload: React.FC<FFIECFileUploadProps> = ({ onUploadComple
       })
 
       // Step 2: Download and process file client-side
+      console.log('Downloading file from storage for processing...')
       const { data: fileData, error: downloadError } = await supabase.storage
         .from('ffiec-uploads')
         .download(fileName)
 
-      if (downloadError) throw downloadError
+      if (downloadError) {
+        console.error('Storage download error:', downloadError)
+        throw downloadError
+      }
+      console.log('File downloaded successfully, size:', fileData?.size)
 
       // Step 3: Process Excel file in browser
-      await processExcelFile(fileData)
+      await processExcelFile(fileData, fileName)
 
       // Clean up storage file after processing
+      console.log('Cleaning up storage file...')
       await supabase.storage
         .from('ffiec-uploads')
         .remove([fileName])
 
     } catch (error: any) {
+      console.error('Upload to storage failed:', error)
       setUploadProgress({
         phase: 'error',
         progress: 0,
         message: `Upload failed: ${error.message}`
       })
+      toast.error(`Upload failed: ${error.message}`)
     }
   }
 
   // Method 2: Direct Client-Side Processing (No storage needed)
   const processFileDirectly = async (file: File) => {
     try {
+      console.log('Starting direct file processing for:', file.name, 'Size:', file.size)
       setUploadProgress({
         phase: 'processing',
         progress: 20,
@@ -92,7 +108,9 @@ export const FFIECFileUpload: React.FC<FFIECFileUploadProps> = ({ onUploadComple
       })
 
       // Read file directly from user's computer
+      console.log('Reading file as array buffer...')
       const arrayBuffer = await file.arrayBuffer()
+      console.log('File read successfully, buffer size:', arrayBuffer.byteLength)
       
       setUploadProgress({
         phase: 'processing',
@@ -101,31 +119,38 @@ export const FFIECFileUpload: React.FC<FFIECFileUploadProps> = ({ onUploadComple
       })
 
       // Parse Excel file
+      console.log('Parsing Excel workbook...')
       const workbook = XLSX.read(arrayBuffer, { 
         type: 'array',
         cellDates: true,
         cellFormula: false
       })
 
+      console.log('Workbook parsed, sheet names:', workbook.SheetNames)
       const sheetName = workbook.SheetNames[0]
       const worksheet = workbook.Sheets[sheetName]
       
       // Convert to JSON
+      console.log('Converting sheet to JSON...')
       const rawData = XLSX.utils.sheet_to_json(worksheet, {
         header: 1,
         raw: false,
         defval: ""
       }) as any[][]
 
+      console.log('Excel data converted, rows:', rawData.length)
+
       // Process the data
       await processFFIECData(rawData, file.name)
 
     } catch (error: any) {
+      console.error('Direct file processing failed:', error)
       setUploadProgress({
         phase: 'error',
         progress: 0,
         message: `Processing failed: ${error.message}`
       })
+      toast.error(`Processing failed: ${error.message}`)
     }
   }
 
