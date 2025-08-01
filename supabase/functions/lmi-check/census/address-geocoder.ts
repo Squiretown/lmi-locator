@@ -1,6 +1,7 @@
 
 import { CENSUS_CONFIG, CensusGeocoderResult, GeocodedAddress, GeocodingError } from "./geocoder-config.ts";
 import { formatGeoId } from "../constants.ts";
+import { determineCensusTract } from "./tract-finder.ts";
 
 /**
  * Geocodes an address to get coordinates and Census geography information
@@ -51,7 +52,7 @@ export async function geocodeAddress(address: string): Promise<GeocodedAddress> 
       
       const data = await response.json() as CensusGeocoderResult;
       
-      return processGeocodeResponse(data);
+      return await processGeocodeResponse(data);
     } catch (error) {
       clearTimeout(timeoutId);
       throw error;
@@ -72,7 +73,7 @@ export async function geocodeAddress(address: string): Promise<GeocodedAddress> 
  * @param data The Census geocoder API response
  * @returns Processed geocoding result with coordinates and tract ID
  */
-function processGeocodeResponse(data: CensusGeocoderResult): GeocodedAddress {
+async function processGeocodeResponse(data: CensusGeocoderResult): Promise<GeocodedAddress> {
   // Check if we got a match
   if (data.result && 
       data.result.addressMatches && 
@@ -99,6 +100,21 @@ function processGeocodeResponse(data: CensusGeocoderResult): GeocodedAddress {
       );
       
       console.log(`Found Census tract: ${tractId}`);
+    } else if (coordinates) {
+      // FALLBACK: If we have coordinates but no tract from address API,
+      // try the coordinate-based geocoding API
+      console.log(`No tract from address API, trying coordinate-based lookup for lat: ${coordinates.lat}, lon: ${coordinates.lon}`);
+      
+      try {
+        tractId = await determineCensusTract(coordinates.lat, coordinates.lon);
+        if (tractId) {
+          console.log(`Found tract via coordinate fallback: ${tractId}`);
+        } else {
+          console.warn(`Coordinate-based lookup also failed for lat: ${coordinates.lat}, lon: ${coordinates.lon}`);
+        }
+      } catch (error) {
+        console.error(`Coordinate-based tract lookup failed:`, error);
+      }
     }
     
     return { 
