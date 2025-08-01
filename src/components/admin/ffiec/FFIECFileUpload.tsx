@@ -1,270 +1,390 @@
-import React, { useState, useCallback } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
-import { Badge } from '@/components/ui/badge';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Upload, FileSpreadsheet, AlertCircle, CheckCircle, XCircle } from 'lucide-react';
-import { toast } from 'sonner';
-import { supabase } from '@/integrations/supabase/client';
+// Corrected File Upload System - Avoiding Edge Function Limitations
+// This approach uses Supabase Storage + client-side processing for large files
+
+import React, { useState, useCallback } from 'react'
+import { useDropzone } from 'react-dropzone'
+import { supabase } from '@/integrations/supabase/client'
+import * as XLSX from 'xlsx'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Progress } from '@/components/ui/progress'
+import { Badge } from '@/components/ui/badge'
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Upload, FileSpreadsheet, AlertCircle, CheckCircle, XCircle } from 'lucide-react'
+import { toast } from 'sonner'
 
 interface FFIECFileUploadProps {
   onUploadComplete?: (jobId: string) => void;
 }
 
-interface UploadJob {
-  id: string;
-  fileName: string;
-  fileSize: number;
-  jobType: 'definitions' | 'census_data';
-  status: 'uploading' | 'processing' | 'completed' | 'failed';
-  progress: number;
-  recordsTotal: number;
-  recordsProcessed: number;
-  recordsSuccessful: number;
-  recordsFailed: number;
-  errors?: any[];
+interface UploadProgress {
+  phase: 'uploading' | 'processing' | 'completed' | 'error'
+  progress: number
+  message: string
+  recordsProcessed?: number
+  totalRecords?: number
 }
 
 export const FFIECFileUpload: React.FC<FFIECFileUploadProps> = ({ onUploadComplete }) => {
-  const [uploadJob, setUploadJob] = useState<UploadJob | null>(null);
-  const [isProcessing, setIsProcessing] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<UploadProgress>({
+    phase: 'uploading',
+    progress: 0,
+    message: 'Ready to upload'
+  })
 
-  // Determine file type based on size and name
-  const determineJobType = (file: File): 'definitions' | 'census_data' => {
-    const fileName = file.name.toLowerCase();
-    const fileSize = file.size;
-    
-    // Small files (< 50MB) are likely definitions
-    if (fileSize < 50 * 1024 * 1024) {
-      return 'definitions';
-    }
-    
-    // Check filename patterns
-    if (fileName.includes('definition') || fileName.includes('field')) {
-      return 'definitions';
-    }
-    
-    if (fileName.includes('census') || fileName.includes('tract')) {
-      return 'census_data';
-    }
-    
-    // Default to census_data for large files
-    return 'census_data';
-  };
-
-  const processExcelFile = async (file: File): Promise<any[]> => {
-    // For now, we'll simulate Excel parsing until we can properly import xlsx
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      
-      reader.onload = (e) => {
-        try {
-          // Simulate data processing - in real implementation this would use XLSX
-          const mockData = Array.from({ length: 100 }, (_, i) => ({
-            tract_id: `36103${String(i).padStart(4, '0')}.01`,
-            state: '36',
-            county: '103',
-            tract_name: `Tract ${i}`,
-            income_level: i % 4 === 0 ? 'Low' : i % 4 === 1 ? 'Moderate' : i % 4 === 2 ? 'Middle' : 'Upper',
-            msa_md_median_income: 75000 + Math.random() * 50000,
-            tract_median_family_income: 45000 + Math.random() * 40000,
-            ami_percentage: 50 + Math.random() * 50,
-            tract_population: 1000 + Math.random() * 5000,
-            minority_population_pct: Math.random() * 100,
-            owner_occupied_units: 300 + Math.random() * 1000
-          }));
-          
-          resolve(mockData);
-        } catch (error) {
-          reject(error);
-        }
-      };
-      
-      reader.onerror = () => reject(new Error('Failed to read file'));
-      reader.readAsText(file);
-    });
-  };
-
-  const uploadFile = async (file: File) => {
+  // Method 1: Direct Storage Upload + Client Processing (Recommended)
+  const uploadToStorageAndProcess = async (file: File) => {
     try {
-      setIsProcessing(true);
-      
-      const jobType = determineJobType(file);
-      const fileSize = file.size;
-      const fileName = file.name;
-      
-      // Parse Excel file
-      toast.info('Reading Excel file...');
-      const data = await processExcelFile(file);
-      const recordsTotal = data.length;
-      
-      // Create upload job
-      const { data: jobResponse, error: jobError } = await supabase.functions.invoke('ffiec-file-processor', {
-        body: {
-          action: 'start_upload',
-          data: {
-            fileName,
-            fileSize,
-            jobType,
-            totalRecords: recordsTotal
-          }
-        }
-      });
-      
-      if (jobError) throw jobError;
-      
-      const jobId = jobResponse.jobId;
-      
-      // Initialize job state
-      setUploadJob({
-        id: jobId,
-        fileName,
-        fileSize,
-        jobType,
-        status: 'processing',
+      setUploadProgress({
+        phase: 'uploading',
+        progress: 10,
+        message: 'Uploading file to storage...'
+      })
+
+      // Step 1: Upload to Supabase Storage (handles large files)
+      const fileName = `ffiec-${Date.now()}-${file.name}`
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('ffiec-uploads')
+        .upload(fileName, file, {
+          cacheControl: '3600',
+          upsert: false
+        })
+
+      if (uploadError) throw uploadError
+
+      setUploadProgress({
+        phase: 'processing',
+        progress: 30,
+        message: 'File uploaded, starting processing...'
+      })
+
+      // Step 2: Download and process file client-side
+      const { data: fileData, error: downloadError } = await supabase.storage
+        .from('ffiec-uploads')
+        .download(fileName)
+
+      if (downloadError) throw downloadError
+
+      // Step 3: Process Excel file in browser
+      await processExcelFile(fileData)
+
+      // Clean up storage file after processing
+      await supabase.storage
+        .from('ffiec-uploads')
+        .remove([fileName])
+
+    } catch (error: any) {
+      setUploadProgress({
+        phase: 'error',
         progress: 0,
-        recordsTotal,
-        recordsProcessed: 0,
-        recordsSuccessful: 0,
-        recordsFailed: 0
-      });
+        message: `Upload failed: ${error.message}`
+      })
+    }
+  }
+
+  // Method 2: Direct Client-Side Processing (No storage needed)
+  const processFileDirectly = async (file: File) => {
+    try {
+      setUploadProgress({
+        phase: 'processing',
+        progress: 20,
+        message: 'Reading Excel file...'
+      })
+
+      // Read file directly from user's computer
+      const arrayBuffer = await file.arrayBuffer()
       
-      // Process data in batches
-      const batchSize = jobType === 'definitions' ? 100 : 1000;
-      const totalBatches = Math.ceil(data.length / batchSize);
+      setUploadProgress({
+        phase: 'processing',
+        progress: 40,
+        message: 'Parsing Excel data...'
+      })
+
+      // Parse Excel file
+      const workbook = XLSX.read(arrayBuffer, { 
+        type: 'array',
+        cellDates: true,
+        cellFormula: false
+      })
+
+      const sheetName = workbook.SheetNames[0]
+      const worksheet = workbook.Sheets[sheetName]
       
-      for (let i = 0; i < totalBatches; i++) {
-        const start = i * batchSize;
-        const end = Math.min(start + batchSize, data.length);
-        const batch = data.slice(start, end);
-        const isLastBatch = i === totalBatches - 1;
-        
-        toast.info(`Processing batch ${i + 1} of ${totalBatches}...`);
-        
-        const { data: batchResponse, error: batchError } = await supabase.functions.invoke('ffiec-file-processor', {
-          body: {
-            action: 'process_batch',
-            data: {
-              jobId,
-              records: batch,
-              batchNumber: i + 1,
-              isLastBatch
-            }
+      // Convert to JSON
+      const rawData = XLSX.utils.sheet_to_json(worksheet, {
+        header: 1,
+        raw: false,
+        defval: ""
+      }) as any[][]
+
+      // Process the data
+      await processFFIECData(rawData, file.name)
+
+    } catch (error: any) {
+      setUploadProgress({
+        phase: 'error',
+        progress: 0,
+        message: `Processing failed: ${error.message}`
+      })
+    }
+  }
+
+  const processExcelFile = async (fileBlob: Blob, fileName?: string) => {
+    const arrayBuffer = await fileBlob.arrayBuffer()
+    
+    setUploadProgress({
+      phase: 'processing',
+      progress: 50,
+      message: 'Parsing Excel structure...'
+    })
+
+    const workbook = XLSX.read(arrayBuffer, { 
+      type: 'array',
+      cellDates: true 
+    })
+
+    const worksheet = workbook.Sheets[workbook.SheetNames[0]]
+    const rawData = XLSX.utils.sheet_to_json(worksheet, { header: 1 }) as any[][]
+
+    await processFFIECData(rawData, fileName || 'uploaded-file')
+  }
+
+  const processFFIECData = async (rawData: any[][], fileName: string) => {
+    try {
+      // Find header row
+      const headerRowIndex = rawData.findIndex(row => 
+        row && row.some(cell => cell && String(cell).toLowerCase().includes('tract'))
+      )
+
+      if (headerRowIndex === -1) {
+        throw new Error('Could not find header row in Excel file')
+      }
+
+      const headers = rawData[headerRowIndex]
+      const dataRows = rawData.slice(headerRowIndex + 1)
+        .filter(row => row && row.some(cell => cell && String(cell).trim()))
+
+      setUploadProgress({
+        phase: 'processing',
+        progress: 60,
+        message: `Processing ${dataRows.length} records...`,
+        totalRecords: dataRows.length
+      })
+
+      // Log import start
+      const importLogData = {
+        user_id: (await supabase.auth.getUser()).data.user?.id,
+        import_type: 'ffiec_census_data',
+        file_name: fileName,
+        file_size: null,
+        records_processed: 0,
+        records_successful: 0,
+        records_failed: 0,
+        import_status: 'processing',
+        started_at: new Date().toISOString()
+      }
+
+      const { data: importLog, error: logError } = await supabase
+        .from('data_import_log')
+        .insert(importLogData)
+        .select()
+        .single()
+
+      // Process in batches to avoid overwhelming the database
+      const batchSize = 1000
+      let processed = 0
+      let successful = 0
+      let failed = 0
+
+      for (let i = 0; i < dataRows.length; i += batchSize) {
+        const batch = dataRows.slice(i, i + batchSize)
+        const processedBatch = batch
+          .map(row => processFFIECRecord(row, headers))
+          .filter(record => record !== null)
+
+        if (processedBatch.length > 0) {
+          // Insert batch into database - using correct table name from schema
+          const { data: insertData, error } = await supabase
+            .from('census_tracts')
+            .upsert(processedBatch, { 
+              onConflict: 'tract_id',
+              ignoreDuplicates: false 
+            })
+
+          if (error) {
+            console.error('Batch insert error:', error)
+            failed += processedBatch.length
+          } else {
+            successful += processedBatch.length
           }
-        });
-        
-        if (batchError) {
-          throw new Error(`Batch ${i + 1} failed: ${batchError.message}`);
         }
+
+        processed += batch.length
         
         // Update progress
-        const progressPercent = Math.round(((i + 1) / totalBatches) * 100);
-        setUploadJob(prev => prev ? {
-          ...prev,
-          progress: progressPercent,
-          recordsProcessed: end,
-          recordsSuccessful: prev.recordsSuccessful + batchResponse.processed,
-          recordsFailed: prev.recordsFailed + batchResponse.failed,
-          errors: batchResponse.errors ? [...(prev.errors || []), ...batchResponse.errors] : prev.errors
-        } : null);
+        setUploadProgress({
+          phase: 'processing',
+          progress: 60 + (processed / dataRows.length) * 35,
+          message: `Processed ${processed}/${dataRows.length} records...`,
+          recordsProcessed: processed,
+          totalRecords: dataRows.length
+        })
+
+        // Small delay to prevent overwhelming the database
+        await new Promise(resolve => setTimeout(resolve, 100))
       }
-      
-      // Mark as completed
-      setUploadJob(prev => prev ? {
-        ...prev,
-        status: 'completed',
-        progress: 100
-      } : null);
-      
-      toast.success(`Successfully imported ${recordsTotal} ${jobType === 'definitions' ? 'field definitions' : 'census tract records'}`);
-      onUploadComplete?.(jobId);
-      
+
+      // Update import log
+      if (importLog && !logError) {
+        await supabase
+          .from('data_import_log')
+          .update({
+            records_processed: processed,
+            records_successful: successful,
+            records_failed: failed,
+            import_status: 'completed',
+            completed_at: new Date().toISOString()
+          })
+          .eq('id', importLog.id)
+      }
+
+      // Complete
+      setUploadProgress({
+        phase: 'completed',
+        progress: 100,
+        message: `Successfully imported ${successful} FFIEC records!`,
+        recordsProcessed: processed,
+        totalRecords: dataRows.length
+      })
+
+      toast.success(`Import completed: ${successful} records processed`)
+      onUploadComplete?.(importLog?.id || 'unknown')
+
     } catch (error: any) {
-      console.error('Upload error:', error);
-      setUploadJob(prev => prev ? { ...prev, status: 'failed' } : null);
-      toast.error(`Upload failed: ${error.message}`);
-    } finally {
-      setIsProcessing(false);
+      setUploadProgress({
+        phase: 'error',
+        progress: 0,
+        message: `Data processing failed: ${error.message}`
+      })
+      toast.error(`Import failed: ${error.message}`)
     }
-  };
+  }
 
-  const handleFileSelect = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = event.target.files;
-    if (!files || files.length === 0) return;
-    
-    const file = files[0];
-    
-    // Validate file type
-    if (!file.name.toLowerCase().endsWith('.xlsx') && !file.name.toLowerCase().endsWith('.xls')) {
-      toast.error('Please upload an Excel file (.xlsx or .xls)');
-      return;
-    }
-    
-    // Validate file size (max 500MB)
-    if (file.size > 500 * 1024 * 1024) {
-      toast.error('File size too large. Maximum size is 500MB.');
-      return;
-    }
-    
-    uploadFile(file);
-  }, []);
+  const processFFIECRecord = (row: any[], headers: any[]): any | null => {
+    try {
+      // Map your specific FFIEC file structure
+      const getColumnValue = (patterns: string[]) => {
+        for (const pattern of patterns) {
+          const index = headers.findIndex(h => 
+            h && String(h).toLowerCase().includes(pattern.toLowerCase())
+          )
+          if (index >= 0 && row[index] !== undefined) {
+            return String(row[index]).trim()
+          }
+        }
+        return null
+      }
 
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-  };
+      const state = getColumnValue(['state', 'st'])
+      const county = getColumnValue(['county', 'cnty'])
+      const tract = getColumnValue(['tract', 'census'])
+      const incomeLevel = getColumnValue(['income', 'level'])
 
-  const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    
-    const files = Array.from(e.dataTransfer.files);
-    if (files.length === 0) return;
-    
-    const file = files[0];
-    
-    // Validate file type
-    if (!file.name.toLowerCase().endsWith('.xlsx') && !file.name.toLowerCase().endsWith('.xls')) {
-      toast.error('Please upload an Excel file (.xlsx or .xls)');
-      return;
+      if (!state || !county || !tract) {
+        return null // Skip invalid records
+      }
+
+      // Build tract ID
+      const tractId = `${state.padStart(2, '0')}${county.padStart(3, '0')}${tract}`
+
+      return {
+        tract_id: tractId,
+        state_code: state.padStart(2, '0'),
+        county_code: county.padStart(3, '0'),
+        tract_code: tract,
+        income_level: incomeLevel,
+        msa_md_median_income: parseFloat(getColumnValue(['msa', 'median']) || '0') || null,
+        tract_median_family_income: parseFloat(getColumnValue(['family', 'income']) || '0') || null,
+        ami_percentage: parseFloat(getColumnValue(['percentage', 'pct']) || '0') || null,
+        is_lmi_eligible: incomeLevel && ['low', 'moderate'].includes(incomeLevel.toLowerCase()),
+        tract_population: parseInt(getColumnValue(['population', 'pop']) || '0') || null,
+        minority_population_pct: parseFloat(getColumnValue(['minority']) || '0') || null,
+        ffiec_data_year: 2025,
+        import_batch_id: crypto.randomUUID(),
+        data_vintage: '2025',
+        eligibility: incomeLevel?.toLowerCase() === 'low' || incomeLevel?.toLowerCase() === 'moderate' ? 'eligible' : 'not_eligible'
+      }
+
+    } catch (error) {
+      console.warn('Error processing record:', error)
+      return null
     }
-    
-    // Validate file size (max 500MB)
-    if (file.size > 500 * 1024 * 1024) {
-      toast.error('File size too large. Maximum size is 500MB.');
-      return;
+  }
+
+  const onDrop = useCallback((acceptedFiles: File[]) => {
+    const file = acceptedFiles[0]
+    if (!file) return
+
+    // Check file type
+    if (!file.name.match(/\.(xlsx|xls|csv)$/i)) {
+      setUploadProgress({
+        phase: 'error',
+        progress: 0,
+        message: 'Please upload an Excel (.xlsx, .xls) or CSV file'
+      })
+      return
     }
-    
-    uploadFile(file);
-  }, []);
+
+    // Choose processing method based on file size
+    if (file.size > 100 * 1024 * 1024) { // > 100MB
+      // Use storage upload for very large files
+      uploadToStorageAndProcess(file)
+    } else {
+      // Process directly for smaller files
+      processFileDirectly(file)
+    }
+  }, [])
+
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    onDrop,
+    accept: {
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'],
+      'application/vnd.ms-excel': ['.xls'],
+      'text/csv': ['.csv']
+    },
+    multiple: false,
+    maxSize: 500 * 1024 * 1024 // 500MB limit
+  })
 
   const resetUpload = () => {
-    setUploadJob(null);
-    setIsProcessing(false);
-  };
+    setUploadProgress({
+      phase: 'uploading',
+      progress: 0,
+      message: 'Ready to upload'
+    })
+  }
 
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'completed':
-        return <CheckCircle className="h-5 w-5 text-green-500" />;
-      case 'failed':
-        return <XCircle className="h-5 w-5 text-red-500" />;
+        return <CheckCircle className="h-5 w-5 text-green-500" />
+      case 'error':
+        return <XCircle className="h-5 w-5 text-red-500" />
       case 'processing':
       case 'uploading':
-        return <Upload className="h-5 w-5 text-blue-500 animate-pulse" />;
+        return <Upload className="h-5 w-5 text-blue-500 animate-pulse" />
       default:
-        return <FileSpreadsheet className="h-5 w-5 text-gray-500" />;
+        return <FileSpreadsheet className="h-5 w-5 text-gray-500" />
     }
-  };
+  }
 
   const formatFileSize = (bytes: number) => {
-    if (bytes === 0) return '0 Bytes';
-    const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-  };
+    if (bytes === 0) return '0 Bytes'
+    const k = 1024
+    const sizes = ['Bytes', 'KB', 'MB', 'GB']
+    const i = Math.floor(Math.log(bytes) / Math.log(k))
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
+  }
 
   return (
     <div className="space-y-6">
@@ -275,100 +395,80 @@ export const FFIECFileUpload: React.FC<FFIECFileUploadProps> = ({ onUploadComple
             FFIEC File Upload
           </CardTitle>
           <CardDescription>
-            Upload FFIEC Excel files to import census tract data and field definitions.
-            Small files (&lt;50MB) are processed immediately, large files are processed in the background.
+            Upload FFIEC Excel files to import census tract data. Files are processed client-side for better performance and reliability.
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {!uploadJob ? (
+          {uploadProgress.progress === 0 ? (
             <div
-              onDragOver={handleDragOver}
-              onDrop={handleDrop}
-              className={`
-                border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors
-                border-gray-300 hover:border-primary
-                ${isProcessing ? 'opacity-50 cursor-not-allowed' : ''}
-              `}
+              {...getRootProps()}
+              className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors
+                ${isDragActive ? 'border-blue-500 bg-blue-50' : 'border-gray-300 hover:border-gray-400'}`}
             >
-              <input
-                type="file"
-                accept=".xlsx,.xls"
-                onChange={handleFileSelect}
-                disabled={isProcessing}
-                className="hidden"
-                id="file-upload"
-              />
-              <label htmlFor="file-upload" className="cursor-pointer">
+              <input {...getInputProps()} />
+              <div className="space-y-2">
                 <Upload className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-                <div>
-                  <p className="text-lg font-medium mb-2">
-                    Drag & drop an Excel file here, or click to select
-                  </p>
-                  <p className="text-sm text-gray-500">
-                    Supports .xlsx and .xls files up to 500MB
-                  </p>
+                <div className="text-lg font-medium">
+                  {isDragActive ? 'Drop your FFIEC file here...' : 'Upload FFIEC Data File'}
                 </div>
-              </label>
+                <div className="text-sm text-gray-500">
+                  Supports Excel (.xlsx, .xls) and CSV files up to 500MB
+                </div>
+                <div className="text-xs text-gray-400">
+                  Large files will be processed in the background
+                </div>
+              </div>
             </div>
           ) : (
             <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  {getStatusIcon(uploadJob.status)}
-                  <div>
-                    <p className="font-medium">{uploadJob.fileName}</p>
-                    <p className="text-sm text-gray-500">
-                      {formatFileSize(uploadJob.fileSize)} • {uploadJob.jobType === 'definitions' ? 'Field Definitions' : 'Census Data'}
-                    </p>
-                  </div>
+              <div className="flex items-center gap-3">
+                {getStatusIcon(uploadProgress.phase)}
+                <div>
+                  <p className="font-medium">{uploadProgress.message}</p>
+                  <p className="text-sm text-gray-500">
+                    Phase: {uploadProgress.phase} • Progress: {uploadProgress.progress.toFixed(1)}%
+                  </p>
                 </div>
-                <Badge variant={uploadJob.status === 'completed' ? 'default' : uploadJob.status === 'failed' ? 'destructive' : 'secondary'}>
-                  {uploadJob.status}
-                </Badge>
               </div>
-              
-              {uploadJob.status === 'processing' && (
-                <div className="space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span>Progress</span>
-                    <span>{uploadJob.progress}%</span>
+
+              {/* Progress Display */}
+              {uploadProgress.progress > 0 && (
+                <div className="space-y-4">
+                  <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div 
+                      className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                      style={{ width: `${uploadProgress.progress}%` }}
+                    />
                   </div>
-                  <Progress value={uploadJob.progress} className="h-2" />
+                  
+                  {uploadProgress.recordsProcessed && uploadProgress.totalRecords && (
+                    <div className="text-center text-sm text-gray-600">
+                      {uploadProgress.recordsProcessed.toLocaleString()} / {uploadProgress.totalRecords.toLocaleString()} records
+                    </div>
+                  )}
                 </div>
               )}
-              
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                <div>
-                  <p className="text-gray-500">Total Records</p>
-                  <p className="font-medium">{uploadJob.recordsTotal.toLocaleString()}</p>
-                </div>
-                <div>
-                  <p className="text-gray-500">Processed</p>
-                  <p className="font-medium">{uploadJob.recordsProcessed.toLocaleString()}</p>
-                </div>
-                <div>
-                  <p className="text-gray-500">Successful</p>
-                  <p className="font-medium text-green-600">{uploadJob.recordsSuccessful.toLocaleString()}</p>
-                </div>
-                <div>
-                  <p className="text-gray-500">Failed</p>
-                  <p className="font-medium text-red-600">{uploadJob.recordsFailed.toLocaleString()}</p>
-                </div>
-              </div>
-              
-              {uploadJob.errors && uploadJob.errors.length > 0 && (
+
+              {/* Success/Error Messages */}
+              {uploadProgress.phase === 'completed' && (
                 <Alert>
-                  <AlertCircle className="h-4 w-4" />
+                  <CheckCircle className="h-4 w-4" />
                   <AlertDescription>
-                    {uploadJob.errors.length} records failed to import. 
-                    <Button variant="link" className="p-0 h-auto ml-1">
-                      Download error report
-                    </Button>
+                    ✅ Import Completed Successfully! {uploadProgress.recordsProcessed?.toLocaleString()} FFIEC census tract records have been imported.
                   </AlertDescription>
                 </Alert>
               )}
-              
-              {uploadJob.status !== 'processing' && (
+
+              {uploadProgress.phase === 'error' && (
+                <Alert variant="destructive">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>
+                    ❌ Import Failed: {uploadProgress.message}
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              {uploadProgress.phase !== 'processing' && (
                 <Button onClick={resetUpload} variant="outline" className="w-full">
                   Upload Another File
                 </Button>
@@ -378,5 +478,5 @@ export const FFIECFileUpload: React.FC<FFIECFileUploadProps> = ({ onUploadComple
         </CardContent>
       </Card>
     </div>
-  );
-};
+  )
+}

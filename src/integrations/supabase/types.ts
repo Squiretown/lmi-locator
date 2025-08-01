@@ -559,11 +559,13 @@ export type Database = {
           centroid_lat: number | null
           centroid_lng: number | null
           county: string | null
+          county_code: string | null
           data_vintage: string | null
           eligibility: string | null
           ffiec_data_year: number | null
           geometry: unknown | null
           id: number
+          import_batch_id: string | null
           income_category: string | null
           income_level: string | null
           is_lmi_eligible: boolean | null
@@ -574,8 +576,10 @@ export type Database = {
           msa_md_median_income: number | null
           owner_occupied_units: number | null
           state: string | null
+          state_code: string | null
           total_households: number | null
           total_population: number | null
+          tract_code: string | null
           tract_id: string
           tract_median_family_income: number | null
           tract_name: string | null
@@ -588,11 +592,13 @@ export type Database = {
           centroid_lat?: number | null
           centroid_lng?: number | null
           county?: string | null
+          county_code?: string | null
           data_vintage?: string | null
           eligibility?: string | null
           ffiec_data_year?: number | null
           geometry?: unknown | null
           id?: number
+          import_batch_id?: string | null
           income_category?: string | null
           income_level?: string | null
           is_lmi_eligible?: boolean | null
@@ -603,8 +609,10 @@ export type Database = {
           msa_md_median_income?: number | null
           owner_occupied_units?: number | null
           state?: string | null
+          state_code?: string | null
           total_households?: number | null
           total_population?: number | null
+          tract_code?: string | null
           tract_id: string
           tract_median_family_income?: number | null
           tract_name?: string | null
@@ -617,11 +625,13 @@ export type Database = {
           centroid_lat?: number | null
           centroid_lng?: number | null
           county?: string | null
+          county_code?: string | null
           data_vintage?: string | null
           eligibility?: string | null
           ffiec_data_year?: number | null
           geometry?: unknown | null
           id?: number
+          import_batch_id?: string | null
           income_category?: string | null
           income_level?: string | null
           is_lmi_eligible?: boolean | null
@@ -632,8 +642,10 @@ export type Database = {
           msa_md_median_income?: number | null
           owner_occupied_units?: number | null
           state?: string | null
+          state_code?: string | null
           total_households?: number | null
           total_population?: number | null
+          tract_code?: string | null
           tract_id?: string
           tract_median_family_income?: number | null
           tract_name?: string | null
@@ -1152,6 +1164,54 @@ export type Database = {
           sms_sent?: boolean | null
           status?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      data_import_log: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          error_details: Json | null
+          file_name: string | null
+          file_size: number | null
+          id: string
+          import_status: string
+          import_type: string
+          records_failed: number | null
+          records_processed: number | null
+          records_successful: number | null
+          started_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          error_details?: Json | null
+          file_name?: string | null
+          file_size?: number | null
+          id?: string
+          import_status?: string
+          import_type: string
+          records_failed?: number | null
+          records_processed?: number | null
+          records_successful?: number | null
+          started_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          error_details?: Json | null
+          file_name?: string | null
+          file_size?: number | null
+          id?: string
+          import_status?: string
+          import_type?: string
+          records_failed?: number | null
+          records_processed?: number | null
+          records_successful?: number | null
+          started_at?: string | null
+          user_id?: string | null
         }
         Relationships: []
       }
