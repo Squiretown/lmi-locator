@@ -176,18 +176,41 @@ export const FFIECFileUpload: React.FC<FFIECFileUploadProps> = ({ onUploadComple
 
   const processFFIECData = async (rawData: any[][], fileName: string) => {
     try {
+      console.log('Starting FFIEC data processing...')
+      
+      // Verify user is authenticated and has admin access
+      const { data: { user }, error: authError } = await supabase.auth.getUser()
+      if (authError || !user) {
+        throw new Error('Authentication required. Please log in again.')
+      }
+      
+      console.log('User authenticated:', user.id)
+      console.log('User metadata:', user.user_metadata)
+      
+      // Check admin access
+      const isAdmin = user.user_metadata?.user_type === 'admin'
+      if (!isAdmin) {
+        throw new Error('Admin access required for FFIEC uploads.')
+      }
+      
+      console.log('Admin access verified')
+
       // Find header row
       const headerRowIndex = rawData.findIndex(row => 
         row && row.some(cell => cell && String(cell).toLowerCase().includes('tract'))
       )
 
       if (headerRowIndex === -1) {
-        throw new Error('Could not find header row in Excel file')
+        throw new Error('Could not find header row in Excel file. Expected columns with "tract" in the name.')
       }
 
       const headers = rawData[headerRowIndex]
+      console.log('Found headers:', headers)
+      
       const dataRows = rawData.slice(headerRowIndex + 1)
         .filter(row => row && row.some(cell => cell && String(cell).trim()))
+
+      console.log(`Found ${dataRows.length} data rows to process`)
 
       setUploadProgress({
         phase: 'processing',
@@ -196,24 +219,34 @@ export const FFIECFileUpload: React.FC<FFIECFileUploadProps> = ({ onUploadComple
         totalRecords: dataRows.length
       })
 
-      // Log import start
-      const importLogData = {
-        user_id: (await supabase.auth.getUser()).data.user?.id,
-        import_type: 'ffiec_census_data',
+      // Create import job in ffiec_import_jobs table to match the manager
+      const importJobData = {
+        job_type: 'census_data',
+        status: 'processing',
         file_name: fileName,
         file_size: null,
+        records_total: dataRows.length,
         records_processed: 0,
         records_successful: 0,
         records_failed: 0,
-        import_status: 'processing',
+        created_by: user.id,
         started_at: new Date().toISOString()
       }
 
+      console.log('Creating import job:', importJobData)
+
       const { data: importLog, error: logError } = await supabase
-        .from('data_import_log')
-        .insert(importLogData)
+        .from('ffiec_import_jobs')
+        .insert(importJobData)
         .select()
         .single()
+        
+      if (logError) {
+        console.error('Failed to create import job:', logError)
+        throw new Error(`Failed to create import job: ${logError.message}`)
+      }
+      
+      console.log('Import job created:', importLog.id)
 
       // Process in batches to avoid overwhelming the database
       const batchSize = 1000
@@ -259,18 +292,31 @@ export const FFIECFileUpload: React.FC<FFIECFileUploadProps> = ({ onUploadComple
         await new Promise(resolve => setTimeout(resolve, 100))
       }
 
-      // Update import log
+      // Update import log in ffiec_import_jobs table
       if (importLog && !logError) {
-        await supabase
-          .from('data_import_log')
+        console.log('Updating import job with final stats:', {
+          processed,
+          successful,
+          failed
+        })
+        
+        const { error: updateError } = await supabase
+          .from('ffiec_import_jobs')
           .update({
             records_processed: processed,
             records_successful: successful,
             records_failed: failed,
-            import_status: 'completed',
-            completed_at: new Date().toISOString()
+            status: 'completed',
+            completed_at: new Date().toISOString(),
+            progress_percentage: 100
           })
           .eq('id', importLog.id)
+          
+        if (updateError) {
+          console.error('Failed to update import job:', updateError)
+        } else {
+          console.log('Import job updated successfully')
+        }
       }
 
       // Complete
@@ -286,6 +332,37 @@ export const FFIECFileUpload: React.FC<FFIECFileUploadProps> = ({ onUploadComple
       onUploadComplete?.(importLog?.id || 'unknown')
 
     } catch (error: any) {
+      console.error('FFIEC data processing failed:', error)
+      
+      // Try to update import job as failed if we have one
+      try {
+        const { data: { user } } = await supabase.auth.getUser()
+        if (user) {
+          // Find any recent import job to mark as failed
+          const { data: recentJob } = await supabase
+            .from('ffiec_import_jobs')
+            .select('id')
+            .eq('created_by', user.id)
+            .eq('status', 'processing')
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .single()
+            
+          if (recentJob) {
+            await supabase
+              .from('ffiec_import_jobs')
+              .update({
+                status: 'failed',
+                error_details: { error: error.message },
+                completed_at: new Date().toISOString()
+              })
+              .eq('id', recentJob.id)
+          }
+        }
+      } catch (updateError) {
+        console.error('Failed to update import job status:', updateError)
+      }
+      
       setUploadProgress({
         phase: 'error',
         progress: 0,
