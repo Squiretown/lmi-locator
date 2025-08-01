@@ -1,8 +1,8 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/useAuth';
-import { Professional } from '../lib/types/modelTypes';
-import { getProfessionalForUser } from '../lib/services/professionalService';
+import { Professional } from '@/lib/api/types';
+import { fetchProfessionals } from '@/lib/api/professionals';
 
 export const useAssignedProfessionals = () => {
   const { user } = useAuth();
@@ -11,7 +11,7 @@ export const useAssignedProfessionals = () => {
     queryKey: ['assigned-professionals', user?.id],
     queryFn: async () => {
       if (!user) return [];
-      return getProfessionalForUser(user.id);
+      return fetchProfessionals();
     },
     enabled: !!user
   });
