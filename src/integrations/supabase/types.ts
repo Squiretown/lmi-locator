@@ -3331,6 +3331,25 @@ export type Database = {
         Args: { geom1: unknown; geom2: unknown }
         Returns: boolean
       }
+      find_census_tract_flexible: {
+        Args: { input_tract_id: string }
+        Returns: {
+          tract_id: string
+          state: string
+          county: string
+          tract_name: string
+          income_level: string
+          median_income: number
+          msa_md_median_income: number
+          tract_median_family_income: number
+          ami_percentage: number
+          is_lmi_eligible: boolean
+          ffiec_data_year: number
+          tract_population: number
+          minority_population_pct: number
+          owner_occupied_units: number
+        }[]
+      }
       find_ffiec_tract_by_coords: {
         Args: { lat: number; lng: number }
         Returns: {
