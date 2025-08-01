@@ -8,6 +8,7 @@ import Index from "./pages/Index";
 import LoginPage from "./pages/auth/LoginPage";
 import { AuthProvider } from "@/providers/AuthProvider";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
+import { EdgeFunctionTest } from "./components/EdgeFunctionTest";
 
 // Import all page components
 import ProductPage from "./pages/ProductPage";
@@ -73,6 +74,7 @@ const App = () => (
           <Routes>
             {/* Public Routes */}
             <Route path="/" element={<Index />} />
+            <Route path="/test-edge" element={<EdgeFunctionTest />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/product" element={<ProductPage />} />
             <Route path="/resources" element={<ResourcesPage />} />
