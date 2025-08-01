@@ -86,13 +86,13 @@ export const FFIECDataImport: React.FC = () => {
     }
   };
 
-  // Start the import process
+  // Start the chunked import process
   const startImport = async () => {
     try {
       setImportProgress({
         isRunning: true,
         progress: 0,
-        message: 'Starting FFIEC data import...',
+        message: 'Downloading FFIEC data file...',
         recordsProcessed: 0,
         totalRecords: 0,
         lmiEligible: 0,
@@ -101,15 +101,101 @@ export const FFIECDataImport: React.FC = () => {
 
       toast.info('Starting FFIEC data import...');
 
-      const { data, error } = await supabase.functions.invoke('import-ffiec-data', {
-        body: {}
-      });
+      // Download the CSV file from storage
+      const { data: fileData, error: downloadError } = await supabase.storage
+        .from('ffiec-uploads')
+        .download('CensusFlatFile2025.csv');
 
-      if (error) {
-        throw error;
+      if (downloadError) {
+        throw new Error(`Failed to download file: ${downloadError.message}`);
       }
 
-      // Start polling for progress
+      setImportProgress(prev => ({
+        ...prev,
+        message: 'Parsing CSV file...'
+      }));
+
+      // Parse CSV file
+      const text = await fileData.text();
+      const lines = text.split('\n').filter(line => line.trim());
+      const headers = lines[0].split(',').map(h => h.trim());
+      const rows = lines.slice(1);
+
+      const totalRecords = rows.length;
+      const CHUNK_SIZE = 5000; // Process 5000 records per chunk
+      const totalChunks = Math.ceil(totalRecords / CHUNK_SIZE);
+
+      setImportProgress(prev => ({
+        ...prev,
+        totalRecords,
+        message: `Creating import job for ${totalRecords.toLocaleString()} records...`
+      }));
+
+      // Create import job
+      const { data: jobResponse, error: jobError } = await supabase.functions.invoke('ffiec-file-processor', {
+        body: {
+          action: 'start_upload',
+          data: {
+            fileName: 'CensusFlatFile2025.csv',
+            fileSize: fileData.size,
+            jobType: 'census_data',
+            totalRecords
+          }
+        }
+      });
+
+      if (jobError || !jobResponse.success) {
+        throw new Error(jobError?.message || 'Failed to create import job');
+      }
+
+      const jobId = jobResponse.jobId;
+
+      setImportProgress(prev => ({
+        ...prev,
+        message: `Processing ${totalChunks} chunks...`
+      }));
+
+      // Process chunks sequentially
+      for (let i = 0; i < totalChunks; i++) {
+        const startIdx = i * CHUNK_SIZE;
+        const endIdx = Math.min(startIdx + CHUNK_SIZE, totalRecords);
+        const chunkRows = rows.slice(startIdx, endIdx);
+        
+        // Convert CSV rows to objects
+        const records = chunkRows.map(row => {
+          const values = row.split(',').map(v => v.trim().replace(/^"|"$/g, ''));
+          const record: any = {};
+          headers.forEach((header, idx) => {
+            record[header] = values[idx] || '';
+          });
+          return record;
+        });
+
+        setImportProgress(prev => ({
+          ...prev,
+          message: `Processing chunk ${i + 1} of ${totalChunks}...`,
+          recordsProcessed: startIdx
+        }));
+
+        // Send chunk to processor
+        const { error: chunkError } = await supabase.functions.invoke('ffiec-file-processor', {
+          body: {
+            action: 'process_batch',
+            data: {
+              jobId,
+              records,
+              batchNumber: i + 1,
+              isLastBatch: i === totalChunks - 1
+            }
+          }
+        });
+
+        if (chunkError) {
+          throw new Error(`Failed to process chunk ${i + 1}: ${chunkError.message}`);
+        }
+      }
+
+      // Start polling for final status
       startProgressPolling();
 
     } catch (error: any) {
