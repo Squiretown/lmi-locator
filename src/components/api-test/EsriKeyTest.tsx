@@ -1,12 +1,8 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-import { validateEsriApiKey } from '@/lib/api/esri/api-key-validator';
-import { ESRI_API_KEY } from '@/lib/api/esri/config';
+import { secureGeocodeWithEsri } from '@/lib/api/esri/secure-geocoding';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -23,57 +19,49 @@ const EsriKeyTest = ({
   loading,
   setLoading
 }: EsriKeyTestProps) => {
-  const [apiKey, setApiKey] = useState(ESRI_API_KEY || '');
-  const [validationResult, setValidationResult] = useState<null | {
+  const [testResult, setTestResult] = useState<null | {
     isValid: boolean;
     message: string;
   }>(null);
   
-  const handleKeyTest = async () => {
-    if (!apiKey) {
-      toast.error('Please enter an API key');
-      return;
-    }
-    
+  const handleTest = async () => {
     setLoading(true);
     setResults(null);
-    setValidationResult(null);
+    setTestResult(null);
     
     try {
-      toast.info('Testing ESRI API key...');
+      toast.info('Testing ESRI API access...');
       
-      const result = await validateEsriApiKey(apiKey);
+      // Test with a simple address to verify ESRI API access
+      const result = await secureGeocodeWithEsri('1600 Amphitheatre Parkway, Mountain View, CA');
       
-      setValidationResult({
-        isValid: result.isValid,
-        message: result.message
+      setTestResult({
+        isValid: true,
+        message: 'ESRI API access is working correctly'
       });
       
-      if (result.isValid) {
-        toast.success('API key is valid');
-      } else {
-        toast.error(`API key is invalid: ${result.message}`);
-      }
+      toast.success('ESRI API access is working!');
       
       setResults({
-        test_type: 'ESRI API Key Validation',
-        ...result,
+        test_type: 'ESRI API Access Test',
+        isValid: true,
+        message: 'API access successful',
+        candidates: result.candidates || [],
         timestamp: new Date().toISOString()
       });
-    } catch (error) {
-      console.error('Error testing API key:', error);
+    } catch (error: any) {
+      const errorMessage = error.message || 'Failed to access ESRI API';
       
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      
-      setValidationResult({
+      setTestResult({
         isValid: false,
-        message: `Error testing key: ${errorMessage}`
+        message: errorMessage
       });
       
-      toast.error('Error testing API key');
+      toast.error(`API access failed: ${errorMessage}`);
       
       setResults({
-        test_type: 'ESRI API Key Validation (Failed)',
+        test_type: 'ESRI API Access Test (Failed)',
+        isValid: false,
         error: errorMessage,
         timestamp: new Date().toISOString()
       });
@@ -86,48 +74,39 @@ const EsriKeyTest = ({
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center justify-between">
-          Test ESRI API Key
-          {validationResult && (
-            <Badge variant={validationResult.isValid ? 'default' : 'destructive'}>
-              {validationResult.isValid ? 'Valid' : 'Invalid'}
+          Test ESRI API Access
+          {testResult && (
+            <Badge variant={testResult.isValid ? 'default' : 'destructive'}>
+              {testResult.isValid ? 'Working' : 'Failed'}
             </Badge>
           )}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div>
-          <Label htmlFor="esri-key">ESRI API Key</Label>
-          <Input
-            id="esri-key"
-            type="password"
-            placeholder="Enter ESRI API key"
-            value={apiKey}
-            onChange={(e) => setApiKey(e.target.value)}
-          />
-          <p className="text-xs text-muted-foreground mt-1">
-            This is used to test geocoding services with the ESRI platform
-          </p>
+        <div className="text-sm text-muted-foreground">
+          <InfoIcon className="inline h-4 w-4 mr-2" />
+          This tests secure access to ESRI geocoding services through our backend.
         </div>
         
         <Button 
-          onClick={handleKeyTest} 
-          disabled={loading || !apiKey}
+          onClick={handleTest} 
+          disabled={loading}
         >
-          {loading ? 'Testing...' : 'Test API Key'}
+          {loading ? 'Testing...' : 'Test ESRI API Access'}
         </Button>
         
-        {validationResult && (
+        {testResult && (
           <>
             <Separator className="my-2" />
             
-            <Alert variant={validationResult.isValid ? 'default' : 'destructive'}>
-              {validationResult.isValid ? (
+            <Alert variant={testResult.isValid ? 'default' : 'destructive'}>
+              {testResult.isValid ? (
                 <CheckCircle className="h-4 w-4" />
               ) : (
                 <XCircle className="h-4 w-4" />
               )}
               <AlertDescription className="ml-2">
-                {validationResult.message}
+                {testResult.message}
               </AlertDescription>
             </Alert>
           </>

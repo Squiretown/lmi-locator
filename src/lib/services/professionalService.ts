@@ -1,30 +1,36 @@
-
 import { Professional, ProfessionalType, ProfessionalStatus } from '../types/modelTypes';
-import { supabaseUntyped } from '../utils/supabaseUntyped';
+import { supabase } from '@/integrations/supabase/client';
 
 /**
- * Get professionals assigned to a user
+ * Get professionals assigned to a user - using secure direct queries
  */
 export async function getProfessionalForUser(userId: string): Promise<Professional[]> {
   try {
-    // Get client profile without type inference
-    const clientProfileResult = await supabaseUntyped.getClientProfile(userId);
+    // Get client profile using secure Supabase client
+    const { data: clientProfile, error: clientError } = await supabase
+      .from('client_profiles')
+      .select('professional_id')
+      .eq('user_id', userId)
+      .single();
     
-    if (clientProfileResult.error || !clientProfileResult.data?.professional_id) {
+    if (clientError || !clientProfile?.professional_id) {
       return [];
     }
     
-    const professionalId = clientProfileResult.data.professional_id;
+    const professionalId = clientProfile.professional_id;
     
-    // Get professional details without type inference
-    const professionalsResult = await supabaseUntyped.getProfessional(professionalId);
+    // Get professional details using secure Supabase client
+    const { data: professionals, error: profError } = await supabase
+      .from('professionals')
+      .select('*')
+      .eq('id', professionalId);
     
-    if (professionalsResult.error || !professionalsResult.data?.length) {
+    if (profError || !professionals?.length) {
       return [];
     }
     
     // Convert raw data to Professional objects
-    return professionalsResult.data.map(createProfessionalModel);
+    return professionals.map(createProfessionalModel);
   } catch (err) {
     console.error('Unexpected error in getProfessionalForUser:', err);
     return [];
