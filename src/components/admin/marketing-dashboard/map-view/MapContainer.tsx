@@ -27,6 +27,21 @@ const MapContainer = forwardRef<MapRef, MapContainerProps>(
   ({ tracts, onTractClick, selectedTract, selectedTracts, onSelectTract }, ref) => {
     const { token: mapboxToken, isLoading: isLoadingToken, error: tokenError } = useMapboxToken();
     
+    // Enhanced debugging for token and map status
+    useEffect(() => {
+      console.log('MapContainer Debug Status:', {
+        hasToken: !!mapboxToken,
+        tokenLength: mapboxToken?.length,
+        isLoadingToken,
+        tokenError,
+        tractsCount: tracts.length
+      });
+      
+      if (tokenError) {
+        console.error('Token Error Details:', tokenError);
+      }
+    }, [mapboxToken, isLoadingToken, tokenError, tracts.length]);
+    
     const { 
       mapContainer, 
       map, 
@@ -36,7 +51,10 @@ const MapContainer = forwardRef<MapRef, MapContainerProps>(
       fitBounds: fitBoundsToTracts
     } = useMapbox({
       accessToken: mapboxToken,
-      onMapError: (err) => console.error("Map error:", err)
+      onMapError: (err) => {
+        console.error("Map error details:", err);
+        console.error("Map error stack:", err.stack);
+      }
     });
     
     const { 

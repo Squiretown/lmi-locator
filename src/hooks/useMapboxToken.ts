@@ -18,42 +18,53 @@ export function useMapboxToken() {
 
   useEffect(() => {
     const fetchMapboxToken = async () => {
+      console.log('Starting Mapbox token fetch...');
+      
       try {
         const { data, error } = await supabase.functions.invoke('get-mapbox-token');
         
+        console.log('Mapbox token response:', { data, error });
+        
         if (error) {
           console.error('Error fetching Mapbox token:', error);
+          const errorMessage = error.message || 'Failed to fetch Mapbox token';
+          console.error('Full error details:', error);
+          
           setMapboxToken({
             token: null,
-            error: error.message || 'Failed to fetch Mapbox token',
+            error: errorMessage,
             isLoading: false,
           });
           toast.error("Map Error", {
-            description: "Failed to load map resources. Please try again later."
+            description: `Failed to load map resources: ${errorMessage}`
           });
           return;
         }
 
         if (data?.token) {
+          console.log('Mapbox token fetched successfully, length:', data.token.length);
           setMapboxToken({
             token: data.token,
             error: null,
             isLoading: false,
           });
-          console.log('Mapbox token fetched successfully');
         } else {
-          console.error('No Mapbox token returned');
+          console.error('No Mapbox token returned from edge function');
+          console.error('Response data:', data);
+          
           setMapboxToken({
             token: null,
-            error: 'No token returned',
+            error: 'No token returned from server',
             isLoading: false,
           });
           toast.error("Map Configuration Error", {
-            description: "Map token is missing. Please contact support."
+            description: "Map token is missing from server configuration."
           });
         }
       } catch (error) {
         console.error('Exception fetching Mapbox token:', error);
+        console.error('Exception stack:', error instanceof Error ? error.stack : 'No stack available');
+        
         setMapboxToken({
           token: null,
           error: error instanceof Error ? error.message : 'An unknown error occurred',
