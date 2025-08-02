@@ -120,11 +120,18 @@ const MapDisplay: React.FC<MapDisplayProps> = ({ lat, lon, isEligible, tractId, 
   return (
     <div className="w-full h-[400px] relative">
       {mapError ? (
-        <div className="absolute inset-0 flex items-center justify-center bg-muted/50 rounded-lg">
-          <Alert variant="destructive" className="max-w-md">
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>{mapError}</AlertDescription>
-          </Alert>
+        <div className="w-full h-[400px] flex items-center justify-center bg-muted/50 rounded-lg">
+          <div className="text-center space-y-4">
+            <div className="relative">
+              <div className="w-16 h-16 rounded-full bg-primary flex items-center justify-center mx-auto">
+                <MapPin className="h-8 w-8 text-primary-foreground" />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <div className="text-lg font-semibold tracking-wider text-foreground">LMICHECK.COM</div>
+              <p className="text-muted-foreground text-sm">{mapError}</p>
+            </div>
+          </div>
         </div>
       ) : (
         <div className="relative w-full h-full">
