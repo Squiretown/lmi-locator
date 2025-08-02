@@ -137,20 +137,6 @@ const MapDisplay: React.FC<MapDisplayProps> = ({ lat, lon, isEligible, tractId, 
             onMapError={handleMapError}
             onTractBoundaryError={handleTractBoundaryError}
           />
-          
-          {/* LMI Drop Pin Logo Overlay */}
-          <div className="absolute top-4 left-4 z-10">
-            <div className="bg-background/90 backdrop-blur-sm rounded-lg p-3 shadow-lg border">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center">
-                  <MapPin className="h-5 w-5 text-primary-foreground" />
-                </div>
-                <div className="text-sm font-semibold tracking-wider text-foreground">
-                  LMICHECK.COM
-                </div>
-              </div>
-            </div>
-          </div>
         </div>
       )}
       
