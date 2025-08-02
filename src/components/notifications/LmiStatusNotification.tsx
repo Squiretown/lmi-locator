@@ -1,10 +1,11 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { NotificationHeader } from './NotificationHeader';
 import { AddressSection } from './AddressSection';
 import { RoleSpecificContent } from './RoleSpecificContent';
 import { ActionButtons } from './ActionButtons';
+import { ShareDialog } from '@/components/ui/share-dialog';
 import ResultsMap from '../map/ResultsMap';
 
 interface LmiStatusNotificationProps {
@@ -38,6 +39,8 @@ const LmiStatusNotification = ({
   onContinue,
   onSignUp
 }: LmiStatusNotificationProps) => {
+  const [showShareDialog, setShowShareDialog] = useState(false);
+  
   console.log('LmiStatusNotification render:', { 
     isApproved, 
     address, 
@@ -46,6 +49,10 @@ const LmiStatusNotification = ({
     hasSaveHandler: !!onSave,
     hasSignUpHandler: !!onSignUp
   });
+
+  const handleShare = () => {
+    setShowShareDialog(true);
+  };
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
@@ -86,12 +93,20 @@ const LmiStatusNotification = ({
           />
 
           <ActionButtons 
-            onShare={onShare}
+            onShare={handleShare}
             onSave={isLoggedIn ? onSave : undefined}
             onSignUp={!isLoggedIn ? onSignUp : undefined}
             isLoggedIn={isLoggedIn}
           />
         </div>
+        
+        <ShareDialog
+          open={showShareDialog}
+          onOpenChange={setShowShareDialog}
+          address={address}
+          isApproved={isApproved}
+          tractId={tractId}
+        />
       </Card>
     </div>
   );

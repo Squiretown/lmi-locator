@@ -63,22 +63,7 @@ export const showNotification = async (options: {
     sessionExists: !!sessionData?.session
   });
   
-  // Handle share button click
-  const handleShare = async () => {
-    if (!data?.address) return;
-    
-    const subject = encodeURIComponent('LMI Property Check Results');
-    const body = encodeURIComponent(`Property LMI Status Check Results:
-
-Address: ${data.address}
-Status: ${data.isApproved ? 'LMI Eligible' : 'Not in LMI Area'}
-Census Tract: ${data.tractId || 'Unknown'}
-
-This property was checked for Low-to-Moderate Income (LMI) eligibility.`);
-    
-    const mailtoLink = `mailto:?subject=${subject}&body=${body}`;
-    window.open(mailtoLink);
-  };
+  // Share functionality is now handled internally by the ShareDialog component
 
   // Handle save button click for logged in users
   const handleSave = () => {
@@ -117,7 +102,6 @@ This property was checked for Low-to-Moderate Income (LMI) eligibility.`);
         userType: userType,
         isLoggedIn: isLoggedIn,
         onClose: handleClose,
-        onShare: handleShare,
         onSave: isLoggedIn ? handleSave : undefined,
         onSignUp: !isLoggedIn ? handleSignUp : undefined
       })
