@@ -84,33 +84,50 @@ export function useClientInvitations() {
   // Send invitation mutation
   const sendInvitationMutation = useMutation({
     mutationFn: async ({ invitationId, type }: { invitationId: string; type: 'email' | 'sms' | 'both' }) => {
-      console.log('Sending invitation:', { invitationId, type });
+      console.log('🚀 Starting invitation send:', { invitationId, type });
+      console.log('📡 Supabase client status:', supabase ? 'Ready' : 'Not initialized');
       
-      // Call edge function to send invitation with timeout
+      // Call edge function to send invitation with shorter timeout
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+      const timeoutId = setTimeout(() => {
+        console.log('⏰ Request timeout triggered');
+        controller.abort();
+      }, 15000); // Reduced to 15 seconds
       
       try {
+        console.log('📞 Calling edge function: send-client-invitation');
+        
         const { data, error } = await supabase.functions.invoke('send-client-invitation', {
-          body: { invitationId, type }
+          body: { invitationId, type },
+          headers: {
+            'Content-Type': 'application/json'
+          }
         });
 
         clearTimeout(timeoutId);
+        console.log('📬 Edge function response:', { data, error });
 
         if (error) {
-          console.error('Edge function error:', error);
+          console.error('❌ Edge function error:', error);
           throw new Error(error.message || 'Failed to send invitation');
         }
         
         if (!data?.success) {
+          console.error('❌ Edge function returned failure:', data);
           throw new Error(data?.error || 'Failed to send invitation');
         }
         
+        console.log('✅ Invitation sent successfully:', data);
         return data;
       } catch (err) {
         clearTimeout(timeoutId);
+        console.error('💥 Send invitation error:', err);
+        
         if (err.name === 'AbortError') {
-          throw new Error('Request timed out - the system may be experiencing issues');
+          throw new Error('Request timed out - please try again');
+        }
+        if (err.message?.includes('Failed to fetch')) {
+          throw new Error('Network error - please check your connection and try again');
         }
         throw err;
       }
