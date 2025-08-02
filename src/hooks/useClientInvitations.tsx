@@ -84,39 +84,111 @@ export function useClientInvitations() {
   // Send invitation mutation
   const sendInvitationMutation = useMutation({
     mutationFn: async ({ invitationId, type }: { invitationId: string; type: 'email' | 'sms' | 'both' }) => {
-      // Call edge function to send invitation
-      const { data, error } = await supabase.functions.invoke('send-client-invitation', {
-        body: { invitationId, type }
-      });
+      console.log('Sending invitation:', { invitationId, type });
+      
+      // Call edge function to send invitation with timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+      
+      try {
+        const { data, error } = await supabase.functions.invoke('send-client-invitation', {
+          body: { invitationId, type }
+        });
 
-      if (error) throw error;
-      return data;
+        clearTimeout(timeoutId);
+
+        if (error) {
+          console.error('Edge function error:', error);
+          throw new Error(error.message || 'Failed to send invitation');
+        }
+        
+        if (!data?.success) {
+          throw new Error(data?.error || 'Failed to send invitation');
+        }
+        
+        return data;
+      } catch (err) {
+        clearTimeout(timeoutId);
+        if (err.name === 'AbortError') {
+          throw new Error('Request timed out - the system may be experiencing issues');
+        }
+        throw err;
+      }
     },
-    onSuccess: () => {
-      toast.success('Invitation sent successfully');
+    onSuccess: (data) => {
+      const message = data?.emailSent && data?.smsSent 
+        ? 'Invitation sent successfully via email and SMS'
+        : data?.emailSent 
+        ? 'Invitation sent successfully via email'
+        : data?.smsSent
+        ? 'Invitation sent successfully via SMS'
+        : 'Invitation sent successfully';
+      
+      toast.success(message);
       queryClient.invalidateQueries({ queryKey: ['client-invitations'] });
     },
     onError: (error: Error) => {
-      toast.error(`Failed to send invitation: ${error.message}`);
+      console.error('Send invitation error:', error);
+      
+      let errorMessage = error.message;
+      if (errorMessage.includes('not configured')) {
+        errorMessage = 'Email service is not configured. Please contact your administrator.';
+      } else if (errorMessage.includes('timed out')) {
+        errorMessage = 'The request is taking longer than expected. Please try again.';
+      }
+      
+      toast.error(`Failed to send invitation: ${errorMessage}`);
     },
   });
 
   // Resend invitation mutation
   const resendInvitationMutation = useMutation({
     mutationFn: async (invitationId: string) => {
-      const { data, error } = await supabase.functions.invoke('send-client-invitation', {
-        body: { invitationId, resend: true }
-      });
+      console.log('Resending invitation:', invitationId);
+      
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000);
+      
+      try {
+        const { data, error } = await supabase.functions.invoke('send-client-invitation', {
+          body: { invitationId, resend: true }
+        });
 
-      if (error) throw error;
-      return data;
+        clearTimeout(timeoutId);
+
+        if (error) {
+          console.error('Edge function error:', error);
+          throw new Error(error.message || 'Failed to resend invitation');
+        }
+        
+        if (!data?.success) {
+          throw new Error(data?.error || 'Failed to resend invitation');
+        }
+        
+        return data;
+      } catch (err) {
+        clearTimeout(timeoutId);
+        if (err.name === 'AbortError') {
+          throw new Error('Request timed out - the system may be experiencing issues');
+        }
+        throw err;
+      }
     },
     onSuccess: () => {
       toast.success('Invitation resent successfully');
       queryClient.invalidateQueries({ queryKey: ['client-invitations'] });
     },
     onError: (error: Error) => {
-      toast.error(`Failed to resend invitation: ${error.message}`);
+      console.error('Resend invitation error:', error);
+      
+      let errorMessage = error.message;
+      if (errorMessage.includes('not configured')) {
+        errorMessage = 'Email service is not configured. Please contact your administrator.';
+      } else if (errorMessage.includes('timed out')) {
+        errorMessage = 'The request is taking longer than expected. Please try again.';
+      }
+      
+      toast.error(`Failed to resend invitation: ${errorMessage}`);
     },
   });
 

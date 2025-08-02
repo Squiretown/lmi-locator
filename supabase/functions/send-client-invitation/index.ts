@@ -21,10 +21,7 @@ const supabase = createClient(
 
 // Initialize Resend client
 const resendApiKey = Deno.env.get("RESEND_API_KEY");
-if (!resendApiKey) {
-  console.error("RESEND_API_KEY is not configured");
-}
-const resend = new Resend(resendApiKey);
+const resend = resendApiKey ? new Resend(resendApiKey) : null;
 
 const handler = async (req: Request): Promise<Response> => {
   // Handle CORS preflight requests
@@ -33,12 +30,21 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
+    console.log('=== Send Client Invitation Function Started ===');
+    
     const { invitationId, type, resend: isResend }: SendInvitationRequest = await req.json();
 
     console.log('Processing invitation request:', { invitationId, type, isResend });
 
     if (!invitationId) {
+      console.error('Missing invitation ID in request');
       throw new Error('Invitation ID is required');
+    }
+
+    // Check if Resend is configured for email sending
+    if ((type === 'email' || type === 'both' || !type) && !resendApiKey) {
+      console.error('RESEND_API_KEY is not configured but email sending was requested');
+      throw new Error('Email service is not configured. Please contact system administrator.');
     }
 
     // Get the invitation details
@@ -181,14 +187,34 @@ const handler = async (req: Request): Promise<Response> => {
       }
     );
   } catch (error: any) {
-    console.error("Error in send-client-invitation function:", error);
+    console.error("=== Error in send-client-invitation function ===");
+    console.error("Error details:", error);
+    console.error("Error stack:", error.stack);
+    
+    // Determine appropriate status code
+    let statusCode = 500;
+    let errorMessage = error.message || 'Failed to send invitation';
+    
+    if (error.message?.includes('not configured')) {
+      statusCode = 503; // Service Unavailable
+    } else if (error.message?.includes('not found')) {
+      statusCode = 404;
+    } else if (error.message?.includes('expired')) {
+      statusCode = 410; // Gone
+    } else if (error.message?.includes('required')) {
+      statusCode = 400; // Bad Request
+    }
+    
+    console.log(`Returning error response with status ${statusCode}: ${errorMessage}`);
+    
     return new Response(
       JSON.stringify({ 
-        error: error.message || 'Failed to send invitation',
-        success: false 
+        error: errorMessage,
+        success: false,
+        statusCode
       }),
       {
-        status: 500,
+        status: statusCode,
         headers: { "Content-Type": "application/json", ...corsHeaders },
       }
     );
@@ -207,8 +233,9 @@ async function sendEmailInvitation(params: {
 }) {
   console.log('Sending email invitation to:', params.clientEmail);
   
-  if (!resendApiKey) {
-    throw new Error('RESEND_API_KEY is not configured');
+  if (!resend || !resendApiKey) {
+    console.error('Resend client not initialized - RESEND_API_KEY missing');
+    throw new Error('Email service is not configured');
   }
   
   try {
