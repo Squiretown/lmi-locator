@@ -321,6 +321,39 @@ export type Database = {
         }
         Relationships: []
       }
+      auth_rate_limits: {
+        Row: {
+          attempt_count: number | null
+          blocked_until: string | null
+          created_at: string | null
+          email: string | null
+          first_attempt: string | null
+          id: string
+          ip_address: string
+          last_attempt: string | null
+        }
+        Insert: {
+          attempt_count?: number | null
+          blocked_until?: string | null
+          created_at?: string | null
+          email?: string | null
+          first_attempt?: string | null
+          id?: string
+          ip_address: string
+          last_attempt?: string | null
+        }
+        Update: {
+          attempt_count?: number | null
+          blocked_until?: string | null
+          created_at?: string | null
+          email?: string | null
+          first_attempt?: string | null
+          id?: string
+          ip_address?: string
+          last_attempt?: string | null
+        }
+        Relationships: []
+      }
       batch_search_jobs: {
         Row: {
           addresses: Json
@@ -3330,6 +3363,10 @@ export type Database = {
       }
       check_admin_status: {
         Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
+      check_auth_rate_limit: {
+        Args: { p_ip_address: string; p_email?: string }
         Returns: boolean
       }
       create_default_notification_preferences: {

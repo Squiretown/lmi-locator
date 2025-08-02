@@ -10,8 +10,10 @@ const CSRF_TOKEN_HEADER = 'X-CSRF-Token';
  * Generate a CSRF token and store it in sessionStorage
  */
 export function generateCSRFToken(): string {
-  const token = crypto.getRandomValues(new Uint8Array(32))
-    .reduce((str, byte) => str + byte.toString(16).padStart(2, '0'), '');
+  // Use crypto.randomUUID for better randomness if available
+  const token = crypto.randomUUID?.() || 
+    crypto.getRandomValues(new Uint8Array(32))
+      .reduce((str, byte) => str + byte.toString(16).padStart(2, '0'), '');
   
   sessionStorage.setItem(CSRF_TOKEN_KEY, token);
   return token;

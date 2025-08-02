@@ -33,14 +33,69 @@ export function isValidPhoneNumber(phone: string): boolean {
 
 /**
  * Sanitize user input for database queries
+ * Enhanced security validation
  */
 export function sanitizeInput(input: string): string {
+  if (typeof input !== 'string') {
+    return '';
+  }
+  
   return input
     .trim()
     .replace(/[<>]/g, '') // Remove angle brackets
     .replace(/javascript:/gi, '') // Remove javascript: protocol
     .replace(/on\w+=/gi, '') // Remove event handlers
+    .replace(/data:/gi, '') // Remove data URLs
+    .replace(/vbscript:/gi, '') // Remove VBScript
+    .replace(/[\x00-\x1f\x7f-\x9f]/g, '') // Remove control characters
     .substring(0, 1000); // Limit length
+}
+
+/**
+ * Comprehensive form input validation
+ */
+export function validateFormInput(input: string, maxLength: number = 1000): {
+  isValid: boolean;
+  sanitized: string;
+  errors: string[];
+} {
+  const errors: string[] = [];
+  
+  if (!input || typeof input !== 'string') {
+    errors.push('Input is required and must be text');
+    return { isValid: false, sanitized: '', errors };
+  }
+  
+  // Check for malicious patterns
+  const maliciousPatterns = [
+    /<script/gi,
+    /javascript:/gi,
+    /on\w+=/gi,
+    /data:text\/html/gi,
+    /vbscript:/gi,
+    /<iframe/gi,
+    /<object/gi,
+    /<embed/gi
+  ];
+  
+  for (const pattern of maliciousPatterns) {
+    if (pattern.test(input)) {
+      errors.push('Input contains potentially malicious content');
+      break;
+    }
+  }
+  
+  const sanitized = sanitizeInput(input);
+  
+  if (sanitized.length > maxLength) {
+    errors.push(`Input exceeds maximum length of ${maxLength} characters`);
+  }
+  
+  return {
+    isValid: errors.length === 0,
+    sanitized,
+    errors
+  };
 }
 
 /**
