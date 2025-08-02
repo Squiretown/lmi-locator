@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { toast } from 'sonner';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, MapPin } from 'lucide-react';
 import MapInitializer from './MapInitializer';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -60,10 +60,23 @@ const MapDisplay: React.FC<MapDisplayProps> = ({ lat, lon, isEligible, tractId, 
   // Display loading state while fetching token
   if (!mapboxToken) {
     return (
-      <div className="w-full h-[400px] flex items-center justify-center bg-gray-100 rounded-lg">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary mx-auto mb-2"></div>
-          <p className="text-muted-foreground">Loading map...</p>
+      <div className="w-full h-[400px] flex items-center justify-center bg-muted/50 rounded-lg">
+        <div className="text-center space-y-4">
+          <div className="relative">
+            <div className="w-16 h-16 rounded-full bg-primary flex items-center justify-center mx-auto">
+              <MapPin className="h-8 w-8 text-primary-foreground" />
+            </div>
+            <div className="absolute inset-0 rounded-full border-2 border-primary/30 animate-pulse"></div>
+          </div>
+          <div className="space-y-2">
+            <div className="text-lg font-semibold tracking-wider text-foreground">LMICHECK.COM</div>
+            <div className="flex items-center justify-center gap-2">
+              <div className="h-1.5 w-1.5 rounded-full bg-primary animate-bounce [animation-delay:-0.3s]"></div>
+              <div className="h-1.5 w-1.5 rounded-full bg-primary animate-bounce [animation-delay:-0.15s]"></div>
+              <div className="h-1.5 w-1.5 rounded-full bg-primary animate-bounce"></div>
+            </div>
+            <p className="text-muted-foreground text-sm">Loading map...</p>
+          </div>
         </div>
       </div>
     );
