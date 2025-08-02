@@ -52,18 +52,30 @@ serve(async (req) => {
     if (ffiecResult.success) {
       console.log('✅ Found FFIEC data:', ffiecResult.data.is_lmi_eligible)
       
+      const isEligible = ffiecResult.data.is_lmi_eligible
+      
       return new Response(
         JSON.stringify({
           success: true,
-          lmi_eligible: ffiecResult.data.is_lmi_eligible,
+          status: 'success',
+          lmi_eligible: isEligible,
+          is_approved: isEligible,
           tract_id: ffiecResult.data.tract_id,
           income_level: ffiecResult.data.income_level,
           ami_percentage: ffiecResult.data.ami_percentage,
-          approval_message: ffiecResult.data.is_lmi_eligible 
+          median_income: ffiecResult.data.median_income || 0,
+          ami: ffiecResult.data.msa_md_median_income || 0,
+          income_category: getIncomeLevelName(ffiecResult.data.income_level),
+          percentage_of_ami: ffiecResult.data.ami_percentage || 0,
+          eligibility: isEligible ? 'Eligible' : 'Not Eligible',
+          lmi_status: isEligible ? 'LMI Eligible' : 'Not Eligible',
+          approval_message: isEligible 
             ? `APPROVED - This location is in a ${getIncomeLevelName(ffiecResult.data.income_level)} Income Census Tract`
             : `NOT APPROVED - This location is in a ${getIncomeLevelName(ffiecResult.data.income_level)} Income Census Tract`,
           data_source: 'FFIEC Census Flat File 2025',
-          address: geocodeResult.formattedAddress
+          address: geocodeResult.formattedAddress,
+          lat: geocodeResult.coordinates.lat,
+          lon: geocodeResult.coordinates.lon
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
@@ -74,11 +86,21 @@ serve(async (req) => {
       return new Response(
         JSON.stringify({
           success: true,
+          status: 'success',
           lmi_eligible: false,
+          is_approved: false,
           tract_id: tractId,
+          median_income: 0,
+          ami: 0,
+          income_category: 'Unknown',
+          percentage_of_ami: 0,
+          eligibility: 'Unknown',
+          lmi_status: 'Not Eligible',
           approval_message: 'NOT APPROVED - Census tract data not available',
           data_source: 'FFIEC Census Flat File 2025 (No Data)',
-          address: geocodeResult.formattedAddress
+          address: geocodeResult.formattedAddress,
+          lat: geocodeResult.coordinates?.lat,
+          lon: geocodeResult.coordinates?.lon
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
@@ -90,9 +112,19 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({
         success: false,
+        status: 'error',
         error: error.message,
         lmi_eligible: false,
-        data_source: 'Error'
+        is_approved: false,
+        median_income: 0,
+        ami: 0,
+        income_category: 'Unknown',
+        percentage_of_ami: 0,
+        eligibility: 'Unknown',
+        lmi_status: 'Not Eligible',
+        approval_message: `ERROR - ${error.message}`,
+        data_source: 'Error',
+        message: error.message
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

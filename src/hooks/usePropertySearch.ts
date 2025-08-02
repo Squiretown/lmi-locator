@@ -117,8 +117,8 @@ export function usePropertySearch() {
         ami: result.ami || 0,
         income_category: result.income_category || 'Unknown',
         percentage_of_ami: result.percentage_of_ami || 0,
-        eligibility: result.eligibility || result.status || 'Unknown',
-        lmi_status: result.lmi_status || (result.is_approved ? 'LMI Eligible' : 'Not Eligible'),
+        eligibility: result.eligibility || 'Unknown',
+        lmi_status: result.lmi_status || 'Unknown',
         lat: result.lat,
         lon: result.lon
       };
