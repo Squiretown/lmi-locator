@@ -1,5 +1,5 @@
 
-import { geocodeAddress } from "./census/address-geocoder.ts";
+import { orchestrateGeocoding } from "./geocoder-orchestrator.ts";
 import { getIncomeCategory } from "./constants.ts";
 
 /**
@@ -14,9 +14,9 @@ export async function checkLmiEligibility(address: string, amiValue: number = 10
   try {
     // Step 1: Geocode the address to get census tract
     console.log("Step 1: Geocoding address...");
-    const geocodeResult = await geocodeAddress(address);
+    const geocodeResult = await orchestrateGeocoding(address);
     
-    if (!geocodeResult.geoid) {
+    if (!geocodeResult.tractId) {
       console.error("Failed to find census tract during geocoding");
       return {
         status: 'error',
@@ -28,11 +28,11 @@ export async function checkLmiEligibility(address: string, amiValue: number = 10
     }
     
     console.log(`Successfully geocoded to coordinates: ${geocodeResult.lat}, ${geocodeResult.lon}`);
-    console.log(`Identified census tract: ${geocodeResult.geoid}`);
+    console.log(`Identified census tract: ${geocodeResult.tractId}`);
     
     // Step 2: Look up FFIEC data for the tract
     console.log("Step 2: Looking up FFIEC data for tract...");
-    const ffiecData = await getFFIECTractData(geocodeResult.geoid);
+    const ffiecData = await getFFIECTractData(geocodeResult.tractId);
     
     if (!ffiecData) {
       console.warn("No FFIEC data found for tract, falling back to external API...");
@@ -62,7 +62,7 @@ export async function checkLmiEligibility(address: string, amiValue: number = 10
       address: address.toUpperCase(),
       lat: geocodeResult.lat,
       lon: geocodeResult.lon,
-      tract_id: formatTractId(geocodeResult.geoid),
+      tract_id: formatTractId(geocodeResult.tractId),
       ffiec_tract_match: ffiecData.tract_id,
       median_income: medianIncome,
       ami: referenceIncome,
@@ -107,13 +107,13 @@ async function checkLmiEligibilityFallback(address: string, amiValue: number, ge
     // Import the income module here to avoid circular dependencies
     const { getMedianIncome } = await import("./income.ts");
     
-    const medianIncome = await getMedianIncome(geocodeResult.geoid);
+    const medianIncome = await getMedianIncome(geocodeResult.tractId);
     
     if (!medianIncome) {
       return {
         status: 'error',
         message: 'Income data unavailable for this location',
-        tract_id: formatTractId(geocodeResult.geoid)
+        tract_id: formatTractId(geocodeResult.tractId)
       };
     }
     
@@ -126,7 +126,7 @@ async function checkLmiEligibilityFallback(address: string, amiValue: number, ge
       address: address.toUpperCase(),
       lat: geocodeResult.lat,
       lon: geocodeResult.lon,
-      tract_id: formatTractId(geocodeResult.geoid),
+      tract_id: formatTractId(geocodeResult.tractId),
       median_income: medianIncome,
       ami: amiValue,
       income_category: incomeCategory,

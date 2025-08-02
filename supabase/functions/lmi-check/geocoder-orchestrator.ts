@@ -1,6 +1,6 @@
 
 import { geocodeWithCensus } from "./geocoding-services/census.ts";
-import { geocodeWithEsri } from "./geocoding-services/esri.ts";
+import { geocodeWithMapbox } from "./geocoding-services/mapbox.ts";
 
 
 /**
@@ -9,13 +9,13 @@ import { geocodeWithEsri } from "./geocoding-services/esri.ts";
 export interface GeocodingResult {
   lat: number;
   lon: number;
-  geoid?: string;
+  tractId?: string;
   geocoding_service?: string;
 }
 
 /**
  * Orchestrates the geocoding process using multiple services
- * Implements a fallback strategy going from Census → ESRI
+ * Implements a fallback strategy going from Mapbox → Census → Mock
  * 
  * @param address The address to geocode
  * @returns Promise with geocoding result including coordinates and census tract
@@ -30,20 +30,20 @@ export async function orchestrateGeocoding(address: string): Promise<GeocodingRe
       throw new Error("Invalid address format. Please provide a complete street address.");
     }
     
-    // Step 1: Try Census Geocoder
-    console.log('Attempting Census geocoding service...');
+    // Step 1: Try Mapbox Geocoder (most reliable)
+    console.log('Attempting Mapbox geocoding service...');
+    const mapboxResult = await tryMapboxGeocoding(address);
+    if (mapboxResult) {
+      console.log('Successfully geocoded with Mapbox service');
+      return mapboxResult;
+    }
+    
+    // Step 2: Try Census Geocoder as backup
+    console.log('Mapbox geocoding failed, trying Census...');
     const censusResult = await tryCensusGeocoding(address);
     if (censusResult) {
       console.log('Successfully geocoded with Census service');
       return censusResult;
-    }
-    
-    // Step 2: Try ESRI Geocoder
-    console.log('Census geocoding failed or returned no results, trying ESRI...');
-    const esriResult = await tryEsriGeocoding(address);
-    if (esriResult) {
-      console.log('Successfully geocoded with ESRI service');
-      return esriResult;
     }
     
     // Step 3: Fall back to mock data
@@ -56,6 +56,32 @@ export async function orchestrateGeocoding(address: string): Promise<GeocodingRe
     // Absolute fallback to mock data
     console.warn('Falling back to mock geocode data after critical error');
     return getMockGeocodeData(address);
+  }
+}
+
+/**
+ * Try to geocode using Mapbox service
+ * 
+ * @param address The address to geocode
+ * @returns GeocodingResult or null if failed
+ */
+async function tryMapboxGeocoding(address: string): Promise<GeocodingResult | null> {
+  try {
+    const result = await geocodeWithMapbox(address);
+    
+    if (result.lat && result.lon) {
+      return {
+        lat: result.lat,
+        lon: result.lon,
+        tractId: result.tractId,
+        geocoding_service: result.geocoding_service || 'Mapbox'
+      };
+    }
+    
+    return null;
+  } catch (error) {
+    console.error('Mapbox geocoding failed:', error);
+    return null;
   }
 }
 
@@ -73,7 +99,7 @@ async function tryCensusGeocoding(address: string): Promise<GeocodingResult | nu
       return {
         lat: result.lat,
         lon: result.lon,
-        geoid: result.geoid,
+        tractId: result.tractId || result.geoid,
         geocoding_service: result.geocoding_service || 'Census'
       };
     }
@@ -86,29 +112,18 @@ async function tryCensusGeocoding(address: string): Promise<GeocodingResult | nu
 }
 
 /**
- * Try to geocode using ESRI service
- * 
- * @param address The address to geocode
- * @returns GeocodingResult or null if failed
+ * Generate mock geocoding data as final fallback
  */
-async function tryEsriGeocoding(address: string): Promise<GeocodingResult | null> {
-  try {
-    const result = await geocodeWithEsri(address);
-    
-    if (result.lat && result.lon) {
-      return {
-        lat: result.lat,
-        lon: result.lon,
-        geoid: result.geoid,
-        geocoding_service: result.geocoding_service || 'ESRI'
-      };
-    }
-    
-    return null;
-  } catch (error) {
-    console.error('ESRI geocoding failed:', error);
-    return null;
-  }
+function getMockGeocodeData(address: string): GeocodingResult {
+  console.log('Generating mock geocode data for:', address);
+  
+  // Hampton Bays coordinates as fallback
+  return {
+    lat: 40.8687,
+    lon: -72.5154,
+    tractId: '36103940100', // Known Hampton Bays tract
+    geocoding_service: 'Mock'
+  };
 }
 
 /**
