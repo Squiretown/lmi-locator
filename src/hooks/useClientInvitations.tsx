@@ -87,19 +87,6 @@ export function useClientInvitations() {
       console.log('🚀 Starting invitation send:', { invitationId, type });
       console.log('📡 Supabase client status:', supabase ? 'Ready' : 'Not initialized');
       
-      // First test if we can reach any edge function
-      try {
-        console.log('🧪 Testing edge function connectivity...');
-        const testResult = await supabase.functions.invoke('send-client-invitation', {
-          body: { test: true },
-          headers: { 'Content-Type': 'application/json' }
-        });
-        console.log('🧪 Test result:', testResult);
-      } catch (testError) {
-        console.error('🚫 Function connectivity test failed:', testError);
-        throw new Error('Edge function is not accessible - deployment issue detected');
-      }
-      
       // Call edge function to send invitation with shorter timeout
       const controller = new AbortController();
       const timeoutId = setTimeout(() => {

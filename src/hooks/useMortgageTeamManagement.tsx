@@ -168,11 +168,13 @@ export const useMortgageTeamManagement = () => {
 
       if (error) throw error;
 
-      // Send invitation email via edge function
-      const { error: emailError } = await supabase.functions.invoke('send-client-invitation', {
+      // Send invitation email via the dedicated professional invitation edge function
+      const { error: emailError } = await supabase.functions.invoke('send-professional-invitation', {
         body: {
-          invitationId: invitation.id,
-          type: 'professional',
+          email: data.email,
+          name: data.name,
+          professionalType: data.professionalType,
+          customMessage: data.customMessage,
         },
       });
 
