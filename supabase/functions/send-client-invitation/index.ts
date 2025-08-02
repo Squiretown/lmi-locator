@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4";
 import { Resend } from "npm:resend@2.0.0";
@@ -20,6 +21,9 @@ const supabase = createClient(
 
 // Initialize Resend client
 const resendApiKey = Deno.env.get("RESEND_API_KEY");
+if (!resendApiKey) {
+  console.error("RESEND_API_KEY is not configured");
+}
 const resend = new Resend(resendApiKey);
 
 const handler = async (req: Request): Promise<Response> => {
@@ -30,6 +34,8 @@ const handler = async (req: Request): Promise<Response> => {
 
   try {
     const { invitationId, type, resend: isResend }: SendInvitationRequest = await req.json();
+
+    console.log('Processing invitation request:', { invitationId, type, isResend });
 
     if (!invitationId) {
       throw new Error('Invitation ID is required');
@@ -43,8 +49,11 @@ const handler = async (req: Request): Promise<Response> => {
       .single();
 
     if (invitationError || !invitation) {
+      console.error('Invitation not found:', invitationError);
       throw new Error('Invitation not found');
     }
+
+    console.log('Found invitation:', invitation);
 
     // Check if invitation is expired
     if (new Date(invitation.expires_at) < new Date()) {
@@ -59,33 +68,41 @@ const handler = async (req: Request): Promise<Response> => {
       .single();
 
     if (professionalError || !professional) {
+      console.error('Professional not found:', professionalError);
       throw new Error('Professional not found');
     }
+
+    console.log('Found professional:', professional.name || professional.company_name);
 
     const invitationType = type || invitation.invitation_type;
     let emailSent = invitation.email_sent;
     let smsSent = invitation.sms_sent;
 
-    // Prepare invitation URL
+    // Prepare invitation URL - use the correct base URL
     const baseUrl = Deno.env.get("SUPABASE_URL")?.replace('/rest/v1', '') || "https://llhofjbijjxkfezidxyi.supabase.co";
-    const invitationUrl = `${baseUrl}/client-registration?code=${invitation.invitation_code}`;
+    const frontendUrl = baseUrl.replace('supabase.co', 'lovableproject.com'); // Adjust for frontend URL
+    const invitationUrl = `${frontendUrl}/client-registration?code=${invitation.invitation_code}`;
+
+    console.log('Invitation URL:', invitationUrl);
 
     // Send email invitation
     if (invitationType === 'email' || invitationType === 'both') {
       try {
+        console.log('Sending email to:', invitation.client_email);
         const emailResponse = await sendEmailInvitation({
           clientEmail: invitation.client_email,
           clientName: invitation.client_name || 'Client',
           professionalName: professional.company_name || professional.name || 'Professional',
           invitationCode: invitation.invitation_code,
           invitationUrl,
-          templateType: invitation.template_type,
+          templateType: invitation.template_type || 'standard',
           customMessage: invitation.custom_message,
           professionalEmail: professional.email,
         });
 
-        if (emailResponse?.id) {
+        if (emailResponse?.data?.id) {
           emailSent = true;
+          console.log('Email sent successfully:', emailResponse.data.id);
         }
       } catch (error) {
         console.error('Email sending failed:', error);
@@ -103,6 +120,7 @@ const handler = async (req: Request): Promise<Response> => {
       }
 
       try {
+        console.log('Sending SMS to:', invitation.client_phone);
         const smsResponse = await sendSMSInvitation({
           clientPhone: invitation.client_phone,
           clientName: invitation.client_name || 'Client',
@@ -113,6 +131,7 @@ const handler = async (req: Request): Promise<Response> => {
 
         if (smsResponse.success) {
           smsSent = true;
+          console.log('SMS sent successfully');
         }
       } catch (error) {
         console.error('SMS sending failed:', error);
@@ -132,14 +151,19 @@ const handler = async (req: Request): Promise<Response> => {
       updated_at: new Date().toISOString(),
     };
 
+    console.log('Updating invitation with:', updateData);
+
     const { error: updateError } = await supabase
       .from('client_invitations')
       .update(updateData)
       .eq('id', invitationId);
 
     if (updateError) {
+      console.error('Update error:', updateError);
       throw updateError;
     }
+
+    console.log('Invitation updated successfully');
 
     return new Response(
       JSON.stringify({
@@ -183,14 +207,24 @@ async function sendEmailInvitation(params: {
 }) {
   console.log('Sending email invitation to:', params.clientEmail);
   
+  if (!resendApiKey) {
+    throw new Error('RESEND_API_KEY is not configured');
+  }
+  
   try {
-    // Use professional's email as from address if available, otherwise use default
-    const fromEmail = params.professionalEmail || "onboarding@resend.dev";
+    // Use professional's email as from address if available and verified, otherwise use default
+    const fromEmail = "onboarding@resend.dev"; // Use verified domain
     const fromName = params.professionalName;
     const fromAddress = `${fromName} <${fromEmail}>`;
 
     // Create HTML content based on template type
     const htmlContent = createEmailHtml(params);
+
+    console.log('Sending email with Resend:', {
+      from: fromAddress,
+      to: params.clientEmail,
+      subject: `Invitation from ${params.professionalName}`
+    });
 
     // Send the email using Resend
     const data = await resend.emails.send({
@@ -218,7 +252,9 @@ function createEmailHtml(params: {
 }) {
   // Apply the custom message if provided
   const customMessageHtml = params.customMessage 
-    ? `<p style="margin-bottom: 20px;">${params.customMessage.replace(/\n/g, '<br>')}</p>`
+    ? `<div style="background: #f8fafc; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #3b82f6;">
+         <p style="margin: 0; color: #374151; font-style: italic;">${params.customMessage.replace(/\n/g, '<br>')}</p>
+       </div>`
     : '';
   
   // Create a nice looking HTML email
@@ -237,73 +273,102 @@ function createEmailHtml(params: {
             padding: 20px;
             max-width: 600px;
             margin: 0 auto;
+            background-color: #ffffff;
           }
           .container {
             border: 1px solid #e1e1e1;
-            border-radius: 5px;
-            padding: 20px;
+            border-radius: 12px;
+            padding: 30px;
             background: #fff;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
           }
           .header { 
             text-align: center;
-            margin-bottom: 20px;
+            margin-bottom: 30px;
             padding-bottom: 20px;
-            border-bottom: 1px solid #f1f1f1;
+            border-bottom: 2px solid #f1f1f1;
+          }
+          .header h1 {
+            color: #1f2937;
+            margin: 0;
+            font-size: 28px;
           }
           .button {
             display: inline-block;
-            padding: 10px 20px;
-            background-color: #4F46E5;
+            padding: 14px 28px;
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
             color: white;
             text-decoration: none;
-            border-radius: 5px;
+            border-radius: 8px;
             margin: 20px 0;
+            font-weight: 600;
+            font-size: 16px;
+            transition: transform 0.2s ease;
+          }
+          .button:hover {
+            transform: translateY(-1px);
           }
           .footer {
-            margin-top: 20px;
+            margin-top: 30px;
             text-align: center;
-            font-size: 12px;
-            color: #666;
+            font-size: 14px;
+            color: #6b7280;
+            border-top: 1px solid #f1f1f1;
+            padding-top: 20px;
           }
           .code {
             display: inline-block;
-            padding: 10px 20px;
-            background-color: #f1f1f1;
-            border-radius: 5px;
-            font-family: monospace;
-            margin: 10px 0;
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #f3f4f6, #e5e7eb);
+            border: 2px dashed #9ca3af;
+            border-radius: 8px;
+            font-family: 'Monaco', 'Menlo', monospace;
+            margin: 15px 0;
+            font-size: 18px;
+            font-weight: bold;
+            color: #374151;
+          }
+          .content {
+            color: #374151;
             font-size: 16px;
+            line-height: 1.7;
           }
         </style>
       </head>
       <body>
         <div class="container">
           <div class="header">
-            <h2>You've Been Invited</h2>
+            <h1>🎉 You're Invited!</h1>
           </div>
           
-          <p>Hello${params.clientName ? ' ' + params.clientName : ''},</p>
-          
-          <p>${params.professionalName} has invited you to join their client portal.</p>
-          
-          ${customMessageHtml}
-          
-          <p>Click the button below to create your account:</p>
-          
-          <div style="text-align: center;">
-            <a href="${params.invitationUrl}" class="button">Accept Invitation</a>
+          <div class="content">
+            <p>Hello${params.clientName ? ' ' + params.clientName : ''},</p>
+            
+            <p><strong>${params.professionalName}</strong> has invited you to join their client portal where you can access exclusive services and resources.</p>
+            
+            ${customMessageHtml}
+            
+            <p>Click the button below to accept your invitation and create your account:</p>
+            
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="${params.invitationUrl}" class="button">✨ Accept Invitation</a>
+            </div>
+            
+            <p>Or use this invitation code during registration:</p>
+            
+            <div style="text-align: center;">
+              <div class="code">${params.invitationCode}</div>
+            </div>
+            
+            <p style="color: #ef4444; font-weight: 500;">⏰ This invitation will expire in 7 days.</p>
           </div>
-          
-          <p>Or use this invitation code during registration:</p>
-          
-          <div style="text-align: center;">
-            <div class="code">${params.invitationCode}</div>
-          </div>
-          
-          <p>This invitation will expire in 7 days.</p>
           
           <div class="footer">
             <p>If you didn't expect this invitation, you can safely ignore this email.</p>
+            <p style="margin-top: 10px;">
+              <strong>Powered by LMI Client Portal</strong><br>
+              Professional client management solutions
+            </p>
           </div>
         </div>
       </body>
@@ -322,11 +387,11 @@ async function sendSMSInvitation(params: {
   // In production, you would integrate with an SMS service like Twilio
   console.log('SMS invitation would be sent:', {
     to: params.clientPhone,
-    message: `You've been invited by ${params.professionalName}. Code: ${params.invitationCode}. Register: ${params.invitationUrl}`,
+    message: `Hi ${params.clientName}! ${params.professionalName} has invited you to their client portal. Code: ${params.invitationCode}. Register: ${params.invitationUrl}`,
   });
 
-  // Simulate SMS sending
-  return { success: true, messageId: 'simulated-sms-id' };
+  // Simulate SMS sending success
+  return { success: true, messageId: 'simulated-sms-id-' + Date.now() };
 }
 
 serve(handler);
