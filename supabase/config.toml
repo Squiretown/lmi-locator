@@ -94,5 +94,8 @@ password = "supabase_smtp_password"
 
 # Configure Edge Functions.
 [functions]
+[functions.send-property-results]
+verify_jwt = false
+
 [functions.sign-out-all-users]
 verify_jwt = true
