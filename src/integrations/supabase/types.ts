@@ -3369,6 +3369,10 @@ export type Database = {
         Args: { p_ip_address: string; p_email: string }
         Returns: boolean
       }
+      comprehensive_security_check: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
       create_default_notification_preferences: {
         Args: { user_uuid: string }
         Returns: undefined
