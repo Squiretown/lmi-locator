@@ -62,6 +62,7 @@ import DatabasePage from "./pages/admin/DatabasePage";
 import ApiKeysPage from "./pages/admin/ApiKeysPage";
 import LogsPage from "./pages/admin/LogsPage";
 import HelpPage from "./pages/admin/HelpPage";
+import UserSettingsPage from "./pages/auth/SettingsPage";
 
 const queryClient = new QueryClient();
 
@@ -82,6 +83,13 @@ const App = () => (
             <Route path="/customers" element={<CustomersPage />} />
             <Route path="/blog" element={<BlogPage />} />
             <Route path="/contact" element={<ContactPage />} />
+            
+            {/* User Settings Route */}
+            <Route path="/settings" element={
+              <ProtectedRoute>
+                <UserSettingsPage />
+              </ProtectedRoute>
+            } />
             
             {/* Dashboard Routes */}
             <Route path="/dashboard" element={<DashboardLayout />}>
