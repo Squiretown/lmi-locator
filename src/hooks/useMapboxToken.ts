@@ -35,9 +35,6 @@ export function useMapboxToken() {
             error: errorMessage,
             isLoading: false,
           });
-          toast.error("Map Error", {
-            description: `Failed to load map resources: ${errorMessage}`
-          });
           return;
         }
 
@@ -57,9 +54,6 @@ export function useMapboxToken() {
             error: 'No token returned from server',
             isLoading: false,
           });
-          toast.error("Map Configuration Error", {
-            description: "Map token is missing from server configuration."
-          });
         }
       } catch (error) {
         console.error('Exception fetching Mapbox token:', error);
@@ -69,9 +63,6 @@ export function useMapboxToken() {
           token: null,
           error: error instanceof Error ? error.message : 'An unknown error occurred',
           isLoading: false,
-        });
-        toast.error("Map Service Error", {
-          description: "Unable to connect to map services. Please try again later."
         });
       }
     };
