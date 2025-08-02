@@ -3366,7 +3366,7 @@ export type Database = {
         Returns: boolean
       }
       check_auth_rate_limit: {
-        Args: { p_ip_address: string; p_email?: string }
+        Args: { p_ip_address: string; p_email: string }
         Returns: boolean
       }
       create_default_notification_preferences: {
@@ -3754,15 +3754,24 @@ export type Database = {
         Returns: Json
       }
       log_security_event: {
-        Args: {
-          p_event_type: string
-          p_user_id?: string
-          p_target_user_id?: string
-          p_details?: Json
-          p_ip_address?: string
-          p_user_agent?: string
-          p_success?: boolean
-        }
+        Args:
+          | {
+              event_type: string
+              user_id_param: string
+              ip_addr: string
+              user_agent_param: string
+              success_param: boolean
+              details_param?: Json
+            }
+          | {
+              p_event_type: string
+              p_user_id?: string
+              p_target_user_id?: string
+              p_details?: Json
+              p_ip_address?: string
+              p_user_agent?: string
+              p_success?: boolean
+            }
         Returns: undefined
       }
       longtransactionsenabled: {
