@@ -19,31 +19,29 @@ const MapDisplay: React.FC<MapDisplayProps> = ({ lat, lon, isEligible, tractId, 
   const [tractError, setTractError] = useState<string | null>(null);
   const [mapboxToken, setMapboxToken] = useState<string | null>(null);
   
-  // Fetch the Mapbox token from Supabase
+  // Fetch the Mapbox token from Supabase with minimum loading time
   React.useEffect(() => {
     const fetchMapboxToken = async () => {
       try {
-        const { data, error } = await supabase
-          .from('system_settings')
-          .select('value')
-          .eq('key', 'mapbox_token')
-          .single();
+        // Create a minimum loading time promise (1.5 seconds)
+        const minLoadingTime = new Promise(resolve => setTimeout(resolve, 1500));
         
-        if (error) {
-          console.error('Error fetching Mapbox token:', error);
-          // Fallback to use the token from Supabase secrets for edge functions
-          const { data: tokenData, error: tokenError } = await supabase.functions.invoke('get-mapbox-token');
-          
-          if (tokenError) {
-            throw new Error('Failed to get Mapbox token');
-          }
-          
-          setMapboxToken(tokenData.token);
-          return;
+        // Try to get token from edge function
+        const tokenPromise = supabase.functions.invoke('get-mapbox-token');
+        
+        const [{ data: tokenData, error: tokenError }] = await Promise.all([
+          tokenPromise,
+          minLoadingTime
+        ]);
+        
+        if (tokenError) {
+          throw new Error('Failed to get Mapbox token');
         }
         
-        if (data) {
-          setMapboxToken(data.value);
+        if (tokenData && tokenData.token) {
+          setMapboxToken(tokenData.token);
+        } else {
+          throw new Error('No Mapbox token received');
         }
       } catch (error) {
         console.error('Error fetching Mapbox token:', error);
