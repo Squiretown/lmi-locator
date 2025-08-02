@@ -140,7 +140,9 @@ export function usePropertySearch() {
           {
             address: lmiResponse.address,
             tractId: lmiResponse.tract_id,
-            isApproved: true
+            isApproved: true,
+            lat: lmiResponse.lat,
+            lon: lmiResponse.lon
           },
           null // Don't reset on notification close
         );
@@ -151,7 +153,9 @@ export function usePropertySearch() {
           {
             address: lmiResponse.address,
             tractId: lmiResponse.tract_id,
-            isApproved: false
+            isApproved: false,
+            lat: lmiResponse.lat,
+            lon: lmiResponse.lon
           },
           null // Don't reset on notification close
         );

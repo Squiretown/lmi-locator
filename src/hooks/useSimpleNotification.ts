@@ -13,6 +13,8 @@ export const showNotification = async (options: {
     address?: string;
     tractId?: string;
     isApproved?: boolean;
+    lat?: number;
+    lon?: number;
   };
   onClose?: () => void;
 }) => {
@@ -124,6 +126,8 @@ Census Tract: ${data.tractId || 'Unknown'}`;
         isApproved: data.isApproved || false,
         address: data.address,
         tractId: data.tractId || 'Unknown',
+        lat: data.lat,
+        lon: data.lon,
         userType: userType,
         isLoggedIn: isLoggedIn,
         onClose: handleClose,
