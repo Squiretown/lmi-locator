@@ -87,15 +87,29 @@ export function useClientInvitations() {
       console.log('🚀 Starting invitation send:', { invitationId, type });
       console.log('📡 Supabase client status:', supabase ? 'Ready' : 'Not initialized');
       
+      // First test if we can reach any edge function
+      try {
+        console.log('🧪 Testing edge function connectivity...');
+        const testResult = await supabase.functions.invoke('send-client-invitation', {
+          body: { test: true },
+          headers: { 'Content-Type': 'application/json' }
+        });
+        console.log('🧪 Test result:', testResult);
+      } catch (testError) {
+        console.error('🚫 Function connectivity test failed:', testError);
+        throw new Error('Edge function is not accessible - deployment issue detected');
+      }
+      
       // Call edge function to send invitation with shorter timeout
       const controller = new AbortController();
       const timeoutId = setTimeout(() => {
         console.log('⏰ Request timeout triggered');
         controller.abort();
-      }, 15000); // Reduced to 15 seconds
+      }, 10000); // Reduced to 10 seconds for faster feedback
       
       try {
         console.log('📞 Calling edge function: send-client-invitation');
+        console.log('📋 Function URL being called: https://llhofjbijjxkfezidxyi.supabase.co/functions/v1/send-client-invitation');
         
         const { data, error } = await supabase.functions.invoke('send-client-invitation', {
           body: { invitationId, type },
@@ -128,6 +142,9 @@ export function useClientInvitations() {
         }
         if (err.message?.includes('Failed to fetch')) {
           throw new Error('Network error - please check your connection and try again');
+        }
+        if (err.message?.includes('FunctionsError')) {
+          throw new Error('Function deployment error - please contact support');
         }
         throw err;
       }
