@@ -67,31 +67,17 @@ export const showNotification = async (options: {
   const handleShare = async () => {
     if (!data?.address) return;
     
-    const shareText = `Property LMI Status Check Results:
+    const subject = encodeURIComponent('LMI Property Check Results');
+    const body = encodeURIComponent(`Property LMI Status Check Results:
+
 Address: ${data.address}
 Status: ${data.isApproved ? 'LMI Eligible' : 'Not in LMI Area'}
-Census Tract: ${data.tractId || 'Unknown'}`;
+Census Tract: ${data.tractId || 'Unknown'}
 
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: 'LMI Property Check Results',
-          text: shareText
-        });
-      } catch (err) {
-        // Fallback to copy to clipboard if share fails or is cancelled
-        await navigator.clipboard.writeText(shareText);
-        toast.success("Results copied to clipboard", {
-          description: "Property details have been copied to your clipboard"
-        });
-      }
-    } else {
-      // Fallback for browsers that don't support sharing
-      await navigator.clipboard.writeText(shareText);
-      toast.success("Results copied to clipboard", {
-        description: "Property details have been copied to your clipboard"
-      });
-    }
+This property was checked for Low-to-Moderate Income (LMI) eligibility.`);
+    
+    const mailtoLink = `mailto:?subject=${subject}&body=${body}`;
+    window.open(mailtoLink);
   };
 
   // Handle save button click for logged in users
