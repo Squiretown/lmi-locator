@@ -126,11 +126,7 @@ export function useLmiSearch() {
           searchValue
         });
 
-        if (tracts.length > 0) {
-          toast.success("Search completed", {
-            description: `Found ${tracts.length} census tracts`
-          });
-        } else {
+        if (tracts.length === 0) {
           toast.error("No results found", {
             description: "Try another search criteria or check your input"
           });
