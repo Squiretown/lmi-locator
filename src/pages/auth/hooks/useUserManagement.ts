@@ -174,11 +174,25 @@ export const useUserManagement = () => {
       });
 
       if (error) {
+        // Handle specific "User not found" errors gracefully
+        if (error.message?.includes('User not found') || error.message?.includes('404')) {
+          console.log(`User ${userId} was already deleted, refreshing list`);
+          toast.info("User was already deleted, refreshing list...");
+          await fetchUsers(); // Refresh the list
+          return;
+        }
         await logAdminError('delete_user', error, userId);
         throw error;
       }
 
       if (!data?.success) {
+        // Handle specific "User not found" errors from the function response
+        if (data?.error?.includes('User not found') || data?.error?.includes('404')) {
+          console.log(`User ${userId} was already deleted, refreshing list`);
+          toast.info("User was already deleted, refreshing list...");
+          await fetchUsers(); // Refresh the list
+          return;
+        }
         const errorDetails = { success: data?.success, error: data?.error };
         await logAdminError('delete_user', new Error(data?.error || 'Unknown error occurred'), userId);
         throw new Error(data?.error || 'Unknown error occurred');
@@ -188,6 +202,14 @@ export const useUserManagement = () => {
       await fetchUsers(); // Refresh the list
     } catch (err) {
       console.error('Error deleting user:', err);
+      
+      // Handle "User not found" errors gracefully
+      if (err instanceof Error && (err.message?.includes('User not found') || err.message?.includes('404'))) {
+        toast.info("User was already deleted, refreshing list...");
+        await fetchUsers(); // Refresh the list
+        return;
+      }
+      
       await logAdminError('delete_user', err, userId);
       const errorMessage = err instanceof Error ? err.message : 'Failed to delete user';
       toast.error(errorMessage);
