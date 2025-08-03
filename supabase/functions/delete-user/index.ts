@@ -69,30 +69,28 @@ serve(async (req) => {
 
     console.log(`Admin user ${user.id} attempting to delete user ${userId}`);
 
-    // First, anonymize user's search history to preserve analytics while removing personal data
-    const { error: anonymizeError } = await supabase.rpc('anonymize_user_search_history', {
+    // Use the safe deletion function that handles all foreign key dependencies
+    const { data, error: deleteError } = await supabase.rpc('delete_user_safely', {
       target_user_id: userId
     });
 
-    if (anonymizeError) {
-      console.error('Failed to anonymize user search history:', anonymizeError);
-      throw new Error(`Failed to anonymize user data: ${anonymizeError.message}`);
-    }
-
-    console.log(`Anonymized search history for user ${userId}`);
-
-    // Delete the user from auth
-    const { error: deleteError } = await supabase.auth.admin.deleteUser(userId);
-    
     if (deleteError) {
+      console.error('Failed to delete user:', deleteError);
       throw new Error(`Failed to delete user: ${deleteError.message}`);
     }
 
-    console.log(`Successfully deleted user ${userId}`);
+    // Check if the deletion was successful
+    if (!data?.success) {
+      console.error('User deletion function returned failure:', data);
+      throw new Error(data?.message || 'Failed to delete user');
+    }
+
+    console.log(`Successfully deleted user ${userId}:`, data);
 
     return new Response(JSON.stringify({
       success: true,
-      message: `User ${userId} deleted successfully`
+      message: data.message,
+      deleted_records: data.deleted_records
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

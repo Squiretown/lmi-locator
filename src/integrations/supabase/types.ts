@@ -3377,6 +3377,10 @@ export type Database = {
         Args: { user_uuid: string }
         Returns: undefined
       }
+      delete_user_safely: {
+        Args: { target_user_id: string }
+        Returns: Json
+      }
       disablelongtransactions: {
         Args: Record<PropertyKey, never>
         Returns: string
