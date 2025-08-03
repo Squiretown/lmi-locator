@@ -1,6 +1,6 @@
 
-import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.21.0";
+import { serve } from "https://deno.land/std@0.192.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 // Configure CORS headers
 const corsHeaders = {
@@ -9,101 +9,115 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
-// Handle CORS preflight requests
-const handleCors = (req: Request) => {
-  if (req.method === "OPTIONS") {
-    return new Response(null, {
-      status: 204,
-      headers: corsHeaders,
-    });
-  }
-  return null;
-};
-
 serve(async (req) => {
-  // Handle CORS
-  const corsResponse = handleCors(req);
-  if (corsResponse) return corsResponse;
+  // Handle CORS preflight requests
+  if (req.method === "OPTIONS") {
+    return new Response(null, { headers: corsHeaders });
+  }
 
   try {
-    // Initialize Supabase client with admin privileges
-    const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
-    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    const { userId } = await req.json();
 
-    // Get user JWT from request
+    if (!userId) {
+      return new Response(JSON.stringify({ 
+        success: false, 
+        error: "User ID is required" 
+      }), { 
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" }
+      });
+    }
+
+    // Initialize Supabase client with service role key for admin operations
+    const supabase = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+    );
+
+    // Get user JWT from request for admin verification
     const authHeader = req.headers.get('Authorization') || '';
     const token = authHeader.replace('Bearer ', '');
     
     if (!token) {
-      throw new Error("No authorization token provided");
+      return new Response(JSON.stringify({
+        success: false,
+        error: "Authorization token required"
+      }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" }
+      });
     }
 
-    // Verify the JWT and get the user
+    // Verify the requesting user is an admin
     const { data: { user }, error: userError } = await supabase.auth.getUser(token);
     
     if (userError || !user) {
-      throw new Error("Invalid authorization token");
+      return new Response(JSON.stringify({
+        success: false,
+        error: "Invalid authorization token"
+      }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" }
+      });
     }
 
-    // Check if user is admin from JWT metadata
+    // Check if user is admin
     const userType = user.user_metadata?.user_type;
-    console.log(`User ${user.id} has user_type: ${userType}`);
-    
     if (userType !== 'admin') {
       console.error(`Access denied: User ${user.id} is not an admin (user_type: ${userType})`);
-      throw new Error("Administrative privileges required to delete users");
+      return new Response(JSON.stringify({
+        success: false,
+        error: "Administrative privileges required"
+      }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" }
+      });
     }
 
-    // Get userId from request body
-    const { userId } = await req.json();
-    
-    if (!userId) {
-      throw new Error("User ID is required");
-    }
-
-    // Don't allow admin to delete themselves
+    // Prevent admin from deleting themselves
     if (userId === user.id) {
-      throw new Error("Cannot delete your own admin account");
+      return new Response(JSON.stringify({
+        success: false,
+        error: "Cannot delete your own admin account"
+      }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" }
+      });
     }
 
     console.log(`Admin user ${user.id} attempting to delete user ${userId}`);
 
-    // Use the new modular deletion function that handles all foreign key dependencies
-    const { data, error: deleteError } = await supabase.rpc('delete_user_safely_v2', {
-      target_user_id: userId
+    // Call the deletion function
+    const { data, error } = await supabase.rpc("delete_user_safely_v2", {
+      target_user_id: userId,
     });
 
-    if (deleteError) {
-      console.error('Failed to delete user:', deleteError);
-      throw new Error(`Failed to delete user: ${deleteError.message}`);
-    }
-
-    // Check if the deletion was successful
-    if (!data?.success) {
-      console.error('User deletion function returned failure:', data);
-      throw new Error(data?.error || 'Failed to delete user');
+    if (error) {
+      console.error("RPC Error:", error);
+      return new Response(JSON.stringify({ 
+        success: false, 
+        error: error.message 
+      }), { 
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" }
+      });
     }
 
     console.log(`Successfully deleted user ${userId}:`, data);
 
-    return new Response(JSON.stringify({
-      success: true,
-      message: data.message,
-      deleted_records: data.deleted_records
-    }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    return new Response(JSON.stringify(data), { 
+      status: 200,
+      headers: { ...corsHeaders, "Content-Type": "application/json" }
     });
-    
-  } catch (error) {
-    console.error("Error deleting user:", error);
-    
-    return new Response(JSON.stringify({
-      success: false,
-      error: error.message || "Unknown error occurred",
+
+  } catch (err) {
+    console.error("Unexpected error:", err);
+    return new Response(JSON.stringify({ 
+      success: false, 
+      error: err.message || "Unknown error" 
     }), {
       status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: { ...corsHeaders, "Content-Type": "application/json" }
     });
   }
 });
