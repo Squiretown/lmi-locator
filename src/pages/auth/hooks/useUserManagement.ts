@@ -170,7 +170,7 @@ export const useUserManagement = () => {
 
       // Call the delete-user edge function
       const { data, error } = await supabase.functions.invoke('delete-user', {
-        body: { userId },
+        body: { user_id: userId },
         headers: {
           Authorization: `Bearer ${session.access_token}`
         }

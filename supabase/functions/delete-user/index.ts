@@ -16,9 +16,9 @@ serve(async (req) => {
   }
 
   try {
-    const { userId } = await req.json();
+    const { user_id } = await req.json();
 
-    if (!userId) {
+    if (!user_id) {
       return new Response(JSON.stringify({ 
         success: false, 
         error: "User ID is required" 
@@ -48,7 +48,7 @@ serve(async (req) => {
       });
     }
 
-    // Verify the requesting user is an admin
+    // Verify the requesting user is an admin via database query
     const { data: { user }, error: userError } = await supabase.auth.getUser(token);
     
     if (userError || !user) {
@@ -61,10 +61,11 @@ serve(async (req) => {
       });
     }
 
-    // Check if user is admin
-    const userType = user.user_metadata?.user_type;
-    if (userType !== 'admin') {
-      console.error(`Access denied: User ${user.id} is not an admin (user_type: ${userType})`);
+    // Check if user is admin using database query
+    const { data: isAdmin, error: adminError } = await supabase.rpc('user_is_admin');
+    
+    if (adminError || !isAdmin) {
+      console.error(`Access denied: User ${user.id} is not an admin`);
       return new Response(JSON.stringify({
         success: false,
         error: "Administrative privileges required"
@@ -75,7 +76,7 @@ serve(async (req) => {
     }
 
     // Prevent admin from deleting themselves
-    if (userId === user.id) {
+    if (user_id === user.id) {
       return new Response(JSON.stringify({
         success: false,
         error: "Cannot delete your own admin account"
@@ -85,27 +86,45 @@ serve(async (req) => {
       });
     }
 
-    console.log(`Admin user ${user.id} attempting to delete user ${userId}`);
+    console.log(`Admin user ${user.id} attempting to delete user ${user_id}`);
 
-    // Call the deletion function
-    const { data, error } = await supabase.rpc("delete_user_safely_v2", {
-      target_user_id: userId,
+    // Clean up user references first
+    const { data: cleanupResult, error: cleanupError } = await supabase.rpc("delete_user_references", {
+      user_id: user_id,
     });
 
-    if (error) {
-      console.error("RPC Error:", error);
+    if (cleanupError) {
+      console.error("Cleanup Error:", cleanupError);
       return new Response(JSON.stringify({ 
         success: false, 
-        error: error.message 
+        error: `Cleanup failed: ${cleanupError.message}` 
       }), { 
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" }
       });
     }
 
-    console.log(`Successfully deleted user ${userId}:`, data);
+    // Delete user from auth
+    const { error: deleteError } = await supabase.auth.admin.deleteUser(user_id);
 
-    return new Response(JSON.stringify(data), { 
+    if (deleteError) {
+      console.error("Auth deletion error:", deleteError);
+      return new Response(JSON.stringify({ 
+        success: false, 
+        error: `Auth deletion failed: ${deleteError.message}` 
+      }), { 
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" }
+      });
+    }
+
+    console.log(`Successfully deleted user ${user_id}. Cleanup result:`, cleanupResult);
+
+    return new Response(JSON.stringify({ 
+      success: true, 
+      message: "User successfully deleted",
+      cleanup_result: cleanupResult 
+    }), { 
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" }
     });
