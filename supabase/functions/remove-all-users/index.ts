@@ -87,14 +87,36 @@ serve(async (req) => {
       
       for (const userId of batch) {
         try {
-          const { error: deleteError } = await supabase.auth.admin.deleteUser(userId);
+          console.log(`Attempting to delete user ${userId} using delete_user_safely`);
+          
+          const { data: deleteResult, error: deleteError } = await supabase.rpc('delete_user_safely', {
+            target_user_id: userId
+          });
           
           if (deleteError) {
             console.error(`Error deleting user ${userId}: ${deleteError.message}`);
-            results.push({ userId, success: false, error: deleteError.message });
+            results.push({ 
+              userId, 
+              success: false, 
+              error: deleteError.message,
+              errorCode: deleteError.code
+            });
+          } else if (!deleteResult?.success) {
+            console.error(`User deletion failed for ${userId}: ${deleteResult?.message || 'Unknown error'}`);
+            results.push({ 
+              userId, 
+              success: false, 
+              error: deleteResult?.message || 'Deletion failed',
+              details: deleteResult
+            });
           } else {
-            console.log(`Successfully deleted user ${userId}`);
-            results.push({ userId, success: true });
+            console.log(`Successfully deleted user ${userId}:`, deleteResult);
+            results.push({ 
+              userId, 
+              success: true,
+              deletedRecords: deleteResult.deleted_records,
+              message: deleteResult.message
+            });
           }
           
           // Small delay to avoid hitting rate limits
