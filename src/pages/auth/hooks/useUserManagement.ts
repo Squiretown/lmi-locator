@@ -156,14 +156,17 @@ export const useUserManagement = () => {
     try {
       console.log('Attempting to completely delete user from auth:', userId);
       
-      // Get current session
-      const { data: { session } } = await supabase.auth.getSession();
+      // Refresh session to ensure we have a valid token
+      const { data: { session }, error: sessionError } = await supabase.auth.refreshSession();
       
-      if (!session) {
-        const error = new Error('No active session found');
+      if (sessionError || !session) {
+        console.error('Session refresh failed:', sessionError);
+        const error = new Error('Authentication required - please log in again');
         await logAdminError('delete_user', error, userId);
         throw error;
       }
+      
+      console.log('Session refreshed successfully for user deletion');
 
       // Call the delete-user edge function
       const { data, error } = await supabase.functions.invoke('delete-user', {
