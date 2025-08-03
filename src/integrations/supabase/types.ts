@@ -3381,7 +3381,27 @@ export type Database = {
         Args: { user_id: string }
         Returns: string
       }
+      delete_user_audit_refs: {
+        Args: { target_user_id: string }
+        Returns: Json
+      }
+      delete_user_auth_record: {
+        Args: { target_user_id: string }
+        Returns: Json
+      }
+      delete_user_owned_data: {
+        Args: { target_user_id: string }
+        Returns: Json
+      }
+      delete_user_relationships: {
+        Args: { target_user_id: string }
+        Returns: Json
+      }
       delete_user_safely: {
+        Args: { target_user_id: string }
+        Returns: Json
+      }
+      delete_user_safely_v2: {
         Args: { target_user_id: string }
         Returns: Json
       }

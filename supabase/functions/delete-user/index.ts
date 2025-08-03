@@ -69,8 +69,8 @@ serve(async (req) => {
 
     console.log(`Admin user ${user.id} attempting to delete user ${userId}`);
 
-    // Use the safe deletion function that handles all foreign key dependencies
-    const { data, error: deleteError } = await supabase.rpc('delete_user_safely', {
+    // Use the new modular deletion function that handles all foreign key dependencies
+    const { data, error: deleteError } = await supabase.rpc('delete_user_safely_v2', {
       target_user_id: userId
     });
 
@@ -82,7 +82,7 @@ serve(async (req) => {
     // Check if the deletion was successful
     if (!data?.success) {
       console.error('User deletion function returned failure:', data);
-      throw new Error(data?.message || 'Failed to delete user');
+      throw new Error(data?.error || 'Failed to delete user');
     }
 
     console.log(`Successfully deleted user ${userId}:`, data);
