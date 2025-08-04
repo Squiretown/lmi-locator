@@ -3378,8 +3378,16 @@ export type Database = {
         Returns: undefined
       }
       delete_user_references: {
-        Args: { user_id: string }
+        Args: { target_user_id: string }
         Returns: Json
+      }
+      diagnose_user_data: {
+        Args: { target_user_id: string }
+        Returns: {
+          table_name: string
+          record_count: number
+          sample_ids: string[]
+        }[]
       }
       disablelongtransactions: {
         Args: Record<PropertyKey, never>
