@@ -71,6 +71,7 @@ export const UserManagementContent: React.FC<UserManagementContentProps> = ({
 
       <UserBulkActions
         selectedUsers={selectedUsers}
+        users={users || []}
         onBulkAction={onBulkAction}
         totalUsers={filteredUsers.length}
       />

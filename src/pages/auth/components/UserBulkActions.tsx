@@ -11,12 +11,14 @@ import { Textarea } from '@/components/ui/textarea';
 
 interface UserBulkActionsProps {
   selectedUsers: string[];
+  users: any[];
   onBulkAction: (action: string, userIds: string[], data?: any) => void;
   totalUsers: number;
 }
 
 export const UserBulkActions: React.FC<UserBulkActionsProps> = ({
   selectedUsers,
+  users,
   onBulkAction,
   totalUsers,
 }) => {

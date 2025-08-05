@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -7,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
+import { RoleManagementDialog } from '@/components/admin/RoleManagementDialog';
 import type { AdminUser } from '../types/admin-user';
 
 interface UserActionDialogProps {
@@ -44,6 +44,20 @@ export const UserActionDialog: React.FC<UserActionDialogProps> = ({
       password: '',
     });
   };
+
+  // For role changes, use the enhanced dialog
+  if (action === 'changeRole') {
+    return (
+      <RoleManagementDialog
+        user={user}
+        open={open}
+        onClose={onClose}
+        onConfirm={async (data) => {
+          await onConfirm({ newRole: data.newRole, reason: data.reason });
+        }}
+      />
+    );
+  }
 
   const getDialogContent = () => {
     switch (action) {
@@ -95,30 +109,6 @@ export const UserActionDialog: React.FC<UserActionDialogProps> = ({
                   onChange={(e) => setFormData({ ...formData, newEmail: e.target.value })}
                   placeholder="Enter new email address..."
                 />
-              </div>
-            </div>
-          ),
-        };
-
-      case 'changeRole':
-        return {
-          title: 'Change User Role',
-          description: `Change role for ${user?.email}`,
-          content: (
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="newRole">New Role</Label>
-                <Select value={formData.newRole} onValueChange={(value) => setFormData({ ...formData, newRole: value })}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select new role" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="client">Client</SelectItem>
-                    <SelectItem value="realtor">Realtor</SelectItem>
-                    <SelectItem value="mortgage_broker">Mortgage Broker</SelectItem>
-                    <SelectItem value="admin">Admin</SelectItem>
-                  </SelectContent>
-                </Select>
               </div>
             </div>
           ),
