@@ -7,7 +7,7 @@ import { useAdminPermissions } from '../AdminPermissionsContext';
 export const AdminSidebarSystemMenu: React.FC = () => {
   const { hasPermission } = useAdminPermissions();
 
-  if (!hasPermission('system_admin')) {
+  if (!hasPermission('manage_system_settings')) {
     return null;
   }
 
@@ -17,19 +17,21 @@ export const AdminSidebarSystemMenu: React.FC = () => {
         System
       </div>
       
-      <NavLink 
-        to="/admin/permissions" 
-        className={({ isActive }) => 
-          `flex items-center space-x-3 px-3 py-2 text-sm rounded-md transition-colors ${
-            isActive 
-              ? 'bg-primary text-primary-foreground' 
-              : 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
-          }`
-        }
-      >
-        <Shield size={16} />
-        <span>Permissions</span>
-      </NavLink>
+      {hasPermission('manage_users') && (
+        <NavLink 
+          to="/admin/permissions" 
+          className={({ isActive }) => 
+            `flex items-center space-x-3 px-3 py-2 text-sm rounded-md transition-colors ${
+              isActive 
+                ? 'bg-primary text-primary-foreground' 
+                : 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
+            }`
+          }
+        >
+          <Shield size={16} />
+          <span>Permissions</span>
+        </NavLink>
+      )}
       
       <NavLink 
         to="/admin/database" 

@@ -79,7 +79,7 @@ export const ClientTeamShowcase: React.FC<ClientTeamShowcaseProps> = ({
 
               <div className="flex flex-wrap gap-2">
                 <Badge variant="secondary" className="text-xs">
-                  {member.type === 'mortgage_broker' ? 'Mortgage Professional' : 'Realtor'}
+                  {member.type === 'mortgage_professional' ? 'Mortgage Professional' : 'Realtor'}
                 </Badge>
               </div>
 

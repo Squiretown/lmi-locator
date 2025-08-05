@@ -10,8 +10,8 @@ interface ReferralInformationProps {
 export const ReferralInformation: React.FC<ReferralInformationProps> = ({ user }) => {
   const getReferralTypeLabel = (type?: string) => {
     switch (type) {
-      case 'mortgage_broker':
-        return 'Mortgage Broker';
+      case 'mortgage_professional':
+        return 'Mortgage Professional';
       case 'realtor':
         return 'Realtor';
       case 'professional':

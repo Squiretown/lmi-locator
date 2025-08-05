@@ -11,7 +11,7 @@ export interface AdminUser {
     last_name?: string;
     suspended?: boolean;
     suspension_end?: string;
-    referred_by_type?: 'mortgage_broker' | 'realtor' | 'professional';
+    referred_by_type?: 'mortgage_professional' | 'realtor' | 'professional';
     referred_by_id?: string;
     referred_by_name?: string;
     referral_code?: string;

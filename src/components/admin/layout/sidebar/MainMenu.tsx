@@ -10,6 +10,7 @@ import {
   Settings
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAdminPermissions } from '../AdminPermissionsContext';
 
 const MenuLink: React.FC<{
   to: string;
@@ -33,6 +34,7 @@ const MenuLink: React.FC<{
 
 export const AdminSidebarMainMenu: React.FC = () => {
   const location = useLocation();
+  const { hasPermission } = useAdminPermissions();
   
   return (
     <div className="space-y-1">
@@ -48,37 +50,45 @@ export const AdminSidebarMainMenu: React.FC = () => {
         Dashboard
       </MenuLink>
       
-      <MenuLink 
-        to="/admin/marketing" 
-        icon={TrendingUp}
-        isActive={location.pathname === '/admin/marketing'}
-      >
-        Marketing
-      </MenuLink>
+      {hasPermission('manage_marketing_campaigns') && (
+        <MenuLink 
+          to="/admin/marketing" 
+          icon={TrendingUp}
+          isActive={location.pathname === '/admin/marketing'}
+        >
+          Marketing
+        </MenuLink>
+      )}
       
-      <MenuLink 
-        to="/admin/users" 
-        icon={Users}
-        isActive={location.pathname === '/admin/users'}
-      >
-        Users
-      </MenuLink>
+      {hasPermission('view_user_management') && (
+        <MenuLink 
+          to="/admin/users" 
+          icon={Users}
+          isActive={location.pathname === '/admin/users'}
+        >
+          Users
+        </MenuLink>
+      )}
       
-      <MenuLink 
-        to="/admin/messaging" 
-        icon={MessageSquare}
-        isActive={location.pathname === '/admin/messaging'}
-      >
-        Messaging
-      </MenuLink>
+      {hasPermission('view_notifications') && (
+        <MenuLink 
+          to="/admin/messaging" 
+          icon={MessageSquare}
+          isActive={location.pathname === '/admin/messaging'}
+        >
+          Messaging
+        </MenuLink>
+      )}
       
-      <MenuLink 
-        to="/admin/subscriptions" 
-        icon={CreditCard}
-        isActive={location.pathname === '/admin/subscriptions'}
-      >
-        Subscriptions
-      </MenuLink>
+      {hasPermission('manage_system_settings') && (
+        <MenuLink 
+          to="/admin/subscriptions" 
+          icon={CreditCard}
+          isActive={location.pathname === '/admin/subscriptions'}
+        >
+          Subscriptions
+        </MenuLink>
+      )}
     </div>
   );
 };

@@ -30,7 +30,7 @@ export const signupFormSchema = z.object({
     }),
   userRole: z.enum(['client', 'realtor', 'mortgage_professional']),
   referralCode: z.string().optional(),
-  referredByType: z.enum(['mortgage_broker', 'realtor', 'professional', 'none']).optional(),
+  referredByType: z.enum(['mortgage_professional', 'realtor', 'professional', 'none']).optional(),
   referredByName: z.string().optional()
 });
 

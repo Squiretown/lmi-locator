@@ -34,7 +34,7 @@ export const ProfessionalActions: React.FC<ProfessionalActionsProps> = ({
   onAction,
 }) => {
   const userType = user.user_metadata?.user_type || 'client';
-  const isProfessional = ['mortgage_broker', 'realtor', 'business'].includes(userType);
+  const isProfessional = ['mortgage_professional', 'realtor', 'business'].includes(userType);
 
   if (!isProfessional) {
     return null;
@@ -42,7 +42,7 @@ export const ProfessionalActions: React.FC<ProfessionalActionsProps> = ({
 
   const getProfessionalIcon = () => {
     switch (userType) {
-      case 'mortgage_broker':
+      case 'mortgage_professional':
         return <CreditCard className="mr-2 h-4 w-4" />;
       case 'realtor':
         return <Building className="mr-2 h-4 w-4" />;
@@ -55,8 +55,8 @@ export const ProfessionalActions: React.FC<ProfessionalActionsProps> = ({
 
   const getProfessionalLabel = () => {
     switch (userType) {
-      case 'mortgage_broker':
-        return 'Mortgage Broker';
+      case 'mortgage_professional':
+        return 'Mortgage Professional';
       case 'realtor':
         return 'Realtor';
       case 'business':

@@ -219,7 +219,7 @@ const SignupForm: React.FC = () => {
                     </FormControl>
                     <SelectContent>
                       <SelectItem value="none">No referral</SelectItem>
-                      <SelectItem value="mortgage_broker">Mortgage Broker</SelectItem>
+                      <SelectItem value="mortgage_professional">Mortgage Professional</SelectItem>
                       <SelectItem value="realtor">Realtor</SelectItem>
                       <SelectItem value="professional">Other Professional</SelectItem>
                     </SelectContent>

@@ -17,6 +17,7 @@ import { UserActionMenu } from './UserActionMenu';
 import { ProfessionalActions } from './ProfessionalActions';
 import { UserStatusBadge } from './UserStatusBadge';
 import { UserTypeBadge } from './UserTypeBadge';
+import { UserRoleManagement } from '@/components/admin/users/UserRoleManagement';
 import type { AdminUser } from '../types/admin-user';
 
 interface UserManagementTableProps {
@@ -141,7 +142,7 @@ export const UserManagementTable: React.FC<UserManagementTableProps> = ({
                   </div>
                 </TableCell>
                 <TableCell>
-                  <UserTypeBadge userType={getUserType(user)} />
+                  <UserRoleManagement user={user} />
                 </TableCell>
                 <TableCell>
                   <UserStatusBadge 

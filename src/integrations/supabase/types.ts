@@ -3444,6 +3444,10 @@ export type Database = {
         Args: { p_ip_address: string; p_email: string }
         Returns: boolean
       }
+      check_user_permission_simple: {
+        Args: { user_uuid: string; permission_name: string }
+        Returns: boolean
+      }
       comprehensive_security_check: {
         Args: Record<PropertyKey, never>
         Returns: Json
