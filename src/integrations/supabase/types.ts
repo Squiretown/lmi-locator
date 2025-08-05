@@ -2739,6 +2739,96 @@ export type Database = {
           },
         ]
       }
+      team_communication_templates: {
+        Row: {
+          content: string
+          created_at: string
+          created_by: string | null
+          id: string
+          is_global: boolean
+          name: string
+          subject: string | null
+          type: string
+          updated_at: string
+          variables: Json | null
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_global?: boolean
+          name: string
+          subject?: string | null
+          type: string
+          updated_at?: string
+          variables?: Json | null
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_global?: boolean
+          name?: string
+          subject?: string | null
+          type?: string
+          updated_at?: string
+          variables?: Json | null
+        }
+        Relationships: []
+      }
+      team_communications: {
+        Row: {
+          content: string
+          created_at: string
+          delivered_at: string | null
+          error_message: string | null
+          id: string
+          metadata: Json | null
+          sender_id: string
+          sent_at: string
+          status: string
+          subject: string | null
+          team_member_email: string | null
+          team_member_id: string
+          team_member_phone: string | null
+          type: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          delivered_at?: string | null
+          error_message?: string | null
+          id?: string
+          metadata?: Json | null
+          sender_id: string
+          sent_at?: string
+          status?: string
+          subject?: string | null
+          team_member_email?: string | null
+          team_member_id: string
+          team_member_phone?: string | null
+          type: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          delivered_at?: string | null
+          error_message?: string | null
+          id?: string
+          metadata?: Json | null
+          sender_id?: string
+          sent_at?: string
+          status?: string
+          subject?: string | null
+          team_member_email?: string | null
+          team_member_id?: string
+          team_member_phone?: string | null
+          type?: string
+        }
+        Relationships: []
+      }
       testimonials: {
         Row: {
           avatar: string
