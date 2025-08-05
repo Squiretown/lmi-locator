@@ -2361,51 +2361,63 @@ export type Database = {
       }
       realtors: {
         Row: {
+          address: string | null
           bio: string | null
-          brokerage: string | null
+          company: string
           created_at: string
           email: string | null
           id: string
           is_flagged: boolean | null
+          is_verified: boolean | null
           last_updated: string
-          license_number: string | null
+          license_number: string
           name: string
           notes: string | null
           phone: string | null
           photo_url: string | null
           social_media: Json | null
+          status: string
+          user_id: string
           website: string | null
         }
         Insert: {
+          address?: string | null
           bio?: string | null
-          brokerage?: string | null
+          company: string
           created_at?: string
           email?: string | null
           id?: string
           is_flagged?: boolean | null
+          is_verified?: boolean | null
           last_updated?: string
-          license_number?: string | null
+          license_number: string
           name: string
           notes?: string | null
           phone?: string | null
           photo_url?: string | null
           social_media?: Json | null
+          status?: string
+          user_id: string
           website?: string | null
         }
         Update: {
+          address?: string | null
           bio?: string | null
-          brokerage?: string | null
+          company?: string
           created_at?: string
           email?: string | null
           id?: string
           is_flagged?: boolean | null
+          is_verified?: boolean | null
           last_updated?: string
-          license_number?: string | null
+          license_number?: string
           name?: string
           notes?: string | null
           phone?: string | null
           photo_url?: string | null
           social_media?: Json | null
+          status?: string
+          user_id?: string
           website?: string | null
         }
         Relationships: []

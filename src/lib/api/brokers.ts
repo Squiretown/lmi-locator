@@ -1,9 +1,9 @@
 
-// This file now re-exports from the refactored broker module
+// This file now re-exports from the mortgage professionals API for backward compatibility
 export type { 
-  MortgageBroker, 
-  BrokerFormValues 
-} from './types';
+  MortgageProfessional as MortgageBroker, 
+  MortgageProfessionalFormValues as BrokerFormValues 
+} from './mortgage-professionals';
 
-// Import and re-export from brokers/index.ts instead of circular import
-export * from './brokers/index';
+// Import and re-export from mortgage-professionals/index.ts 
+export * from './mortgage-professionals/index';

@@ -1,4 +1,49 @@
 // Define explicitly the necessary database types to use with Supabase
+
+// New standardized role tables
+export interface StandardRealtorTable {
+  id: string;
+  user_id: string;
+  name: string;
+  company: string;
+  license_number: string;
+  email?: string;
+  phone: string | null;
+  address: string | null;
+  website: string | null;
+  bio: string | null;
+  photo_url: string | null;
+  status: 'active' | 'pending' | 'inactive';
+  social_media: any | null;
+  is_verified: boolean | null;
+  is_flagged: boolean | null;
+  notes: string | null;
+  created_at: string;
+  last_updated: string;
+}
+
+export interface StandardMortgageProfessionalTable {
+  id: string;
+  user_id: string;
+  name: string;
+  company: string;
+  license_number: string;
+  email?: string;
+  phone: string | null;
+  address: string | null;
+  website: string | null;
+  bio: string | null;
+  photo_url: string | null;
+  status: 'active' | 'pending' | 'inactive';
+  social_media: any | null;
+  is_verified: boolean | null;
+  is_flagged: boolean | null;
+  notes: string | null;
+  created_at: string;
+  last_updated: string;
+}
+
+// Legacy table (kept for backward compatibility during transition)
 export interface ProfessionalTable {
   id: string;
   user_id: string;
