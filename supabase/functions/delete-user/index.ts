@@ -48,10 +48,11 @@ serve(async (req) => {
       });
     }
 
-    // Verify the requesting user is an admin via database query
+    // Verify the requesting user is an admin
     const { data: { user }, error: userError } = await supabase.auth.getUser(token);
     
     if (userError || !user) {
+      console.error("Auth error:", userError);
       return new Response(JSON.stringify({
         success: false,
         error: "Invalid authorization token"
@@ -61,17 +62,30 @@ serve(async (req) => {
       });
     }
 
-    // Check if user is admin using database query with proper user context
-    const { data: userProfile, error: profileError } = await supabase
-      .from('user_profiles')
-      .select('user_type')
-      .eq('user_id', user.id)
+    // Check if user is admin using the NEW role system
+    // First check the users table for the role field
+    const { data: userData, error: userRoleError } = await supabase
+      .from('users')
+      .select('role')
+      .eq('id', user.id)
       .single();
     
-    const isAdmin = userProfile?.user_type === 'admin' || user.user_metadata?.user_type === 'admin';
+    if (userRoleError) {
+      console.error(`Error fetching user role: ${userRoleError.message}`);
+      return new Response(JSON.stringify({
+        success: false,
+        error: "Failed to verify admin privileges"
+      }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" }
+      });
+    }
+
+    // Check if user is admin using the standardized role system
+    const isAdmin = userData?.role === 'admin';
     
-    if (profileError || !isAdmin) {
-      console.error(`Access denied: User ${user.id} is not an admin`);
+    if (!isAdmin) {
+      console.error(`Access denied: User ${user.id} has role '${userData?.role}', not 'admin'`);
       return new Response(JSON.stringify({
         success: false,
         error: "Administrative privileges required"
@@ -94,55 +108,50 @@ serve(async (req) => {
 
     console.log(`Admin user ${user.id} attempting to delete user ${user_id}`);
 
-    // Clean up user references first
-    const { data: cleanupResult, error: cleanupError } = await supabase.rpc("delete_user_references", {
-      target_user_id: user_id,
-    });
+    // Verify the target user exists before attempting deletion
+    const { data: targetUser, error: targetUserError } = await supabase
+      .from('users')
+      .select('id, role')
+      .eq('id', user_id)
+      .single();
 
-    if (cleanupError) {
-      console.error("Cleanup Error:", cleanupError);
-      return new Response(JSON.stringify({ 
-        success: false, 
-        error: `Cleanup failed: ${cleanupError.message}` 
-      }), { 
-        status: 500,
+    if (targetUserError || !targetUser) {
+      console.error(`Target user not found: ${targetUserError?.message}`);
+      return new Response(JSON.stringify({
+        success: false,
+        error: "User not found"
+      }), {
+        status: 404,
         headers: { ...corsHeaders, "Content-Type": "application/json" }
       });
     }
 
-    // Delete user from auth
-    const { error: deleteError } = await supabase.auth.admin.deleteUser(user_id);
+    console.log(`Target user ${user_id} has role: ${targetUser.role}`);
 
-    if (deleteError) {
-      console.error("Auth deletion error:", deleteError);
-      return new Response(JSON.stringify({ 
-        success: false, 
-        error: `Auth deletion failed: ${deleteError.message}` 
-      }), { 
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" }
-      });
-    }
+    // Clean up user references first - this needs to handle the new role system
+    try {
+      // Manual cleanup since the RPC might not exist or be updated
+      const cleanupPromises = [];
 
-    console.log(`Successfully deleted user ${user_id}. Cleanup result:`, cleanupResult);
+      // Clean up user_profiles
+      cleanupPromises.push(
+        supabase.from('user_profiles').delete().eq('user_id', user_id)
+      );
 
-    return new Response(JSON.stringify({ 
-      success: true, 
-      message: "User successfully deleted",
-      cleanup_result: cleanupResult 
-    }), { 
-      status: 200,
-      headers: { ...corsHeaders, "Content-Type": "application/json" }
-    });
+      // Clean up role-specific tables based on user's role
+      if (targetUser.role === 'realtor') {
+        cleanupPromises.push(
+          supabase.from('realtors').delete().eq('user_id', user_id)
+        );
+      } else if (targetUser.role === 'mortgage_professional') {
+        cleanupPromises.push(
+          supabase.from('mortgage_professionals').delete().eq('user_id', user_id)
+        );
+      }
 
-  } catch (err) {
-    console.error("Unexpected error:", err);
-    return new Response(JSON.stringify({ 
-      success: false, 
-      error: err.message || "Unknown error" 
-    }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" }
-    });
-  }
-});
+      // Add other cleanup operations as needed
+      // cleanupPromises.push(
+      //   supabase.from('user_preferences').delete().eq('user_id', user_id)
+      // );
+      // cleanupPromises.push(
+      //   supabase.from('user_sessions').delete().eq('user_id
