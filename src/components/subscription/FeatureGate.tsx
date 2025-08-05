@@ -42,30 +42,40 @@ export const FeatureGate: React.FC<FeatureGateProps> = ({
         return;
       }
 
-      // For now, check features based on plan type since RPC functions need types update
+      // Get user's current subscription plan
       const { data: profile } = await supabase
         .from('user_profiles')
-        .select('user_type')
+        .select(`
+          current_plan_id,
+          subscription_plans!current_plan_id (
+            id,
+            name,
+            display_name
+          )
+        `)
         .eq('user_id', user.id)
         .single();
 
-      // Temporary feature mapping based on user type until database types are updated
-      const featureAccess: Record<string, string[]> = {
-        'admin': ['api_access', 'crm_integrations', 'iframe_embed', 'white_label', 'ai_lead_scoring', 'custom_reports', 'multi_user'],
-        'realtor': ['crm_integrations', 'iframe_embed', 'ai_lead_scoring', 'custom_reports', 'multi_user'],
-        'mortgage_professional': ['crm_integrations', 'iframe_embed', 'ai_lead_scoring', 'custom_reports', 'multi_user'],
-        'client': []
-      };
+      if (!profile?.current_plan_id) {
+        setAccess({ hasFeature: false });
+        return;
+      }
 
-      const userType = profile?.user_type || 'client';
-      const allowedFeatures = featureAccess[userType] || [];
-      const hasFeature = allowedFeatures.includes(feature);
+      // Get plan features for the user's current plan
+      const { data: planFeatures } = await supabase
+        .from('plan_features')
+        .select('feature_name, is_enabled')
+        .eq('plan_id', profile.current_plan_id);
 
+      // Check if user has the requested feature
+      const featureData = planFeatures?.find(f => f.feature_name === feature);
+      const hasFeature = featureData?.is_enabled || false;
+
+      const plan = profile.subscription_plans as any;
       setAccess({
         hasFeature,
-        planName: userType,
-        planDisplayName: userType === 'admin' ? 'Enterprise' : 
-                        userType === 'realtor' || userType === 'mortgage_professional' ? 'Professional' : 'Basic'
+        planName: plan?.name,
+        planDisplayName: plan?.display_name
       });
 
     } catch (error) {
@@ -110,7 +120,7 @@ export const FeatureGate: React.FC<FeatureGateProps> = ({
             )}
           </div>
         </div>
-        <Button size="sm" variant="outline" className="ml-4">
+        <Button size="sm" variant="outline" className="ml-4" onClick={() => window.location.href = '/pricing'}>
           <ArrowUp className="h-3 w-3 mr-1" />
           Upgrade Plan
         </Button>
@@ -133,23 +143,27 @@ export const useFeatureAccess = (feature: string) => {
           return;
         }
 
-        // Temporary feature check until database types are updated
+        // Get user's current subscription plan and features
         const { data: profile } = await supabase
           .from('user_profiles')
-          .select('user_type')
+          .select('current_plan_id')
           .eq('user_id', user.id)
           .single();
 
-        const featureAccess: Record<string, string[]> = {
-          'admin': ['api_access', 'crm_integrations', 'iframe_embed', 'white_label', 'ai_lead_scoring', 'custom_reports', 'multi_user'],
-          'realtor': ['crm_integrations', 'iframe_embed', 'ai_lead_scoring', 'custom_reports', 'multi_user'],
-          'mortgage_professional': ['crm_integrations', 'iframe_embed', 'ai_lead_scoring', 'custom_reports', 'multi_user'],
-          'client': []
-        };
+        if (!profile?.current_plan_id) {
+          setHasAccess(false);
+          return;
+        }
 
-        const userType = profile?.user_type || 'client';
-        const allowedFeatures = featureAccess[userType] || [];
-        setHasAccess(allowedFeatures.includes(feature));
+        // Get plan features for the user's current plan
+        const { data: planFeatures } = await supabase
+          .from('plan_features')
+          .select('feature_name, is_enabled')
+          .eq('plan_id', profile.current_plan_id);
+
+        // Check if user has the requested feature
+        const featureData = planFeatures?.find(f => f.feature_name === feature);
+        setHasAccess(featureData?.is_enabled || false);
       } catch (error) {
         console.error('Error checking feature access:', error);
         setHasAccess(false);
@@ -178,23 +192,27 @@ export const useResourceLimit = (resourceType: string) => {
           return;
         }
 
-        // Temporary limit check until database types are updated
+        // Get user's current subscription plan and limits
         const { data: profile } = await supabase
           .from('user_profiles')
-          .select('user_type')
+          .select('current_plan_id')
           .eq('user_id', user.id)
           .single();
 
-        const defaultLimits: Record<string, Record<string, number>> = {
-          'admin': { 'team_members': 25, 'clients': 500, 'marketing_campaigns': 100, 'searches_per_month': -1 },
-          'realtor': { 'team_members': 5, 'clients': 50, 'marketing_campaigns': 10, 'searches_per_month': 500 },
-          'mortgage_professional': { 'team_members': 5, 'clients': 50, 'marketing_campaigns': 10, 'searches_per_month': 500 },
-          'client': { 'team_members': 1, 'clients': 5, 'marketing_campaigns': 0, 'searches_per_month': 10 }
-        };
+        if (!profile?.current_plan_id) {
+          setLimit(0);
+          return;
+        }
 
-        const userType = profile?.user_type || 'client';
-        const userLimits = defaultLimits[userType] || defaultLimits['client'];
-        setLimit(userLimits[resourceType] || 0);
+        // Get plan limits for the user's current plan
+        const { data: planLimits } = await supabase
+          .from('plan_limits')
+          .select('resource_type, limit_value')
+          .eq('plan_id', profile.current_plan_id);
+
+        // Find the specific resource limit
+        const limitData = planLimits?.find(l => l.resource_type === resourceType);
+        setLimit(limitData?.limit_value || 0);
       } catch (error) {
         console.error('Error checking resource limit:', error);
         setLimit(0);

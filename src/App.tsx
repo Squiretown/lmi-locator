@@ -14,6 +14,7 @@ import { EdgeFunctionTest } from "./components/EdgeFunctionTest";
 import ProductPage from "./pages/ProductPage";
 import ResourcesPage from "./pages/ResourcesPage";
 import PricingPage from "./pages/PricingPage";
+import SubscriptionPage from "./pages/SubscriptionPage";
 import CustomersPage from "./pages/CustomersPage";
 import BlogPage from "./pages/BlogPage";
 import ContactPage from "./pages/ContactPage";
@@ -80,6 +81,11 @@ const App = () => (
             <Route path="/product" element={<ProductPage />} />
             <Route path="/resources" element={<ResourcesPage />} />
             <Route path="/pricing" element={<PricingPage />} />
+            <Route path="/subscription" element={
+              <ProtectedRoute>
+                <SubscriptionPage />
+              </ProtectedRoute>
+            } />
             <Route path="/customers" element={<CustomersPage />} />
             <Route path="/blog" element={<BlogPage />} />
             <Route path="/contact" element={<ContactPage />} />
