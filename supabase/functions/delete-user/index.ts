@@ -96,7 +96,7 @@ serve(async (req) => {
 
     // Clean up user references first
     const { data: cleanupResult, error: cleanupError } = await supabase.rpc("delete_user_references", {
-      user_id: user_id,
+      target_user_id: user_id,
     });
 
     if (cleanupError) {
