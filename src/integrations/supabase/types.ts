@@ -3453,7 +3453,7 @@ export type Database = {
         Returns: undefined
       }
       delete_user_references: {
-        Args: { p_target_user_id: string }
+        Args: { target_user_id: string }
         Returns: Json
       }
       diagnose_user_data: {

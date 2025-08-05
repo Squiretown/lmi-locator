@@ -132,7 +132,7 @@ serve(async (req) => {
       console.log(`Calling delete_user_references for user: ${user_id}`);
       
       const { data: cleanupResult, error: cleanupError } = await supabase
-        .rpc('delete_user_references', { p_target_user_id: user_id });
+        .rpc('delete_user_references', { target_user_id: user_id });
 
       if (cleanupError) {
         console.error(`Cleanup Error: ${JSON.stringify(cleanupError)}`);
