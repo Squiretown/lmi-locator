@@ -62,12 +62,12 @@ serve(async (req) => {
       });
     }
 
-    // Check if user is admin using the NEW role system
-    // First check the users table for the role field
+    // Check if user is admin using the correct role system
+    // Check the user_profiles table for the user_type field
     const { data: userData, error: userRoleError } = await supabase
-      .from('users')
-      .select('role')
-      .eq('id', user.id)
+      .from('user_profiles')
+      .select('user_type')
+      .eq('user_id', user.id)
       .single();
     
     if (userRoleError) {
@@ -82,10 +82,10 @@ serve(async (req) => {
     }
 
     // Check if user is admin using the standardized role system
-    const isAdmin = userData?.role === 'admin';
+    const isAdmin = userData?.user_type === 'admin';
     
     if (!isAdmin) {
-      console.error(`Access denied: User ${user.id} has role '${userData?.role}', not 'admin'`);
+      console.error(`Access denied: User ${user.id} has user_type '${userData?.user_type}', not 'admin'`);
       return new Response(JSON.stringify({
         success: false,
         error: "Administrative privileges required"
@@ -108,15 +108,15 @@ serve(async (req) => {
 
     console.log(`Admin user ${user.id} attempting to delete user ${user_id}`);
 
-    // Verify the target user exists before attempting deletion
-    const { data: targetUser, error: targetUserError } = await supabase
-      .from('users')
-      .select('id, role')
-      .eq('id', user_id)
+    // Verify the target user exists and get their role
+    const { data: targetUserProfile, error: targetUserError } = await supabase
+      .from('user_profiles')
+      .select('user_id, user_type')
+      .eq('user_id', user_id)
       .single();
 
-    if (targetUserError || !targetUser) {
-      console.error(`Target user not found: ${targetUserError?.message}`);
+    if (targetUserError || !targetUserProfile) {
+      console.error(`Target user profile not found: ${targetUserError?.message}`);
       return new Response(JSON.stringify({
         success: false,
         error: "User not found"
@@ -126,7 +126,7 @@ serve(async (req) => {
       });
     }
 
-    console.log(`Target user ${user_id} has role: ${targetUser.role}`);
+    console.log(`Target user ${user_id} has user_type: ${targetUserProfile.user_type}`);
 
     // Clean up user references first - this needs to handle the new role system
     try {
@@ -138,12 +138,12 @@ serve(async (req) => {
         supabase.from('user_profiles').delete().eq('user_id', user_id)
       );
 
-      // Clean up role-specific tables based on user's role
-      if (targetUser.role === 'realtor') {
+      // Clean up role-specific tables based on user's user_type
+      if (targetUserProfile.user_type === 'realtor') {
         cleanupPromises.push(
           supabase.from('realtors').delete().eq('user_id', user_id)
         );
-      } else if (targetUser.role === 'mortgage_professional') {
+      } else if (targetUserProfile.user_type === 'mortgage_professional') {
         cleanupPromises.push(
           supabase.from('mortgage_professionals').delete().eq('user_id', user_id)
         );
