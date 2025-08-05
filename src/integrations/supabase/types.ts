@@ -396,6 +396,53 @@ export type Database = {
         }
         Relationships: []
       }
+      billing_history: {
+        Row: {
+          amount: number
+          billing_period_end: string | null
+          billing_period_start: string | null
+          created_at: string
+          currency: string
+          id: string
+          plan_id: string | null
+          status: string
+          stripe_payment_intent_id: string | null
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          billing_period_end?: string | null
+          billing_period_start?: string | null
+          created_at?: string
+          currency?: string
+          id?: string
+          plan_id?: string | null
+          status: string
+          stripe_payment_intent_id?: string | null
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          billing_period_end?: string | null
+          billing_period_start?: string | null
+          created_at?: string
+          currency?: string
+          id?: string
+          plan_id?: string | null
+          status?: string
+          stripe_payment_intent_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "billing_history_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "subscription_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       blog_posts: {
         Row: {
           author: string
@@ -1829,6 +1876,73 @@ export type Database = {
         }
         Relationships: []
       }
+      plan_features: {
+        Row: {
+          created_at: string
+          feature_name: string
+          feature_value: string | null
+          id: string
+          is_enabled: boolean
+          plan_id: string
+        }
+        Insert: {
+          created_at?: string
+          feature_name: string
+          feature_value?: string | null
+          id?: string
+          is_enabled?: boolean
+          plan_id: string
+        }
+        Update: {
+          created_at?: string
+          feature_name?: string
+          feature_value?: string | null
+          id?: string
+          is_enabled?: boolean
+          plan_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plan_features_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "subscription_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      plan_limits: {
+        Row: {
+          created_at: string
+          id: string
+          limit_value: number
+          plan_id: string
+          resource_type: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          limit_value: number
+          plan_id: string
+          resource_type: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          limit_value?: number
+          plan_id?: string
+          resource_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plan_limits_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "subscription_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       professional_leads: {
         Row: {
           client_name: string
@@ -2698,6 +2812,135 @@ export type Database = {
         }
         Relationships: []
       }
+      subscribers: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          stripe_customer_id: string | null
+          subscribed: boolean
+          subscription_end: string | null
+          subscription_tier: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          stripe_customer_id?: string | null
+          subscribed?: boolean
+          subscription_end?: string | null
+          subscription_tier?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          stripe_customer_id?: string | null
+          subscribed?: boolean
+          subscription_end?: string | null
+          subscription_tier?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      subscription_changes: {
+        Row: {
+          change_type: string
+          created_at: string
+          effective_date: string
+          from_plan_id: string | null
+          id: string
+          reason: string | null
+          to_plan_id: string | null
+          user_id: string
+        }
+        Insert: {
+          change_type: string
+          created_at?: string
+          effective_date: string
+          from_plan_id?: string | null
+          id?: string
+          reason?: string | null
+          to_plan_id?: string | null
+          user_id: string
+        }
+        Update: {
+          change_type?: string
+          created_at?: string
+          effective_date?: string
+          from_plan_id?: string | null
+          id?: string
+          reason?: string | null
+          to_plan_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscription_changes_from_plan_id_fkey"
+            columns: ["from_plan_id"]
+            isOneToOne: false
+            referencedRelation: "subscription_plans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subscription_changes_to_plan_id_fkey"
+            columns: ["to_plan_id"]
+            isOneToOne: false
+            referencedRelation: "subscription_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      subscription_plans: {
+        Row: {
+          billing_period: string
+          created_at: string
+          description: string | null
+          display_name: string
+          features: string[]
+          id: string
+          is_active: boolean
+          is_popular: boolean
+          name: string
+          price: number
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          billing_period: string
+          created_at?: string
+          description?: string | null
+          display_name: string
+          features?: string[]
+          id?: string
+          is_active?: boolean
+          is_popular?: boolean
+          name: string
+          price: number
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          billing_period?: string
+          created_at?: string
+          description?: string | null
+          display_name?: string
+          features?: string[]
+          id?: string
+          is_active?: boolean
+          is_popular?: boolean
+          name?: string
+          price?: number
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       system_settings: {
         Row: {
           created_at: string
@@ -2987,6 +3230,7 @@ export type Database = {
           company_address: string | null
           company_name: string | null
           company_website: string | null
+          current_plan_id: string | null
           id: string
           job_title: string | null
           license_number: string | null
@@ -3018,6 +3262,7 @@ export type Database = {
           company_address?: string | null
           company_name?: string | null
           company_website?: string | null
+          current_plan_id?: string | null
           id?: string
           job_title?: string | null
           license_number?: string | null
@@ -3049,6 +3294,7 @@ export type Database = {
           company_address?: string | null
           company_name?: string | null
           company_website?: string | null
+          current_plan_id?: string | null
           id?: string
           job_title?: string | null
           license_number?: string | null
@@ -3072,7 +3318,15 @@ export type Database = {
           website?: string | null
           zip_code?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "user_profiles_current_plan_id_fkey"
+            columns: ["current_plan_id"]
+            isOneToOne: false
+            referencedRelation: "subscription_plans"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_role_audit: {
         Row: {
