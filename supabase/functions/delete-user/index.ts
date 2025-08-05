@@ -61,10 +61,16 @@ serve(async (req) => {
       });
     }
 
-    // Check if user is admin using database query
-    const { data: isAdmin, error: adminError } = await supabase.rpc('user_is_admin');
+    // Check if user is admin using database query with proper user context
+    const { data: userProfile, error: profileError } = await supabase
+      .from('user_profiles')
+      .select('user_type')
+      .eq('user_id', user.id)
+      .single();
     
-    if (adminError || !isAdmin) {
+    const isAdmin = userProfile?.user_type === 'admin' || user.user_metadata?.user_type === 'admin';
+    
+    if (profileError || !isAdmin) {
       console.error(`Access denied: User ${user.id} is not an admin`);
       return new Response(JSON.stringify({
         success: false,
