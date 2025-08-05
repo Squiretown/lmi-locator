@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.192.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
@@ -128,30 +127,69 @@ serve(async (req) => {
 
     console.log(`Target user ${user_id} has user_type: ${targetUserProfile.user_type}`);
 
-    // Clean up user references first - this needs to handle the new role system
+    // Clean up user references first using the database function
     try {
-      // Manual cleanup since the RPC might not exist or be updated
-      const cleanupPromises = [];
+      console.log(`Calling delete_user_references for user: ${user_id}`);
+      
+      const { data: cleanupResult, error: cleanupError } = await supabase
+        .rpc('delete_user_references', { target_user_id: user_id });
 
-      // Clean up user_profiles
-      cleanupPromises.push(
-        supabase.from('user_profiles').delete().eq('user_id', user_id)
-      );
-
-      // Clean up role-specific tables based on user's user_type
-      if (targetUserProfile.user_type === 'realtor') {
-        cleanupPromises.push(
-          supabase.from('realtors').delete().eq('user_id', user_id)
-        );
-      } else if (targetUserProfile.user_type === 'mortgage_professional') {
-        cleanupPromises.push(
-          supabase.from('mortgage_professionals').delete().eq('user_id', user_id)
-        );
+      if (cleanupError) {
+        console.error(`Cleanup Error: ${JSON.stringify(cleanupError)}`);
+        return new Response(JSON.stringify({
+          success: false,
+          error: `Failed to clean up user data: ${cleanupError.message}`
+        }), {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" }
+        });
       }
 
-      // Add other cleanup operations as needed
-      // cleanupPromises.push(
-      //   supabase.from('user_preferences').delete().eq('user_id', user_id)
-      // );
-      // cleanupPromises.push(
-      //   supabase.from('user_sessions').delete().eq('user_id
+      console.log(`Cleanup completed successfully:`, cleanupResult);
+
+      // Now delete the user from auth.users
+      const { error: deleteError } = await supabase.auth.admin.deleteUser(user_id);
+
+      if (deleteError) {
+        console.error(`Failed to delete user from auth: ${deleteError.message}`);
+        return new Response(JSON.stringify({
+          success: false,
+          error: `Failed to delete user from authentication: ${deleteError.message}`
+        }), {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" }
+        });
+      }
+
+      console.log(`Successfully deleted user ${user_id} and all associated data`);
+      
+      return new Response(JSON.stringify({
+        success: true,
+        message: "User and all associated data deleted successfully",
+        cleanup_summary: cleanupResult
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" }
+      });
+
+    } catch (err) {
+      console.error(`Exception during user deletion: ${err}`);
+      return new Response(JSON.stringify({
+        success: false,
+        error: `Unexpected error during deletion: ${err instanceof Error ? err.message : 'Unknown error'}`
+      }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" }
+      });
+    }
+
+  } catch (err) {
+    console.error("Global error in delete-user function:", err);
+    return new Response(JSON.stringify({
+      success: false,
+      error: `Server error: ${err instanceof Error ? err.message : 'Unknown error'}`
+    }), {
+      status: 500,
+      headers: { ...corsHeaders, "Content-Type": "application/json" }
+    });
+  }
+});
