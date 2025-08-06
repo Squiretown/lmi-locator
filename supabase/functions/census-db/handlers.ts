@@ -166,6 +166,29 @@ async function handleSearchByAddress(supabase: SupabaseClient, params: any) {
   }
 }
 
+// State abbreviation to FIPS code mapping
+const STATE_CODES = {
+  'AL': '01', 'AK': '02', 'AZ': '04', 'AR': '05', 'CA': '06', 'CO': '08', 'CT': '09', 'DE': '10',
+  'FL': '12', 'GA': '13', 'HI': '15', 'ID': '16', 'IL': '17', 'IN': '18', 'IA': '19', 'KS': '20',
+  'KY': '21', 'LA': '22', 'ME': '23', 'MD': '24', 'MA': '25', 'MI': '26', 'MN': '27', 'MS': '28',
+  'MO': '29', 'MT': '30', 'NE': '31', 'NV': '32', 'NH': '33', 'NJ': '34', 'NM': '35', 'NY': '36',
+  'NC': '37', 'ND': '38', 'OH': '39', 'OK': '40', 'OR': '41', 'PA': '42', 'RI': '44', 'SC': '45',
+  'SD': '46', 'TN': '47', 'TX': '48', 'UT': '49', 'VT': '50', 'VA': '51', 'WA': '53', 'WV': '54',
+  'WI': '55', 'WY': '56', 'DC': '11', 'PR': '72'
+};
+
+// County name to FIPS code mapping for NY (Suffolk = 103)
+const NY_COUNTY_CODES = {
+  'SUFFOLK': '103',
+  'NASSAU': '059',
+  'WESTCHESTER': '119',
+  'KINGS': '047',
+  'QUEENS': '081',
+  'NEW YORK': '061',
+  'BRONX': '005',
+  'RICHMOND': '085'
+};
+
 // Handle batch search for census tracts
 async function handleSearchBatch(supabase: SupabaseClient, params: any) {
   try {
@@ -178,8 +201,8 @@ async function handleSearchBatch(supabase: SupabaseClient, params: any) {
       .from('census_tracts')
       .select(`
         tract_id,
-        state,
-        county,
+        state_code,
+        county_code,
         tract_name,
         income_level,
         ami_percentage,
@@ -203,14 +226,33 @@ async function handleSearchBatch(supabase: SupabaseClient, params: any) {
       // Direct tract ID search
       query = query.eq('tract_id', tractId.trim());
     } else if (state && county) {
-      // State + county search
-      query = query.eq('state', state.toUpperCase()).eq('county', county);
+      // State + county search - convert state abbreviation to FIPS code
+      const stateCode = STATE_CODES[state.toUpperCase()];
+      if (!stateCode) {
+        throw new Error(`Invalid state abbreviation: ${state}`);
+      }
+      
+      // Convert county name to code (simplified for NY, extend as needed)
+      let countyCode = null;
+      if (stateCode === '36') { // NY
+        countyCode = NY_COUNTY_CODES[county.toUpperCase()];
+      }
+      
+      if (countyCode) {
+        query = query.eq('state_code', stateCode).eq('county_code', countyCode);
+      } else {
+        // Fallback: search all counties and hope we have readable county names somewhere
+        throw new Error(`County code mapping not available for ${county} in ${state}`);
+      }
     } else if (state) {
-      // State-only search (limit to avoid too many results)
-      query = query.eq('state', state.toUpperCase()).limit(500);
+      // State-only search - convert state abbreviation to FIPS code
+      const stateCode = STATE_CODES[state.toUpperCase()];
+      if (!stateCode) {
+        throw new Error(`Invalid state abbreviation: ${state}`);
+      }
+      query = query.eq('state_code', stateCode).limit(500);
     } else if (zipCode) {
       // For ZIP code search, we need to use geographic lookup
-      // This is a simplified approach - in production you'd use proper geocoding
       console.log(`ZIP code search not fully implemented yet: ${zipCode}`);
       return {
         success: false,
@@ -242,8 +284,8 @@ async function handleSearchBatch(supabase: SupabaseClient, params: any) {
       propertyCount: tract.total_households || 0,
       geometry: tract.geometry || null,
       tractName: tract.tract_name,
-      state: tract.state,
-      county: tract.county,
+      state: tract.state_code,
+      county: tract.county_code,
       population: tract.tract_population,
       minorityPercentage: tract.minority_population_pct,
       ownerOccupiedUnits: tract.owner_occupied_units,
@@ -301,8 +343,8 @@ async function handleSearchTracts(supabase: SupabaseClient, params: any) {
       .from('census_tracts')
       .select(`
         tract_id,
-        state,
-        county,
+        state_code,
+        county_code,
         tract_name,
         income_level,
         ami_percentage,
@@ -321,14 +363,27 @@ async function handleSearchTracts(supabase: SupabaseClient, params: any) {
         break;
       case 'county':
         if (state) {
-          query = query.eq('state', state.toUpperCase()).ilike('county', `%${searchValue}%`);
+          const stateCode = STATE_CODES[state.toUpperCase()];
+          if (!stateCode) {
+            throw new Error(`Invalid state abbreviation: ${state}`);
+          }
+          // For county search, try to match county code if available
+          if (stateCode === '36') { // NY
+            const countyCode = NY_COUNTY_CODES[searchValue.toUpperCase()];
+            if (countyCode) {
+              query = query.eq('state_code', stateCode).eq('county_code', countyCode);
+            } else {
+              throw new Error(`County code mapping not available for ${searchValue} in ${state}`);
+            }
+          } else {
+            throw new Error(`County search not implemented for state: ${state}`);
+          }
         } else {
-          query = query.ilike('county', `%${searchValue}%`);
+          throw new Error("State is required for county search");
         }
         break;
       case 'zip':
         // ZIP code search would require geocoding service
-        // For now, return error message
         throw new Error("ZIP code search requires external geocoding service");
       default:
         throw new Error(`Unsupported search type: ${searchType}`);
@@ -346,8 +401,8 @@ async function handleSearchTracts(supabase: SupabaseClient, params: any) {
     // Transform and return results
     const results = (tracts || []).map(tract => ({
       tract_id: tract.tract_id,
-      state: tract.state,
-      county: tract.county,
+      state: tract.state_code,
+      county: tract.county_code,
       tract_name: tract.tract_name,
       income_level: tract.income_level,
       ami_percentage: tract.ami_percentage,
