@@ -21,8 +21,7 @@ export const createProfessional = async (professional: ProfessionalFormValues): 
     // Prepare the professional data
     const professionalData = {
       user_id: user.id,
-      type: professional.type,
-      professional_type: professional.type,
+      professional_type: professional.professionalType,
       name: professional.name,
       company: professional.company,
       license_number: professional.licenseNumber,

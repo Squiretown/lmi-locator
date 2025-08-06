@@ -12,7 +12,7 @@ import { toast } from 'sonner';
 interface TeamMember {
   id: string;
   name: string;
-  type: string;
+  professional_type: string;
   company: string;
   photo_url?: string;
   isAccountOwner?: boolean;
@@ -43,7 +43,7 @@ export const TeamVisibilityManager: React.FC = () => {
   const handleEditStart = (member: TeamMember) => {
     setEditingMember(member.id);
     setEditData({
-      role: member.visibility_settings.showcase_role || member.type,
+      role: member.visibility_settings.showcase_role || member.professional_type,
       description: member.visibility_settings.showcase_description || ''
     });
   };
@@ -167,7 +167,7 @@ export const TeamVisibilityManager: React.FC = () => {
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="font-medium">
-                          {member.visibility_settings.showcase_role || member.type}
+                          {member.visibility_settings.showcase_role || member.professional_type}
                         </p>
                         {member.visibility_settings.showcase_description && (
                           <p className="text-sm text-muted-foreground">

@@ -1,11 +1,11 @@
 
-export type ProfessionalType = 'realtor' | 'mortgage_broker';
+export type ProfessionalType = 'realtor' | 'mortgage_professional';
 export type ProfessionalStatus = 'active' | 'pending' | 'inactive';
 
 export interface ProfessionalDTO {
   id: string;
   user_id: string;
-  type: string;
+  professional_type: string;
   name: string;
   company: string;
   license_number: string;
@@ -26,7 +26,7 @@ export interface ProfessionalDTO {
 export interface Professional {
   id: string;
   userId: string;
-  type: ProfessionalType;
+  professionalType: ProfessionalType;
   name: string;
   company: string;
   licenseNumber: string;

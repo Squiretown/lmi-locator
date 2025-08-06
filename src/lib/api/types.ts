@@ -4,7 +4,7 @@
 export interface Professional {
   id: string;
   userId: string;
-  type: 'realtor' | 'mortgage_broker';
+  professionalType: 'realtor' | 'mortgage_professional';
   name: string;
   company: string;
   licenseNumber: string;
@@ -25,7 +25,7 @@ export interface Professional {
 
 export interface ProfessionalFormValues {
   name: string;
-  type: 'realtor' | 'mortgage_broker';
+  professionalType: 'realtor' | 'mortgage_professional';
   company: string;
   licenseNumber: string;
   phone?: string;

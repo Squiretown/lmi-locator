@@ -4,11 +4,11 @@ import { ProfessionalTable } from '../database-types';
 import { Professional } from '../types';
 import { transformProfessional } from '../utils/transformers';
 
-export const fetchProfessionals = async (type?: 'realtor' | 'mortgage_broker'): Promise<Professional[]> => {
+export const fetchProfessionals = async (type?: 'realtor' | 'mortgage_professional'): Promise<Professional[]> => {
   let query = supabase.from('professionals').select();
   
   if (type) {
-    query = query.eq('type', type);
+    query = query.eq('professional_type', type);
   }
   
   const { data, error } = await query.order('created_at', { ascending: false });
@@ -40,7 +40,7 @@ export const fetchProfessionalById = async (id: string): Promise<Professional | 
   return transformProfessional(data as ProfessionalTable);
 };
 
-export const getProfessionalByUserId = async (type?: 'realtor' | 'mortgage_broker'): Promise<Professional | null> => {
+export const getProfessionalByUserId = async (type?: 'realtor' | 'mortgage_professional'): Promise<Professional | null> => {
   try {
     // Get the current user
     const { data: { user }, error: userError } = await supabase.auth.getUser();
@@ -56,7 +56,7 @@ export const getProfessionalByUserId = async (type?: 'realtor' | 'mortgage_broke
     query = query.eq('user_id', user.id);
     
     if (type) {
-      query = query.eq('type', type);
+      query = query.eq('professional_type', type);
     }
 
     const { data, error } = await query.single();

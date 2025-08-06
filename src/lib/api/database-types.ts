@@ -43,11 +43,11 @@ export interface StandardMortgageProfessionalTable {
   last_updated: string;
 }
 
-// Legacy table (kept for backward compatibility during transition)
+// Updated table with professional_type field
 export interface ProfessionalTable {
   id: string;
   user_id: string;
-  type: 'realtor' | 'mortgage_broker';
+  professional_type: 'realtor' | 'mortgage_professional';
   name: string;
   company: string;
   license_number: string;

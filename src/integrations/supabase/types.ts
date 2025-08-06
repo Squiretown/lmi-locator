@@ -2013,7 +2013,6 @@ export type Database = {
           professional_type: string
           social_media: Json | null
           status: string
-          type: string
           user_id: string
           visibility_settings: Json | null
           website: string | null
@@ -2035,7 +2034,6 @@ export type Database = {
           professional_type: string
           social_media?: Json | null
           status?: string
-          type: string
           user_id: string
           visibility_settings?: Json | null
           website?: string | null
@@ -2057,7 +2055,6 @@ export type Database = {
           professional_type?: string
           social_media?: Json | null
           status?: string
-          type?: string
           user_id?: string
           visibility_settings?: Json | null
           website?: string | null

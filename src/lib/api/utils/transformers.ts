@@ -14,7 +14,7 @@ import {
 export const transformProfessional = (item: ProfessionalTable): Professional => ({
   id: item.id,
   userId: item.user_id,
-  type: item.type,
+  professionalType: item.professional_type,
   name: item.name,
   company: item.company,
   licenseNumber: item.license_number,

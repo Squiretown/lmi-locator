@@ -9,7 +9,7 @@ interface LendingTeamMember {
   company: string;
   phone?: string;
   user_id: string;
-  type: string;
+  professional_type: string;
   status: string;
   created_at: string;
   isAccountOwner?: boolean;
@@ -50,7 +50,7 @@ export const useMortgageTeamManagement = () => {
         .from('professionals')
         .select('*')
         .eq('user_id', user.id)
-        .eq('type', 'mortgage_professional')
+        .eq('professional_type', 'mortgage_professional')
         .single();
 
       if (!currentProfessional) return [];
@@ -59,7 +59,7 @@ export const useMortgageTeamManagement = () => {
       const { data: teamMembers, error } = await supabase
         .from('professionals')
         .select('*')
-        .eq('type', 'mortgage_professional')
+        .eq('professional_type', 'mortgage_professional')
         .eq('company', currentProfessional.company)
         .eq('status', 'active')
         .order('name');
@@ -94,7 +94,7 @@ export const useMortgageTeamManagement = () => {
         .from('professionals')
         .select('id')
         .eq('user_id', user.id)
-        .eq('type', 'mortgage_professional')
+        .eq('professional_type', 'mortgage_professional')
         .single();
 
       if (!currentProfessional) return [];
@@ -267,7 +267,7 @@ export const useMortgageTeamManagement = () => {
       company: partner.realtor!.company,
       phone: partner.realtor!.phone,
       user_id: '',
-      type: 'realtor',
+      professional_type: 'realtor',
       status: partner.status,
       created_at: partner.created_at,
       isAccountOwner: false,

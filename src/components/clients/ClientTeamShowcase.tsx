@@ -6,7 +6,7 @@ import { Mail, Phone, Globe } from 'lucide-react';
 interface TeamMember {
   id: string;
   name: string;
-  type: string;
+  professional_type: string;
   company: string;
   email?: string;
   phone?: string;
@@ -65,7 +65,7 @@ export const ClientTeamShowcase: React.FC<ClientTeamShowcaseProps> = ({
                 <div className="flex-1 min-w-0">
                   <h4 className="font-semibold text-foreground">{member.name}</h4>
                   <p className="text-sm font-medium text-primary">
-                    {member.visibility_settings.showcase_role || member.type}
+                    {member.visibility_settings.showcase_role || member.professional_type}
                   </p>
                   <p className="text-sm text-muted-foreground">{member.company}</p>
                 </div>
@@ -79,7 +79,7 @@ export const ClientTeamShowcase: React.FC<ClientTeamShowcaseProps> = ({
 
               <div className="flex flex-wrap gap-2">
                 <Badge variant="secondary" className="text-xs">
-                  {member.type === 'mortgage_professional' ? 'Mortgage Professional' : 'Realtor'}
+                  {member.professional_type === 'mortgage_professional' ? 'Mortgage Professional' : 'Realtor'}
                 </Badge>
               </div>
 
