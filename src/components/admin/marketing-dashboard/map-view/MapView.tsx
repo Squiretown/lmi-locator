@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import MapContainer, { MapRef } from './MapContainer';
 import TractInfoPanel from './TractInfoPanel';
 import MapSidebar from './components/MapSidebar';
+import { GeometryUpdatePanel } from './components/GeometryUpdatePanel';
 import { useTractSearch } from './hooks';
 
 interface MapViewProps {
@@ -128,6 +129,13 @@ const MapView: React.FC<MapViewProps> = ({ onExportResults }) => {
           setSelectedTracts={setSelectedTracts}
           handleExport={handleExport}
         />
+        
+        {/* Geometry Update Panel - only show when collapsed */}
+        {sidebarCollapsed && (
+          <div className="p-4">
+            <GeometryUpdatePanel />
+          </div>
+        )}
       </div>
 
       {/* Main Content with Map and Button to toggle sidebar */}

@@ -36,8 +36,14 @@ export async function fetchRealData(params: SearchParams): Promise<{
     console.log('Real data response:', data);
     
     if (data && data.tracts && Array.isArray(data.tracts)) {
+      // Enhance tracts with mock geometry if missing
+      const enhancedTracts = data.tracts.map((tract: any) => ({
+        ...tract,
+        geometry: tract.geometry || generateMockGeometry(tract.centroid_lat, tract.centroid_lng)
+      }));
+
       return {
-        tracts: data.tracts,
+        tracts: enhancedTracts,
         stats: data.summary || {
           totalTracts: data.tracts.length,
           lmiTracts: data.tracts.filter((t: any) => t.isLmiEligible).length,
@@ -51,4 +57,21 @@ export async function fetchRealData(params: SearchParams): Promise<{
     console.error('Error fetching real data:', err);
     return null;
   }
+}
+
+function generateMockGeometry(lat: number, lng: number) {
+  if (!lat || !lng) return null;
+  
+  // Generate a small square around the centroid (roughly 0.01 degrees ~ 1km)
+  const offset = 0.005;
+  return {
+    type: 'Polygon',
+    coordinates: [[
+      [lng - offset, lat - offset],
+      [lng + offset, lat - offset],
+      [lng + offset, lat + offset],
+      [lng - offset, lat + offset],
+      [lng - offset, lat - offset]
+    ]]
+  };
 }
