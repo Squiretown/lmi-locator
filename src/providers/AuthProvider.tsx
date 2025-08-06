@@ -153,11 +153,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     
     try {
       // Validate and sanitize user type to prevent role escalation
-      const userType = metadata.user_type || 'client';
-      const validRoles = ['client', 'realtor', 'mortgage_professional'];
-      const sanitizedUserType = validRoles.includes(userType) ? userType : 'client';
+      // Only allow professional roles for direct signup
+      const userType = metadata.user_type || 'realtor';
+      const validDirectSignupRoles = ['realtor', 'mortgage_professional'];
+      const sanitizedUserType = validDirectSignupRoles.includes(userType) ? userType : 'realtor';
       
-      console.log('User type validation:', { userType, sanitizedUserType });
+      // Block client direct signup - clients must be invited
+      if (userType === 'client') {
+        throw new Error('Clients cannot sign up directly. Please contact a real estate professional to receive an invitation.');
+      }
+      
+      console.log('User type validation (professional only):', { userType, sanitizedUserType });
       
       // Prevent admin role assignment during signup
       if (userType === 'admin') {
@@ -223,16 +229,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       switch (provider) {
         case 'google':
-          result = await signInWithGoogle({ userType: options.userType || 'client' });
+          result = await signInWithGoogle({ userType: options.userType || 'realtor' });
           break;
         case 'github':
-          result = await signInWithGitHub({ userType: options.userType || 'client' });
+          result = await signInWithGitHub({ userType: options.userType || 'realtor' });
           break;
         case 'azure':
-          result = await signInWithMicrosoft({ userType: options.userType || 'client' });
+          result = await signInWithMicrosoft({ userType: options.userType || 'realtor' });
           break;
         case 'discord':
-          result = await signInWithDiscord({ userType: options.userType || 'client' });
+          result = await signInWithDiscord({ userType: options.userType || 'realtor' });
           break;
         default:
           throw new Error(`Unsupported OAuth provider: ${provider}`);

@@ -25,7 +25,7 @@ const SignupForm: React.FC = () => {
       lastName: '',
       email: '',
       password: '',
-      userRole: 'client',
+      userRole: 'realtor',
       referralCode: '',
       referredByType: 'none',
       referredByName: ''
@@ -175,7 +175,6 @@ const SignupForm: React.FC = () => {
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="client">Home Buyer / Client</SelectItem>
                     <SelectItem value="realtor">Realtor</SelectItem>
                     <SelectItem value="mortgage_professional">Mortgage Professional</SelectItem>
                   </SelectContent>
@@ -184,6 +183,14 @@ const SignupForm: React.FC = () => {
               </FormItem>
             )}
           />
+          
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mt-4">
+            <h4 className="text-sm font-medium text-blue-900 mb-2">Are you a home buyer or client?</h4>
+            <p className="text-sm text-blue-700">
+              Clients are invited by real estate professionals and don't sign up directly. 
+              Contact your realtor or mortgage professional to receive an invitation to access the platform.
+            </p>
+          </div>
 
           <div className="space-y-4 border-t pt-4">
             <h3 className="text-sm font-medium text-muted-foreground">Referral Information (Optional)</h3>

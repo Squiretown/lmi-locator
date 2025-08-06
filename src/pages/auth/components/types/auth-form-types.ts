@@ -28,7 +28,7 @@ export const signupFormSchema = z.object({
     .refine(val => passwordRegex.hasSpecialChar.test(val), {
       message: 'Password must include at least one special character'
     }),
-  userRole: z.enum(['client', 'realtor', 'mortgage_professional']),
+  userRole: z.enum(['realtor', 'mortgage_professional']),
   referralCode: z.string().optional(),
   referredByType: z.enum(['mortgage_professional', 'realtor', 'professional', 'none']).optional(),
   referredByName: z.string().optional()
