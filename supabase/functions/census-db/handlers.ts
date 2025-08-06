@@ -281,7 +281,7 @@ async function handleSearchBatch(supabase: SupabaseClient, params: any) {
       amiPercentage: tract.ami_percentage || 0,
       medianIncome: tract.median_income || 0,
       incomeCategory: tract.income_level || 'Unknown',
-      propertyCount: tract.total_households || 0,
+      propertyCount: tract.owner_occupied_units || 0,
       geometry: tract.geometry || null,
       tractName: tract.tract_name,
       state: tract.state_code,
@@ -297,7 +297,10 @@ async function handleSearchBatch(supabase: SupabaseClient, params: any) {
     // Calculate summary statistics
     const totalTracts = transformedTracts.length;
     const lmiTracts = transformedTracts.filter(t => t.isLmiEligible).length;
-    const propertyCount = transformedTracts.reduce((sum, t) => sum + (t.propertyCount || 0), 0);
+    // Only count properties in LMI eligible tracts for marketing purposes
+    const propertyCount = transformedTracts
+      .filter(t => t.isLmiEligible)
+      .reduce((sum, t) => sum + (t.propertyCount || 0), 0);
     const lmiPercentage = totalTracts > 0 ? Math.round((lmiTracts / totalTracts) * 100) : 0;
 
     const summary = {
