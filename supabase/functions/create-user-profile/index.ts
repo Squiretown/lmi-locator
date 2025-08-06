@@ -8,12 +8,7 @@ interface WebhookPayload {
   record: {
     id: string;
     email: string;
-    raw_user_meta_data: {
-      first_name?: string;
-      last_name?: string;
-      user_type?: string;
-      [key: string]: any;
-    };
+    raw_user_meta_data: string | null; // This comes as a JSON string from the database
     [key: string]: any;
   };
   schema: string;
@@ -64,15 +59,36 @@ serve(async (req) => {
       );
     }
     
+    // Parse metadata safely
+    let metadata: any = {};
+    try {
+      if (user.raw_user_meta_data && typeof user.raw_user_meta_data === 'string') {
+        metadata = JSON.parse(user.raw_user_meta_data);
+      } else if (user.raw_user_meta_data && typeof user.raw_user_meta_data === 'object') {
+        metadata = user.raw_user_meta_data;
+      }
+    } catch (parseError) {
+      console.warn('Failed to parse user metadata:', parseError);
+      metadata = {};
+    }
+    
     // Get user type from metadata or default to 'client'
-    const userType = user.raw_user_meta_data?.user_type || 'client';
+    const validUserTypes = ['client', 'realtor', 'mortgage_professional'];
+    const userType = validUserTypes.includes(metadata.user_type) ? metadata.user_type : 'client';
+    
+    console.log('Creating user profile:', { 
+      userId: user.id, 
+      userType, 
+      metadata: metadata,
+      rawMetadata: user.raw_user_meta_data 
+    });
     
     // Create user profile
     const { error: insertError } = await supabase.from('user_profiles').insert({
       user_id: user.id,
       user_type: userType,
       // Add other fields from metadata if available
-      company: user.raw_user_meta_data?.company,
+      company: metadata.company || null,
     });
     
     if (insertError) {
