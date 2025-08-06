@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from 'sonner';
 import { supabase } from "@/integrations/supabase/client";
-import { Search, Download, CheckCircle, XCircle, MapPin } from 'lucide-react';
+import { Search, Download, CheckCircle, XCircle, MapPin, Filter } from 'lucide-react';
 
 interface CensusTract {
   tractId: string;
@@ -39,6 +39,7 @@ export const CensusTractSearch: React.FC = () => {
   const [results, setResults] = useState<CensusTract[]>([]);
   const [summary, setSummary] = useState<SearchSummary | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [eligibilityFilter, setEligibilityFilter] = useState<'all' | 'eligible' | 'not-eligible'>('all');
 
   const states = [
     'AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'DC', 'FL',
@@ -106,6 +107,7 @@ export const CensusTractSearch: React.FC = () => {
 
         setResults(tracts);
         setSummary(data.summary);
+        setEligibilityFilter('all'); // Reset filter on new search
 
         toast.success("Search completed", {
           description: `Found ${tracts.length} census tracts (${data.summary.lmiTracts} LMI-eligible)`
@@ -168,10 +170,19 @@ export const CensusTractSearch: React.FC = () => {
     });
   };
 
-  const filteredResults = results.filter(tract =>
-    !searchQuery || tract.tractId.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    tract.county?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredResults = results.filter(tract => {
+    // Apply text search filter
+    const matchesSearch = !searchQuery || 
+      tract.tractId.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      tract.county?.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    // Apply eligibility filter
+    const matchesEligibility = eligibilityFilter === 'all' || 
+      (eligibilityFilter === 'eligible' && tract.isLmiEligible) ||
+      (eligibilityFilter === 'not-eligible' && !tract.isLmiEligible);
+    
+    return matchesSearch && matchesEligibility;
+  });
 
   return (
     <div className="space-y-6">
@@ -272,12 +283,41 @@ export const CensusTractSearch: React.FC = () => {
         <Card>
           <CardHeader>
             <div className="flex justify-between items-center">
-              <CardTitle>Search Results ({filteredResults.length})</CardTitle>
+              <CardTitle>Search Results ({filteredResults.length} of {results.length})</CardTitle>
               <Button onClick={handleExport} variant="outline" size="sm">
                 <Download className="mr-2 h-4 w-4" />
                 Export CSV
               </Button>
             </div>
+            
+            {/* Eligibility Filter */}
+            <div className="flex justify-between items-center">
+              <div className="flex items-center gap-2">
+                <Button 
+                  variant={eligibilityFilter === 'all' ? "default" : "outline"} 
+                  size="sm"
+                  onClick={() => setEligibilityFilter('all')}
+                >
+                  Show All
+                </Button>
+                <Button 
+                  variant={eligibilityFilter === 'eligible' ? "default" : "outline"} 
+                  size="sm"
+                  onClick={() => setEligibilityFilter('eligible')}
+                >
+                  <Filter className="mr-2 h-4 w-4" />
+                  LMI Eligible Only
+                </Button>
+                <Button 
+                  variant={eligibilityFilter === 'not-eligible' ? "default" : "outline"} 
+                  size="sm"
+                  onClick={() => setEligibilityFilter('not-eligible')}
+                >
+                  Not Eligible Only
+                </Button>
+              </div>
+            </div>
+            
             <div className="flex items-center space-x-2">
               <Search className="h-4 w-4 text-muted-foreground" />
               <Input
