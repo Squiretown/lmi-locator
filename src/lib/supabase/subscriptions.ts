@@ -86,6 +86,8 @@ export async function createSubscriptionPlan(planData: CreatePlanData): Promise<
         price: planData.price,
         billing_period: planData.billing_period,
         is_popular: planData.is_popular || false,
+        is_trial: planData.is_trial || false,
+        trial_period_days: planData.trial_period_days,
         sort_order: planData.sort_order || 0,
         features: planData.features || []
       })
@@ -145,6 +147,8 @@ export async function updateSubscriptionPlan(planData: UpdatePlanData): Promise<
         price: planData.price,
         billing_period: planData.billing_period,
         is_popular: planData.is_popular,
+        is_trial: planData.is_trial,
+        trial_period_days: planData.trial_period_days,
         is_active: planData.is_active,
         sort_order: planData.sort_order,
         features: planData.features

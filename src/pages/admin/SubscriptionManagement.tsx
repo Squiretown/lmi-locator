@@ -73,6 +73,8 @@ const SubscriptionManagement: React.FC = () => {
     price: 0,
     billing_period: 'monthly' as 'monthly' | 'yearly',
     is_popular: false,
+    is_trial: false,
+    trial_period_days: 14,
     is_active: true,
     sort_order: 0,
     features: [] as string[],
@@ -171,6 +173,8 @@ const SubscriptionManagement: React.FC = () => {
       price: plan.price / 100, // Convert cents to dollars for display
       billing_period: plan.billing_period as 'monthly',
       is_popular: plan.is_popular,
+      is_trial: plan.is_trial || false,
+      trial_period_days: plan.trial_period_days || 14,
       is_active: plan.is_active,
       sort_order: plan.sort_order,
       features: plan.features.length > 0 ? plan.features : [''],
@@ -205,6 +209,8 @@ const SubscriptionManagement: React.FC = () => {
       price: 0,
       billing_period: 'monthly',
       is_popular: false,
+      is_trial: false,
+      trial_period_days: 14,
       is_active: true,
       sort_order: plans.length,
       features: [''],
@@ -236,6 +242,8 @@ const SubscriptionManagement: React.FC = () => {
         price: Math.round(formData.price * 100), // Convert dollars to cents
         billing_period: formData.billing_period,
         is_popular: formData.is_popular,
+        is_trial: formData.is_trial,
+        trial_period_days: formData.is_trial ? formData.trial_period_days : undefined,
         is_active: formData.is_active,
         sort_order: formData.sort_order,
         features: formData.features,
@@ -454,6 +462,29 @@ const SubscriptionManagement: React.FC = () => {
                 />
                 <Label htmlFor="is_popular">Mark as Popular</Label>
               </div>
+              <div className="flex items-center space-x-2">
+                <Switch
+                  id="is_trial"
+                  checked={formData.is_trial}
+                  onCheckedChange={(checked) => setFormData({ ...formData, is_trial: checked })}
+                />
+                <Label htmlFor="is_trial">Trial Plan</Label>
+              </div>
+              {formData.is_trial && (
+                <div>
+                  <Label htmlFor="trial_period_days">Trial Period (Days)</Label>
+                  <Input
+                    id="trial_period_days"
+                    type="number"
+                    min="1"
+                    max="365"
+                    value={formData.trial_period_days}
+                    onChange={(e) => setFormData({ ...formData, trial_period_days: parseInt(e.target.value) || 14 })}
+                    placeholder="14"
+                  />
+                  <p className="text-sm text-muted-foreground mt-1">Number of days for the free trial period</p>
+                </div>
+              )}
               <div className="flex items-center space-x-2">
                 <Switch
                   id="is_active"

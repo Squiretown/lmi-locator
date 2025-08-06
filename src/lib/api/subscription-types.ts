@@ -9,6 +9,8 @@ export interface SubscriptionPlan {
   billing_period: 'monthly' | 'yearly';
   is_active: boolean;
   is_popular: boolean;
+  is_trial?: boolean;
+  trial_period_days?: number;
   sort_order: number;
   features: string[];
   created_at: string;
@@ -76,6 +78,8 @@ export interface CreatePlanData {
   price: number;
   billing_period: 'monthly' | 'yearly';
   is_popular?: boolean;
+  is_trial?: boolean;
+  trial_period_days?: number;
   sort_order?: number;
   features: string[];
   limits: Omit<PlanLimit, 'id' | 'plan_id' | 'created_at'>[];
