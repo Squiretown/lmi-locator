@@ -228,8 +228,15 @@ const SubscriptionManagement: React.FC = () => {
     setSaving(true);
     try {
       const planData = {
-        ...formData,
+        name: formData.name,
+        display_name: formData.display_name,
+        description: formData.description,
         price: Math.round(formData.price * 100), // Convert dollars to cents
+        billing_period: formData.billing_period,
+        is_popular: formData.is_popular,
+        is_active: formData.is_active,
+        sort_order: formData.sort_order,
+        features: formData.features,
         limits: Object.entries(formData.limits || {}).map(([resource_type, limit_value]) => ({
           resource_type: resource_type as 'team_members' | 'clients' | 'marketing_campaigns' | 'searches_per_month',
           limit_value: Number(limit_value)
