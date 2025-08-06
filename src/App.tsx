@@ -9,6 +9,8 @@ import LoginPage from "./pages/auth/LoginPage";
 import { AuthProvider } from "@/providers/AuthProvider";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 import { EdgeFunctionTest } from "./components/EdgeFunctionTest";
+import { ClientRegistration } from "./pages/ClientRegistration";
+import { RegistrationSuccess } from "./pages/RegistrationSuccess";
 
 // Import all page components
 import ProductPage from "./pages/ProductPage";
@@ -78,6 +80,8 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/test-edge" element={<EdgeFunctionTest />} />
             <Route path="/login" element={<LoginPage />} />
+            <Route path="/client-registration" element={<ClientRegistration />} />
+            <Route path="/registration-success" element={<RegistrationSuccess />} />
             <Route path="/product" element={<ProductPage />} />
             <Route path="/resources" element={<ResourcesPage />} />
             <Route path="/pricing" element={<PricingPage />} />

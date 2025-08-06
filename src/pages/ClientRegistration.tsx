@@ -4,9 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Switch } from '@/components/ui/switch';
 import { useForm } from 'react-hook-form';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -17,12 +15,7 @@ interface ClientRegistrationData {
   last_name: string;
   email: string;
   phone?: string;
-  income?: number;
-  household_size?: number;
-  military_status?: string;
   timeline?: string;
-  first_time_buyer?: boolean;
-  notes?: string;
 }
 
 export const ClientRegistration: React.FC = () => {
@@ -34,8 +27,7 @@ export const ClientRegistration: React.FC = () => {
   
   const invitationCode = searchParams.get('code');
   
-  const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm<ClientRegistrationData>();
-  const firstTimeBuyer = watch('first_time_buyer');
+  const { register, handleSubmit, setValue, formState: { errors } } = useForm<ClientRegistrationData>();
 
   useEffect(() => {
     if (!invitationCode) {
@@ -108,12 +100,7 @@ export const ClientRegistration: React.FC = () => {
           last_name: formData.last_name,
           email: formData.email,
           phone: formData.phone,
-          income: formData.income,
-          household_size: formData.household_size,
-          military_status: formData.military_status,
           timeline: formData.timeline,
-          first_time_buyer: formData.first_time_buyer,
-          notes: formData.notes,
           status: 'active',
         })
         .select()
@@ -246,78 +233,25 @@ export const ClientRegistration: React.FC = () => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="income">Annual Income</Label>
-                  <Input
-                    id="income"
-                    type="number"
-                    {...register('income', { valueAsNumber: true })}
-                    placeholder="75000"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="household_size">Household Size</Label>
-                  <Input
-                    id="household_size"
-                    type="number"
-                    {...register('household_size', { valueAsNumber: true })}
-                    placeholder="2"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="military_status">Military Status</Label>
-                  <Select onValueChange={(value) => setValue('military_status', value)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">None</SelectItem>
-                      <SelectItem value="active">Active Duty</SelectItem>
-                      <SelectItem value="veteran">Veteran</SelectItem>
-                      <SelectItem value="reserves">Reserves</SelectItem>
-                      <SelectItem value="retired">Retired</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="timeline">Purchase Timeline</Label>
-                  <Select onValueChange={(value) => setValue('timeline', value)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select timeline" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="immediate">Immediate (0-3 months)</SelectItem>
-                      <SelectItem value="short">Short-term (3-6 months)</SelectItem>
-                      <SelectItem value="medium">Medium-term (6-12 months)</SelectItem>
-                      <SelectItem value="long">Long-term (12+ months)</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <div className="flex items-center space-x-2">
-                <Switch
-                  id="first_time_buyer"
-                  checked={firstTimeBuyer || false}
-                  onCheckedChange={(checked) => setValue('first_time_buyer', checked)}
-                />
-                <Label htmlFor="first_time_buyer">First-time home buyer</Label>
-              </div>
-
               <div className="space-y-2">
-                <Label htmlFor="notes">Additional Notes</Label>
-                <Textarea
-                  id="notes"
-                  {...register('notes')}
-                  placeholder="Any additional information you'd like to share..."
-                  className="min-h-[80px]"
-                />
+                <Label htmlFor="timeline">Purchase Timeline</Label>
+                <Select onValueChange={(value) => setValue('timeline', value)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select timeline" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="immediate">Immediate (0-3 months)</SelectItem>
+                    <SelectItem value="short">Short-term (3-6 months)</SelectItem>
+                    <SelectItem value="medium">Medium-term (6-12 months)</SelectItem>
+                    <SelectItem value="long">Long-term (12+ months)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="bg-muted/50 p-4 rounded-lg">
+                <p className="text-sm text-muted-foreground">
+                  <strong>Note:</strong> Additional details can be provided later as needed for your specific home buying journey.
+                </p>
               </div>
 
               <div className="flex justify-end gap-2 pt-4">
