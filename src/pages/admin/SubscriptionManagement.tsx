@@ -166,7 +166,7 @@ const SubscriptionManagement: React.FC = () => {
       name: plan.name,
       display_name: plan.display_name,
       description: plan.description || '',
-      price: plan.price,
+      price: plan.price / 100, // Convert cents to dollars for display
       billing_period: plan.billing_period as 'monthly',
       is_popular: plan.is_popular,
       is_active: plan.is_active,
@@ -229,6 +229,7 @@ const SubscriptionManagement: React.FC = () => {
     try {
       const planData = {
         ...formData,
+        price: Math.round(formData.price * 100), // Convert dollars to cents
         limits: Object.entries(formData.limits || {}).map(([resource_type, limit_value]) => ({
           resource_type: resource_type as 'team_members' | 'clients' | 'marketing_campaigns' | 'searches_per_month',
           limit_value: Number(limit_value)
