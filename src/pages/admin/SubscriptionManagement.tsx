@@ -643,7 +643,7 @@ const SubscriptionManagement: React.FC = () => {
                 <div className="space-y-2">
                   <div className="text-sm text-muted-foreground">Pricing</div>
                   <div className="text-lg font-semibold">
-                    ${plan.price}/{plan.billing_period}
+                    ${(plan.price / 100).toFixed(2)}/{plan.billing_period}
                   </div>
                 </div>
 
