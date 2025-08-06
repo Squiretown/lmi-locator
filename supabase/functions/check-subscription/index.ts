@@ -46,36 +46,79 @@ serve(async (req) => {
     const customers = await stripe.customers.list({ email: user.email, limit: 1 });
     
     if (customers.data.length === 0) {
-      logStep("No customer found, updating to free plan");
+      logStep("No customer found, checking/starting trial");
       
-      // Get free plan
-      const { data: freePlan } = await supabaseClient
-        .from('subscription_plans')
-        .select('id')
-        .eq('name', 'free')
+      // Get or create trial plan
+      const { data: trialPlan } = await supabaseClient
+        .from("subscription_plans")
+        .select("*")
+        .eq("is_trial", true)
         .single();
-
-      // Update user to free plan
-      await supabaseClient
-        .from('user_profiles')
-        .update({ current_plan_id: freePlan?.id })
-        .eq('user_id', user.id);
-
-      // Upsert subscriber record
+      
+      if (!trialPlan) {
+        throw new Error("No trial plan found");
+      }
+      
+      // Check if user already has a profile with trial info
+      const { data: userProfile } = await supabaseClient
+        .from("user_profiles")
+        .select("trial_started_at, trial_expired, current_plan_id")
+        .eq("user_id", user.id)
+        .single();
+      
+      let trialStarted = userProfile?.trial_started_at;
+      let trialExpired = userProfile?.trial_expired || false;
+      
+      // Start trial if not already started
+      if (!trialStarted) {
+        trialStarted = new Date().toISOString();
+        logStep("Starting new trial", { trialStarted });
+        
+        await supabaseClient
+          .from("user_profiles")
+          .upsert({
+            user_id: user.id,
+            current_plan_id: trialPlan.id,
+            trial_started_at: trialStarted,
+            trial_expired: false,
+            subscription_starts_at: trialStarted,
+            subscription_ends_at: new Date(Date.now() + trialPlan.trial_period_days * 24 * 60 * 60 * 1000).toISOString()
+          }, { onConflict: 'user_id' });
+      } else {
+        // Check if trial has expired
+        const trialEndDate = new Date(trialStarted);
+        trialEndDate.setDate(trialEndDate.getDate() + trialPlan.trial_period_days);
+        trialExpired = new Date() > trialEndDate;
+        
+        if (trialExpired && !userProfile?.trial_expired) {
+          logStep("Trial expired, updating status");
+          await supabaseClient
+            .from("user_profiles")
+            .update({ trial_expired: true })
+            .eq("user_id", user.id);
+        }
+      }
+      
+      const daysRemaining = trialExpired ? 0 : Math.max(0, Math.ceil((new Date(trialStarted).getTime() + trialPlan.trial_period_days * 24 * 60 * 60 * 1000 - Date.now()) / (24 * 60 * 60 * 1000)));
+      
       await supabaseClient.from("subscribers").upsert({
         email: user.email,
         user_id: user.id,
         stripe_customer_id: null,
-        subscribed: false,
-        subscription_tier: 'free',
-        subscription_end: null,
+        subscribed: !trialExpired,
+        subscription_tier: trialExpired ? "expired" : "trial",
+        subscription_end: trialExpired ? null : new Date(new Date(trialStarted).getTime() + trialPlan.trial_period_days * 24 * 60 * 60 * 1000).toISOString(),
         updated_at: new Date().toISOString(),
       }, { onConflict: 'email' });
-
+      
       return new Response(JSON.stringify({ 
-        subscribed: false, 
-        subscription_tier: 'free',
-        plan_id: freePlan?.id 
+        subscribed: !trialExpired,
+        subscription_tier: trialExpired ? "expired" : "trial",
+        subscription_end: trialExpired ? null : new Date(new Date(trialStarted).getTime() + trialPlan.trial_period_days * 24 * 60 * 60 * 1000).toISOString(),
+        trial_days_remaining: daysRemaining,
+        is_trial: true,
+        trial_expired: trialExpired,
+        plan_id: trialPlan.id
       }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 200,
@@ -152,6 +195,9 @@ serve(async (req) => {
       subscribed: hasActiveSub,
       subscription_tier: subscriptionTier,
       subscription_end: subscriptionEnd,
+      trial_days_remaining: 0,
+      is_trial: false,
+      trial_expired: false,
       plan_id: planId
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },

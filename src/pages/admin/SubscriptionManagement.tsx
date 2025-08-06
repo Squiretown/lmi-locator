@@ -26,6 +26,8 @@ interface SubscriptionPlan {
   features: string[];
   created_at: string;
   updated_at: string;
+  is_trial?: boolean;
+  trial_period_days?: number;
 }
 
 interface PlanLimit {
@@ -660,6 +662,11 @@ const SubscriptionManagement: React.FC = () => {
                 <div className="space-y-2">
                   <div className="text-sm text-muted-foreground">Features</div>
                   <div className="space-y-1">
+                    {plan.is_trial && (
+                      <div className="mb-2 p-2 bg-primary/10 rounded text-xs">
+                        <strong>Trial Plan:</strong> {plan.trial_period_days} days
+                      </div>
+                    )}
                     <div className="grid grid-cols-2 gap-1 text-xs">
                       {AVAILABLE_FEATURES.map((feature) => (
                         <div key={feature.key} className="flex items-center space-x-1">

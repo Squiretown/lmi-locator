@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Lock, ArrowUp } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useTrial } from '@/hooks/useTrial';
 
 interface FeatureGateProps {
   feature: string;
@@ -26,6 +27,7 @@ export const FeatureGate: React.FC<FeatureGateProps> = ({
 }) => {
   const [access, setAccess] = useState<UserFeatureAccess>({ hasFeature: false });
   const [loading, setLoading] = useState(true);
+  const { trialExpired, isTrialUser } = useTrial();
 
   useEffect(() => {
     checkFeatureAccess();
@@ -67,6 +69,12 @@ export const FeatureGate: React.FC<FeatureGateProps> = ({
         .select('feature_name, is_enabled')
         .eq('plan_id', profile.current_plan_id);
 
+      // Check trial expiration for trial users
+      if (isTrialUser && trialExpired) {
+        setAccess({ hasFeature: false });
+        return;
+      }
+
       // Check if user has the requested feature
       const featureData = planFeatures?.find(f => f.feature_name === feature);
       const hasFeature = featureData?.is_enabled || false;
@@ -107,22 +115,28 @@ export const FeatureGate: React.FC<FeatureGateProps> = ({
     return null;
   }
 
+  const isTrialExpired = isTrialUser && trialExpired;
+  const title = isTrialExpired ? "Trial Expired" : "Feature Not Available";
+  const description = isTrialExpired 
+    ? "Your trial has ended. Upgrade to continue using this feature."
+    : "This feature requires a higher subscription plan.";
+
   return (
     <Alert className="border-orange-200 bg-orange-50">
       <Lock className="h-4 w-4" />
       <AlertDescription className="flex items-center justify-between">
         <div className="space-y-1">
-          <div className="font-medium">Feature Not Available</div>
+          <div className="font-medium">{title}</div>
           <div className="text-sm text-muted-foreground">
-            This feature requires a higher subscription plan.
-            {access.planDisplayName && (
+            {description}
+            {!isTrialExpired && access.planDisplayName && (
               <span> Current plan: <Badge variant="outline">{access.planDisplayName}</Badge></span>
             )}
           </div>
         </div>
         <Button size="sm" variant="outline" className="ml-4" onClick={() => window.location.href = '/pricing'}>
           <ArrowUp className="h-3 w-3 mr-1" />
-          Upgrade Plan
+          {isTrialExpired ? "Upgrade to Continue" : "Upgrade Plan"}
         </Button>
       </AlertDescription>
     </Alert>

@@ -6,6 +6,9 @@ interface SubscriptionInfo {
   subscription_tier: string;
   subscription_end: string | null;
   plan_id: string | null;
+  trial_days_remaining?: number;
+  is_trial?: boolean;
+  trial_expired?: boolean;
 }
 
 export const useSubscription = () => {
