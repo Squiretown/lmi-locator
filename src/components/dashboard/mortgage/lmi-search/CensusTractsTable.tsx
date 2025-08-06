@@ -41,17 +41,25 @@ export const CensusTractsTable: React.FC<CensusTractsTableProps> = ({ tracts }) 
           <TableHeader>
             <TableRow>
               <TableHead>Tract ID</TableHead>
+              <TableHead>Location</TableHead>
               <TableHead>LMI Status</TableHead>
               <TableHead>AMI %</TableHead>
-              <TableHead>Median Income</TableHead>
-              <TableHead className="text-right">Properties</TableHead>
+              <TableHead>Income Category</TableHead>
+              <TableHead className="text-right">Population</TableHead>
+              <TableHead className="text-right">Households</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {filteredTracts.length > 0 ? (
               filteredTracts.map((tract, index) => (
                 <TableRow key={index}>
-                  <TableCell className="font-medium">{tract.tractId}</TableCell>
+                  <TableCell className="font-medium font-mono text-sm">{tract.tractId}</TableCell>
+                  <TableCell>
+                    <div className="text-sm">
+                      <div className="font-medium">{tract.county || 'Unknown County'}</div>
+                      <div className="text-muted-foreground">{tract.state || 'Unknown State'}</div>
+                    </div>
+                  </TableCell>
                   <TableCell>
                     <Badge variant={tract.isLmiEligible ? "success" : "destructive"} className="gap-1">
                       {tract.isLmiEligible ? 
@@ -60,14 +68,23 @@ export const CensusTractsTable: React.FC<CensusTractsTableProps> = ({ tracts }) 
                       }
                     </Badge>
                   </TableCell>
-                  <TableCell>{tract.amiPercentage}%</TableCell>
-                  <TableCell>${tract.medianIncome.toLocaleString()}</TableCell>
-                  <TableCell className="text-right">{tract.propertyCount.toLocaleString()}</TableCell>
+                  <TableCell>
+                    <span className="font-medium">{tract.amiPercentage?.toFixed(1) || '0.0'}%</span>
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant="outline">{tract.incomeCategory || 'Unknown'}</Badge>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    {tract.population?.toLocaleString() || 'N/A'}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    {tract.propertyCount?.toLocaleString() || 'N/A'}
+                  </TableCell>
                 </TableRow>
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={5} className="text-center py-6 text-muted-foreground">
+                <TableCell colSpan={7} className="text-center py-6 text-muted-foreground">
                   {searchQuery ? 'No matching tracts found' : 'No census tracts available'}
                 </TableCell>
               </TableRow>

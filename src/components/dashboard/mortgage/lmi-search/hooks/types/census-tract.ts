@@ -6,6 +6,18 @@ export interface CensusTract {
   amiPercentage: number;
   medianIncome: number;
   propertyCount: number;
+  // Additional FFIEC data fields
+  tractName?: string;
+  state?: string;
+  county?: string;
+  incomeCategory?: string;
+  population?: number;
+  geometry?: any;
+  minorityPercentage?: number;
+  ownerOccupiedUnits?: number;
+  msaMedianIncome?: number;
+  tractMedianFamilyIncome?: number;
+  dataYear?: number;
 }
 
 // Search results type

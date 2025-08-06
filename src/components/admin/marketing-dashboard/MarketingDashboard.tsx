@@ -14,6 +14,7 @@ import { MapView } from './map-view';
 import { useMarketingDashboardData } from './useMarketingDashboardData';
 import { MarketingSidebar } from './MarketingSidebar';
 import { BulkAddressSearch } from './bulk-search/BulkAddressSearch';
+import { CensusTractSearch } from './census-tract-search/CensusTractSearch';
 import { MarketingContent } from '@/components/admin/tools/marketing/MarketingContent';
 
 // Component for the "Coming Soon" placeholder card
@@ -73,6 +74,8 @@ export const MarketingDashboard: React.FC = () => {
         return <OverviewSection {...dashboardData} />;
       case 'search':
         return <BulkAddressSearch />;
+      case 'census-search':
+        return <CensusTractSearch />;
       case 'map':
         return <MapView />;
       case 'content':

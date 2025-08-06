@@ -51,6 +51,7 @@ export const MarketingSidebar: React.FC<MarketingSidebarProps> = ({
   const menuItems = [
     { id: 'overview', label: 'Dashboard Overview', icon: BarChart3 },
     { id: 'search', label: 'Bulk Address Search', icon: Search },
+    { id: 'census-search', label: 'Census Tract Search', icon: Database },
     { id: 'map', label: 'LMI Tract Map', icon: Map },
     { id: 'jobs', label: 'Marketing Jobs', icon: Clock },
     { id: 'lists', label: 'Saved Lists', icon: FileSpreadsheet },
