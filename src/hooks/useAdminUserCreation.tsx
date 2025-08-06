@@ -50,6 +50,7 @@ export function useAdminUserCreation() {
             user_id: data.user.id,
             name: `${userData.first_name} ${userData.last_name}`,
             type: userData.user_type,
+            professional_type: userData.user_type,
             company: userData.company || 'Independent',
             license_number: userData.license_number || 'TBD',
             phone: userData.phone,

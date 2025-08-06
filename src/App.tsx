@@ -52,8 +52,8 @@ import SystemLogsPage from "./pages/admin/SystemLogsPage";
 import ErrorLogs from "./pages/admin/ErrorLogs";
 import DataProtectionPage from "./pages/admin/DataProtectionPage";
 import SearchHistoryPage from "./pages/admin/SearchHistoryPage";
-import RealtorsPage from "./pages/admin/RealtorsPage";
-import MortgageBrokersPage from "./pages/admin/MortgageBrokersPage";
+// Removed RealtorsPage as it's consolidated into professionals
+// Removed MortgageBrokersPage as it's consolidated into professionals
 import ContactsPage from "./pages/admin/ContactsPage";
 
 // Previously Missing Admin Components - Now Added
@@ -189,8 +189,8 @@ const App = () => (
               <Route path="tools" element={<AdminTools />} />
               <Route path="settings" element={<SettingsPage />} />
               <Route path="contacts" element={<AdminContactsPage />} />
-              <Route path="realtors" element={<RealtorsPage />} />
-              <Route path="mortgage-brokers" element={<MortgageBrokersPage />} />
+              {/* Realtor management consolidated into professionals page */}
+              {/* Mortgage brokers management consolidated into professionals page */}
               
               {/* Previously Missing Admin Routes - Now Fixed */}
               <Route path="subscriptions" element={<SubscriptionManagement />} />

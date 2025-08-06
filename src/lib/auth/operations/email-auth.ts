@@ -54,6 +54,45 @@ export async function signUpWithEmail(email: string, password: string, metadata:
       console.error('Sign up error:', error.message);
       return { error, data: null };
     }
+
+    // If signup successful and user is a professional, create professional profile
+    if (data.user && data.session) {
+      const userType = formattedMetadata.user_type;
+      
+      if (userType === 'realtor' || userType === 'mortgage_professional') {
+        try {
+          console.log('Creating professional profile for:', userType);
+          
+          // Create professional profile
+          const professionalData = {
+            user_id: data.user.id,
+            type: userType,
+            professional_type: userType,
+            name: `${formattedMetadata.first_name || ''} ${formattedMetadata.last_name || ''}`.trim() || 'New Professional',
+            company: formattedMetadata.company || 'Not Specified',
+            license_number: formattedMetadata.license_number || 'Pending',
+            phone: formattedMetadata.phone || null,
+            email: email,
+            status: 'pending' as const
+          };
+
+          const { error: professionalError } = await supabase
+            .from('professionals')
+            .insert([professionalData]);
+
+          if (professionalError) {
+            console.error('Error creating professional profile:', professionalError);
+            // Don't fail the signup, but log the error
+            // The user can complete their profile later
+          } else {
+            console.log('Professional profile created successfully');
+          }
+        } catch (professionalErr) {
+          console.error('Exception creating professional profile:', professionalErr);
+          // Don't fail the signup, but log the error
+        }
+      }
+    }
     
     const requiresEmailConfirmation = !data.session;
     

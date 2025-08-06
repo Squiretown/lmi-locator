@@ -5,6 +5,9 @@ export interface UserMetadata {
   first_name?: string;
   last_name?: string;
   user_type?: string;
+  company?: string;
+  license_number?: string;
+  phone?: string;
   [key: string]: any;
 }
 
