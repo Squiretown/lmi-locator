@@ -2906,9 +2906,11 @@ export type Database = {
           id: string
           is_active: boolean
           is_popular: boolean
+          is_trial: boolean | null
           name: string
           price: number
           sort_order: number
+          trial_period_days: number | null
           updated_at: string
         }
         Insert: {
@@ -2920,9 +2922,11 @@ export type Database = {
           id?: string
           is_active?: boolean
           is_popular?: boolean
+          is_trial?: boolean | null
           name: string
           price: number
           sort_order?: number
+          trial_period_days?: number | null
           updated_at?: string
         }
         Update: {
@@ -2934,9 +2938,11 @@ export type Database = {
           id?: string
           is_active?: boolean
           is_popular?: boolean
+          is_trial?: boolean | null
           name?: string
           price?: number
           sort_order?: number
+          trial_period_days?: number | null
           updated_at?: string
         }
         Relationships: []
@@ -3249,6 +3255,8 @@ export type Database = {
           subscription_start_date: string | null
           subscription_starts_at: string | null
           subscription_tier: string | null
+          trial_expired: boolean | null
+          trial_started_at: string | null
           user_id: string
           user_type: string | null
           website: string | null
@@ -3281,6 +3289,8 @@ export type Database = {
           subscription_start_date?: string | null
           subscription_starts_at?: string | null
           subscription_tier?: string | null
+          trial_expired?: boolean | null
+          trial_started_at?: string | null
           user_id: string
           user_type?: string | null
           website?: string | null
@@ -3313,6 +3323,8 @@ export type Database = {
           subscription_start_date?: string | null
           subscription_starts_at?: string | null
           subscription_tier?: string | null
+          trial_expired?: boolean | null
+          trial_started_at?: string | null
           user_id?: string
           user_type?: string | null
           website?: string | null
@@ -4145,6 +4157,10 @@ export type Database = {
         Args: { "": number }
         Returns: string
       }
+      get_trial_days_remaining: {
+        Args: { user_id_param: string }
+        Returns: number
+      }
       get_user_permissions: {
         Args: { user_uuid: string }
         Returns: {
@@ -4182,6 +4198,10 @@ export type Database = {
       }
       is_admin_user_safe: {
         Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
+      is_trial_expired: {
+        Args: { user_id_param: string }
         Returns: boolean
       }
       json: {
