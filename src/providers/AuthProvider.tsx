@@ -154,8 +154,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       // Validate and sanitize user type to prevent role escalation
       const userType = metadata.user_type || 'client';
-      const validRoles = ['client', 'professional'];
+      const validRoles = ['client', 'realtor', 'mortgage_professional'];
       const sanitizedUserType = validRoles.includes(userType) ? userType : 'client';
+      
+      console.log('User type validation:', { userType, sanitizedUserType });
       
       // Prevent admin role assignment during signup
       if (userType === 'admin') {
