@@ -3,7 +3,9 @@
  * Application model types with proper TypeScript conventions
  * These use camelCase and have proper typing
  */
-export type ProfessionalType = 'realtor' | 'mortgage_broker';
+import { ProfessionalType as ProfessionalTypeConstant } from '@/lib/constants/roles';
+
+export type ProfessionalType = ProfessionalTypeConstant;
 export type ProfessionalStatus = 'active' | 'pending' | 'inactive';
 
 export interface Professional {

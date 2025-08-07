@@ -5,6 +5,7 @@ import { useAuth } from '@/hooks/useAuth';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import { verifyAdminAccess } from '@/lib/auth/operations/session';
 import { toast } from 'sonner';
+import { normalizeRole, hasAnyRole, getDashboardRoute } from '@/lib/constants/roles';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -102,11 +103,13 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   
   // For non-admin routes, proceed with user type check
   const isUserTypeAllowed = () => {
+    const normalizedUserType = normalizeRole(userType);
+    
     if (requiredUserType) {
-      return userType === requiredUserType;
+      return normalizedUserType === normalizeRole(requiredUserType);
     }
     if (allowedUserTypes && allowedUserTypes.length > 0) {
-      return allowedUserTypes.includes(userType || '');
+      return hasAnyRole(userType, allowedUserTypes.map(normalizeRole));
     }
     return true; // No specific type requirement
   };
@@ -137,16 +140,8 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     console.log(`User type not allowed: expected ${expectedTypes}, got ${userType}. Redirecting.`);
     
     // Otherwise, redirect to appropriate dashboard
-    switch (userType) {
-      case 'mortgage_professional':
-        return <Navigate to="/dashboard/mortgage" replace />;
-      case 'realtor':
-        return <Navigate to="/dashboard/realtor" replace />;
-      case 'client':
-        return <Navigate to="/dashboard/client" replace />;
-      default:
-        return <Navigate to="/" replace />;
-    }
+    const dashboardRoute = getDashboardRoute(userType);
+    return <Navigate to={dashboardRoute} replace />;
   }
 
   return <>{children}</>;

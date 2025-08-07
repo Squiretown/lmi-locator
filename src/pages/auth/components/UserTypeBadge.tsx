@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { Badge } from '@/components/ui/badge';
+import { getRoleDisplayName, normalizeRole, USER_ROLES } from '@/lib/constants/roles';
 
 interface UserTypeBadgeProps {
   userType?: string;
@@ -8,14 +9,15 @@ interface UserTypeBadgeProps {
 
 export const UserTypeBadge: React.FC<UserTypeBadgeProps> = ({ userType }) => {
   const getVariant = (type?: string) => {
-    switch (type) {
-      case 'admin':
+    const normalizedType = normalizeRole(type);
+    switch (normalizedType) {
+      case USER_ROLES.ADMIN:
         return 'destructive';
-      case 'realtor':
+      case USER_ROLES.REALTOR:
         return 'default';
-      case 'mortgage_professional':
+      case USER_ROLES.MORTGAGE_PROFESSIONAL:
         return 'secondary'; // We'll override this with custom styling
-      case 'client':
+      case USER_ROLES.CLIENT:
         return 'outline'; // We'll override this with custom styling
       default:
         return 'outline';
@@ -23,25 +25,15 @@ export const UserTypeBadge: React.FC<UserTypeBadgeProps> = ({ userType }) => {
   };
 
   const getDisplayName = (type?: string) => {
-    switch (type) {
-      case 'admin':
-        return 'Admin';
-      case 'realtor':
-        return 'Realtor';
-      case 'mortgage_professional':
-        return 'Mortgage Professional';
-      case 'client':
-        return 'Client';
-      default:
-        return type || 'Unknown';
-    }
+    return getRoleDisplayName(type);
   };
 
   const getCustomStyles = (type?: string) => {
-    switch (type) {
-      case 'mortgage_professional':
+    const normalizedType = normalizeRole(type);
+    switch (normalizedType) {
+      case USER_ROLES.MORTGAGE_PROFESSIONAL:
         return 'bg-green-800 text-white hover:bg-green-900 border-green-800';
-      case 'client':
+      case USER_ROLES.CLIENT:
         return 'bg-black text-white hover:bg-gray-900 border-black';
       default:
         return '';

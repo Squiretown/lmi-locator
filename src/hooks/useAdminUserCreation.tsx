@@ -2,12 +2,14 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
+import { UserRole, isProfessionalRole } from '@/lib/constants/roles';
+
 export interface CreateUserData {
   email: string;
   password: string;
   first_name: string;
   last_name: string;
-  user_type: 'admin' | 'mortgage_professional' | 'realtor' | 'client';
+  user_type: UserRole;
   phone?: string;
   company?: string;
   license_number?: string;
@@ -43,13 +45,12 @@ export function useAdminUserCreation() {
       if (error) throw error;
 
       // If creating a professional, also create professional profile
-      if (userData.user_type === 'mortgage_professional' || userData.user_type === 'realtor') {
+      if (isProfessionalRole(userData.user_type)) {
         const { error: profileError } = await supabase
           .from('professionals')
           .insert({
             user_id: data.user.id,
             name: `${userData.first_name} ${userData.last_name}`,
-            type: userData.user_type,
             professional_type: userData.user_type,
             company: userData.company || 'Independent',
             license_number: userData.license_number || 'TBD',

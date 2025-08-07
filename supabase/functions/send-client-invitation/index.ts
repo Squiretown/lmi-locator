@@ -3,6 +3,29 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4";
 import { Resend } from "npm:resend@2.0.0";
 
+// Role normalization utility (copied from frontend for consistency)
+const LEGACY_ROLE_MAPPING = {
+  'mortgage': 'mortgage_professional',
+  'mortgage_broker': 'mortgage_professional',
+  'realtor': 'realtor',
+  'admin': 'admin',
+  'client': 'client'
+} as const;
+
+function normalizeRole(role: string | null | undefined): string {
+  if (!role) return 'client';
+  
+  const lowercaseRole = role.toLowerCase();
+  
+  // Check legacy mappings first
+  if (lowercaseRole in LEGACY_ROLE_MAPPING) {
+    return LEGACY_ROLE_MAPPING[lowercaseRole as keyof typeof LEGACY_ROLE_MAPPING];
+  }
+  
+  // Return as-is if no mapping found
+  return lowercaseRole;
+}
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -117,15 +140,17 @@ const handler = async (req: Request): Promise<Response> => {
       const invitationRole = invitation.target_professional_role;
       const professionalType = professional.professional_type;
       
-      // Handle role name variations for compatibility
-      const normalizeRole = (role: string) => {
-        if (role === 'mortgage' || role === 'mortgage_professional') return 'mortgage_professional';
-        if (role === 'realtor') return 'realtor';
-        return role;
-      };
+      // Use the global normalizeRole function defined above
       
       const normalizedInvitationRole = normalizeRole(invitationRole);
       const normalizedProfessionalType = normalizeRole(professionalType);
+      
+      console.log('Role validation:', { 
+        invitationRole, 
+        normalizedInvitationRole, 
+        professionalType, 
+        normalizedProfessionalType 
+      });
       
       if (normalizedInvitationRole !== normalizedProfessionalType) {
         console.error('Role mismatch:', { 

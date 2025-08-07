@@ -154,22 +154,22 @@ const App = () => (
               
               {/* Mortgage Dashboard */}
               <Route path="mortgage" element={
-                <ProtectedRoute allowedUserTypes={['mortgage_professional', 'mortgage']}>
+                <ProtectedRoute allowedUserTypes={['mortgage_professional']}>
                   <MortgageOverview />
                 </ProtectedRoute>
               } />
               <Route path="mortgage/clients" element={
-                <ProtectedRoute allowedUserTypes={['mortgage_professional', 'mortgage']}>
+                <ProtectedRoute allowedUserTypes={['mortgage_professional']}>
                   <MortgageClients />
                 </ProtectedRoute>
               } />
               <Route path="mortgage/team" element={
-                <ProtectedRoute allowedUserTypes={['mortgage_professional', 'mortgage']}>
+                <ProtectedRoute allowedUserTypes={['mortgage_professional']}>
                   <MortgageTeam />
                 </ProtectedRoute>
               } />
               <Route path="mortgage/analytics" element={
-                <ProtectedRoute allowedUserTypes={['mortgage_professional', 'mortgage']}>
+                <ProtectedRoute allowedUserTypes={['mortgage_professional']}>
                   <MortgageAnalytics />
                 </ProtectedRoute>
               } />

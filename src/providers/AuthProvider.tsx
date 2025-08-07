@@ -15,6 +15,7 @@ import {
   signInWithDiscord
 } from '@/lib/auth/operations';
 import AuthContext from '@/contexts/AuthContext';
+import { USER_ROLES, PROFESSIONAL_ROLES, normalizeRole } from '@/lib/constants/roles';
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -154,19 +155,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       // Validate and sanitize user type to prevent role escalation
       // Only allow professional roles for direct signup
-      const userType = metadata.user_type || 'realtor';
-      const validDirectSignupRoles = ['realtor', 'mortgage_professional'];
-      const sanitizedUserType = validDirectSignupRoles.includes(userType) ? userType : 'realtor';
+      const userType = metadata.user_type || USER_ROLES.REALTOR;
+      const sanitizedUserType = PROFESSIONAL_ROLES.includes(userType as any) ? userType : USER_ROLES.REALTOR;
       
       // Block client direct signup - clients must be invited
-      if (userType === 'client') {
+      if (userType === USER_ROLES.CLIENT) {
         throw new Error('Clients cannot sign up directly. Please contact a real estate professional to receive an invitation.');
       }
       
       console.log('User type validation (professional only):', { userType, sanitizedUserType });
       
       // Prevent admin role assignment during signup
-      if (userType === 'admin') {
+      if (userType === USER_ROLES.ADMIN) {
         console.warn('Attempted admin role assignment during signup blocked');
       }
       
@@ -229,16 +229,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       switch (provider) {
         case 'google':
-          result = await signInWithGoogle({ userType: options.userType || 'realtor' });
+          result = await signInWithGoogle({ userType: options.userType || USER_ROLES.REALTOR });
           break;
         case 'github':
-          result = await signInWithGitHub({ userType: options.userType || 'realtor' });
+          result = await signInWithGitHub({ userType: options.userType || USER_ROLES.REALTOR });
           break;
         case 'azure':
-          result = await signInWithMicrosoft({ userType: options.userType || 'realtor' });
+          result = await signInWithMicrosoft({ userType: options.userType || USER_ROLES.REALTOR });
           break;
         case 'discord':
-          result = await signInWithDiscord({ userType: options.userType || 'realtor' });
+          result = await signInWithDiscord({ userType: options.userType || USER_ROLES.REALTOR });
           break;
         default:
           throw new Error(`Unsupported OAuth provider: ${provider}`);
