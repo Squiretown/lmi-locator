@@ -51,10 +51,21 @@ export function useRealtorClientManagement() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('User not authenticated');
 
+      // Get the user's professional profile first
+      const { data: professional, error: profError } = await supabase
+        .from('professionals')
+        .select('id')
+        .eq('user_id', user.id)
+        .single();
+
+      if (profError || !professional) {
+        throw new Error('Professional profile not found. Please complete your profile setup.');
+      }
+
       const { data, error } = await supabase
         .from('client_profiles')
         .select('*')
-        .eq('professional_id', user.id)
+        .eq('professional_id', professional.id)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -68,11 +79,22 @@ export function useRealtorClientManagement() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('User not authenticated');
 
+      // Get the user's professional profile first
+      const { data: professional, error: profError } = await supabase
+        .from('professionals')
+        .select('id')
+        .eq('user_id', user.id)
+        .single();
+
+      if (profError || !professional) {
+        throw new Error('Professional profile not found. Please complete your profile setup.');
+      }
+
       // Create client profile
       const { data: client, error: clientError } = await supabase
         .from('client_profiles')
         .insert({
-          professional_id: user.id,
+          professional_id: professional.id,
           first_name: clientData.first_name,
           last_name: clientData.last_name,
           email: clientData.email,
@@ -93,12 +115,12 @@ export function useRealtorClientManagement() {
       // Assign client to team (realtor + optional mortgage professional)
       const assignments = [];
       
-      // Always assign realtor
+      // Always assign realtor using professional ID
       assignments.push({
         client_id: client.id,
-        professional_id: user.id,
+        professional_id: professional.id,
         professional_role: 'realtor',
-        assigned_by: user.id,
+        assigned_by: user.id, // Keep auth user ID for audit purposes
       });
 
       // Assign mortgage professional if specified
@@ -128,7 +150,7 @@ export function useRealtorClientManagement() {
           const { error: invitationError } = await supabase
             .from('client_invitations')
             .insert({
-              professional_id: user.id,
+              professional_id: professional.id, // Use professional ID
               client_id: client.id,
               client_name: `${clientData.first_name} ${clientData.last_name}`,
               client_email: clientData.email,

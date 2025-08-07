@@ -67,15 +67,49 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     // Get the professional's information for the invitation
-    const { data: professional, error: professionalError } = await supabase
-      .from('user_profiles')
-      .select('*')
-      .eq('user_id', invitation.professional_id)
+    // First try to find by professional_id (which should be professionals.id)
+    let professional;
+    let professionalError;
+    
+    // Try to get professional info from professionals table first
+    const { data: prof, error: profError } = await supabase
+      .from('professionals')
+      .select('id, user_id, name, company, phone, status')
+      .eq('id', invitation.professional_id)
       .single();
 
-    if (professionalError || !professional) {
-      console.error('Professional not found:', professionalError);
-      throw new Error('Professional not found');
+    if (prof) {
+      // Get user profile info for email and other details
+      const { data: userProfile, error: userError } = await supabase
+        .from('user_profiles')
+        .select('*')
+        .eq('user_id', prof.user_id)
+        .single();
+
+      if (userProfile) {
+        professional = {
+          ...prof,
+          ...userProfile,
+          company_name: prof.company || userProfile.company_name
+        };
+      } else {
+        professional = prof;
+      }
+    } else {
+      // Fallback: try to find by user_id (for backward compatibility)
+      const { data: userProf, error: userError } = await supabase
+        .from('user_profiles')
+        .select('*')
+        .eq('user_id', invitation.professional_id)
+        .single();
+
+      professional = userProf;
+      professionalError = userError;
+    }
+
+    if (!professional) {
+      console.error('Professional not found:', { profError, professionalError });
+      throw new Error('Professional profile not found');
     }
 
     console.log('Found professional:', professional.name || professional.company_name);
