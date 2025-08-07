@@ -3998,6 +3998,10 @@ export type Database = {
           permission_name: string
         }[]
       }
+      get_current_professional_id: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       get_current_user_type: {
         Args: Record<PropertyKey, never>
         Returns: string
