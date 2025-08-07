@@ -33,6 +33,7 @@ interface RealtorPartner {
     company: string;
     phone?: string;
     license_number: string;
+    visibility_settings?: any;
   };
 }
 
@@ -112,7 +113,7 @@ export const useMortgageTeamManagement = () => {
           try {
             const { data: realtor } = await supabase
               .from('professionals')
-              .select('id, name, company, phone, license_number')
+              .select('id, name, company, phone, license_number, visibility_settings')
               .eq('id', team.realtor_id)
               .single();
 
@@ -279,7 +280,8 @@ export const useMortgageTeamManagement = () => {
       status: partner.status,
       created_at: partner.created_at,
       isAccountOwner: false,
-      visibility_settings: {
+      visibility_settings: (typeof partner.realtor!.visibility_settings === 'object' && partner.realtor!.visibility_settings) ? 
+        partner.realtor!.visibility_settings as any : {
         visible_to_clients: true,
         showcase_role: null,
         showcase_description: null
