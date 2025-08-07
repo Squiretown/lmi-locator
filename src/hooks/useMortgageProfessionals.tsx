@@ -17,7 +17,7 @@ export function useMortgageProfessionals() {
       const { data, error } = await supabase
         .from('professionals')
         .select('*')
-        .eq('type', 'mortgage_professional')
+        .eq('professional_type', 'mortgage_professional')
         .eq('status', 'active')
         .order('name');
 

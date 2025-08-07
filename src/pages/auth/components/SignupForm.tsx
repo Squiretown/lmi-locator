@@ -1,7 +1,8 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
-import { Eye, EyeOff } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Eye, EyeOff, CheckCircle, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { CardContent } from '@/components/ui/card';
 import { useForm } from 'react-hook-form';
@@ -15,7 +16,10 @@ import FormErrorDisplay from './form-sections/FormErrorDisplay';
 const SignupForm: React.FC = () => {
   const [authError, setAuthError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
-  const { signUp, isLoading } = useAuth();
+  const [signupSuccess, setSignupSuccess] = useState(false);
+  const [userEmail, setUserEmail] = useState<string>('');
+  const { signUp, isLoading, user, userType } = useAuth();
+  const navigate = useNavigate();
 
   // Initialize form
   const form = useForm<SignupFormValues>({
@@ -61,6 +65,11 @@ const SignupForm: React.FC = () => {
         } else {
           setAuthError(error.message || 'Failed to create account');
         }
+      } else {
+        // Success! Show success state and prepare for redirect
+        setUserEmail(values.email);
+        setSignupSuccess(true);
+        form.reset();
       }
     } catch (err) {
       console.error('Exception during signup:', err);
@@ -72,12 +81,87 @@ const SignupForm: React.FC = () => {
     setShowPassword(!showPassword);
   };
 
+  // Auto-redirect after successful signup
+  useEffect(() => {
+    if (user && userType && signupSuccess) {
+      const timer = setTimeout(() => {
+        if (userType === 'realtor') {
+          navigate('/realtor');
+        } else if (userType === 'mortgage_professional') {
+          navigate('/mortgage-professional');
+        } else {
+          navigate('/dashboard');
+        }
+      }, 3000); // 3 second delay to show success message
+
+      return () => clearTimeout(timer);
+    }
+  }, [user, userType, signupSuccess, navigate]);
+
   const watchReferredByType = form.watch('referredByType');
+
+  // Show success state
+  if (signupSuccess) {
+    return (
+      <CardContent className="space-y-6 pt-6 text-center">
+        <div className="flex justify-center">
+          <div className="bg-primary/10 p-4 rounded-full">
+            <CheckCircle className="h-12 w-12 text-primary" />
+          </div>
+        </div>
+
+        <div>
+          <h2 className="text-2xl font-bold text-foreground mb-2">
+            Welcome! Your Free Trial Starts Now
+          </h2>
+          <p className="text-muted-foreground mb-4">
+            Account created successfully for {userEmail}
+          </p>
+        </div>
+
+        <div className="bg-gradient-to-r from-primary/10 to-secondary/10 p-6 rounded-lg">
+          <div className="flex items-center justify-center mb-3">
+            <Sparkles className="h-5 w-5 text-primary mr-2" />
+            <span className="font-semibold text-primary">14-Day Free Trial Active</span>
+          </div>
+          <div className="space-y-2 text-sm text-muted-foreground">
+            <p>✓ Access to all premium features</p>
+            <p>✓ Unlimited client management</p>
+            <p>✓ Team collaboration tools</p>
+            <p>✓ Advanced analytics & reporting</p>
+          </div>
+        </div>
+
+        <div className="bg-muted/50 p-4 rounded-lg">
+          <p className="text-sm text-muted-foreground">
+            <strong>What's Next?</strong>
+            <br />
+            You'll be redirected to your dashboard in a few seconds. Start exploring all the features available during your free trial!
+          </p>
+        </div>
+
+        <p className="text-xs text-muted-foreground">
+          No credit card required • Cancel anytime • Full access to all features
+        </p>
+      </CardContent>
+    );
+  }
 
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSignup)}>
         <CardContent className="space-y-4 pt-4">
+          {/* Trial Benefits Banner */}
+          <div className="bg-gradient-to-r from-primary/10 to-secondary/10 p-4 rounded-lg mb-6">
+            <div className="flex items-center mb-2">
+              <Sparkles className="h-5 w-5 text-primary mr-2" />
+              <span className="font-semibold text-primary">Start Your 14-Day Free Trial</span>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              No credit card required • Full access to all premium features • Cancel anytime
+            </p>
+          </div>
+
           <FormErrorDisplay error={authError} />
           
           <div className="grid grid-cols-2 gap-4">
