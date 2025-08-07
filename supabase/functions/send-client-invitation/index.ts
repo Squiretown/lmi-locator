@@ -90,7 +90,8 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     // Get the professional's information for the invitation
-    // First try to find by professional_id (which should be professionals.id)
+    console.log('Looking for professional with ID:', invitation.professional_id);
+    
     let professional;
     let professionalError;
     
@@ -99,7 +100,9 @@ const handler = async (req: Request): Promise<Response> => {
       .from('professionals')
       .select('id, user_id, name, company, phone, status, professional_type')
       .eq('id', invitation.professional_id)
-      .single();
+      .maybeSingle();
+
+    console.log('Professional lookup result:', { prof, profError });
 
     if (prof) {
       // Get user profile info for email and other details

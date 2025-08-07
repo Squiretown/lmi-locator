@@ -75,17 +75,32 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    // Get the current professional's info
+    // Get the current professional's info using the helper function
     const { data: currentProfessional, error: professionalError } = await supabase
       .from('professionals')
       .select('*')
       .eq('user_id', user.id)
-      .single();
+      .maybeSingle();
 
-    if (professionalError || !currentProfessional) {
-      console.error('❌ Professional not found:', professionalError);
+    if (professionalError) {
+      console.error('❌ Database error fetching professional:', professionalError);
       return new Response(
-        JSON.stringify({ error: 'Professional profile not found' }),
+        JSON.stringify({ error: 'Database error', details: professionalError.message }),
+        { 
+          status: 500, 
+          headers: { 'Content-Type': 'application/json', ...corsHeaders } 
+        }
+      );
+    }
+
+    if (!currentProfessional) {
+      console.error('❌ No professional profile found for user:', user.id);
+      return new Response(
+        JSON.stringify({ 
+          error: 'Professional profile not found', 
+          details: 'You must have a professional profile to send invitations',
+          userType: 'admin' // This helps frontend show appropriate error
+        }),
         { 
           status: 404, 
           headers: { 'Content-Type': 'application/json', ...corsHeaders } 
