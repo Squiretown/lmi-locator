@@ -97,7 +97,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Create the invitation record
     const invitationData = {
-      professional_id: user.id,
+      professional_id: currentProfessional.id, // Use professional ID, not user ID
       client_email: email,
       client_name: name || email.split('@')[0],
       custom_message: customMessage,

@@ -189,7 +189,15 @@ export const useMortgageTeamManagement = () => {
     },
     onError: (error: any) => {
       console.error('Error inviting professional:', error);
-      toast.error('Failed to send invitation');
+      
+      // Show specific error messages
+      if (error.message?.includes('Professional profile not found')) {
+        toast.error('Please complete your professional profile before sending invitations');
+      } else if (error.message?.includes('not found')) {
+        toast.error('Professional profile missing. Please contact support.');
+      } else {
+        toast.error(error.message || 'Failed to send invitation');
+      }
     },
   });
 

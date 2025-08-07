@@ -3725,6 +3725,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string
       }
+      ensure_professional_profile: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       equals: {
         Args: { geom1: unknown; geom2: unknown }
         Returns: boolean

@@ -45,6 +45,7 @@ export const InviteProfessionalDialog: React.FC<InviteProfessionalDialogProps> =
       reset();
     } catch (error) {
       console.error('Failed to invite professional:', error);
+      // Error is handled by the mutation's onError callback
     }
   };
 
