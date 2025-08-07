@@ -1,10 +1,7 @@
+
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { corsHeaders, handleCors } from "../_shared/cors.ts";
 
 interface ProfessionalInvitationRequest {
   email: string;
@@ -15,19 +12,18 @@ interface ProfessionalInvitationRequest {
 
 const handler = async (req: Request): Promise<Response> => {
   // Handle CORS preflight requests
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
-  }
+  const corsResponse = handleCors(req);
+  if (corsResponse) return corsResponse;
 
   try {
     console.log('🚀 Professional invitation function started');
 
-    // Initialize Supabase client
+    // Initialize Supabase client with service role key for better permissions
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
-    const supabase = createClient(supabaseUrl, supabaseAnonKey);
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    console.log('📋 Supabase client initialized');
+    console.log('📋 Supabase client initialized with service role');
 
     // Get the user from the request
     const authHeader = req.headers.get('Authorization');
@@ -75,44 +71,62 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    // Get the current professional's info using the helper function
-    const { data: currentProfessional, error: professionalError } = await supabase
+    // Get the current professional's info - try professionals table first
+    let currentProfessional;
+    
+    console.log('🔍 Looking up professional for user:', user.id);
+    
+    // First try to find in professionals table
+    const { data: profData, error: profError } = await supabase
       .from('professionals')
       .select('*')
       .eq('user_id', user.id)
       .maybeSingle();
 
-    if (professionalError) {
-      console.error('❌ Database error fetching professional:', professionalError);
-      return new Response(
-        JSON.stringify({ error: 'Database error', details: professionalError.message }),
-        { 
-          status: 500, 
-          headers: { 'Content-Type': 'application/json', ...corsHeaders } 
-        }
-      );
+    if (profData) {
+      currentProfessional = profData;
+      console.log('✅ Found professional in professionals table:', profData.id);
+    } else {
+      console.log('⚠️ No professional found in professionals table, checking user_profiles');
+      
+      // Fallback to user_profiles table
+      const { data: userProfile, error: profileError } = await supabase
+        .from('user_profiles')
+        .select('*')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (userProfile) {
+        // Create a pseudo professional object from user profile
+        currentProfessional = {
+          id: userProfile.user_id, // Use user_id as professional_id fallback
+          user_id: user.id,
+          name: userProfile.company_name || `${userProfile.first_name || ''} ${userProfile.last_name || ''}`.trim(),
+          company: userProfile.company_name,
+          email: user.email,
+          professional_type: userProfile.user_type || 'realtor'
+        };
+        console.log('✅ Created professional from user_profiles:', currentProfessional.id);
+      } else {
+        console.error('❌ No professional profile found for user:', user.id);
+        return new Response(
+          JSON.stringify({ 
+            error: 'Professional profile not found', 
+            details: 'You must have a professional profile to send invitations'
+          }),
+          { 
+            status: 404, 
+            headers: { 'Content-Type': 'application/json', ...corsHeaders } 
+          }
+        );
+      }
     }
 
-    if (!currentProfessional) {
-      console.error('❌ No professional profile found for user:', user.id);
-      return new Response(
-        JSON.stringify({ 
-          error: 'Professional profile not found', 
-          details: 'You must have a professional profile to send invitations',
-          userType: 'admin' // This helps frontend show appropriate error
-        }),
-        { 
-          status: 404, 
-          headers: { 'Content-Type': 'application/json', ...corsHeaders } 
-        }
-      );
-    }
-
-    console.log('💼 Current professional:', currentProfessional.name);
+    console.log('💼 Current professional:', currentProfessional.name || currentProfessional.company);
 
     // Create the invitation record
     const invitationData = {
-      professional_id: currentProfessional.id, // Use professional ID, not user ID
+      professional_id: currentProfessional.id,
       client_email: email,
       client_name: name || email.split('@')[0],
       custom_message: customMessage,
@@ -120,6 +134,8 @@ const handler = async (req: Request): Promise<Response> => {
       target_professional_role: professionalType,
       status: 'pending'
     };
+
+    console.log('📤 Creating invitation with data:', invitationData);
 
     const { data: invitation, error: invitationError } = await supabase
       .from('client_invitations')
@@ -130,7 +146,10 @@ const handler = async (req: Request): Promise<Response> => {
     if (invitationError) {
       console.error('❌ Failed to create invitation:', invitationError);
       return new Response(
-        JSON.stringify({ error: 'Failed to create invitation' }),
+        JSON.stringify({ 
+          error: 'Failed to create invitation',
+          details: invitationError.message
+        }),
         { 
           status: 500, 
           headers: { 'Content-Type': 'application/json', ...corsHeaders } 
@@ -138,11 +157,7 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    console.log('✅ Invitation created:', invitation.id);
-
-    // Here you would typically send an email using a service like Resend
-    // For now, we'll just log that the invitation was created
-    console.log('📧 Email would be sent to:', email);
+    console.log('✅ Invitation created successfully:', invitation.id);
 
     return new Response(
       JSON.stringify({ 
@@ -151,8 +166,9 @@ const handler = async (req: Request): Promise<Response> => {
           id: invitation.id,
           email: email,
           type: professionalType,
-          status: 'sent'
-        }
+          status: 'created'
+        },
+        message: 'Professional invitation created successfully'
       }),
       { 
         status: 200, 
@@ -163,7 +179,10 @@ const handler = async (req: Request): Promise<Response> => {
   } catch (error: any) {
     console.error('💥 Function error:', error);
     return new Response(
-      JSON.stringify({ error: error.message || 'Internal server error' }),
+      JSON.stringify({ 
+        error: error.message || 'Internal server error',
+        details: 'Failed to process professional invitation request'
+      }),
       { 
         status: 500, 
         headers: { 'Content-Type': 'application/json', ...corsHeaders } 
