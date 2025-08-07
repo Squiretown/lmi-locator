@@ -177,6 +177,7 @@ export const useUserManagement = () => {
       });
 
       if (error) {
+        console.error('Edge function error:', error);
         // Handle specific "User not found" errors gracefully
         if (error.message?.includes('User not found') || error.message?.includes('404')) {
           console.log(`User ${userId} was already deleted, refreshing list`);
@@ -184,8 +185,11 @@ export const useUserManagement = () => {
           await fetchUsers(); // Refresh the list
           return;
         }
+        // Handle edge function errors more gracefully
+        const errorMessage = error.message || 'Failed to delete user';
         await logAdminError('delete_user', error, userId);
-        throw error;
+        toast.error(`Deletion failed: ${errorMessage}`);
+        return; // Don't throw, just return to prevent system freezing
       }
 
       if (!data?.success) {
