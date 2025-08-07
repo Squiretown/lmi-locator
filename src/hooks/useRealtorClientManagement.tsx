@@ -128,7 +128,7 @@ export function useRealtorClientManagement() {
         assignments.push({
           client_id: client.id,
           professional_id: clientData.assignedMortgageProfessionalId,
-          professional_role: 'mortgage',
+          professional_role: 'mortgage_professional',
           assigned_by: user.id,
         });
       }

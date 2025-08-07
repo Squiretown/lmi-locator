@@ -160,7 +160,7 @@ export const useMortgageTeamManagement = () => {
           client_email: data.email,
           client_name: data.name,
           invitation_target_type: 'professional',
-          target_professional_role: data.professionalType,
+          target_professional_role: data.professionalType === 'mortgage_professional' ? 'mortgage_professional' : data.professionalType,
           custom_message: data.customMessage,
           professional_id: currentProfessional.id,
         })

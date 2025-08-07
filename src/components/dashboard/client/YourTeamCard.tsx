@@ -74,7 +74,7 @@ export const YourTeamCard = () => {
                 <p className="text-xs text-muted-foreground">{assignment.professional_company}</p>
               </div>
               <Badge variant="secondary" className="text-xs">
-                {assignment.professional_role === 'mortgage' ? 'Mortgage' : 'Realtor'}
+                {assignment.professional_role === 'mortgage_professional' ? 'Mortgage' : 'Realtor'}
               </Badge>
             </div>
             

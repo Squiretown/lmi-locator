@@ -133,7 +133,7 @@ export function useClientManagement() {
       assignments.push({
         client_id: client.id,
         professional_id: professional.id,
-        professional_role: 'mortgage',
+        professional_role: 'mortgage_professional',
         assigned_by: user.id, // Keep auth user ID for audit purposes
       });
 

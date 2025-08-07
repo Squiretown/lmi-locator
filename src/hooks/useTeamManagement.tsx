@@ -23,7 +23,7 @@ interface ClientTeamAssignment {
   id: string;
   client_id: string;
   professional_id: string;
-  professional_role: 'mortgage' | 'realtor';
+  professional_role: 'mortgage_professional' | 'realtor';
   assigned_at: string;
   assigned_by?: string;
   status: string;
@@ -226,7 +226,7 @@ export const useTeamManagement = () => {
       assignments.push({
         client_id: data.clientId,
         professional_id: userId,
-        professional_role: 'mortgage',
+        professional_role: 'mortgage_professional',
         assigned_by: data.assignedBy || userId,
       });
 

@@ -74,7 +74,7 @@ const handler = async (req: Request): Promise<Response> => {
     // Try to get professional info from professionals table first
     const { data: prof, error: profError } = await supabase
       .from('professionals')
-      .select('id, user_id, name, company, phone, status')
+      .select('id, user_id, name, company, phone, status, professional_type')
       .eq('id', invitation.professional_id)
       .single();
 
@@ -110,6 +110,30 @@ const handler = async (req: Request): Promise<Response> => {
     if (!professional) {
       console.error('Professional not found:', { profError, professionalError });
       throw new Error('Professional profile not found');
+    }
+
+    // Validate role matching if specified in invitation
+    if (invitation.target_professional_role) {
+      const invitationRole = invitation.target_professional_role;
+      const professionalType = professional.professional_type;
+      
+      // Handle role name variations for compatibility
+      const normalizeRole = (role: string) => {
+        if (role === 'mortgage' || role === 'mortgage_professional') return 'mortgage_professional';
+        if (role === 'realtor') return 'realtor';
+        return role;
+      };
+      
+      const normalizedInvitationRole = normalizeRole(invitationRole);
+      const normalizedProfessionalType = normalizeRole(professionalType);
+      
+      if (normalizedInvitationRole !== normalizedProfessionalType) {
+        console.error('Role mismatch:', { 
+          invitationRole: normalizedInvitationRole, 
+          professionalType: normalizedProfessionalType 
+        });
+        throw new Error(`Professional role mismatch. Expected ${normalizedInvitationRole}, found ${normalizedProfessionalType}`);
+      }
     }
 
     console.log('Found professional:', professional.name || professional.company_name);

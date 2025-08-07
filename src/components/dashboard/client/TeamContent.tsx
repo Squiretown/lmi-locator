@@ -60,8 +60,8 @@ export const TeamContent: React.FC = () => {
                 <div className="flex-1 space-y-2">
                   <div className="flex items-center justify-between">
                     <h3 className="font-semibold">{assignment.professional?.name}</h3>
-                    <Badge variant={assignment.professional_role === 'mortgage' ? 'default' : 'secondary'}>
-                      {assignment.professional_role === 'mortgage' ? 'Mortgage Professional' : 'Realtor'}
+                    <Badge variant={assignment.professional_role === 'mortgage_professional' ? 'default' : 'secondary'}>
+                      {assignment.professional_role === 'mortgage_professional' ? 'Mortgage Professional' : 'Realtor'}
                     </Badge>
                   </div>
                   
