@@ -7,7 +7,7 @@ import { useInvitedContacts } from '@/hooks/useInvitedContacts';
 import { formatDistanceToNow } from 'date-fns';
 
 export const RecentContactsSection: React.FC = () => {
-  const { invitedContacts, isLoading } = useInvitedContacts();
+  const { contacts, isLoading } = useInvitedContacts();
 
   if (isLoading) {
     return (
@@ -30,14 +30,14 @@ export const RecentContactsSection: React.FC = () => {
       <CardContent>
         <ScrollArea className="h-[400px] pr-4">
           <div className="space-y-4">
-            {invitedContacts.length > 0 ? (
-              invitedContacts.map((contact) => (
+            {contacts.length > 0 ? (
+              contacts.map((contact) => (
                 <ContactItem
                   key={contact.id}
-                  name={contact.name || contact.email}
+                  name={(contact.client_name || contact.client_email) as string}
                   type="Invited"
-                  status={contact.status}
-                  date={formatDistanceToNow(new Date(contact.invited_at), { addSuffix: true })}
+                  status={(contact.status === 'accepted' ? 'accepted' : 'invited') as 'invited' | 'accepted' | 'registered'}
+                  date={formatDistanceToNow(new Date((contact.sent_at || contact.created_at) as string), { addSuffix: true })}
                 />
               ))
             ) : (

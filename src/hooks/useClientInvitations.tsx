@@ -39,28 +39,34 @@ export function useClientInvitations() {
   const { data: invitations = [], isLoading } = useQuery({
     queryKey: ['client-invitations'],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('User not authenticated');
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error('User not authenticated');
 
-      // Get the user's professional profile first
-      const { data: professional, error: profError } = await supabase
-        .from('professionals')
-        .select('id')
-        .eq('user_id', user.id)
-        .single();
+        // Get the user's professional profile first
+        const { data: professional, error: profError } = await supabase
+          .from('professionals')
+          .select('id')
+          .eq('user_id', user.id)
+          .single();
 
-      if (profError || !professional) {
-        throw new Error('Professional profile not found. Please complete your profile setup.');
+        if (profError || !professional) {
+          throw new Error('Professional profile not found. Please complete your profile setup.');
+        }
+
+        const { data, error } = await supabase
+          .from('client_invitations')
+          .select('*')
+          .eq('professional_id', professional.id)
+          .order('created_at', { ascending: false });
+
+        if (error) throw error;
+        return data as ClientInvitation[];
+      } catch (error: any) {
+        const message = error?.message || 'Unable to load invitations';
+        toast.error(`Failed to load invitations: ${message}`);
+        throw error;
       }
-
-      const { data, error } = await supabase
-        .from('client_invitations')
-        .select('*')
-        .eq('professional_id', professional.id)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      return data as ClientInvitation[];
     },
   });
 

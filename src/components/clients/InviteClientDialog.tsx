@@ -84,7 +84,12 @@ export const InviteClientDialog: React.FC<InviteClientDialogProps> = ({
             <Input
               id="client_email"
               type="email"
-              {...register('client_email', { required: 'Email is required' })}
+              {...register('client_email', {
+                validate: (value) => {
+                  if (invitationType === 'sms') return true; // Email not required for SMS-only
+                  return (!!value || 'Email is required');
+                },
+              })}
               placeholder="john.smith@example.com"
             />
             {errors.client_email && (
@@ -96,9 +101,19 @@ export const InviteClientDialog: React.FC<InviteClientDialogProps> = ({
             <Label htmlFor="client_phone">Phone Number</Label>
             <Input
               id="client_phone"
-              {...register('client_phone')}
+              {...register('client_phone', {
+                validate: (value) => {
+                  if (invitationType === 'sms' || invitationType === 'both') {
+                    return (!!value || 'Phone number is required for SMS invitations');
+                  }
+                  return true;
+                },
+              })}
               placeholder="(555) 123-4567"
             />
+            {errors.client_phone && (
+              <p className="text-sm text-destructive">{errors.client_phone.message}</p>
+            )}
             <p className="text-xs text-muted-foreground">
               Required for SMS invitations
             </p>
