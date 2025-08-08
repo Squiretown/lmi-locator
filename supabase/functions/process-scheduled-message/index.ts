@@ -76,13 +76,38 @@ const handler = async (req: Request): Promise<Response> => {
         if (error) throw error;
         targetUsers = allUsers?.map(u => u.user_id) || [];
       } else if (filter.user_filter === 'by_type' && filter.user_type) {
-        const { data: typedUsers, error } = await supabase
+        // Support both legacy string-based user_type and relational user_type_id via user_types.type_name
+        const { data: typedUsersByString, error: typedByStringError } = await supabase
           .from('user_profiles')
           .select('user_id')
           .eq('user_type', filter.user_type);
         
-        if (error) throw error;
-        targetUsers = typedUsers?.map(u => u.user_id) || [];
+        if (typedByStringError) throw typedByStringError;
+        
+        if (typedUsersByString && typedUsersByString.length > 0) {
+          targetUsers = typedUsersByString.map(u => u.user_id);
+        } else {
+          // Fallback to relational model lookup
+          const { data: typeRow, error: typeLookupError } = await supabase
+            .from('user_types')
+            .select('type_id')
+            .eq('type_name', filter.user_type)
+            .maybeSingle();
+          
+          if (typeLookupError) throw typeLookupError;
+          
+          if (typeRow?.type_id) {
+            const { data: typedUsersById, error: typedByIdError } = await supabase
+              .from('user_profiles')
+              .select('user_id')
+              .eq('user_type_id', typeRow.type_id);
+            
+            if (typedByIdError) throw typedByIdError;
+            targetUsers = typedUsersById?.map(u => u.user_id) || [];
+          } else {
+            targetUsers = [];
+          }
+        }
       }
     }
 
