@@ -843,9 +843,11 @@ export type Database = {
           email_sent: boolean | null
           expires_at: string | null
           id: string
+          invitation_category: string | null
           invitation_code: string
           invitation_target_type: string
           invitation_type: string
+          lending_team_id: string | null
           professional_id: string
           sent_at: string | null
           sms_sent: boolean | null
@@ -867,9 +869,11 @@ export type Database = {
           email_sent?: boolean | null
           expires_at?: string | null
           id?: string
+          invitation_category?: string | null
           invitation_code?: string
           invitation_target_type?: string
           invitation_type?: string
+          lending_team_id?: string | null
           professional_id: string
           sent_at?: string | null
           sms_sent?: boolean | null
@@ -891,9 +895,11 @@ export type Database = {
           email_sent?: boolean | null
           expires_at?: string | null
           id?: string
+          invitation_category?: string | null
           invitation_code?: string
           invitation_target_type?: string
           invitation_type?: string
+          lending_team_id?: string | null
           professional_id?: string
           sent_at?: string | null
           sms_sent?: boolean | null
@@ -910,6 +916,13 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "client_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_invitations_lending_team_id_fkey"
+            columns: ["lending_team_id"]
+            isOneToOne: false
+            referencedRelation: "lending_teams"
             referencedColumns: ["id"]
           },
         ]
@@ -1526,6 +1539,45 @@ export type Database = {
           total_chunks?: number | null
           total_rows?: number | null
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      lending_teams: {
+        Row: {
+          created_at: string
+          id: string
+          invited_at: string | null
+          joined_at: string | null
+          permissions: Json | null
+          role: string
+          status: string
+          team_leader_id: string
+          team_member_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          invited_at?: string | null
+          joined_at?: string | null
+          permissions?: Json | null
+          role?: string
+          status?: string
+          team_leader_id: string
+          team_member_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          invited_at?: string | null
+          joined_at?: string | null
+          permissions?: Json | null
+          role?: string
+          status?: string
+          team_leader_id?: string
+          team_member_id?: string
+          updated_at?: string
         }
         Relationships: []
       }

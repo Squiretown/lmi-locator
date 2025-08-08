@@ -8,6 +8,7 @@ import { useMortgageTeamStats } from '@/hooks/useMortgageTeamStats';
 import { useMortgageTeamManagement } from '@/hooks/useMortgageTeamManagement';
 import { useClientInvitations } from '@/hooks/useClientInvitations';
 import { InviteProfessionalDialog } from '@/components/teams/InviteProfessionalDialog';
+import { LendingTeamManagement } from '@/components/teams/LendingTeamManagement';
 
 const MortgageTeam: React.FC = () => {
   const [showInviteDialog, setShowInviteDialog] = useState(false);
@@ -363,9 +364,11 @@ const MortgageTeam: React.FC = () => {
       </Card>
 
       {/* Invite Dialog */}
-      <InviteProfessionalDialog 
-        open={showInviteDialog} 
-        onOpenChange={setShowInviteDialog} 
+      <LendingTeamManagement />
+
+      <InviteProfessionalDialog
+        open={showInviteDialog}
+        onOpenChange={setShowInviteDialog}
       />
     </div>
   );
