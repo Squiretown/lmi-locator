@@ -66,7 +66,7 @@ serve(async (req: Request) => {
     // Get inviter's professional profile
     const { data: professional, error: profError } = await supabase
       .from('professionals')
-      .select('id, name, company, email, phone, license_number')
+      .select('id, name, company, phone, license_number')
       .eq('user_id', user.id)
       .single();
 

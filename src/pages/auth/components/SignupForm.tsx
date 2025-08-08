@@ -30,6 +30,7 @@ const SignupForm: React.FC = () => {
       email: '',
       password: '',
       userRole: 'realtor',
+      licenseNumber: '',
       referralCode: '',
       referredByType: 'none',
       referredByName: ''
@@ -46,6 +47,7 @@ const SignupForm: React.FC = () => {
         first_name: values.firstName,
         last_name: values.lastName,
         user_type: values.userRole,
+        license_number: values.licenseNumber,
         ...(values.referralCode && { referral_code: values.referralCode }),
         ...(values.referredByType && values.referredByType !== 'none' && { 
           referred_by_type: values.referredByType,
@@ -263,6 +265,20 @@ const SignupForm: React.FC = () => {
                     <SelectItem value="mortgage_professional">Mortgage Professional</SelectItem>
                   </SelectContent>
                 </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="licenseNumber"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>License Number</FormLabel>
+                <FormControl>
+                  <Input placeholder="Enter your professional license number" {...field} />
+                </FormControl>
                 <FormMessage />
               </FormItem>
             )}

@@ -19,6 +19,7 @@ interface ProfileFormValues {
   company: string;
   bio: string;
   website: string;
+  license_number: string;
 }
 
 const ProfileSettings: React.FC = () => {
@@ -35,6 +36,7 @@ const ProfileSettings: React.FC = () => {
       company: profile?.company || '',
       bio: profile?.bio || '',
       website: profile?.website || '',
+      license_number: profile?.license_number || '',
     }
   });
 
@@ -49,6 +51,7 @@ const ProfileSettings: React.FC = () => {
         company: profile?.company || '',
         bio: profile?.bio || '',
         website: profile?.website || '',
+        license_number: profile?.license_number || '',
       });
     }
   }, [user, profile, form]);
@@ -66,6 +69,7 @@ const ProfileSettings: React.FC = () => {
         data: {
           first_name: data.first_name,
           last_name: data.last_name,
+          license_number: data.license_number,
         }
       });
       
@@ -81,6 +85,7 @@ const ProfileSettings: React.FC = () => {
           company: data.company,
           bio: data.bio,
           website: data.website,
+          license_number: data.license_number,
         });
       }
       
@@ -222,6 +227,20 @@ const ProfileSettings: React.FC = () => {
                 <FormLabel>Website</FormLabel>
                 <FormControl>
                   <Input {...field} type="url" placeholder="https://yourwebsite.com" />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="license_number"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>License Number</FormLabel>
+                <FormControl>
+                  <Input {...field} placeholder="Enter your professional license number" />
                 </FormControl>
                 <FormMessage />
               </FormItem>

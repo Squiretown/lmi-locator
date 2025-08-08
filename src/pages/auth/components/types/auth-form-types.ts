@@ -30,6 +30,7 @@ export const signupFormSchema = z.object({
       message: 'Password must include at least one special character'
     }),
   userRole: z.enum(PROFESSIONAL_ROLES as [string, ...string[]]),
+  licenseNumber: z.string().min(1, 'License number is required'),
   referralCode: z.string().optional(),
   referredByType: z.enum(['mortgage_professional', 'realtor', 'professional', 'none']).optional(),
   referredByName: z.string().optional()
