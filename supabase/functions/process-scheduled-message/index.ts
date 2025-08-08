@@ -7,6 +7,18 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Timeout helper with label logging
+async function withTimeout<T>(promise: Promise<T>, ms: number, label?: string): Promise<T> {
+  const started = Date.now();
+  return await Promise.race([
+    promise,
+    new Promise<T>((_, reject) => setTimeout(() => reject(new Error(`Timeout after ${ms}ms${label ? ` during ${label}` : ''}`)), ms))
+  ]).finally(() => {
+    if (label) console.log(`[process-scheduled-message] ${label} took ${Date.now() - started}ms`);
+  });
+}
+
+
 interface ScheduledMessage {
   id: string;
   title: string;
@@ -28,6 +40,9 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
+    const start = Date.now();
+    const budgetMs = 24000; // leave headroom under platform limit
+
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
@@ -158,38 +173,48 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Send emails if selected
     if (deliveryMethods.includes('email')) {
-      // Process emails in batches
-      const batchSize = 5;
-      for (let i = 0; i < targetUsers.length; i += batchSize) {
-        const batch = targetUsers.slice(i, i + batchSize);
-        
-        const emailPromises = batch.map(async (userId) => {
-          try {
-            const { error: emailError } = await supabase.functions.invoke('send-user-email', {
-              body: {
-                userId: userId,
-                subject: message.title,
-                message: message.message,
-              }
-            });
-
-            if (emailError) throw emailError;
-            return { success: true, userId };
-          } catch (error) {
-            console.error(`Failed to send email to user ${userId}:`, error);
-            return { success: false, userId };
+      const processBatches = async (startIndex: number) => {
+        const batchSize = 5;
+        for (let i = startIndex; i < targetUsers.length; i += batchSize) {
+          // If we're close to the time budget, offload remaining work
+          if (Date.now() - start > budgetMs) {
+            try {
+              // @ts-ignore - EdgeRuntime may exist in Supabase Edge
+              globalThis.EdgeRuntime?.waitUntil?.(processBatches(i));
+            } catch (_) {}
+            break;
           }
-        });
 
-        const results = await Promise.all(emailPromises);
-        emailsSent += results.filter(r => r.success).length;
-        emailsFailed += results.filter(r => !r.success).length;
+          const batch = targetUsers.slice(i, i + batchSize);
+          const emailPromises = batch.map(async (userId) => {
+            try {
+              const { error: emailError } = await withTimeout(
+                supabase.functions.invoke('send-user-email', {
+                  body: { userId, subject: message.title, message: message.message },
+                }),
+                6000,
+                `send-user-email ${userId}`
+              );
+              if (emailError) throw emailError;
+              return { success: true, userId };
+            } catch (error) {
+              console.error(`Failed to send email to user ${userId}:`, error);
+              return { success: false, userId };
+            }
+          });
 
-        // Add small delay between batches
-        if (i + batchSize < targetUsers.length) {
-          await new Promise(resolve => setTimeout(resolve, 1000));
+          const results = await Promise.allSettled(emailPromises);
+          emailsSent += results.filter(r => r.status === 'fulfilled' && (r as PromiseFulfilledResult<any>).value.success).length;
+          emailsFailed += results.filter(r => r.status === 'fulfilled' && !(r as PromiseFulfilledResult<any>).value.success).length;
+
+          // Small delay between batches
+          if (i + batchSize < targetUsers.length) {
+            await new Promise(resolve => setTimeout(resolve, 300));
+          }
         }
-      }
+      };
+
+      await processBatches(0);
     }
 
     // Update scheduled message status

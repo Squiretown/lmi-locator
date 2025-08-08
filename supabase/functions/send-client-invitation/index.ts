@@ -25,16 +25,27 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Simple timeout wrapper with logging
+async function withTimeout<T>(promise: Promise<T>, ms: number, label?: string): Promise<T> {
+  const started = Date.now();
+  return await Promise.race([
+    promise,
+    new Promise<T>((_, reject) =>
+      setTimeout(() => reject(new Error(`Timeout after ${ms}ms${label ? ` during ${label}` : ''}`)), ms)
+    ),
+  ]).finally(() => {
+    if (label) console.log(`[send-client-invitation] ${label} took ${Date.now() - started}ms`);
+  });
+}
+
 interface SendInvitationRequest {
   invitationId: string;
   type?: 'email' | 'sms' | 'both';
   resend?: boolean;
 }
 
-const supabase = createClient(
-  Deno.env.get("SUPABASE_URL") ?? "",
-  Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
-);
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
+const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
 
 const resendApiKey = Deno.env.get("RESEND_API_KEY");
 const resend = resendApiKey ? new Resend(resendApiKey) : null;
@@ -45,8 +56,18 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    const { invitationId, type, resend: isResend }: SendInvitationRequest = await req.json();
+    const start = Date.now();
 
+    if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+      return new Response(
+        JSON.stringify({ error: 'Service not configured', success: false }),
+        { status: 503, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+
+    const { invitationId, type, resend: isResend }: SendInvitationRequest = await req.json();
     if (!invitationId) throw new Error('Invitation ID is required');
 
     if ((type === 'email' || type === 'both' || !type) && !resendApiKey) {
@@ -113,14 +134,20 @@ const handler = async (req: Request): Promise<Response> => {
     let smsSent = invitation.sms_sent;
 
     // Prepare invitation URL
-    const baseUrl = Deno.env.get("SUPABASE_URL")?.replace('/rest/v1', '') || "https://llhofjbijjxkfezidxyi.supabase.co";
-    const frontendUrl = baseUrl.replace('supabase.co', 'lovableproject.com');
-    const invitationUrl = `${frontendUrl}/client-registration?code=${invitation.invitation_code}`;
+    const configuredFrontend = Deno.env.get("FRONTEND_URL");
+    const originHeader = req.headers.get("origin") || '';
+    const fallbackFrontend = (Deno.env.get("SUPABASE_URL")?.replace('/rest/v1', '') || "https://llhofjbijjxkfezidxyi.supabase.co")
+      .replace('supabase.co', 'lovableproject.com');
+    const frontendBase = configuredFrontend || originHeader || fallbackFrontend;
+    const invitationUrl = `${frontendBase}/client-registration?code=${invitation.invitation_code}`;
 
-    // Send email
+    // Send communications (run in parallel when 'both')
+    let emailPromise: Promise<any> | null = null;
+    let smsPromise: Promise<any> | null = null;
+
     if (invitationType === 'email' || invitationType === 'both') {
-      try {
-        const emailResponse = await sendEmailInvitation({
+      emailPromise = withTimeout(
+        sendEmailInvitation({
           clientEmail: invitation.client_email,
           clientName: invitation.client_name || 'Client',
           professionalName: professional.company_name || professional.name || 'Professional',
@@ -129,27 +156,48 @@ const handler = async (req: Request): Promise<Response> => {
           templateType: invitation.template_type || 'standard',
           customMessage: invitation.custom_message,
           professionalEmail: professional.email,
-        });
-        if (emailResponse?.data?.id) emailSent = true;
-      } catch (error) {
-        if (invitationType === 'email') throw error;
-      }
+        }),
+        12000,
+        'sendEmail'
+      );
     }
 
-    // Send SMS
     if (invitationType === 'sms' || invitationType === 'both') {
       if (!invitation.client_phone) throw new Error('Phone number is required for SMS invitations');
-      try {
-        const smsResponse = await sendSMSInvitation({
+      smsPromise = withTimeout(
+        sendSMSInvitation({
           clientPhone: invitation.client_phone,
           clientName: invitation.client_name || 'Client',
           professionalName: professional.company_name || professional.name || 'Professional',
           invitationCode: invitation.invitation_code,
           invitationUrl,
-        });
-        if (smsResponse.success) smsSent = true;
-      } catch (error) {
-        if (invitationType === 'sms' || !emailSent) throw error;
+        }),
+        8000,
+        'sendSMS'
+      );
+    }
+
+    const results = await Promise.allSettled([
+      emailPromise ?? Promise.resolve(null),
+      smsPromise ?? Promise.resolve(null),
+    ]);
+
+    const emailResult = results[0];
+    const smsResult = results[1];
+
+    if (emailPromise) {
+      if (emailResult.status === 'fulfilled' && (emailResult.value as any)?.data?.id) {
+        emailSent = true;
+      } else if (invitationType === 'email' && emailResult.status === 'rejected') {
+        throw (emailResult as PromiseRejectedResult).reason;
+      }
+    }
+
+    if (smsPromise) {
+      if (smsResult.status === 'fulfilled' && (smsResult.value as any)?.success) {
+        smsSent = true;
+      } else if ((invitationType === 'sms' || (invitationType === 'both' && !emailSent)) && smsResult.status === 'rejected') {
+        throw (smsResult as PromiseRejectedResult).reason;
       }
     }
 
