@@ -37,9 +37,9 @@ export const InviteProfessionalDialog: React.FC<InviteProfessionalDialogProps> =
     try {
       await inviteProfessional({
         email: data.email,
-        
+        role: data.professionalType === 'realtor' ? 'realtor' : 'team_member',
         professionalType: data.professionalType,
-        customMessage: data.customMessage,
+        message: data.customMessage,
       });
       onOpenChange(false);
       reset();
