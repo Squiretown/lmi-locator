@@ -19,7 +19,20 @@ interface InvitationRequest {
   role?: string;
 }
 
-const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
+// Initialize Resend with validation
+const resendApiKey = Deno.env.get("RESEND_API_KEY");
+const isDevelopment = Deno.env.get("ENVIRONMENT") === "development" || !resendApiKey;
+
+let resend: any = null;
+if (resendApiKey) {
+  resend = new Resend(resendApiKey);
+}
+
+// Email validation helper
+function isValidEmail(email: string): boolean {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
+}
 
 serve(async (req: Request) => {
   // Handle CORS preflight
@@ -63,6 +76,15 @@ serve(async (req: Request) => {
     const body: InvitationRequest = await req.json();
     console.log("Request body:", body);
 
+    // Validate required fields
+    if (!body.email || !body.type) {
+      throw new Error("Email and type are required fields");
+    }
+
+    if (!isValidEmail(body.email)) {
+      throw new Error("Invalid email format");
+    }
+
     // Get inviter's professional profile
     const { data: professional, error: profError } = await supabase
       .from('professionals')
@@ -73,6 +95,11 @@ serve(async (req: Request) => {
     if (profError || !professional) {
       console.error("Error fetching professional:", profError);
       throw new Error("Professional profile not found");
+    }
+
+    // Validate professional profile completeness
+    if (!professional.name || !professional.license_number) {
+      throw new Error("Professional profile is incomplete. Please ensure your name and license number are set.");
     }
 
     console.log("Professional found:", professional.name);
@@ -135,18 +162,39 @@ serve(async (req: Request) => {
       });
     }
 
-    // Send email
+    // Send email or mock in development
     console.log("Sending email to:", body.email);
     
-    const emailResult = await resend.emails.send({
-      from: `${inviterName} <onboarding@resend.dev>`,
-      to: [body.email],
-      subject,
-      html: htmlContent,
-    });
+    let emailResult: any;
+    
+    if (isDevelopment) {
+      // Development mode - mock email sending
+      console.log("Development mode: Mocking email send");
+      console.log("Email would be sent to:", body.email);
+      console.log("Subject:", subject);
+      console.log("From:", `${inviterName} <noreply@yourdomain.com>`);
+      
+      emailResult = {
+        data: { id: `mock-${Date.now()}` },
+        error: null
+      };
+    } else {
+      // Production mode - send actual email
+      if (!resend) {
+        throw new Error("RESEND_API_KEY is required for sending emails in production");
+      }
+      
+      emailResult = await resend.emails.send({
+        from: `${inviterName} <noreply@yourdomain.com>`, // Use your verified domain
+        to: [body.email],
+        subject,
+        html: htmlContent,
+      });
+    }
 
     if (emailResult.error) {
       console.error("Email sending failed:", emailResult.error);
+      console.error("Full error object:", JSON.stringify(emailResult.error, null, 2));
       
       // Update invitation status to failed
       await supabase
@@ -156,8 +204,18 @@ serve(async (req: Request) => {
           updated_at: new Date().toISOString()
         })
         .eq('id', invitation.id);
+      
+      // Handle different error types from Resend
+      let errorMessage = "Email sending failed";
+      if (emailResult.error?.message) {
+        errorMessage = emailResult.error.message;
+      } else if (typeof emailResult.error === 'string') {
+        errorMessage = emailResult.error;
+      } else if (emailResult.error?.error) {
+        errorMessage = emailResult.error.error;
+      }
         
-      throw new Error(`Email sending failed: ${emailResult.error.message}`);
+      throw new Error(`Email sending failed: ${errorMessage}`);
     }
 
     console.log("Email sent successfully:", emailResult.data?.id);
@@ -188,15 +246,33 @@ serve(async (req: Request) => {
 
   } catch (error: any) {
     console.error("Error in send-invitation function:", error);
+    console.error("Full error object:", JSON.stringify(error, null, 2));
+    console.error("Error stack:", error.stack);
+    
+    // Determine appropriate status code
+    let statusCode = 500;
+    let errorMessage = error.message || "Failed to send invitation";
+    
+    if (error.message?.includes("Invalid email format") || 
+        error.message?.includes("required fields") ||
+        error.message?.includes("profile is incomplete")) {
+      statusCode = 400; // Bad Request
+    } else if (error.message?.includes("Authentication failed") ||
+               error.message?.includes("No authorization header")) {
+      statusCode = 401; // Unauthorized
+    } else if (error.message?.includes("Professional profile not found")) {
+      statusCode = 403; // Forbidden
+    }
     
     return new Response(
       JSON.stringify({
         success: false,
-        error: error.message || "Failed to send invitation"
+        error: errorMessage,
+        details: isDevelopment ? error.stack : undefined
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 500,
+        status: statusCode,
       }
     );
   }
