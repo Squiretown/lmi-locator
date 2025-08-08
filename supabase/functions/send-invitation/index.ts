@@ -88,7 +88,7 @@ serve(async (req: Request) => {
     // Get inviter's professional profile with fallback
     const { data: professional, error: profError } = await supabase
       .from('professionals')
-      .select('id, name, company, phone, license_number')
+      .select('id, name, company, phone, license_number, email')
       .eq('user_id', user.id)
       .single();
 
@@ -100,7 +100,7 @@ serve(async (req: Request) => {
     // Get user profile for fallback data
     const { data: userProfile } = await supabase
       .from('user_profiles')
-      .select('first_name, last_name, company_name, license_number')
+      .select('first_name, last_name')
       .eq('user_id', user.id)
       .single();
 
@@ -108,8 +108,9 @@ serve(async (req: Request) => {
     const enhancedProfessional = {
       ...professional,
       name: professional.name || (userProfile ? `${userProfile.first_name || ''} ${userProfile.last_name || ''}`.trim() : '') || 'Professional',
-      company: professional.company || userProfile?.company_name || 'Company',
-      license_number: professional.license_number || userProfile?.license_number || 'License Pending'
+      company: professional.company || 'Company',
+      license_number: professional.license_number || 'License Pending',
+      email: professional.email || user.email || ''
     };
 
     // Log the profile data for debugging

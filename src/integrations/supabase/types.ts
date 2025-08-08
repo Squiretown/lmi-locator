@@ -3166,8 +3166,10 @@ export type Database = {
           company_name: string | null
           company_website: string | null
           current_plan_id: string | null
+          first_name: string | null
           id: string
           job_title: string | null
+          last_name: string | null
           license_number: string | null
           license_verified: boolean | null
           notification_preferences: Json | null
@@ -3200,8 +3202,10 @@ export type Database = {
           company_name?: string | null
           company_website?: string | null
           current_plan_id?: string | null
+          first_name?: string | null
           id?: string
           job_title?: string | null
+          last_name?: string | null
           license_number?: string | null
           license_verified?: boolean | null
           notification_preferences?: Json | null
@@ -3234,8 +3238,10 @@ export type Database = {
           company_name?: string | null
           company_website?: string | null
           current_plan_id?: string | null
+          first_name?: string | null
           id?: string
           job_title?: string | null
+          last_name?: string | null
           license_number?: string | null
           license_verified?: boolean | null
           notification_preferences?: Json | null
