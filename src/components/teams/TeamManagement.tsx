@@ -23,12 +23,40 @@ export const TeamManagement: React.FC = () => {
 
   const { 
     teamMembers, 
+    currentProfessional,
     isLoadingTeam, 
     removeTeamMember,
   } = useTeamManagement();
 
+  // Get the appropriate partner based on user role
+  const getPartnerFromTeam = (team: any) => {
+    if (currentProfessional?.professionalType === 'mortgage_professional') {
+      return team.realtor;
+    } else if (currentProfessional?.professionalType === 'realtor') {
+      return team.mortgageProfessional;
+    }
+    return null;
+  };
+
+  // Get the role label for the current user's partners
+  const getPartnerRoleLabel = () => {
+    if (currentProfessional?.professionalType === 'mortgage_professional') {
+      return 'Realtors';
+    } else if (currentProfessional?.professionalType === 'realtor') {
+      return 'Mortgage Professionals';
+    }
+    return 'Team Members';
+  };
+
   const handleBackToDashboard = () => {
-    navigate('/dashboard/realtor');
+    // Navigate to appropriate dashboard based on user role
+    if (currentProfessional?.professionalType === 'realtor') {
+      navigate('/dashboard/realtor');
+    } else if (currentProfessional?.professionalType === 'mortgage_professional') {
+      navigate('/dashboard/mortgage');
+    } else {
+      navigate('/dashboard');
+    }
   };
 
   const handleViewDetails = (member: any) => {
@@ -117,9 +145,9 @@ export const TeamManagement: React.FC = () => {
           <Card className="col-span-full">
             <CardContent className="flex flex-col items-center justify-center py-8 text-center">
               <Users className="h-12 w-12 text-muted-foreground mb-4" />
-              <h3 className="text-lg font-semibold mb-2">No Team Members Yet</h3>
+              <h3 className="text-lg font-semibold mb-2">No {getPartnerRoleLabel()} Yet</h3>
               <p className="text-muted-foreground mb-4">
-                Start building your team by inviting professional partners
+                Start building your team by inviting {getPartnerRoleLabel().toLowerCase()}
               </p>
               <Button onClick={() => setShowInviteDialog(true)}>
                 <UserPlus className="mr-2 h-4 w-4" />
@@ -128,55 +156,60 @@ export const TeamManagement: React.FC = () => {
             </CardContent>
           </Card>
         ) : (
-          teamMembers.map((member) => (
-            <Card key={member.id}>
-              <CardHeader className="pb-3">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <CardTitle className="text-lg">{member.realtor?.name}</CardTitle>
-                    <CardDescription>{member.realtor?.company}</CardDescription>
+          teamMembers.map((member) => {
+            const partner = getPartnerFromTeam(member);
+            const partnerType = currentProfessional?.professionalType === 'mortgage_professional' ? 'Realtor' : 'Mortgage Professional';
+            
+            return (
+              <Card key={member.id}>
+                <CardHeader className="pb-3">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <CardTitle className="text-lg">{partner?.name || 'Unknown'}</CardTitle>
+                      <CardDescription>{partner?.company || 'No company'}</CardDescription>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="secondary">{partnerType}</Badge>
+                      <TeamActionsDropdown
+                        member={member}
+                        onViewDetails={handleViewDetails}
+                        onEdit={handleEditMember}
+                        onSendEmail={(member) => handleSendCommunication(member, 'email')}
+                        onSendSMS={(member) => handleSendCommunication(member, 'sms')}
+                        onRemove={handleRemoveMember}
+                        onUpdate={handleUpdateTeam}
+                      />
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Badge variant="secondary">Realtor</Badge>
-                    <TeamActionsDropdown
-                      member={member}
-                      onViewDetails={handleViewDetails}
-                      onEdit={handleEditMember}
-                      onSendEmail={(member) => handleSendCommunication(member, 'email')}
-                      onSendSMS={(member) => handleSendCommunication(member, 'sms')}
-                      onRemove={handleRemoveMember}
-                      onUpdate={handleUpdateTeam}
-                    />
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {member.realtor?.phone && (
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {partner?.phone && (
+                    <div className="flex items-center gap-2 text-sm">
+                      <Phone className="h-4 w-4 text-muted-foreground" />
+                      <span>{partner.phone}</span>
+                    </div>
+                  )}
+                  
                   <div className="flex items-center gap-2 text-sm">
-                    <Phone className="h-4 w-4 text-muted-foreground" />
-                    <span>{member.realtor.phone}</span>
+                    <Building className="h-4 w-4 text-muted-foreground" />
+                    <span>License: {partner?.license_number || 'Not provided'}</span>
                   </div>
-                )}
-                
-                <div className="flex items-center gap-2 text-sm">
-                  <Building className="h-4 w-4 text-muted-foreground" />
-                  <span>License: {member.realtor?.license_number}</span>
-                </div>
 
-                {member.notes && (
-                  <div className="text-sm text-muted-foreground">
-                    <p>{member.notes}</p>
+                  {member.notes && (
+                    <div className="text-sm text-muted-foreground">
+                      <p>{member.notes}</p>
+                    </div>
+                  )}
+
+                  <div className="pt-2">
+                    <span className="text-xs text-muted-foreground">
+                      Added {new Date(member.created_at).toLocaleDateString()}
+                    </span>
                   </div>
-                )}
-
-                <div className="pt-2">
-                  <span className="text-xs text-muted-foreground">
-                    Added {new Date(member.created_at).toLocaleDateString()}
-                  </span>
-                </div>
-              </CardContent>
-            </Card>
-          ))
+                </CardContent>
+              </Card>
+            );
+          })
         )}
       </div>
 

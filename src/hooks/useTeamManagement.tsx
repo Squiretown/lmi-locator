@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { getProfessionalByUserId } from '@/lib/api/professionals/queries';
 
 interface ProfessionalTeam {
   id: string;
@@ -40,72 +41,114 @@ interface ClientTeamAssignment {
 export const useTeamManagement = () => {
   const queryClient = useQueryClient();
 
-  // Fetch team members (realtors) for current mortgage professional
+  // Get current professional profile to determine role and permissions
+  const { data: currentProfessional, isLoading: isLoadingProfile } = useQuery({
+    queryKey: ['current-professional'],
+    queryFn: () => getProfessionalByUserId(),
+    retry: 1,
+    staleTime: 300000, // Cache for 5 minutes
+  });
+
+  // Fetch team members based on the current user's role
   const { data: teamMembers = [], isLoading: isLoadingTeam, error: teamError } = useQuery({
-    queryKey: ['team-members'],
+    queryKey: ['team-members', currentProfessional?.id, currentProfessional?.professionalType],
     queryFn: async () => {
+      if (!currentProfessional) {
+        console.warn('No professional profile found for current user');
+        return [];
+      }
+
       try {
-        // Get current user's professional ID first
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) throw new Error('Not authenticated');
+        let teams: any[] = [];
 
-        const { data: currentProfessional } = await supabase
-          .from('professionals')
-          .select('id')
-          .eq('user_id', user.id)
-          .single();
+        if (currentProfessional.professionalType === 'mortgage_professional') {
+          // Mortgage professionals see their realtor team members
+          const { data, error: teamsError } = await supabase
+            .from('professional_teams')
+            .select('*')
+            .eq('mortgage_professional_id', currentProfessional.id)
+            .eq('status', 'active');
 
-        if (!currentProfessional) {
-          console.warn('No professional profile found for current user');
-          return [];
+          if (teamsError) {
+            console.error('Error fetching teams for mortgage professional:', teamsError);
+            return [];
+          }
+          teams = data || [];
+
+          // Fetch realtor details for each team
+          const teamWithRealtors = await Promise.all(
+            teams.map(async (team) => {
+              try {
+                const { data: realtor } = await supabase
+                  .from('professionals')
+                  .select('id, name, phone, company, license_number, user_id')
+                  .eq('id', team.realtor_id)
+                  .single();
+
+                return {
+                  ...team,
+                  realtor: realtor || null
+                };
+              } catch (error) {
+                console.warn(`Failed to fetch realtor for team ${team.id}:`, error);
+                return {
+                  ...team,
+                  realtor: null
+                };
+              }
+            })
+          );
+
+          return teamWithRealtors;
+
+        } else if (currentProfessional.professionalType === 'realtor') {
+          // Realtors see their mortgage professional partnerships
+          const { data, error: teamsError } = await supabase
+            .from('professional_teams')
+            .select('*')
+            .eq('realtor_id', currentProfessional.id)
+            .eq('status', 'active');
+
+          if (teamsError) {
+            console.error('Error fetching teams for realtor:', teamsError);
+            return [];
+          }
+          teams = data || [];
+
+          // Fetch mortgage professional details for each team
+          const teamWithMortgagePros = await Promise.all(
+            teams.map(async (team) => {
+              try {
+                const { data: mortgagePro } = await supabase
+                  .from('professionals')
+                  .select('id, name, phone, company, license_number, user_id')
+                  .eq('id', team.mortgage_professional_id)
+                  .single();
+
+                return {
+                  ...team,
+                  mortgageProfessional: mortgagePro || null
+                };
+              } catch (error) {
+                console.warn(`Failed to fetch mortgage professional for team ${team.id}:`, error);
+                return {
+                  ...team,
+                  mortgageProfessional: null
+                };
+              }
+            })
+          );
+
+          return teamWithMortgagePros;
         }
 
-        // Fetch professional teams with manual join to handle missing relationships
-        const { data: teams, error: teamsError } = await supabase
-          .from('professional_teams')
-          .select('*')
-          .eq('mortgage_professional_id', currentProfessional.id)
-          .eq('status', 'active');
-
-        if (teamsError) {
-          console.error('Error fetching teams:', teamsError);
-          return [];
-        }
-
-        if (!teams || teams.length === 0) {
-          return [];
-        }
-
-        // Manually fetch realtor details for each team
-        const teamWithRealtors = await Promise.all(
-          teams.map(async (team) => {
-            try {
-              const { data: realtor } = await supabase
-                .from('professionals')
-                .select('id, name, phone, company, license_number, user_id')
-                .eq('id', team.realtor_id)
-                .single();
-
-              return {
-                ...team,
-                realtor: realtor || null
-              };
-            } catch (error) {
-              console.warn(`Failed to fetch realtor for team ${team.id}:`, error);
-              return {
-                ...team,
-                realtor: null
-              };
-            }
-          })
-        );
-
-        return teamWithRealtors;
+        return [];
       } catch (error) {
         console.error('Error in team members query:', error);
         return [];
       }
     },
+    enabled: !!currentProfessional,
     retry: 1,
     staleTime: 30000, // Cache for 30 seconds
   });
@@ -281,7 +324,8 @@ export const useTeamManagement = () => {
   return {
     teamMembers,
     clientTeams,
-    isLoadingTeam,
+    currentProfessional,
+    isLoadingTeam: isLoadingTeam || isLoadingProfile,
     isLoadingClientTeams,
     getClientTeam,
     inviteRealtor: inviteRealtorMutation.mutateAsync,
