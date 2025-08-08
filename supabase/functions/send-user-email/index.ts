@@ -205,7 +205,7 @@ async function sendAdminEmail(params: {
 
     // Send the email using Resend
     const data = await resend.emails.send({
-      from: `${params.adminName} <onboarding@resend.dev>`,
+      from: `${params.adminName} <support@lmicheck.com>`,
       to: [params.to],
       subject: params.subject,
       html: htmlContent,

@@ -76,7 +76,7 @@ serve(async (req) => {
 
       // Send email using Resend
       result = await resend.emails.send({
-        from: `Team Communication <onboarding@resend.dev>`,
+        from: `Team Communication <support@lmicheck.com>`,
         to: [recipient],
         subject: subject || 'Team Communication',
         html: `

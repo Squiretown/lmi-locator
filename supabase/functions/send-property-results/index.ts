@@ -33,7 +33,7 @@ const handler = async (req: Request): Promise<Response> => {
     const senderInfo = senderName ? `\n\nShared by: ${senderName}` : '';
 
     const emailResponse = await resend.emails.send({
-      from: "LMI Check <onboarding@resend.dev>",
+      from: "LMI Check <support@lmicheck.com>",
       to: [recipientEmail],
       subject: "LMI Property Check Results",
       html: `
