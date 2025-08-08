@@ -274,15 +274,17 @@ async function sendEmailInvitation(params: {
   customMessage?: string;
   professionalEmail?: string;
 }) {
-  if (!resend || !resendApiKey) {
+  const apiKey = Deno.env.get("RESEND_API_KEY");
+  if (!apiKey) {
     throw new Error('Email service is not configured');
   }
   try {
+    const resendLocal = new Resend(apiKey);
     const fromEmail = "onboarding@resend.dev";
     const fromName = params.professionalName;
     const fromAddress = `${fromName} <${fromEmail}>`;
     const htmlContent = createEmailHtml(params);
-    const data = await resend.emails.send({
+    const data = await resendLocal.emails.send({
       from: fromAddress,
       to: [params.clientEmail],
       subject: `Invitation from ${params.professionalName}`,
