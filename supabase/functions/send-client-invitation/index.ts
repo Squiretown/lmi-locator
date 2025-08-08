@@ -57,8 +57,10 @@ const handler = async (req: Request): Promise<Response> => {
 
   try {
     const start = Date.now();
+    console.log(`[send-client-invitation] Starting request processing at ${new Date().toISOString()}`);
 
     if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+      console.error('[send-client-invitation] Missing Supabase configuration');
       return new Response(
         JSON.stringify({ error: 'Service not configured', success: false }),
         { status: 503, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -67,8 +69,45 @@ const handler = async (req: Request): Promise<Response> => {
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-    const { invitationId, type, resend: isResend }: SendInvitationRequest = await req.json();
-    if (!invitationId) throw new Error('Invitation ID is required');
+    // Improved request body parsing with detailed logging
+    let requestBody;
+    let invitationId: string;
+    let type: 'email' | 'sms' | 'both' | undefined;
+    let isResend: boolean | undefined;
+    
+    try {
+      const rawBody = await req.text();
+      console.log(`[send-client-invitation] Raw request body length: ${rawBody.length}`);
+      console.log(`[send-client-invitation] Raw request body: ${rawBody}`);
+      
+      if (!rawBody || rawBody.trim() === '') {
+        throw new Error('Empty request body');
+      }
+      
+      requestBody = JSON.parse(rawBody);
+      console.log(`[send-client-invitation] Parsed request body:`, requestBody);
+      
+      ({ invitationId, type, resend: isResend } = requestBody);
+      
+      if (!invitationId) {
+        throw new Error('Missing invitationId in request body');
+      }
+      
+      console.log(`[send-client-invitation] Processing invitation: ${invitationId}, type: ${type || 'default'}`);
+    } catch (parseError: any) {
+      console.error('[send-client-invitation] Request body parsing failed:', parseError.message);
+      return new Response(
+        JSON.stringify({
+          error: 'Invalid request body',
+          details: parseError.message,
+          success: false
+        }),
+        { 
+          status: 400, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
+    }
 
     if ((type === 'email' || type === 'both' || !type) && !resendApiKey) {
       throw new Error('Email service is not configured. Please contact system administrator.');

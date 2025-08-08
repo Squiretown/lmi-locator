@@ -165,20 +165,41 @@ const handler = async (req: Request): Promise<Response> => {
     
     try {
       console.log('📧 Attempting to send invitation email for:', invitation.id);
-      
-      const emailResponse = await supabase.functions.invoke('send-client-invitation', {
-        body: {
-          invitationId: invitation.id,
-          type: 'email'
-        }
+      console.log('📧 Payload being sent:', {
+        invitationId: invitation.id,
+        type: 'email'
       });
       
-      if (emailResponse.error) {
-        console.error('❌ Email sending failed:', emailResponse.error);
-        emailError = emailResponse.error.message || 'Failed to send email';
-      } else {
-        console.log('✅ Email sent successfully:', emailResponse.data);
+      // Use direct HTTP call instead of supabase.functions.invoke for better reliability
+      const functionUrl = `${supabaseUrl}/functions/v1/send-client-invitation`;
+      console.log('📧 Function URL:', functionUrl);
+      
+      const emailResponse = await fetch(functionUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${supabaseServiceKey}`,
+          'apikey': supabaseServiceKey
+        },
+        body: JSON.stringify({
+          invitationId: invitation.id,
+          type: 'email'
+        })
+      });
+      
+      console.log('📧 Email response status:', emailResponse.status);
+      const emailData = await emailResponse.json();
+      console.log('📧 Email response data:', emailData);
+      
+      if (!emailResponse.ok) {
+        console.error('❌ Email sending failed with status:', emailResponse.status);
+        emailError = emailData.error || `HTTP ${emailResponse.status}`;
+      } else if (emailData.success) {
+        console.log('✅ Email sent successfully');
         emailSent = true;
+      } else {
+        console.error('❌ Email sending failed:', emailData.error);
+        emailError = emailData.error || 'Unknown email error';
       }
     } catch (emailErr: any) {
       console.error('💥 Exception while sending email:', emailErr);
