@@ -37,7 +37,7 @@ export const InviteProfessionalDialog: React.FC<InviteProfessionalDialogProps> =
     try {
       await inviteProfessional({
         email: data.email,
-        name: data.name,
+        
         professionalType: data.professionalType,
         customMessage: data.customMessage,
       });

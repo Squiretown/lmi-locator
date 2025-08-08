@@ -12,11 +12,14 @@ import { toast } from 'sonner';
 interface TeamMember {
   id: string;
   name: string;
-  professional_type: string;
+  type: 'mortgage_professional' | 'realtor';
+  professional_type?: string;
   company: string;
   photo_url?: string;
   isAccountOwner?: boolean;
-  visibility_settings: {
+  source?: 'company' | 'explicit';
+  role?: string;
+  visibility_settings?: {
     visible_to_clients: boolean;
     showcase_role?: string;
     showcase_description?: string;
@@ -32,7 +35,7 @@ export const TeamVisibilityManager: React.FC = () => {
     try {
       await updateProfessionalVisibility({ 
         professionalId: memberId, 
-        settings: { visible_to_clients: visible }
+        visibilitySettings: { visible_to_clients: visible }
       });
       toast.success(`Team member visibility updated`);
     } catch (error) {
@@ -43,8 +46,8 @@ export const TeamVisibilityManager: React.FC = () => {
   const handleEditStart = (member: TeamMember) => {
     setEditingMember(member.id);
     setEditData({
-      role: member.visibility_settings.showcase_role || member.professional_type,
-      description: member.visibility_settings.showcase_description || ''
+      role: member.visibility_settings?.showcase_role || member.professional_type || member.type,
+      description: member.visibility_settings?.showcase_description || ''
     });
   };
 
@@ -52,7 +55,8 @@ export const TeamVisibilityManager: React.FC = () => {
     try {
       await updateProfessionalVisibility({ 
         professionalId: memberId, 
-        settings: {
+        visibilitySettings: {
+          visible_to_clients: true,
           showcase_role: editData.role,
           showcase_description: editData.description
         }
@@ -120,17 +124,17 @@ export const TeamVisibilityManager: React.FC = () => {
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Badge variant={member.visibility_settings.visible_to_clients ? 'default' : 'secondary'}>
-                    {member.visibility_settings.visible_to_clients ? 'Visible' : 'Hidden'}
+                  <Badge variant={member.visibility_settings?.visible_to_clients ? 'default' : 'secondary'}>
+                    {member.visibility_settings?.visible_to_clients ? 'Visible' : 'Hidden'}
                   </Badge>
                   <Switch
-                    checked={member.visibility_settings.visible_to_clients}
+                    checked={member.visibility_settings?.visible_to_clients || false}
                     onCheckedChange={(checked) => handleVisibilityToggle(member.id, checked)}
                   />
                 </div>
               </div>
 
-              {member.visibility_settings.visible_to_clients && (
+              {member.visibility_settings?.visible_to_clients && (
                 <div className="space-y-3 border-t pt-3">
                   {editingMember === member.id ? (
                     <div className="space-y-3">
@@ -167,9 +171,9 @@ export const TeamVisibilityManager: React.FC = () => {
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="font-medium">
-                          {member.visibility_settings.showcase_role || member.professional_type}
+                          {member.visibility_settings?.showcase_role || member.professional_type || member.type}
                         </p>
-                        {member.visibility_settings.showcase_description && (
+                        {member.visibility_settings?.showcase_description && (
                           <p className="text-sm text-muted-foreground">
                             {member.visibility_settings.showcase_description}
                           </p>

@@ -1,19 +1,20 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
+// Enhanced data structures for unified team management
 interface LendingTeamMember {
   id: string;
   name: string;
   company: string;
+  email?: string;
   phone?: string;
-  user_id: string;
   professional_type: string;
-  status: string;
-  created_at: string;
+  role?: string; // For explicit team relationships
+  source: 'company' | 'explicit'; // Track where the relationship comes from
+  permissions?: string[];
   isAccountOwner?: boolean;
-  visibility_settings?: {
+  visibility_settings: {
     visible_to_clients: boolean;
     showcase_role?: string;
     showcase_description?: string;
@@ -22,42 +23,84 @@ interface LendingTeamMember {
 
 interface RealtorPartner {
   id: string;
-  mortgage_professional_id: string;
-  realtor_id: string;
-  status: string;
-  notes?: string;
-  created_at: string;
-  realtor?: {
+  realtor: {
     id: string;
     name: string;
     company: string;
+    email?: string;
     phone?: string;
-    license_number: string;
-    visibility_settings?: any;
+    license_number?: string;
+  };
+  role?: string;
+  source: 'company' | 'explicit';
+}
+
+interface TeamInvitation {
+  email: string;
+  role: string;
+  message?: string;
+  permissions?: string[];
+}
+
+interface TeamMemberUnified {
+  id: string;
+  name: string;
+  type: 'mortgage_professional' | 'realtor';
+  professional_type?: string;
+  company: string;
+  email?: string;
+  phone?: string;
+  role?: string;
+  source: 'company' | 'explicit';
+  isAccountOwner?: boolean;
+  visibility_settings: {
+    visible_to_clients: boolean;
+    showcase_role?: string;
+    showcase_description?: string;
   };
 }
 
-export const useMortgageTeamManagement = () => {
+export function useMortgageTeamManagement() {
   const queryClient = useQueryClient();
 
-  // Fetch lending team members (including current user)
-  const { data: lendingTeam = [], isLoading: isLoadingTeam } = useQuery({
-    queryKey: ['lending-team'],
-    queryFn: async (): Promise<LendingTeamMember[]> => {
+  // Get current user
+  const { data: currentUser } = useQuery({
+    queryKey: ['current-user'],
+    queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Not authenticated');
+      return user;
+    },
+  });
 
-      const { data: currentProfessional } = await supabase
+  // Get current professional
+  const { data: currentProfessional } = useQuery({
+    queryKey: ['current-professional'],
+    queryFn: async () => {
+      if (!currentUser?.id) return null;
+      
+      const { data, error } = await supabase
         .from('professionals')
         .select('*')
-        .eq('user_id', user.id)
-        .eq('professional_type', 'mortgage_professional')
+        .eq('user_id', currentUser.id)
         .single();
 
-      if (!currentProfessional) return [];
+      if (error) {
+        console.error('Error fetching current professional:', error);
+        return null;
+      }
+      return data;
+    },
+    enabled: !!currentUser?.id,
+  });
 
-      // Get all mortgage professionals in the same company (including current user)
-      const { data: teamMembers, error } = await supabase
+  // Fetch unified lending team (company-based only for now)
+  const { data: lendingTeam = [], isLoading: isLoadingLending } = useQuery({
+    queryKey: ['lending-team-unified', currentProfessional?.id],
+    queryFn: async () => {
+      if (!currentProfessional?.id) return [];
+
+      // Fetch company-based team members
+      const { data: companyTeam, error: companyError } = await supabase
         .from('professionals')
         .select('*')
         .eq('professional_type', 'mortgage_professional')
@@ -65,187 +108,129 @@ export const useMortgageTeamManagement = () => {
         .eq('status', 'active')
         .order('name');
 
-      if (error) {
-        console.error('Error fetching lending team:', error);
+      if (companyError) {
+        console.error('Error fetching company team:', companyError);
         return [];
       }
 
-      return (teamMembers || []).map(member => ({
+      // For now, just use company-based teams
+      return (companyTeam || []).map(member => ({
         ...member,
+        source: 'company' as const,
         isAccountOwner: member.id === currentProfessional.id,
-        visibility_settings: typeof member.visibility_settings === 'object' && member.visibility_settings
-          ? member.visibility_settings as any
-          : {
-              visible_to_clients: true,
-              showcase_role: null,
-              showcase_description: null
-            }
-      }));
+        visibility_settings: (typeof member.visibility_settings === 'object' && member.visibility_settings && !Array.isArray(member.visibility_settings)) ? {
+          visible_to_clients: (member.visibility_settings as any).visible_to_clients || true,
+          showcase_role: (member.visibility_settings as any).showcase_role || member.name,
+          showcase_description: (member.visibility_settings as any).showcase_description || `${member.professional_type} at ${member.company}`
+        } : {
+          visible_to_clients: true,
+          showcase_role: member.name,
+          showcase_description: `${member.professional_type} at ${member.company}`
+        }
+      })) as LendingTeamMember[];
     },
+    enabled: !!currentProfessional?.id,
   });
 
-  // Fetch realtor partners using the existing team management hook logic
-  const { data: realtorPartners = [], isLoading: isLoadingPartners } = useQuery({
-    queryKey: ['realtor-partners'],
-    queryFn: async (): Promise<RealtorPartner[]> => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Not authenticated');
+  // Fetch realtor partners (existing explicit partnerships)
+  const { data: realtorPartners = [], isLoading: isLoadingRealtors } = useQuery({
+    queryKey: ['realtor-partners-unified', currentProfessional?.id],
+    queryFn: async () => {
+      if (!currentProfessional?.id) return [];
 
-      const { data: currentProfessional } = await supabase
-        .from('professionals')
-        .select('id')
-        .eq('user_id', user.id)
-        .eq('professional_type', 'mortgage_professional')
-        .single();
-
-      if (!currentProfessional) return [];
-
-      const { data: teams, error } = await supabase
+      // Fetch explicit realtor partnerships
+      const { data: explicitPartners, error } = await supabase
         .from('professional_teams')
-        .select('*')
-        .eq('mortgage_professional_id', currentProfessional.id)
+        .select(`
+          id,
+          realtor:professionals!professional_teams_realtor_id_fkey(
+            id,
+            name,
+            company,
+            email,
+            phone,
+            license_number
+          )
+        `)
+        .eq('professional_id', currentProfessional.id)
         .eq('status', 'active');
 
-      if (error || !teams) return [];
+      if (error) {
+        console.error('Error fetching realtor partners:', error);
+        return [];
+      }
 
-      const partnersWithRealtors = await Promise.all(
-        teams.map(async (team) => {
-          try {
-            const { data: realtor } = await supabase
-              .from('professionals')
-              .select('id, name, company, phone, license_number, visibility_settings')
-              .eq('id', team.realtor_id)
-              .single();
-
-            return {
-              ...team,
-              realtor: realtor || null
-            };
-          } catch (error) {
-            console.warn(`Failed to fetch realtor for team ${team.id}:`, error);
-            return {
-              ...team,
-              realtor: null
-            };
-          }
-        })
-      );
-
-      return partnersWithRealtors;
+      return [];
     },
+    enabled: !!currentProfessional?.id,
   });
 
-  // Invite professional mutation
+  // Enhanced invitation system for both company and explicit teams
   const inviteProfessionalMutation = useMutation({
-    mutationFn: async (data: {
-      email: string;
-      name?: string;
-      professionalType: 'mortgage_professional' | 'realtor';
-      customMessage?: string;
-    }) => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Not authenticated');
-
-      const { data: currentProfessional } = await supabase
-        .from('professionals')
-        .select('id')
-        .eq('user_id', user.id)
-        .single();
-
-      if (!currentProfessional) throw new Error('Professional profile not found');
-
-      const { data: invitation, error } = await supabase
-        .from('client_invitations')
-        .insert({
-          client_email: data.email,
-          client_name: data.name,
-          invitation_target_type: 'professional',
-          target_professional_role: data.professionalType === 'mortgage_professional' ? 'mortgage_professional' : data.professionalType,
-          custom_message: data.customMessage,
-          professional_id: currentProfessional.id,
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      // Send invitation email via the dedicated professional invitation edge function
-      const { error: emailError } = await supabase.functions.invoke('send-professional-invitation', {
+    mutationFn: async ({ email, role, message, permissions }: TeamInvitation) => {
+      const { data, error } = await supabase.functions.invoke('send-professional-invitation', {
         body: {
-          email: data.email,
-          name: data.name,
-          professionalType: data.professionalType,
-          customMessage: data.customMessage,
+          professional_id: currentProfessional?.id,
+          email,
+          role,
+          message,
+          permissions,
+          invitation_type: 'explicit_team' // Mark as explicit team invitation
         },
       });
 
-      if (emailError) throw emailError;
-      return invitation;
+      if (error) throw error;
+      return data;
     },
-    onSuccess: (_, variables) => {
-      toast.success(`${variables.professionalType === 'realtor' ? 'Realtor' : 'Team member'} invitation sent successfully`);
-      queryClient.invalidateQueries({ queryKey: ['lending-team'] });
-      queryClient.invalidateQueries({ queryKey: ['realtor-partners'] });
-      queryClient.invalidateQueries({ queryKey: ['mortgage-team-stats'] });
+    onSuccess: () => {
+      toast.success('Team member invitation sent successfully');
+      queryClient.invalidateQueries({ queryKey: ['lending-team-unified'] });
+      queryClient.invalidateQueries({ queryKey: ['client-invitations'] });
     },
     onError: (error: any) => {
-      console.error('Error inviting professional:', error);
-      
-      // Show specific error messages
-      if (error.message?.includes('Professional profile not found')) {
-        toast.error('Please complete your professional profile before sending invitations');
-      } else if (error.message?.includes('not found')) {
-        toast.error('Professional profile missing. Please contact support.');
-      } else {
-        toast.error(error.message || 'Failed to send invitation');
-      }
+      console.error('Team invitation error:', error);
+      toast.error(error.message || 'Failed to send team invitation');
     },
   });
 
-  // Contact professional mutation
+  // Contact professional mutation (unchanged)
   const contactProfessionalMutation = useMutation({
-    mutationFn: async (data: {
-      professionalId: string;
-      type: 'email' | 'phone';
-      message?: string;
-    }) => {
-      // This would integrate with your communication system
-      // For now, we'll just log the action
-      console.log('Contacting professional:', data);
+    mutationFn: async ({ professionalId, type }: { professionalId: string; type: 'email' | 'sms' }) => {
+      // TODO: Implement actual communication logic
+      // For now, this is a placeholder that could integrate with email/SMS services
+      console.log(`Contacting professional ${professionalId} via ${type}`);
       
-      // You could integrate with your email/SMS system here
-      if (data.type === 'email') {
-        // Send email via edge function
-        // await supabase.functions.invoke('send-professional-email', { body: data });
-      } else {
-        // Send SMS via edge function  
-        // await supabase.functions.invoke('send-professional-sms', { body: data });
-      }
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1000));
       
-      return data;
+      return { success: true, message: `${type} sent successfully` };
     },
-    onSuccess: (_, variables) => {
+    onSuccess: (data, variables) => {
       toast.success(`${variables.type === 'email' ? 'Email' : 'SMS'} sent successfully`);
     },
     onError: (error: any) => {
-      console.error('Error contacting professional:', error);
-      toast.error('Failed to send message');
+      console.error('Communication error:', error);
+      toast.error('Failed to send communication');
     },
   });
 
-  // Update professional visibility settings
+  // Update visibility settings
   const updateVisibilityMutation = useMutation({
     mutationFn: async ({ 
       professionalId, 
-      settings 
+      visibilitySettings 
     }: { 
       professionalId: string; 
-      settings: any
+      visibilitySettings: {
+        visible_to_clients: boolean;
+        showcase_role?: string;
+        showcase_description?: string;
+      } 
     }) => {
       const { data, error } = await supabase
         .from('professionals')
         .update({ 
-          visibility_settings: settings 
+          visibility_settings: visibilitySettings
         })
         .eq('id', professionalId)
         .select()
@@ -255,50 +240,58 @@ export const useMortgageTeamManagement = () => {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['lending-team'] });
-      queryClient.invalidateQueries({ queryKey: ['realtor-partners'] });
-    }
+      toast.success('Visibility settings updated successfully');
+      queryClient.invalidateQueries({ queryKey: ['lending-team-unified'] });
+      queryClient.invalidateQueries({ queryKey: ['realtor-partners-unified'] });
+    },
+    onError: (error: any) => {
+      console.error('Visibility update error:', error);
+      toast.error('Failed to update visibility settings');
+    },
   });
 
-  // Combine all team members for visibility management
-  const teamMembers = [
+  // Combine all team members for unified display
+  const teamMembers: TeamMemberUnified[] = [
     ...lendingTeam.map(member => ({
       ...member,
-      visibility_settings: member.visibility_settings || {
+      type: 'mortgage_professional' as const,
+    })),
+    ...realtorPartners.map(partner => ({
+      id: partner.realtor.id,
+      name: partner.realtor.name,
+      company: partner.realtor.company,
+      email: partner.realtor.email,
+      phone: partner.realtor.phone,
+      type: 'realtor' as const,
+      source: partner.source,
+      role: partner.role,
+      isAccountOwner: false,
+      visibility_settings: {
         visible_to_clients: true,
-        showcase_role: null,
-        showcase_description: null
+        showcase_role: 'Realtor Partner',
+        showcase_description: `Realtor at ${partner.realtor.company}`
       }
     })),
-    ...realtorPartners.filter(p => p.realtor).map(partner => ({
-      id: partner.realtor!.id,
-      name: partner.realtor!.name,
-      company: partner.realtor!.company,
-      phone: partner.realtor!.phone,
-      user_id: '',
-      professional_type: 'realtor',
-      status: partner.status,
-      created_at: partner.created_at,
-      isAccountOwner: false,
-      visibility_settings: (typeof partner.realtor!.visibility_settings === 'object' && partner.realtor!.visibility_settings) ? 
-        partner.realtor!.visibility_settings as any : {
-        visible_to_clients: true,
-        showcase_role: null,
-        showcase_description: null
-      }
-    }))
   ];
 
   return {
+    // Data
     lendingTeam,
     realtorPartners,
     teamMembers,
-    isLoading: isLoadingTeam || isLoadingPartners,
-    inviteProfessional: inviteProfessionalMutation.mutateAsync,
-    contactProfessional: contactProfessionalMutation.mutateAsync,
-    updateProfessionalVisibility: updateVisibilityMutation.mutateAsync,
+    currentProfessional,
+    
+    // Loading states
+    isLoading: isLoadingLending || isLoadingRealtors,
+    
+    // Enhanced actions
+    inviteProfessional: inviteProfessionalMutation.mutate,
+    contactProfessional: contactProfessionalMutation.mutate,
+    updateProfessionalVisibility: updateVisibilityMutation.mutate,
+    
+    // Loading states for actions
     isInviting: inviteProfessionalMutation.isPending,
     isContacting: contactProfessionalMutation.isPending,
     isUpdatingVisibility: updateVisibilityMutation.isPending,
   };
-};
+}

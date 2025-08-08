@@ -8,7 +8,7 @@ import { useMortgageTeamStats } from '@/hooks/useMortgageTeamStats';
 import { useMortgageTeamManagement } from '@/hooks/useMortgageTeamManagement';
 import { useClientInvitations } from '@/hooks/useClientInvitations';
 import { InviteProfessionalDialog } from '@/components/teams/InviteProfessionalDialog';
-import { LendingTeamManagement } from '@/components/teams/LendingTeamManagement';
+
 
 const MortgageTeam: React.FC = () => {
   const [showInviteDialog, setShowInviteDialog] = useState(false);
@@ -35,7 +35,7 @@ const MortgageTeam: React.FC = () => {
     inv.invitation_target_type === 'professional'
   );
 
-  const handleContactProfessional = async (professionalId: string, type: 'email' | 'phone') => {
+  const handleContactProfessional = async (professionalId: string, type: 'email' | 'sms') => {
     try {
       await contactProfessional({ professionalId, type });
     } catch (error) {
@@ -176,7 +176,7 @@ const MortgageTeam: React.FC = () => {
                       <Button 
                         variant="outline" 
                         size="sm"
-                        onClick={() => handleContactProfessional(member.id, 'phone')}
+                        onClick={() => handleContactProfessional(member.id, 'sms')}
                         disabled={isContacting}
                       >
                         <Phone className="h-4 w-4" />
@@ -232,7 +232,7 @@ const MortgageTeam: React.FC = () => {
                     <Button 
                       variant="outline" 
                       size="sm"
-                      onClick={() => handleContactProfessional(partner.realtor_id, 'email')}
+                        onClick={() => handleContactProfessional(partner.realtor.id, 'email')}
                       disabled={isContacting}
                     >
                       <Mail className="h-4 w-4" />
@@ -241,7 +241,7 @@ const MortgageTeam: React.FC = () => {
                       <Button 
                         variant="outline" 
                         size="sm"
-                        onClick={() => handleContactProfessional(partner.realtor_id, 'phone')}
+                        onClick={() => handleContactProfessional(partner.realtor.id, 'sms')}
                         disabled={isContacting}
                       >
                         <Phone className="h-4 w-4" />
@@ -364,8 +364,6 @@ const MortgageTeam: React.FC = () => {
       </Card>
 
       {/* Invite Dialog */}
-      <LendingTeamManagement />
-
       <InviteProfessionalDialog
         open={showInviteDialog}
         onOpenChange={setShowInviteDialog}
