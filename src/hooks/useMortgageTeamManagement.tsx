@@ -148,19 +148,21 @@ export function useMortgageTeamManagement() {
 
   // Enhanced invitation system for both company and explicit teams
   const inviteProfessionalMutation = useMutation({
-    mutationFn: async ({ email, role, message, permissions }: TeamInvitation) => {
-      const { data, error } = await supabase.functions.invoke('send-professional-invitation', {
+    mutationFn: async ({ email, role, message, permissions, professionalType }: TeamInvitation) => {
+      const { data, error } = await supabase.functions.invoke('send-invitation', {
         body: {
-          professional_id: currentProfessional?.id,
           email,
-          role,
-          message,
-          permissions,
-          invitation_type: 'explicit_team' // Mark as explicit team invitation
-        },
+          type: 'professional',
+          customMessage: message,
+          professionalType: professionalType || 'team_member',
+          role
+        }
       });
 
       if (error) throw error;
+      if (!data?.success) {
+        throw new Error(data?.error || 'Failed to send invitation');
+      }
       return data;
     },
     onSuccess: () => {

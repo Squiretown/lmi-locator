@@ -103,76 +103,32 @@ export function useClientInvitations() {
     mutationFn: async (invitationData: CreateInvitationData) => {
       return withTimeout(
         (async () => {
-          const { data: { user } } = await supabase.auth.getUser();
-          if (!user) throw new Error('User not authenticated');
+          const { data, error } = await supabase.functions.invoke('send-invitation', {
+            body: {
+              email: invitationData.client_email,
+              type: 'client',
+              clientName: invitationData.client_name,
+              clientPhone: invitationData.client_phone,
+              customMessage: invitationData.custom_message
+            }
+          });
 
-          // Get the user's professional profile first
-          const { data: professional, error: profError } = await supabase
-            .from('professionals')
-            .select('id')
-            .eq('user_id', user.id)
-            .single();
-
-          if (profError || !professional) {
-            throw new Error('Professional profile not found. Please complete your profile setup.');
+          if (error) {
+            throw new Error(error.message || 'Failed to send invitation');
           }
 
-          const { data, error } = await supabase
-            .from('client_invitations')
-            .insert({
-              professional_id: professional.id,
-              ...invitationData,
-            })
-            .select()
-            .single();
+          if (!data?.success) {
+            throw new Error(data?.error || 'Failed to send invitation');
+          }
 
-          if (error) throw error;
           return data;
         })(),
         15000,
         'Creating invitation'
       );
     },
-    onSuccess: (data) => {
-      toast.success(`Invitation created with code: ${data.invitation_code}`);
-      queryClient.invalidateQueries({ queryKey: ['client-invitations'] });
-    },
-    onError: (error: Error) => {
-      toast.error(`Failed to create invitation: ${error.message}`);
-    },
-  });
-
-  // Send invitation mutation
-  const sendInvitationMutation = useMutation({
-    mutationFn: async ({ invitationId, type }: { invitationId: string; type: 'email' | 'sms' | 'both' }) => {
-      const promise = supabase.functions
-        .invoke('send-client-invitation', {
-          body: { invitationId, type },
-          headers: { 'Content-Type': 'application/json' },
-        })
-        .then(({ data, error }) => {
-          if (error) throw new Error(error.message || 'Failed to send invitation');
-          if (!data?.success || (!data.emailSent && !data.smsSent)) {
-            throw new Error(data?.error || 'Failed to send invitation');
-          }
-          return data;
-        });
-      return withTimeout(promise, 15000, 'Sending invitation');
-    },
-    onSuccess: (data) => {
-      if (!data?.success || (!data.emailSent && !data.smsSent)) {
-        toast.error('Failed to send invitation.');
-        return;
-      }
-      const msg =
-        data.emailSent && data.smsSent
-          ? 'Invitation sent successfully via email and SMS'
-          : data.emailSent
-          ? 'Invitation sent successfully via email'
-          : data.smsSent
-          ? 'Invitation sent successfully via SMS'
-          : '';
-      toast.success(msg);
+    onSuccess: () => {
+      toast.success('Client invitation sent successfully!');
       queryClient.invalidateQueries({ queryKey: ['client-invitations'] });
     },
     onError: (error: Error) => {
@@ -180,22 +136,96 @@ export function useClientInvitations() {
     },
   });
 
-  // Resend invitation mutation
+  // Send invitation mutation
+  const sendInvitationMutation = useMutation({
+    mutationFn: async ({ invitationId, type }: { invitationId: string; type: 'email' | 'sms' | 'both' }) => {
+      return withTimeout(
+        (async () => {
+          // Get invitation details first
+          const { data: invitation, error: fetchError } = await supabase
+            .from('client_invitations')
+            .select('*')
+            .eq('id', invitationId)
+            .single();
+
+          if (fetchError || !invitation) {
+            throw new Error('Invitation not found');
+          }
+
+          // Use the unified send-invitation function
+          const { data, error } = await supabase.functions.invoke('send-invitation', {
+            body: {
+              email: invitation.client_email,
+              type: invitation.invitation_target_type || 'client',
+              clientName: invitation.client_name,
+              clientPhone: invitation.client_phone,
+              customMessage: invitation.custom_message
+            }
+          });
+
+          if (error) {
+            throw new Error(error.message || 'Failed to send invitation');
+          }
+
+          if (!data?.success) {
+            throw new Error(data?.error || 'Failed to send invitation');
+          }
+
+          return data;
+        })(),
+        15000,
+        'Sending invitation'
+      );
+    },
+    onSuccess: () => {
+      toast.success('Invitation sent successfully!');
+      queryClient.invalidateQueries({ queryKey: ['client-invitations'] });
+    },
+    onError: (error: Error) => {
+      toast.error(`Failed to send invitation: ${error.message}`);
+    },
+  });
+
+  // Resend invitation mutation (same as send)
   const resendInvitationMutation = useMutation({
     mutationFn: async (invitationId: string) => {
-      const promise = supabase.functions
-        .invoke('send-client-invitation', {
-          body: { invitationId, resend: true },
-          headers: { 'Content-Type': 'application/json' },
-        })
-        .then(({ data, error }) => {
-          if (error) throw new Error(error.message || 'Failed to resend invitation');
-          if (!data?.success || (!data.emailSent && !data.smsSent)) {
+      return withTimeout(
+        (async () => {
+          // Get invitation details first
+          const { data: invitation, error: fetchError } = await supabase
+            .from('client_invitations')
+            .select('*')
+            .eq('id', invitationId)
+            .single();
+
+          if (fetchError || !invitation) {
+            throw new Error('Invitation not found');
+          }
+
+          // Use the unified send-invitation function
+          const { data, error } = await supabase.functions.invoke('send-invitation', {
+            body: {
+              email: invitation.client_email,
+              type: invitation.invitation_target_type || 'client',
+              clientName: invitation.client_name,
+              clientPhone: invitation.client_phone,
+              customMessage: invitation.custom_message
+            }
+          });
+
+          if (error) {
+            throw new Error(error.message || 'Failed to resend invitation');
+          }
+
+          if (!data?.success) {
             throw new Error(data?.error || 'Failed to resend invitation');
           }
+
           return data;
-        });
-      return withTimeout(promise, 20000, 'Resending invitation');
+        })(),
+        20000,
+        'Resending invitation'
+      );
     },
     onSuccess: () => {
       toast.success('Invitation resent successfully');
