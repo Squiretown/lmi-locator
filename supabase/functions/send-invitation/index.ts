@@ -85,7 +85,7 @@ serve(async (req: Request) => {
       throw new Error("Invalid email format");
     }
 
-    // Get inviter's professional profile
+    // Get inviter's professional profile with fallback
     const { data: professional, error: profError } = await supabase
       .from('professionals')
       .select('id, name, company, phone, license_number')
@@ -97,12 +97,36 @@ serve(async (req: Request) => {
       throw new Error("Professional profile not found");
     }
 
-    // Validate professional profile completeness
-    if (!professional.name || !professional.license_number) {
-      throw new Error("Professional profile is incomplete. Please ensure your name and license number are set.");
+    // Get user profile for fallback data
+    const { data: userProfile } = await supabase
+      .from('user_profiles')
+      .select('first_name, last_name, company_name, license_number')
+      .eq('user_id', user.id)
+      .single();
+
+    // Create enhanced professional object with fallbacks
+    const enhancedProfessional = {
+      ...professional,
+      name: professional.name || (userProfile ? `${userProfile.first_name || ''} ${userProfile.last_name || ''}`.trim() : '') || 'Professional',
+      company: professional.company || userProfile?.company_name || 'Company',
+      license_number: professional.license_number || userProfile?.license_number || 'License Pending'
+    };
+
+    // Log the profile data for debugging
+    console.log("Professional profile data:", {
+      original: { name: professional.name, license_number: professional.license_number },
+      enhanced: { name: enhancedProfessional.name, license_number: enhancedProfessional.license_number }
+    });
+
+    // Validate essential fields (name is required)
+    if (!enhancedProfessional.name || enhancedProfessional.name === 'Professional') {
+      const missingFields = [];
+      if (!professional.name && !userProfile?.first_name && !userProfile?.last_name) missingFields.push('name');
+      
+      throw new Error(`Professional profile is incomplete. Missing required fields: ${missingFields.join(', ')}. Please complete your profile settings before sending invitations.`);
     }
 
-    console.log("Professional found:", professional.name);
+    console.log("Professional found:", enhancedProfessional.name);
 
     // Generate invitation code
     const invitationCode = Math.random().toString(36).substring(2, 15);
@@ -137,8 +161,8 @@ serve(async (req: Request) => {
     console.log("Invitation created:", invitation.id);
 
     // Prepare email content
-    const inviterName = professional.name;
-    const companyName = professional.company || "Our Team";
+    const inviterName = enhancedProfessional.name;
+    const companyName = enhancedProfessional.company || "Our Team";
     
     let subject: string;
     let htmlContent: string;
