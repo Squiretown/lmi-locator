@@ -4,7 +4,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Users, UserPlus, Mail, Phone, Calendar, ChevronDown, Search } from "lucide-react";
+import { Users, UserPlus, Mail, Phone, Calendar, ChevronDown, Search, AlertCircle } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useClientManagement } from '@/hooks/useClientManagement';
 import { useClientInvitations } from '@/hooks/useClientInvitations';
 import { ClientTable } from '@/components/clients/ClientTable';
@@ -12,6 +13,7 @@ import { CreateClientDialog } from '@/components/clients/CreateClientDialog';
 import { EditClientDialog } from '@/components/clients/EditClientDialog';
 import { ClientDetailsDialog } from '@/components/clients/ClientDetailsDialog';
 import { InviteClientDialog } from '@/components/clients/InviteClientDialog';
+import { InvitationManagement } from '@/components/clients/InvitationManagement';
 
 const MortgageClients: React.FC = () => {
   const [showCreateDialog, setShowCreateDialog] = useState(false);
@@ -34,6 +36,8 @@ const MortgageClients: React.FC = () => {
   } = useClientManagement();
 
   const {
+    invitations,
+    stats,
     createInvitation,
     isCreatingInvitation,
   } = useClientInvitations();
@@ -156,35 +160,55 @@ const MortgageClients: React.FC = () => {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">This Month</CardTitle>
-            <Calendar className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Pending Invitations</CardTitle>
+            <AlertCircle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{recentlyAdded}</div>
-            <p className="text-xs text-muted-foreground">New clients added</p>
+            <div className="text-2xl font-bold">{stats?.pending || 0}</div>
+            <p className="text-xs text-muted-foreground">Awaiting response</p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Client Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle>All Clients</CardTitle>
-          <CardDescription>
-            Manage your client relationships and track their progress
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <ClientTable
-            clients={filteredClients}
-            onEdit={handleEditClient}
-            onDelete={handleDeleteClient}
-            onView={handleViewClient}
-            onRefresh={refetch}
-            isLoading={isLoadingClients}
-          />
-        </CardContent>
-      </Card>
+      {/* Client Management Tabs */}
+      <Tabs defaultValue="clients" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="clients">Clients</TabsTrigger>
+          <TabsTrigger value="invitations" className="relative">
+            Invitations
+            {stats?.pending > 0 && (
+              <span className="ml-1 bg-destructive text-destructive-foreground text-xs rounded-full px-1.5 py-0.5">
+                {stats.pending}
+              </span>
+            )}
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="clients" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>All Clients</CardTitle>
+              <CardDescription>
+                Manage your client relationships and track their progress
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ClientTable
+                clients={filteredClients}
+                onEdit={handleEditClient}
+                onDelete={handleDeleteClient}
+                onView={handleViewClient}
+                onRefresh={refetch}
+                isLoading={isLoadingClients}
+              />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="invitations">
+          <InvitationManagement />
+        </TabsContent>
+      </Tabs>
 
       {/* Quick Actions */}
       <Card>

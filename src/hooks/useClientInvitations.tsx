@@ -19,6 +19,10 @@ export interface ClientInvitation {
   client_id?: string;
   template_type: string;
   custom_message?: string;
+  invitation_target_type?: string;
+  target_professional_role?: string;
+  team_context?: any;
+  team_showcase?: any;
   created_at: string;
   updated_at: string;
 }

@@ -3,9 +3,10 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Users, UserPlus, Mail, Phone, Building } from "lucide-react";
+import { Users, UserPlus, Mail, Phone, Building, AlertCircle } from "lucide-react";
 import { useMortgageTeamStats } from '@/hooks/useMortgageTeamStats';
 import { useMortgageTeamManagement } from '@/hooks/useMortgageTeamManagement';
+import { useClientInvitations } from '@/hooks/useClientInvitations';
 import { InviteProfessionalDialog } from '@/components/teams/InviteProfessionalDialog';
 
 const MortgageTeam: React.FC = () => {
@@ -18,6 +19,20 @@ const MortgageTeam: React.FC = () => {
     contactProfessional,
     isContacting 
   } = useMortgageTeamManagement();
+  
+  const {
+    invitations,
+    stats,
+    resendInvitation,
+    revokeInvitation,
+    isResendingInvitation,
+    isRevokingInvitation,
+  } = useClientInvitations();
+
+  // Filter professional invitations
+  const professionalInvitations = invitations.filter(inv => 
+    inv.invitation_target_type === 'professional'
+  );
 
   const handleContactProfessional = async (professionalId: string, type: 'email' | 'phone') => {
     try {
@@ -101,12 +116,12 @@ const MortgageTeam: React.FC = () => {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Shared Clients</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Pending Invitations</CardTitle>
+            <AlertCircle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{teamStats?.sharedClients || 0}</div>
-            <p className="text-xs text-muted-foreground">Co-managed transactions</p>
+            <div className="text-2xl font-bold">{professionalInvitations.length}</div>
+            <p className="text-xs text-muted-foreground">Professional invites</p>
           </CardContent>
         </Card>
       </div>
@@ -238,6 +253,66 @@ const MortgageTeam: React.FC = () => {
           )}
         </CardContent>
       </Card>
+
+      {/* Pending Professional Invitations */}
+      {professionalInvitations.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              Pending Professional Invitations
+              <Badge variant="destructive">{professionalInvitations.length}</Badge>
+            </CardTitle>
+            <CardDescription>
+              Invitations sent to professionals awaiting response
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {professionalInvitations.map((invitation) => (
+                <div key={invitation.id} className="flex items-center justify-between p-4 border rounded-lg">
+                  <div className="flex items-center space-x-4">
+                    <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center">
+                      <span className="text-orange-600 font-semibold">
+                        {invitation.client_name?.split(' ').map(n => n[0]).join('').toUpperCase() || 'P'}
+                      </span>
+                    </div>
+                    <div>
+                      <h4 className="font-semibold">{invitation.client_name}</h4>
+                      <p className="text-sm text-muted-foreground">
+                        {invitation.client_email} • {invitation.target_professional_role}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        Sent {new Date(invitation.created_at).toLocaleDateString()}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Badge variant="outline" className="text-orange-600 border-orange-600">
+                      {invitation.status}
+                    </Badge>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => resendInvitation(invitation.id)}
+                      disabled={isResendingInvitation}
+                    >
+                      Resend
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => revokeInvitation(invitation.id)}
+                      disabled={isRevokingInvitation}
+                    >
+                      Revoke
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Partnership Performance */}
       <Card>
