@@ -162,7 +162,7 @@ export const useTeamManagement = () => {
       if (error) throw error;
 
       // Send invitation email via edge function
-      const { error: emailError } = await supabase.functions.invoke('send-client-invitation', {
+      const { error: emailError } = await supabase.functions.invoke('send-invitation', {
         body: {
           invitationId: invitation.id,
           type: 'professional',

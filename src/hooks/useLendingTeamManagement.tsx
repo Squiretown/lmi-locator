@@ -104,11 +104,13 @@ export function useLendingTeamManagement() {
   // Invite lending team member
   const inviteTeamMemberMutation = useMutation({
     mutationFn: async (invitation: LendingTeamInvitation) => {
-      const { data, error } = await supabase.functions.invoke('send-professional-invitation', {
+      const { data, error } = await supabase.functions.invoke('send-invitation', {
         body: {
-          ...invitation,
-          invitation_category: 'lending_team',
-          target_professional_role: 'mortgage_professional',
+          email: invitation.professional_email,
+          type: 'professional',
+          professionalType: 'mortgage_professional',
+          role: invitation.role,
+          customMessage: invitation.custom_message,
         },
       });
 

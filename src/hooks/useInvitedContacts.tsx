@@ -75,11 +75,12 @@ export const useInvitedContacts = () => {
     setIsCreatingInvitation(true);
 
     try {
-      const { data, error } = await supabase.functions.invoke('send-professional-invitation', {
+      const { data, error } = await supabase.functions.invoke('send-invitation', {
         body: {
           email: params.email,
-          name: params.name,
-          professionalType: 'client', // Inviting a client
+          type: 'client',
+          clientName: params.name,
+          clientPhone: params.phone,
           customMessage: params.customMessage
         }
       });
@@ -106,7 +107,7 @@ export const useInvitedContacts = () => {
   // Send invitation
   const sendInvitation = async (invitationId: string, type: 'email' | 'sms' | 'both' = 'email') => {
     try {
-      const { data, error } = await supabase.functions.invoke('send-client-invitation', {
+      const { data, error } = await supabase.functions.invoke('send-invitation', {
         body: { invitationId, type }
       });
 
