@@ -12,6 +12,8 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { signupFormSchema, SignupFormValues } from './types/auth-form-types';
 import FormErrorDisplay from './form-sections/FormErrorDisplay';
+import { syncProfessionalProfile } from '@/lib/utils/professionalSync';
+import { toast } from 'sonner';
 
 const SignupForm: React.FC = () => {
   const [authError, setAuthError] = useState<string | null>(null);
@@ -55,7 +57,7 @@ const SignupForm: React.FC = () => {
         })
       };
       
-      const { error } = await signUp(values.email, values.password, metadata);
+      const { data, error } = await signUp(values.email, values.password, metadata);
 
       if (error) {
         console.error('Signup error:', error);
@@ -67,7 +69,27 @@ const SignupForm: React.FC = () => {
         } else {
           setAuthError(error.message || 'Failed to create account');
         }
-      } else {
+      } else if (data?.user) {
+        // For professionals, create the professional profile using sync utility
+        if (values.userRole === 'realtor' || values.userRole === 'mortgage_professional') {
+          console.log('Creating professional profile for new user...');
+          
+          try {
+            await syncProfessionalProfile(data.user.id, {
+              first_name: values.firstName,
+              last_name: values.lastName,
+              license_number: values.licenseNumber,
+              user_type: values.userRole,
+            }, values.userRole);
+            
+            console.log('Professional profile created successfully');
+          } catch (syncError: any) {
+            console.error('Failed to create professional profile:', syncError);
+            // Don't fail the signup, but log the error
+            toast.error('Account created but professional profile setup failed. You can complete it in settings.');
+          }
+        }
+
         // Success! Show success state and prepare for redirect
         setUserEmail(values.email);
         setSignupSuccess(true);
