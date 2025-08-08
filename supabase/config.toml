@@ -103,11 +103,5 @@ verify_jwt = false
 [functions.sign-out-all-users]
 verify_jwt = true
 
-[functions.send-client-invitation]
-verify_jwt = true
-
-[functions.send-professional-invitation]
-verify_jwt = true
-
 [functions.send-invitation]
 verify_jwt = true

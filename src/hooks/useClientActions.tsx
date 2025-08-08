@@ -204,13 +204,13 @@ export const useClientActions = () => {
       );
 
       // Call edge function to actually send the communication
-      const { error: sendError } = await supabase.functions.invoke('send-client-invitation', {
+      const { error: sendError } = await supabase.functions.invoke('send-invitation', {
         body: {
-          type: template.type,
-          recipient,
-          subject: template.type === 'email' ? subject : undefined,
-          content,
-          client_name: `${client.first_name} ${client.last_name}`,
+          email: recipient,
+          type: 'client',
+          clientName: `${client.first_name} ${client.last_name}`,
+          customMessage: content,
+          templateType: template.type
         }
       });
 

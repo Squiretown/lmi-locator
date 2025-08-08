@@ -72,9 +72,11 @@ const EmailTester: React.FC = () => {
       let result;
       
       if (emailType === 'client-invitation') {
-        result = await supabase.functions.invoke('send-client-invitation', {
+        result = await supabase.functions.invoke('send-invitation', {
           body: {
-            invitationId: 'test-invitation-' + Date.now(),
+            email: 'test@example.com',
+            type: 'client',
+            clientName: 'Test User',
             testMode: true
           }
         });

@@ -159,10 +159,11 @@ const AdminTester: React.FC = () => {
     }
 
     runTest('Invitation Sending', async () => {
-      return await supabase.functions.invoke('send-client-invitation', {
+      return await supabase.functions.invoke('send-invitation', {
         body: { 
           email: testEmail,
-          name: 'Test User',
+          type: 'client',
+          clientName: 'Test User',
           testMode: true
         }
       });

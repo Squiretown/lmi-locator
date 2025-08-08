@@ -161,16 +161,14 @@ export function useClientManagement() {
       // Send invitation if requested
       if (clientData.sendInvitation && clientData.email) {
         try {
-          const { error: inviteError } = await supabase.functions.invoke('send-client-invitation', {
+          const { error: inviteError } = await supabase.functions.invoke('send-invitation', {
             body: {
+              email: clientData.email,
+              type: clientData.invitationType || 'email',
               clientName: `${clientData.first_name} ${clientData.last_name}`,
-              clientEmail: clientData.email,
               clientPhone: clientData.phone,
-              invitationType: clientData.invitationType || 'email',
               templateType: clientData.templateType || 'default',
-              customMessage: clientData.customMessage,
-              invitationTargetType: 'client',
-              targetProfessionalRole: 'mortgage'
+              customMessage: clientData.customMessage
             }
           });
 
