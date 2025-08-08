@@ -159,6 +159,36 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log('✅ Invitation created successfully:', invitation.id);
 
+    // Now send the email by calling send-client-invitation
+    let emailSent = false;
+    let emailError = null;
+    
+    try {
+      console.log('📧 Attempting to send invitation email for:', invitation.id);
+      
+      const emailResponse = await supabase.functions.invoke('send-client-invitation', {
+        body: {
+          invitationId: invitation.id,
+          type: 'email'
+        }
+      });
+      
+      if (emailResponse.error) {
+        console.error('❌ Email sending failed:', emailResponse.error);
+        emailError = emailResponse.error.message || 'Failed to send email';
+      } else {
+        console.log('✅ Email sent successfully:', emailResponse.data);
+        emailSent = true;
+      }
+    } catch (emailErr: any) {
+      console.error('💥 Exception while sending email:', emailErr);
+      emailError = emailErr.message || 'Email sending exception';
+    }
+
+    const responseMessage = emailSent 
+      ? 'Professional invitation created and email sent successfully'
+      : 'Professional invitation created successfully, but email sending failed';
+
     return new Response(
       JSON.stringify({ 
         success: true, 
@@ -168,7 +198,9 @@ const handler = async (req: Request): Promise<Response> => {
           type: professionalType,
           status: 'created'
         },
-        message: 'Professional invitation created successfully'
+        emailSent,
+        emailError,
+        message: responseMessage
       }),
       { 
         status: 200, 
