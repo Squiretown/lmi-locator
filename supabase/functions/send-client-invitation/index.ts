@@ -131,7 +131,7 @@ const handler = async (req) => {
     let professional;
     const { data: prof } = await supabase
       .from('professionals')
-      .select('id, user_id, name, company, phone, status, professional_type')
+      .select('id, user_id, name, company, phone, status, professional_type, email')
       .eq('id', invitation.professional_id)
       .maybeSingle();
 

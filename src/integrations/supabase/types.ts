@@ -2053,6 +2053,7 @@ export type Database = {
           bio: string | null
           company: string
           created_at: string
+          email: string | null
           id: string
           is_flagged: boolean | null
           is_verified: boolean | null
@@ -2074,6 +2075,7 @@ export type Database = {
           bio?: string | null
           company: string
           created_at?: string
+          email?: string | null
           id?: string
           is_flagged?: boolean | null
           is_verified?: boolean | null
@@ -2095,6 +2097,7 @@ export type Database = {
           bio?: string | null
           company?: string
           created_at?: string
+          email?: string | null
           id?: string
           is_flagged?: boolean | null
           is_verified?: boolean | null
