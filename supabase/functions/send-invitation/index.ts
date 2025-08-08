@@ -196,7 +196,7 @@ serve(async (req: Request) => {
       console.log("Development mode: Mocking email send");
       console.log("Email would be sent to:", body.email);
       console.log("Subject:", subject);
-      console.log("From:", `${inviterName} <noreply@yourdomain.com>`);
+      console.log("From:", `${inviterName} <noreply@lmicheck.com>`);
       
       emailResult = {
         data: { id: `mock-${Date.now()}` },
@@ -209,7 +209,7 @@ serve(async (req: Request) => {
       }
       
       emailResult = await resend.emails.send({
-        from: `${inviterName} <noreply@yourdomain.com>`, // Use your verified domain
+        from: `${inviterName} <noreply@lmicheck.com>`, // Use your verified domain
         to: [body.email],
         subject,
         html: htmlContent,
