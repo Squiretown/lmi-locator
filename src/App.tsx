@@ -11,6 +11,7 @@ import ProtectedRoute from "./components/auth/ProtectedRoute";
 import { EdgeFunctionTest } from "./components/EdgeFunctionTest";
 import { ClientRegistration } from "./pages/ClientRegistration";
 import { RegistrationSuccess } from "./pages/RegistrationSuccess";
+import AcceptInvitation from "./pages/AcceptInvitation";
 
 // Import all page components
 import ProductPage from "./pages/ProductPage";
@@ -82,6 +83,7 @@ const App = () => (
             <Route path="/login" element={<LoginPage />} />
             <Route path="/client-registration" element={<ClientRegistration />} />
             <Route path="/registration-success" element={<RegistrationSuccess />} />
+            <Route path="/accept-invitation/:code" element={<AcceptInvitation />} />
             <Route path="/product" element={<ProductPage />} />
             <Route path="/resources" element={<ResourcesPage />} />
             <Route path="/pricing" element={<PricingPage />} />

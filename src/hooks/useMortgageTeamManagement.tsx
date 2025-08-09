@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { useRealtimeTeamUpdates } from './useRealtimeTeamUpdates';
 
 // Enhanced data structures for unified team management
 interface LendingTeamMember {
@@ -133,15 +134,44 @@ export function useMortgageTeamManagement() {
     enabled: !!currentProfessional?.id,
   });
 
-  // Fetch realtor partners (existing explicit partnerships)
+  // Fetch realtor partners from professional_teams table
   const { data: realtorPartners = [], isLoading: isLoadingRealtors } = useQuery({
     queryKey: ['realtor-partners-unified', currentProfessional?.id],
     queryFn: async () => {
       if (!currentProfessional?.id) return [];
 
-      // For now, return empty array to fix type recursion
-      // TODO: Implement explicit realtor partnerships when needed
-      return [];
+      // Fetch realtor partners from professional_teams table
+      const { data: teamData, error } = await supabase
+        .from('professional_teams')
+        .select(`
+          id,
+          role,
+          status,
+          realtor:realtor_id (
+            id,
+            name,
+            company,
+            phone,
+            professional_type,
+            email,
+            license_number
+          )
+        `)
+        .eq('mortgage_professional_id', currentProfessional.id)
+        .eq('status', 'active')
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching realtor partners:', error);
+        return [];
+      }
+
+      return (teamData || []).map(team => ({
+        id: team.id,
+        realtor: team.realtor,
+        role: team.role,
+        source: 'explicit' as const
+      })) as RealtorPartner[];
     },
     enabled: !!currentProfessional?.id,
   });
@@ -257,6 +287,9 @@ export function useMortgageTeamManagement() {
       }
     })),
   ];
+
+  // Enable real-time updates
+  useRealtimeTeamUpdates(currentProfessional?.id);
 
   return {
     // Data
