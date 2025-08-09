@@ -154,13 +154,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     
     try {
       // Validate and sanitize user type to prevent role escalation
-      // Only allow professional roles for direct signup
+      // Only allow professional roles for direct signup, unless it's invitation-based
       const userType = metadata.user_type || USER_ROLES.REALTOR;
-      const sanitizedUserType = PROFESSIONAL_ROLES.includes(userType as any) ? userType : USER_ROLES.REALTOR;
+      const isInvitationSignup = metadata.invitation_context === true;
       
-      // Block client direct signup - clients must be invited
-      if (userType === USER_ROLES.CLIENT) {
-        throw new Error('Clients cannot sign up directly. Please contact a real estate professional to receive an invitation.');
+      let sanitizedUserType;
+      
+      if (isInvitationSignup) {
+        // For invitation-based signup, allow client and professional roles
+        sanitizedUserType = [USER_ROLES.CLIENT, ...PROFESSIONAL_ROLES].includes(userType as any) 
+          ? userType 
+          : USER_ROLES.CLIENT;
+      } else {
+        // For direct signup, only allow professional roles
+        sanitizedUserType = PROFESSIONAL_ROLES.includes(userType as any) ? userType : USER_ROLES.REALTOR;
+        
+        // Block client direct signup - clients must be invited
+        if (userType === USER_ROLES.CLIENT) {
+          throw new Error('Clients cannot sign up directly. Please contact a real estate professional to receive an invitation.');
+        }
       }
       
       console.log('User type validation (professional only):', { userType, sanitizedUserType });
@@ -172,7 +184,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       const sanitizedMetadata = {
         ...metadata,
-        user_type: sanitizedUserType
+        user_type: sanitizedUserType,
+        invitation_context: undefined // Remove invitation flag from stored metadata
       };
       
       const result = await signUpWithEmail(email, password, sanitizedMetadata);

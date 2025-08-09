@@ -76,8 +76,13 @@ const handler = async (req: Request): Promise<Response> => {
       // The user will need to sign up/login separately
     }
 
+    let userType = 'client'; // Default for client invitations
+    let profileCreated = false;
+
     // Determine invitation type and handle accordingly
     if (invitation.invitation_target_type === 'client') {
+      userType = 'client';
+      
       // Create client profile if user is authenticated
       if (acceptedByUserId) {
         const { error: clientError } = await supabaseClient
@@ -93,20 +98,52 @@ const handler = async (req: Request): Promise<Response> => {
 
         if (clientError) {
           console.error('Error creating client profile:', clientError);
+        } else {
+          profileCreated = true;
+          console.log('Client profile created successfully');
         }
       }
     } else if (invitation.invitation_target_type === 'professional') {
+      userType = invitation.target_professional_role || 'realtor';
+      
       // Create professional team relationship if user is authenticated
       if (acceptedByUserId) {
-        // Determine which role is which based on the invitation context
+        // First ensure the user has a professional profile
+        const { data: existingProfessional } = await supabaseClient
+          .from('professionals')
+          .select('id')
+          .eq('user_id', acceptedByUserId)
+          .single();
+
+        if (!existingProfessional) {
+          // Create professional profile
+          const { error: profError } = await supabaseClient
+            .from('professionals')
+            .insert({
+              user_id: acceptedByUserId,
+              type: userType,
+              name: invitation.client_name || 'Professional',
+              company: 'Professional Services',
+              license_number: '',
+              status: 'active'
+            });
+
+          if (profError) {
+            console.error('Error creating professional profile:', profError);
+          } else {
+            console.log('Professional profile created successfully');
+          }
+        }
+
+        // Create team relationship
         const teamData = invitation.target_professional_role === 'realtor' ? {
           mortgage_professional_id: invitation.professional_id,
           realtor_id: acceptedByUserId,
-          created_by: invitation.professional_id
+          role: 'partner'
         } : {
           mortgage_professional_id: acceptedByUserId,
           realtor_id: invitation.professional_id,
-          created_by: invitation.professional_id
+          role: 'partner'
         };
 
         const { error: teamError } = await supabaseClient
@@ -115,6 +152,9 @@ const handler = async (req: Request): Promise<Response> => {
 
         if (teamError) {
           console.error('Error creating team relationship:', teamError);
+        } else {
+          profileCreated = true;
+          console.log('Professional team relationship created successfully');
         }
       }
     }
@@ -140,6 +180,8 @@ const handler = async (req: Request): Promise<Response> => {
     return new Response(
       JSON.stringify({
         success: true,
+        userType,
+        profileCreated,
         invitation: {
           ...invitation,
           status: 'accepted',

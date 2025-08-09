@@ -14,6 +14,8 @@ interface InvitationData {
   professional_id: string;
   invitation_type: string;
   invitation_category: string;
+  invitation_target_type: string;
+  target_professional_role?: string;
   custom_message?: string;
   expires_at: string;
   status: string;
@@ -93,10 +95,16 @@ const AcceptInvitation: React.FC = () => {
           return;
         }
       } else {
+        // Determine user type based on invitation
+        const userType = invitation?.invitation_target_type === 'professional' 
+          ? invitation.target_professional_role || 'realtor'
+          : 'client';
+          
         const { error } = await signUp(email, password, {
           first_name: invitation?.client_name?.split(' ')[0] || '',
           last_name: invitation?.client_name?.split(' ').slice(1).join(' ') || '',
-          user_type: 'client'
+          user_type: userType,
+          invitation_context: true // Flag to allow client signup via invitation
         });
         if (error) {
           toast.error(error.message);
@@ -132,9 +140,15 @@ const AcceptInvitation: React.FC = () => {
 
       toast.success('Invitation accepted successfully!');
       
-      // Navigate to appropriate dashboard
+      // Navigate to appropriate dashboard based on invitation type
+      const dashboardRoute = data.userType === 'mortgage_professional' 
+        ? '/dashboard/mortgage'
+        : data.userType === 'realtor' 
+        ? '/dashboard/realtor'
+        : '/dashboard/client';
+        
       setTimeout(() => {
-        navigate('/dashboard/client');
+        navigate(dashboardRoute);
       }, 2000);
 
     } catch (err) {
@@ -186,9 +200,13 @@ const AcceptInvitation: React.FC = () => {
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">
             <Users className="h-12 w-12 text-primary mx-auto mb-4" />
-            <CardTitle>Client Invitation</CardTitle>
+            <CardTitle>
+              {invitation.invitation_target_type === 'professional' ? 'Professional' : 'Client'} Invitation
+            </CardTitle>
             <CardDescription>
-              You've been invited to join as a client. Please sign in or create an account to continue.
+              You've been invited to join as a {invitation.invitation_target_type === 'professional' 
+                ? invitation.target_professional_role || 'professional' 
+                : 'client'}. Please sign in or create an account to continue.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -239,9 +257,13 @@ const AcceptInvitation: React.FC = () => {
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <CheckCircle className="h-12 w-12 text-primary mx-auto mb-4" />
-          <CardTitle>Client Invitation</CardTitle>
+          <CardTitle>
+            {invitation.invitation_target_type === 'professional' ? 'Professional' : 'Client'} Invitation
+          </CardTitle>
           <CardDescription>
-            You've been invited to join as a client
+            You've been invited to join as a {invitation.invitation_target_type === 'professional' 
+              ? invitation.target_professional_role || 'professional' 
+              : 'client'}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
