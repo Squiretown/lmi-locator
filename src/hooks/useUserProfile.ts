@@ -46,6 +46,11 @@ export const useUserProfile = () => {
 
       if (data) {
         setProfile(data);
+        
+        // Ensure professional profile exists for professional users
+        if (data.user_type === 'mortgage_professional' || data.user_type === 'realtor') {
+          await ensureProfessionalProfile(data);
+        }
       } else {
         // Create profile if it doesn't exist
         const userType = user.user_metadata?.user_type || 'client';
@@ -57,12 +62,60 @@ export const useUserProfile = () => {
 
         if (createError) throw createError;
         setProfile(newProfile);
+        
+        // Ensure professional profile exists for professional users
+        if (newProfile.user_type === 'mortgage_professional' || newProfile.user_type === 'realtor') {
+          await ensureProfessionalProfile(newProfile);
+        }
       }
     } catch (error: any) {
       console.error('Error fetching profile:', error);
       toast.error('Failed to load profile');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const ensureProfessionalProfile = async (userProfile: UserProfile) => {
+    try {
+      // Check if professional profile already exists
+      const { data: existingProfessional } = await supabase
+        .from('professionals')
+        .select('id')
+        .eq('user_id', userProfile.user_id)
+        .single();
+
+      if (existingProfessional) return; // Already exists
+
+      // Create professional profile
+      const professionalData = {
+        user_id: userProfile.user_id,
+        professional_type: userProfile.user_type,
+        name: user?.user_metadata?.first_name && user?.user_metadata?.last_name 
+          ? `${user.user_metadata.first_name} ${user.user_metadata.last_name}`
+          : user?.email?.split('@')[0] || 'Professional',
+        company: userProfile.company || user?.user_metadata?.company || 'Professional Services',
+        email: user?.email || '',
+        phone: userProfile.phone || user?.user_metadata?.phone || '',
+        license_number: userProfile.license_number || user?.user_metadata?.license_number || '',
+        address: userProfile.address || '',
+        city: userProfile.city || '',
+        state: userProfile.state || '',
+        zip_code: userProfile.zip_code || '',
+        status: 'active'
+      };
+
+      const { error: professionalError } = await supabase
+        .from('professionals')
+        .insert([professionalData]);
+
+      if (professionalError) {
+        console.error('Error creating professional profile:', professionalError);
+      } else {
+        console.log('Professional profile created successfully');
+      }
+    } catch (error) {
+      console.error('Error ensuring professional profile:', error);
     }
   };
 
