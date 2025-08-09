@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -23,21 +24,60 @@ export interface ClientInvitation {
   target_professional_role?: string;
   team_context?: any;
   team_showcase?: any;
+  accepted_by?: string;
   created_at: string;
   updated_at: string;
 }
 
 export interface CreateInvitationData {
-  client_email: string;
-  client_name?: string;
-  client_phone?: string;
-  invitation_type: 'email' | 'sms' | 'both';
-  template_type?: string;
-  custom_message?: string;
+  email: string;
+  name?: string;
+  phone?: string;
+  invitationType: 'email' | 'sms' | 'both';
+  templateType?: string;
+  customMessage?: string;
 }
 
 export function useClientInvitations() {
   const queryClient = useQueryClient();
+
+  // Set up real-time subscription for invitation updates
+  useEffect(() => {
+    const setupRealtimeSubscription = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) return;
+
+    const channel = supabase
+      .channel('client-invitations-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'client_invitations'
+        },
+        (payload) => {
+          console.log('Invitation change detected:', payload);
+          queryClient.invalidateQueries({ queryKey: ['client-invitations'] });
+          
+          // Also invalidate client profiles in case a client was created
+          if (payload.eventType === 'UPDATE' && payload.new?.status === 'accepted') {
+            queryClient.invalidateQueries({ queryKey: ['realtor-client-profiles'] });
+            queryClient.invalidateQueries({ queryKey: ['mortgage-clients'] });
+            queryClient.invalidateQueries({ queryKey: ['client-profiles'] });
+          }
+        }
+      )
+      .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    };
+
+    setupRealtimeSubscription();
+  }, [queryClient]);
 
   // Small helper to fail fast on slow/hanging requests
   function withTimeout<T>(promise: Promise<T>, ms = 12000, label = 'Request'): Promise<T> {
@@ -98,18 +138,36 @@ export function useClientInvitations() {
     },
   });
 
-  // Create invitation mutation
+  // Create invitation mutation with duplicate prevention
   const createInvitationMutation = useMutation({
     mutationFn: async (invitationData: CreateInvitationData) => {
       return withTimeout(
         (async () => {
+          const { data: { user } } = await supabase.auth.getUser();
+          if (!user) throw new Error('User not authenticated');
+
+          // Check for existing active invitation first
+          const { data: existingInvite } = await supabase
+            .from('client_invitations')
+            .select('id, status')
+            .eq('client_email', invitationData.email.toLowerCase())
+            .eq('professional_id', user.id)
+            .in('status', ['pending', 'sent'])
+            .maybeSingle();
+
+          if (existingInvite) {
+            throw new Error('An active invitation already exists for this email address');
+          }
+
           const { data, error } = await supabase.functions.invoke('send-invitation', {
             body: {
-              email: invitationData.client_email,
+              email: invitationData.email,
               type: 'client',
-              clientName: invitationData.client_name,
-              clientPhone: invitationData.client_phone,
-              customMessage: invitationData.custom_message
+              clientName: invitationData.name,
+              clientPhone: invitationData.phone,
+              customMessage: invitationData.customMessage,
+              invitationType: invitationData.invitationType || 'email',
+              templateType: invitationData.templateType || 'default'
             }
           });
 
@@ -141,25 +199,11 @@ export function useClientInvitations() {
     mutationFn: async ({ invitationId, type }: { invitationId: string; type: 'email' | 'sms' | 'both' }) => {
       return withTimeout(
         (async () => {
-          // Get invitation details first
-          const { data: invitation, error: fetchError } = await supabase
-            .from('client_invitations')
-            .select('*')
-            .eq('id', invitationId)
-            .single();
-
-          if (fetchError || !invitation) {
-            throw new Error('Invitation not found');
-          }
-
-          // Use the unified send-invitation function
-          const { data, error } = await supabase.functions.invoke('send-invitation', {
-            body: {
-              email: invitation.client_email,
-              type: invitation.invitation_target_type || 'client',
-              clientName: invitation.client_name,
-              clientPhone: invitation.client_phone,
-              customMessage: invitation.custom_message
+          const { data, error } = await supabase.functions.invoke('manage-invitation', {
+            body: { 
+              invitationId, 
+              action: 'resend',
+              type 
             }
           });
 
@@ -177,8 +221,11 @@ export function useClientInvitations() {
         'Sending invitation'
       );
     },
-    onSuccess: () => {
-      toast.success('Invitation sent successfully!');
+    onSuccess: (data) => {
+      let sentType: string[] = [];
+      if (data.emailSent) sentType.push('email');
+      if (data.smsSent) sentType.push('SMS');
+      toast.success(`Invitation sent via ${sentType.join(' & ')} successfully!`);
       queryClient.invalidateQueries({ queryKey: ['client-invitations'] });
     },
     onError: (error: Error) => {
@@ -186,67 +233,57 @@ export function useClientInvitations() {
     },
   });
 
-  // Resend invitation mutation (same as send)
+  // Resend invitation mutation
   const resendInvitationMutation = useMutation({
-    mutationFn: async (invitationId: string) => {
-      return withTimeout(
-        (async () => {
-          // Get invitation details first
-          const { data: invitation, error: fetchError } = await supabase
-            .from('client_invitations')
-            .select('*')
-            .eq('id', invitationId)
-            .single();
+    mutationFn: async ({ invitationId, type = 'email' }: { invitationId: string; type?: 'email' | 'sms' | 'both' }) => {
+      const { data, error } = await supabase.functions.invoke('manage-invitation', {
+        body: { 
+          invitationId, 
+          action: 'resend',
+          type 
+        }
+      });
 
-          if (fetchError || !invitation) {
-            throw new Error('Invitation not found');
-          }
+      if (error) {
+        throw new Error(error.message || 'Failed to resend invitation');
+      }
 
-          // Use the unified send-invitation function
-          const { data, error } = await supabase.functions.invoke('send-invitation', {
-            body: {
-              email: invitation.client_email,
-              type: invitation.invitation_target_type || 'client',
-              clientName: invitation.client_name,
-              clientPhone: invitation.client_phone,
-              customMessage: invitation.custom_message
-            }
-          });
+      if (!data?.success) {
+        throw new Error(data?.error || 'Failed to resend invitation');
+      }
 
-          if (error) {
-            throw new Error(error.message || 'Failed to resend invitation');
-          }
-
-          if (!data?.success) {
-            throw new Error(data?.error || 'Failed to resend invitation');
-          }
-
-          return data;
-        })(),
-        20000,
-        'Resending invitation'
-      );
+      return data;
     },
-    onSuccess: () => {
-      toast.success('Invitation resent successfully');
+    onSuccess: (data) => {
+      let sentType: string[] = [];
+      if (data.emailSent) sentType.push('email');
+      if (data.smsSent) sentType.push('SMS');
+      toast.success(`Invitation resent via ${sentType.join(' & ')} successfully!`);
       queryClient.invalidateQueries({ queryKey: ['client-invitations'] });
     },
     onError: (error: Error) => {
-      toast.error(`Failed to resend invitation: ${error.message}`);
+      toast.error(error.message || 'Failed to resend invitation');
     },
   });
 
   // Revoke invitation mutation
   const revokeInvitationMutation = useMutation({
     mutationFn: async (invitationId: string) => {
-      const { data, error } = await supabase
-        .from('client_invitations')
-        .update({ status: 'revoked', updated_at: new Date().toISOString() })
-        .eq('id', invitationId)
-        .select()
-        .single();
+      const { data, error } = await supabase.functions.invoke('manage-invitation', {
+        body: { 
+          invitationId, 
+          action: 'revoke'
+        }
+      });
 
-      if (error) throw error;
+      if (error) {
+        throw new Error(error.message || 'Failed to revoke invitation');
+      }
+
+      if (!data?.success) {
+        throw new Error(data?.error || 'Failed to revoke invitation');
+      }
+
       return data;
     },
     onSuccess: () => {

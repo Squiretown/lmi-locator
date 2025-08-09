@@ -834,12 +834,14 @@ export type Database = {
       client_invitations: {
         Row: {
           accepted_at: string | null
+          accepted_by: string | null
           client_email: string
           client_id: string | null
           client_name: string | null
           client_phone: string | null
           created_at: string | null
           custom_message: string | null
+          duplicate_check_key: string | null
           email_sent: boolean | null
           expires_at: string | null
           id: string
@@ -860,12 +862,14 @@ export type Database = {
         }
         Insert: {
           accepted_at?: string | null
+          accepted_by?: string | null
           client_email: string
           client_id?: string | null
           client_name?: string | null
           client_phone?: string | null
           created_at?: string | null
           custom_message?: string | null
+          duplicate_check_key?: string | null
           email_sent?: boolean | null
           expires_at?: string | null
           id?: string
@@ -886,12 +890,14 @@ export type Database = {
         }
         Update: {
           accepted_at?: string | null
+          accepted_by?: string | null
           client_email?: string
           client_id?: string | null
           client_name?: string | null
           client_phone?: string | null
           created_at?: string | null
           custom_message?: string | null
+          duplicate_check_key?: string | null
           email_sent?: boolean | null
           expires_at?: string | null
           id?: string

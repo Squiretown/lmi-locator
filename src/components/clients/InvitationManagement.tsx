@@ -3,6 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 import { useClientInvitations } from '@/hooks/useClientInvitations';
 import { InviteClientDialog } from './InviteClientDialog';
 import { 
@@ -17,7 +19,8 @@ import {
   MoreHorizontal,
   Copy,
   Send,
-  RotateCcw
+  RotateCcw,
+  Archive
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -31,6 +34,7 @@ import { toast } from 'sonner';
 export const InvitationManagement: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [showInviteDialog, setShowInviteDialog] = useState(false);
+  const [showArchived, setShowArchived] = useState(false);
   const {
     invitations,
     isLoading,
@@ -45,14 +49,22 @@ export const InvitationManagement: React.FC = () => {
     isRevokingInvitation,
   } = useClientInvitations();
 
-  // Filter invitations based on search query
+  // Filter invitations based on search query and archive setting
   const filteredInvitations = invitations.filter(invitation => {
     const searchLower = searchQuery.toLowerCase();
-    return (
+    const matchesSearch = (
       invitation.client_name?.toLowerCase().includes(searchLower) ||
       invitation.client_email.toLowerCase().includes(searchLower) ||
       invitation.invitation_code.toLowerCase().includes(searchLower)
     );
+
+    const isArchived = ['revoked', 'expired'].includes(invitation.status);
+    
+    if (showArchived) {
+      return matchesSearch; // Show all when archive toggle is on
+    } else {
+      return matchesSearch && !isArchived; // Hide archived when toggle is off
+    }
   });
 
   const getStatusBadge = (status: string) => {
@@ -93,6 +105,14 @@ export const InvitationManagement: React.FC = () => {
   const handleSendInvitation = async (invitationId: string, type: 'email' | 'sms' | 'both') => {
     try {
       await sendInvitation({ invitationId, type });
+    } catch (error) {
+      // Error handling is done in the hook
+    }
+  };
+
+  const handleResendInvitation = async (invitationId: string, type: 'email' | 'sms' | 'both' = 'email') => {
+    try {
+      await resendInvitation({ invitationId, type });
     } catch (error) {
       // Error handling is done in the hook
     }
@@ -167,10 +187,23 @@ export const InvitationManagement: React.FC = () => {
           </div>
         </div>
         
-        <Button onClick={() => setShowInviteDialog(true)}>
-          <Plus className="mr-2 h-4 w-4" />
-          Invite Client
-        </Button>
+        <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2">
+            <Switch
+              id="show-archived"
+              checked={showArchived}
+              onCheckedChange={setShowArchived}
+            />
+            <Label htmlFor="show-archived" className="text-sm">
+              <Archive className="h-4 w-4 inline mr-1" />
+              Show archived
+            </Label>
+          </div>
+          <Button onClick={() => setShowInviteDialog(true)}>
+            <Plus className="mr-2 h-4 w-4" />
+            Invite Client
+          </Button>
+        </div>
       </div>
 
       {/* Invitations Table */}
@@ -285,7 +318,7 @@ export const InvitationManagement: React.FC = () => {
                             )}
                             {invitation.status === 'sent' && (
                               <DropdownMenuItem
-                                onClick={() => resendInvitation(invitation.id)}
+                                onClick={() => handleResendInvitation(invitation.id, invitation.invitation_type)}
                                 disabled={isResendingInvitation}
                               >
                                 <RotateCcw className="h-4 w-4 mr-2" />

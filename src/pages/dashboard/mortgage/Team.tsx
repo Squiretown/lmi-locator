@@ -294,7 +294,7 @@ const MortgageTeam: React.FC = () => {
                     <Button 
                       variant="outline" 
                       size="sm"
-                      onClick={() => resendInvitation(invitation.id)}
+                      onClick={() => resendInvitation({ invitationId: invitation.id })}
                       disabled={isResendingInvitation}
                     >
                       Resend
