@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
+import { CopyInvitationCode } from '@/components/teams/CopyInvitationCode';
 import { useClientInvitations } from '@/hooks/useClientInvitations';
 import { InviteClientDialog } from './InviteClientDialog';
 import { 

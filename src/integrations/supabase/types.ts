@@ -2033,6 +2033,7 @@ export type Database = {
           mortgage_professional_id: string
           notes: string | null
           realtor_id: string
+          role: string | null
           status: string
         }
         Insert: {
@@ -2041,6 +2042,7 @@ export type Database = {
           mortgage_professional_id: string
           notes?: string | null
           realtor_id: string
+          role?: string | null
           status?: string
         }
         Update: {
@@ -2049,6 +2051,7 @@ export type Database = {
           mortgage_professional_id?: string
           notes?: string | null
           realtor_id?: string
+          role?: string | null
           status?: string
         }
         Relationships: []

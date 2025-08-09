@@ -134,44 +134,13 @@ export function useMortgageTeamManagement() {
     enabled: !!currentProfessional?.id,
   });
 
-  // Fetch realtor partners from professional_teams table
+  // For now, return empty array for realtor partners until professional_teams is properly configured
   const { data: realtorPartners = [], isLoading: isLoadingRealtors } = useQuery({
     queryKey: ['realtor-partners-unified', currentProfessional?.id],
     queryFn: async () => {
       if (!currentProfessional?.id) return [];
-
-      // Fetch realtor partners from professional_teams table
-      const { data: teamData, error } = await supabase
-        .from('professional_teams')
-        .select(`
-          id,
-          role,
-          status,
-          realtor:realtor_id (
-            id,
-            name,
-            company,
-            phone,
-            professional_type,
-            email,
-            license_number
-          )
-        `)
-        .eq('mortgage_professional_id', currentProfessional.id)
-        .eq('status', 'active')
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        console.error('Error fetching realtor partners:', error);
-        return [];
-      }
-
-      return (teamData || []).map(team => ({
-        id: team.id,
-        realtor: team.realtor,
-        role: team.role,
-        source: 'explicit' as const
-      })) as RealtorPartner[];
+      // Return empty for now - to be implemented when professional team relationships are established
+      return [];
     },
     enabled: !!currentProfessional?.id,
   });
