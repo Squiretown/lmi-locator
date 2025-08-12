@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import LoginPage from "./pages/auth/LoginPage";
+import ClientLoginPage from "./pages/auth/ClientLoginPage";
 import { AuthProvider } from "@/providers/AuthProvider";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 import { EdgeFunctionTest } from "./components/EdgeFunctionTest";
@@ -81,6 +82,7 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/test-edge" element={<EdgeFunctionTest />} />
             <Route path="/login" element={<LoginPage />} />
+            <Route path="/client-login" element={<ClientLoginPage />} />
             <Route path="/client-registration" element={<ClientRegistration />} />
             <Route path="/registration-success" element={<RegistrationSuccess />} />
             <Route path="/accept-invitation/:code" element={<AcceptInvitation />} />

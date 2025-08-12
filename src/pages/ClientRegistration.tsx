@@ -121,10 +121,10 @@ export const ClientRegistration: React.FC = () => {
 
       if (updateError) throw updateError;
 
-      toast.success('Registration completed successfully!');
+      toast.success('Registration completed successfully! You can now sign in to access your dashboard.');
       
-      // Redirect to a success page or login
-      navigate('/registration-success');
+      // Redirect to a success page with login info
+      navigate('/registration-success?showLoginInfo=true');
       
     } catch (error: any) {
       toast.error(`Registration failed: ${error.message}`);
