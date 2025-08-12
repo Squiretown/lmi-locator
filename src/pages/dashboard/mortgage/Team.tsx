@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Users, UserPlus, Mail, Phone, Building, AlertCircle } from "lucide-react";
 import { useMortgageTeamStats } from '@/hooks/useMortgageTeamStats';
 import { useMortgageTeamManagement } from '@/hooks/useMortgageTeamManagement';
-import { useClientInvitations } from '@/hooks/useClientInvitations';
+import { useProfessionalInvitations } from '@/hooks/useProfessionalInvitations';
 import { InviteProfessionalDialog } from '@/components/teams/InviteProfessionalDialog';
 
 
@@ -22,18 +22,13 @@ const MortgageTeam: React.FC = () => {
   } = useMortgageTeamManagement();
   
   const {
-    invitations,
-    stats,
+    invitations: professionalInvitations,
+    stats: professionalStats,
     resendInvitation,
     revokeInvitation,
     isResendingInvitation,
     isRevokingInvitation,
-  } = useClientInvitations();
-
-  // Filter professional invitations
-  const professionalInvitations = invitations.filter(inv => 
-    inv.invitation_target_type === 'professional'
-  );
+  } = useProfessionalInvitations();
 
   const handleContactProfessional = async (professionalId: string, type: 'email' | 'sms') => {
     try {
