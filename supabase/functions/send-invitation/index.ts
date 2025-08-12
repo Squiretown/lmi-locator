@@ -344,7 +344,7 @@ function createClientInvitationHTML(params: {
   customMessage?: string;
 }): string {
   const { inviterName, companyName, invitationCode, customMessage } = params;
-  const acceptUrl = `https://preview--lmi-locator.lovable.app/accept-invitation/${invitationCode}`;
+  const acceptUrl = `https://lmicheck.com/login?tab=signup/${invitationCode}`;
   
   return `
     <!DOCTYPE html>
