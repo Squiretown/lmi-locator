@@ -37,19 +37,25 @@ export const useInvitedContacts = () => {
     }
 
     try {
-      let professionalId = null;
+      let professionalId: string | null = null;
       const { data: professional } = await supabase
         .from('professionals')
         .select('id')
         .eq('user_id', user.id)
         .maybeSingle();
 
-      professionalId = professional ? professional.id : user.id;
+      if (!professional) {
+        setContacts([]);
+        return;
+      }
+
+      professionalId = professional.id;
 
       const { data, error } = await supabase
         .from('client_invitations')
         .select('*')
         .eq('professional_id', professionalId)
+        .eq('invitation_target_type', 'client')
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -75,6 +81,7 @@ export const useInvitedContacts = () => {
     setIsCreatingInvitation(true);
 
     try {
+      const { data: { session } } = await supabase.auth.getSession();
       const { data, error } = await supabase.functions.invoke('send-invitation', {
         body: {
           email: params.email,
@@ -82,7 +89,8 @@ export const useInvitedContacts = () => {
           clientName: params.name,
           clientPhone: params.phone,
           customMessage: params.customMessage
-        }
+        },
+        headers: session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : undefined,
       });
 
       if (error) {
@@ -107,8 +115,10 @@ export const useInvitedContacts = () => {
   // Send invitation
   const sendInvitation = async (invitationId: string, type: 'email' | 'sms' | 'both' = 'email') => {
     try {
+      const { data: { session } } = await supabase.auth.getSession();
       const { data, error } = await supabase.functions.invoke('send-invitation', {
-        body: { invitationId, type }
+        body: { invitationId, type },
+        headers: session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : undefined,
       });
 
       if (error) {

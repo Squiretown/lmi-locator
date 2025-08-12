@@ -129,23 +129,153 @@ serve(async (req: Request) => {
 
     console.log("Professional found:", enhancedProfessional.name);
 
-    // Generate invitation code
-    const invitationCode = Math.random().toString(36).substring(2, 15);
-    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
+    // Support resend-by-id and prevent duplicate active invitations
+    type TargetType = 'client' | 'professional';
+    const isProfessionalTarget = (t: string | undefined) => t === 'professional' || t === 'realtor';
 
-    // Create invitation record
+    // Parse body as any to allow optional invitationId
+    const rawBody: any = body as any;
+
+    // Helper to build and send the email, then mark invitation as sent
+    const sendEmailForInvitation = async (
+      invitation: { id: string; invitation_code: string; client_email: string; invitation_target_type: TargetType },
+      typeForEmail: 'client' | 'professional',
+      customMessage?: string,
+      professionalType?: string
+    ) => {
+      const invitationCode = invitation.invitation_code;
+      const subject = typeForEmail === 'client'
+        ? `Invitation from ${inviterName}`
+        : `Professional Invitation from ${inviterName}`;
+
+      const htmlContent = typeForEmail === 'client'
+        ? createClientInvitationHTML({ inviterName, companyName, invitationCode, customMessage })
+        : createProfessionalInvitationHTML({ inviterName, companyName, invitationCode, professionalType: professionalType || 'team member', customMessage });
+
+      console.log("Sending email to:", invitation.client_email);
+      let emailResult: any;
+      if (isDevelopment) {
+        console.log("Development mode: Mocking email send");
+        console.log("Email would be sent to:", invitation.client_email);
+        emailResult = { data: { id: `mock-${Date.now()}` }, error: null };
+      } else {
+        if (!resend) {
+          throw new Error("RESEND_API_KEY is required for sending emails in production");
+        }
+        emailResult = await resend.emails.send({
+          from: `${inviterName} <noreply@lmicheck.com>`,
+          to: [invitation.client_email],
+          subject,
+          html: htmlContent,
+        });
+      }
+
+      if (emailResult.error) {
+        console.error("Email sending failed:", emailResult.error);
+        await supabase.from('client_invitations').update({ status: 'failed', updated_at: new Date().toISOString() }).eq('id', invitation.id);
+        let errorMessage = typeof emailResult.error === 'string' ? emailResult.error : (emailResult.error?.message || 'Email sending failed');
+        throw new Error(`Email sending failed: ${errorMessage}`);
+      }
+
+      console.log("Email sent successfully:", emailResult.data?.id);
+      await supabase
+        .from('client_invitations')
+        .update({ status: 'sent', sent_at: new Date().toISOString(), email_sent: true, updated_at: new Date().toISOString() })
+        .eq('id', invitation.id);
+
+      return {
+        success: true,
+        invitationId: invitation.id,
+        emailId: emailResult.data?.id,
+      };
+    };
+
+    // Common values used by email helpers
+    const inviterName = enhancedProfessional.name;
+    const companyName = enhancedProfessional.company || "Our Team";
+
+    // 1) Resend by existing invitation ID
+    if (rawBody?.invitationId) {
+      const { data: existing, error: fetchExistingError } = await supabase
+        .from('client_invitations')
+        .select('id, invitation_code, client_email, invitation_target_type, status')
+        .eq('id', rawBody.invitationId)
+        .single();
+
+      if (fetchExistingError || !existing) {
+        throw new Error('Invitation not found');
+      }
+
+      if (existing.status === 'revoked' || existing.status === 'accepted') {
+        throw new Error('Cannot resend accepted or revoked invitation');
+      }
+
+      const emailResult = await sendEmailForInvitation(
+        existing as any,
+        existing.invitation_target_type === 'professional' ? 'professional' : 'client',
+        rawBody.customMessage,
+        rawBody.professionalType || rawBody.role
+      );
+
+      return new Response(
+        JSON.stringify({ success: true, ...emailResult, message: 'Invitation sent successfully' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
+      );
+    }
+
+    // 2) Create or reuse existing active invitation (pre-check)
+    if (!rawBody.email || !rawBody.type) {
+      throw new Error('Email and type are required fields');
+    }
+
+    if (!isValidEmail(rawBody.email)) {
+      throw new Error('Invalid email format');
+    }
+
+    const targetType: TargetType = isProfessionalTarget(rawBody.type) ? 'professional' : 'client';
+    const emailLower = String(rawBody.email).toLowerCase();
+
+    // Look for an existing active invitation
+    const { data: activeInvite } = await supabase
+      .from('client_invitations')
+      .select('id, invitation_code, client_email, invitation_target_type, status')
+      .eq('professional_id', professional.id)
+      .eq('client_email', emailLower)
+      .eq('invitation_target_type', targetType)
+      .in('status', ['pending', 'sent'])
+      .maybeSingle();
+
+    if (activeInvite) {
+      console.log('Active invitation exists, resending email');
+      const emailResult = await sendEmailForInvitation(
+        activeInvite as any,
+        targetType === 'professional' ? 'professional' : 'client',
+        rawBody.customMessage,
+        rawBody.professionalType || rawBody.role
+      );
+
+      return new Response(
+        JSON.stringify({ success: true, ...emailResult, message: 'Existing active invitation resent' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
+      );
+    }
+
+    // 3) Create new invitation then send
+    const invitationCode = Math.random().toString(36).substring(2, 15);
+    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+
     const invitationData = {
       professional_id: professional.id,
-      client_email: body.email,
+      client_email: emailLower,
       invitation_code: invitationCode,
-      invitation_type: body.type === 'client' ? 'email' : 'email',
-      invitation_target_type: body.type,
+      invitation_type: 'email',
+      invitation_target_type: targetType,
       status: 'pending',
       expires_at: expiresAt.toISOString(),
-      custom_message: body.customMessage,
-      client_name: body.clientName,
-      client_phone: body.clientPhone,
-      target_professional_role: body.professionalType || body.role,
+      custom_message: rawBody.customMessage,
+      client_name: rawBody.clientName,
+      client_phone: rawBody.clientPhone,
+      target_professional_role: rawBody.professionalType || rawBody.role,
     };
 
     const { data: invitation, error: inviteError } = await supabase
@@ -155,118 +285,22 @@ serve(async (req: Request) => {
       .single();
 
     if (inviteError || !invitation) {
-      console.error("Error creating invitation:", inviteError);
-      throw new Error("Failed to create invitation");
+      console.error('Error creating invitation:', inviteError);
+      throw new Error('Failed to create invitation');
     }
 
-    console.log("Invitation created:", invitation.id);
+    console.log('Invitation created:', invitation.id);
 
-    // Prepare email content
-    const inviterName = enhancedProfessional.name;
-    const companyName = enhancedProfessional.company || "Our Team";
-    
-    let subject: string;
-    let htmlContent: string;
-    
-    if (body.type === 'client') {
-      subject = `Invitation from ${inviterName}`;
-      htmlContent = createClientInvitationHTML({
-        inviterName,
-        companyName,
-        invitationCode,
-        customMessage: body.customMessage,
-      });
-    } else {
-      subject = `Professional Invitation from ${inviterName}`;
-      htmlContent = createProfessionalInvitationHTML({
-        inviterName,
-        companyName,
-        invitationCode,
-        professionalType: body.professionalType || 'team member',
-        customMessage: body.customMessage,
-      });
-    }
-
-    // Send email or mock in development
-    console.log("Sending email to:", body.email);
-    
-    let emailResult: any;
-    
-    if (isDevelopment) {
-      // Development mode - mock email sending
-      console.log("Development mode: Mocking email send");
-      console.log("Email would be sent to:", body.email);
-      console.log("Subject:", subject);
-      console.log("From:", `${inviterName} <noreply@lmicheck.com>`);
-      
-      emailResult = {
-        data: { id: `mock-${Date.now()}` },
-        error: null
-      };
-    } else {
-      // Production mode - send actual email
-      if (!resend) {
-        throw new Error("RESEND_API_KEY is required for sending emails in production");
-      }
-      
-      emailResult = await resend.emails.send({
-        from: `${inviterName} <noreply@lmicheck.com>`, // Use your verified domain
-        to: [body.email],
-        subject,
-        html: htmlContent,
-      });
-    }
-
-    if (emailResult.error) {
-      console.error("Email sending failed:", emailResult.error);
-      console.error("Full error object:", JSON.stringify(emailResult.error, null, 2));
-      
-      // Update invitation status to failed
-      await supabase
-        .from('client_invitations')
-        .update({ 
-          status: 'failed',
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', invitation.id);
-      
-      // Handle different error types from Resend
-      let errorMessage = "Email sending failed";
-      if (emailResult.error?.message) {
-        errorMessage = emailResult.error.message;
-      } else if (typeof emailResult.error === 'string') {
-        errorMessage = emailResult.error;
-      } else if (emailResult.error?.error) {
-        errorMessage = emailResult.error.error;
-      }
-        
-      throw new Error(`Email sending failed: ${errorMessage}`);
-    }
-
-    console.log("Email sent successfully:", emailResult.data?.id);
-
-    // Update invitation status to sent
-    await supabase
-      .from('client_invitations')
-      .update({ 
-        status: 'sent',
-        sent_at: new Date().toISOString(),
-        email_sent: true,
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', invitation.id);
+    const emailResult = await sendEmailForInvitation(
+      invitation as any,
+      targetType === 'professional' ? 'professional' : 'client',
+      rawBody.customMessage,
+      rawBody.professionalType || rawBody.role
+    );
 
     return new Response(
-      JSON.stringify({
-        success: true,
-        invitationId: invitation.id,
-        emailId: emailResult.data?.id,
-        message: "Invitation sent successfully"
-      }),
-      {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 200,
-      }
+      JSON.stringify({ success: true, ...emailResult, message: 'Invitation sent successfully' }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
     );
 
   } catch (error: any) {

@@ -122,6 +122,7 @@ export function useClientInvitations() {
               .from('client_invitations')
               .select('*')
               .eq('professional_id', professional.id)
+              .eq('invitation_target_type', 'client')
               .order('created_at', { ascending: false });
 
             if (error) throw error;
@@ -146,18 +147,31 @@ export function useClientInvitations() {
           const { data: { user } } = await supabase.auth.getUser();
           if (!user) throw new Error('User not authenticated');
 
-          // Check for existing active invitation first
+          // Load current professional id for correct scoping
+          const { data: professional, error: profErr } = await supabase
+            .from('professionals')
+            .select('id')
+            .eq('user_id', user.id)
+            .single();
+
+          if (profErr || !professional) {
+            throw new Error('Professional profile not found. Please complete your profile setup.');
+          }
+
           const { data: existingInvite } = await supabase
             .from('client_invitations')
             .select('id, status')
             .eq('client_email', invitationData.email.toLowerCase())
-            .eq('professional_id', user.id)
+            .eq('professional_id', professional.id)
+            .eq('invitation_target_type', 'client')
             .in('status', ['pending', 'sent'])
             .maybeSingle();
 
           if (existingInvite) {
             throw new Error('An active invitation already exists for this email address');
           }
+
+          const { data: { session } } = await supabase.auth.getSession();
 
           const { data, error } = await supabase.functions.invoke('send-invitation', {
             body: {
@@ -168,7 +182,8 @@ export function useClientInvitations() {
               customMessage: invitationData.customMessage,
               invitationType: invitationData.invitationType || 'email',
               templateType: invitationData.templateType || 'default'
-            }
+            },
+            headers: session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : undefined,
           });
 
           if (error) {
@@ -199,12 +214,14 @@ export function useClientInvitations() {
     mutationFn: async ({ invitationId, type }: { invitationId: string; type: 'email' | 'sms' | 'both' }) => {
       return withTimeout(
         (async () => {
+          const { data: { session } } = await supabase.auth.getSession();
           const { data, error } = await supabase.functions.invoke('manage-invitation', {
             body: { 
               invitationId, 
               action: 'resend',
               type 
-            }
+            },
+            headers: session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : undefined,
           });
 
           if (error) {
@@ -236,12 +253,14 @@ export function useClientInvitations() {
   // Resend invitation mutation
   const resendInvitationMutation = useMutation({
     mutationFn: async ({ invitationId, type = 'email' }: { invitationId: string; type?: 'email' | 'sms' | 'both' }) => {
+      const { data: { session } } = await supabase.auth.getSession();
       const { data, error } = await supabase.functions.invoke('manage-invitation', {
         body: { 
           invitationId, 
           action: 'resend',
           type 
-        }
+        },
+        headers: session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : undefined,
       });
 
       if (error) {
@@ -269,11 +288,13 @@ export function useClientInvitations() {
   // Revoke invitation mutation
   const revokeInvitationMutation = useMutation({
     mutationFn: async (invitationId: string) => {
+      const { data: { session } } = await supabase.auth.getSession();
       const { data, error } = await supabase.functions.invoke('manage-invitation', {
         body: { 
           invitationId, 
           action: 'revoke'
-        }
+        },
+        headers: session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : undefined,
       });
 
       if (error) {
