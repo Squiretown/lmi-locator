@@ -141,19 +141,21 @@ const AcceptInvitation: React.FC = () => {
       toast.success('Invitation accepted successfully!');
       
       // Navigate to appropriate dashboard based on invitation type
-      const dashboardRoute = data.userType === 'mortgage_professional' 
-        ? '/dashboard/mortgage'
-        : data.userType === 'realtor' 
-        ? '/dashboard/realtor'
-        : '/dashboard/client';
-        
       setTimeout(() => {
-        navigate(dashboardRoute);
+        const dashboardRoute = data.userType === 'mortgage_professional' 
+          ? '/dashboard/mortgage'
+          : data.userType === 'realtor' 
+          ? '/dashboard/realtor'
+          : '/dashboard/client';
+          
+        console.log('Navigating to:', dashboardRoute, 'for user type:', data.userType);
+        navigate(dashboardRoute, { replace: true });
       }, 2000);
 
     } catch (err) {
       console.error('Error accepting invitation:', err);
-      toast.error('Failed to accept invitation');
+      const errorMessage = err instanceof Error ? err.message : 'Failed to accept invitation';
+      toast.error(errorMessage);
     } finally {
       setAccepting(false);
     }
@@ -208,6 +210,11 @@ const AcceptInvitation: React.FC = () => {
                 ? invitation.target_professional_role || 'professional' 
                 : 'client'}. Please sign in or create an account to continue.
             </CardDescription>
+            {invitation.custom_message && (
+              <div className="mt-4 p-3 bg-secondary/30 rounded-md text-sm">
+                <strong>Message:</strong> {invitation.custom_message}
+              </div>
+            )}
           </CardHeader>
           <CardContent>
             <form onSubmit={handleAuth} className="space-y-4">
@@ -229,10 +236,11 @@ const AcceptInvitation: React.FC = () => {
                   onChange={(e) => setPassword(e.target.value)}
                   className="w-full p-2 border rounded-md"
                   required
+                  placeholder={authMode === 'signup' ? 'Create a password' : 'Enter your password'}
                 />
               </div>
               <Button type="submit" className="w-full">
-                {authMode === 'signin' ? 'Sign In' : 'Create Account'}
+                {authMode === 'signin' ? 'Sign In & Accept' : 'Create Account & Accept'}
               </Button>
               <div className="text-center">
                 <button
@@ -240,7 +248,7 @@ const AcceptInvitation: React.FC = () => {
                   onClick={() => setAuthMode(authMode === 'signin' ? 'signup' : 'signin')}
                   className="text-sm text-primary hover:underline"
                 >
-                  {authMode === 'signin' ? 'Need an account? Sign up' : 'Have an account? Sign in'}
+                  {authMode === 'signin' ? 'New user? Create an account' : 'Already have an account? Sign in'}
                 </button>
               </div>
             </form>

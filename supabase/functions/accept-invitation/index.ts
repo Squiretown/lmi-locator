@@ -109,52 +109,89 @@ const handler = async (req: Request): Promise<Response> => {
       // Create professional team relationship if user is authenticated
       if (acceptedByUserId) {
         // First ensure the user has a professional profile
+        let professionalId = null;
         const { data: existingProfessional } = await supabaseClient
           .from('professionals')
           .select('id')
           .eq('user_id', acceptedByUserId)
           .single();
 
-        if (!existingProfessional) {
+        if (existingProfessional) {
+          professionalId = existingProfessional.id;
+        } else {
           // Create professional profile
-          const { error: profError } = await supabaseClient
+          const { data: newProfessional, error: profError } = await supabaseClient
             .from('professionals')
             .insert({
               user_id: acceptedByUserId,
-              type: userType,
+              professional_type: userType,
               name: invitation.client_name || 'Professional',
               company: 'Professional Services',
               license_number: '',
-              status: 'active'
-            });
+              status: 'active',
+              email: invitation.client_email,
+              phone: ''
+            })
+            .select('id')
+            .single();
 
           if (profError) {
             console.error('Error creating professional profile:', profError);
           } else {
+            professionalId = newProfessional.id;
             console.log('Professional profile created successfully');
           }
         }
 
         // Create team relationship
-        const teamData = invitation.target_professional_role === 'realtor' ? {
-          mortgage_professional_id: invitation.professional_id,
-          realtor_id: acceptedByUserId,
-          role: 'partner'
-        } : {
-          mortgage_professional_id: acceptedByUserId,
-          realtor_id: invitation.professional_id,
-          role: 'partner'
-        };
+        if (professionalId) {
+          const teamData = invitation.target_professional_role === 'realtor' ? {
+            mortgage_professional_id: invitation.professional_id,
+            realtor_id: professionalId,
+            role: 'partner',
+            status: 'active'
+          } : {
+            mortgage_professional_id: professionalId,
+            realtor_id: invitation.professional_id,
+            role: 'partner', 
+            status: 'active'
+          };
 
-        const { error: teamError } = await supabaseClient
-          .from('professional_teams')
-          .insert(teamData);
+          const { error: teamError } = await supabaseClient
+            .from('professional_teams')
+            .insert(teamData);
 
-        if (teamError) {
-          console.error('Error creating team relationship:', teamError);
-        } else {
-          profileCreated = true;
-          console.log('Professional team relationship created successfully');
+          if (teamError) {
+            console.error('Error creating team relationship:', teamError);
+          } else {
+            profileCreated = true;
+            console.log('Professional team relationship created successfully');
+            
+            // Create notification for the inviter
+            const { data: inviterProfessional } = await supabaseClient
+              .from('professionals')
+              .select('user_id, name')
+              .eq('id', invitation.professional_id)
+              .single();
+
+            if (inviterProfessional) {
+              await supabaseClient
+                .from('notifications')
+                .insert({
+                  user_id: inviterProfessional.user_id,
+                  notification_type: 'invitation_accepted',
+                  title: 'Invitation Accepted!',
+                  message: `${invitation.client_name || 'A professional'} has accepted your ${invitation.target_professional_role || 'team'} invitation.`,
+                  data: {
+                    invitationId: invitation.id,
+                    acceptedBy: acceptedByUserId,
+                    acceptedByName: invitation.client_name,
+                    professionalType: invitation.target_professional_role
+                  },
+                  is_read: false
+                });
+            }
+          }
         }
       }
     }

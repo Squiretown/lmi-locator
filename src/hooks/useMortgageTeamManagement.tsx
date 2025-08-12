@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -259,6 +260,33 @@ export function useMortgageTeamManagement() {
 
   // Enable real-time updates
   useRealtimeTeamUpdates(currentProfessional?.id);
+
+  // Also listen for professional_teams changes specifically for immediate updates
+  useEffect(() => {
+    if (!currentProfessional?.id) return;
+
+    const channel = supabase
+      .channel('team-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'professional_teams'
+        },
+        (payload) => {
+          console.log('Professional teams change detected:', payload);
+          // Invalidate queries when team relationships change
+          queryClient.invalidateQueries({ queryKey: ['lending-team-unified'] });
+          queryClient.invalidateQueries({ queryKey: ['realtor-partners-unified'] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [currentProfessional?.id, queryClient]);
 
   return {
     // Data

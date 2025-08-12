@@ -20,6 +20,7 @@ interface Notification {
   created_at: string;
   link_url: string | null;
   priority?: string | null;
+  data?: any;
 }
 
 export const NotificationCenter: React.FC = () => {
@@ -77,10 +78,6 @@ export const NotificationCenter: React.FC = () => {
           // Show toast for new notification
           toast.info(newNotification.title || 'New notification', {
             description: newNotification.message,
-            action: newNotification.link_url ? {
-              label: 'View',
-              onClick: () => navigate(newNotification.link_url!)
-            } : undefined
           });
         }
       )
@@ -165,6 +162,10 @@ export const NotificationCenter: React.FC = () => {
 
   const getNotificationIcon = (type: string | null) => {
     switch (type) {
+      case 'invitation_accepted':
+        return '✅';
+      case 'team_update':
+        return '👥';
       case 'property_match':
         return '🏠';
       case 'marketing_complete':
