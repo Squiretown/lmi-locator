@@ -310,6 +310,7 @@ function createClientInvitationHTML(params: {
   customMessage?: string;
 }): string {
   const { inviterName, companyName, invitationCode, customMessage } = params;
+  const acceptUrl = `https://preview--lmi-locator.lovable.app/accept-invitation/${invitationCode}`;
   
   return `
     <!DOCTYPE html>
@@ -332,13 +333,27 @@ function createClientInvitationHTML(params: {
             </div>
           ` : ''}
           
+          <!-- Main CTA Button -->
+          <div style="margin: 30px 0;">
+            <a href="${acceptUrl}" style="background-color: #2563eb; color: white; padding: 15px 30px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 16px; display: inline-block; box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2);">
+              Accept Invitation & Create Account
+            </a>
+          </div>
+          
+          <p style="margin: 20px 0; font-size: 14px; color: #666;">
+            Can't click the button? Copy and paste this link into your browser:
+          </p>
+          <p style="margin: 0 0 20px 0; font-size: 14px; color: #2563eb; word-break: break-all;">
+            ${acceptUrl}
+          </p>
+          
           <div style="background-color: #fff; padding: 20px; border-radius: 8px; margin: 20px 0; border: 2px dashed #2563eb;">
-            <p style="margin: 0 0 10px 0; font-weight: bold;">Your Invitation Code:</p>
+            <p style="margin: 0 0 10px 0; font-weight: bold;">Or use this invitation code manually:</p>
             <p style="font-size: 24px; font-weight: bold; color: #2563eb; margin: 0; letter-spacing: 2px;">${invitationCode}</p>
           </div>
           
           <p style="margin: 20px 0;">
-            Use this code to create your account and start working with ${inviterName} on your mortgage journey.
+            Get started working with ${inviterName} on your mortgage journey today!
           </p>
           
           <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e5e5; font-size: 14px; color: #666;">
@@ -358,6 +373,7 @@ function createProfessionalInvitationHTML(params: {
   customMessage?: string;
 }): string {
   const { inviterName, companyName, invitationCode, professionalType, customMessage } = params;
+  const acceptUrl = `https://preview--lmi-locator.lovable.app/accept-invitation/${invitationCode}`;
   
   return `
     <!DOCTYPE html>
@@ -380,13 +396,27 @@ function createProfessionalInvitationHTML(params: {
             </div>
           ` : ''}
           
+          <!-- Main CTA Button -->
+          <div style="margin: 30px 0;">
+            <a href="${acceptUrl}" style="background-color: #16a34a; color: white; padding: 15px 30px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 16px; display: inline-block; box-shadow: 0 2px 4px rgba(22, 163, 74, 0.2);">
+              Accept Invitation & Join Team
+            </a>
+          </div>
+          
+          <p style="margin: 20px 0; font-size: 14px; color: #666;">
+            Can't click the button? Copy and paste this link into your browser:
+          </p>
+          <p style="margin: 0 0 20px 0; font-size: 14px; color: #16a34a; word-break: break-all;">
+            ${acceptUrl}
+          </p>
+          
           <div style="background-color: #fff; padding: 20px; border-radius: 8px; margin: 20px 0; border: 2px dashed #16a34a;">
-            <p style="margin: 0 0 10px 0; font-weight: bold;">Your Invitation Code:</p>
+            <p style="margin: 0 0 10px 0; font-weight: bold;">Or use this invitation code manually:</p>
             <p style="font-size: 24px; font-weight: bold; color: #16a34a; margin: 0; letter-spacing: 2px;">${invitationCode}</p>
           </div>
           
           <p style="margin: 20px 0;">
-            Use this code to create your professional account and start collaborating with our team.
+            Start collaborating with our team and grow your professional network today!
           </p>
           
           <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e5e5; font-size: 14px; color: #666;">
