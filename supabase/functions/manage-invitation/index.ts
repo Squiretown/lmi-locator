@@ -60,6 +60,8 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     if (action === 'revoke') {
+      console.log(`Revoking invitation ${invitationId} by user ${user.id}`);
+      
       // Revoke the invitation
       const { error: updateError } = await supabaseClient
         .from('client_invitations')
@@ -70,12 +72,14 @@ const handler = async (req: Request): Promise<Response> => {
         .eq('id', invitationId);
 
       if (updateError) {
+        console.error(`Failed to revoke invitation ${invitationId}:`, updateError);
         return new Response(
           JSON.stringify({ error: 'Failed to revoke invitation' }),
           { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
 
+      console.log(`Successfully revoked invitation ${invitationId}`);
       return new Response(
         JSON.stringify({ 
           success: true, 
@@ -86,16 +90,23 @@ const handler = async (req: Request): Promise<Response> => {
       );
 
     } else if (action === 'resend') {
+      console.log(`Resending invitation ${invitationId} by user ${user.id}, type: ${type}`);
+      
       // Check if invitation is still valid for resending
       if (invitation.status === 'accepted' || invitation.status === 'revoked') {
+        console.log(`Cannot resend invitation ${invitationId} - status is ${invitation.status}`);
         return new Response(
           JSON.stringify({ error: 'Cannot resend accepted or revoked invitation' }),
           { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
 
-      // Call the send-invitation function to resend
-      const { data: sendResult, error: sendError } = await supabaseClient.functions.invoke('send-invitation', {
+      // Route to appropriate sending function based on invitation target type
+      const functionName = invitation.invitation_target_type === 'client' ? 'send-client-invitation' : 'send-invitation';
+      console.log(`Using function ${functionName} for invitation target type: ${invitation.invitation_target_type}`);
+      
+      // Call the appropriate function to resend
+      const { data: sendResult, error: sendError } = await supabaseClient.functions.invoke(functionName, {
         body: { 
           invitationId,
           type 
@@ -103,6 +114,7 @@ const handler = async (req: Request): Promise<Response> => {
       });
 
       if (sendError || !sendResult?.success) {
+        console.error(`Failed to resend invitation ${invitationId}:`, sendError, sendResult);
         return new Response(
           JSON.stringify({ error: sendResult?.error || 'Failed to resend invitation' }),
           { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -128,6 +140,7 @@ const handler = async (req: Request): Promise<Response> => {
         console.error('Error updating invitation after resend:', updateError);
       }
 
+      console.log(`Successfully resent invitation ${invitationId}`);
       return new Response(
         JSON.stringify({ 
           success: true, 

@@ -136,9 +136,9 @@ serve(async (req: Request) => {
     // Parse body as any to allow optional invitationId
     const rawBody: any = body as any;
 
-    // Helper to build and send the email, then mark invitation as sent
+    // Helper to build and send email/SMS based on invitation type
     const sendEmailForInvitation = async (
-      invitation: { id: string; invitation_code: string; client_email: string; invitation_target_type: TargetType },
+      invitation: { id: string; invitation_code: string; client_email: string; invitation_target_type: TargetType; invitation_type?: string },
       typeForEmail: 'client' | 'professional',
       customMessage?: string,
       professionalType?: string
@@ -178,15 +178,33 @@ serve(async (req: Request) => {
       }
 
       console.log("Email sent successfully:", emailResult.data?.id);
+      
+      // Determine if we need to send SMS too
+      const invitationType = invitation.invitation_type || 'email';
+      let smsSent = false;
+      
+      if (invitationType === 'sms' || invitationType === 'both') {
+        // TODO: Implement SMS sending when SMS provider is configured
+        console.log("SMS sending not yet implemented");
+      }
+      
       await supabase
         .from('client_invitations')
-        .update({ status: 'sent', sent_at: new Date().toISOString(), email_sent: true, updated_at: new Date().toISOString() })
+        .update({ 
+          status: 'sent', 
+          sent_at: new Date().toISOString(), 
+          email_sent: true,
+          sms_sent: smsSent,
+          updated_at: new Date().toISOString() 
+        })
         .eq('id', invitation.id);
 
       return {
         success: true,
         invitationId: invitation.id,
         emailId: emailResult.data?.id,
+        emailSent: true,
+        smsSent,
       };
     };
 
@@ -264,19 +282,22 @@ serve(async (req: Request) => {
     const invitationCode = Math.random().toString(36).substring(2, 15);
     const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
 
-    const invitationData = {
-      professional_id: professional.id,
-      client_email: emailLower,
-      invitation_code: invitationCode,
-      invitation_type: 'email',
-      invitation_target_type: targetType,
-      status: 'pending',
-      expires_at: expiresAt.toISOString(),
-      custom_message: rawBody.customMessage,
-      client_name: rawBody.clientName,
-      client_phone: rawBody.clientPhone,
-      target_professional_role: rawBody.professionalType || rawBody.role,
-    };
+  // Determine invitation type - support email, sms, both
+  const invitationType = rawBody.invitationType || rawBody.type || 'email';
+  
+  const invitationData = {
+    professional_id: professional.id,
+    client_email: emailLower,
+    invitation_code: invitationCode,
+    invitation_type: invitationType,
+    invitation_target_type: targetType,
+    status: 'pending',
+    expires_at: expiresAt.toISOString(),
+    custom_message: rawBody.customMessage,
+    client_name: rawBody.clientName,
+    client_phone: rawBody.clientPhone,
+    target_professional_role: rawBody.professionalType || rawBody.role,
+  };
 
     const { data: invitation, error: inviteError } = await supabase
       .from('client_invitations')
@@ -344,7 +365,9 @@ function createClientInvitationHTML(params: {
   customMessage?: string;
 }): string {
   const { inviterName, companyName, invitationCode, customMessage } = params;
-  const acceptUrl =`https://lmicheck.com/login?tab=signup/${invitationCode}`;
+  // Use dynamic domain for client registration
+  const domain = Deno.env.get("FRONTEND_URL") || "https://llhofjbijjxkfezidxyi.lovableproject.com";
+  const acceptUrl = `${domain}/client-registration?code=${invitationCode}`;
   
   return `
     <!DOCTYPE html>
@@ -407,7 +430,9 @@ function createProfessionalInvitationHTML(params: {
   customMessage?: string;
 }): string {
   const { inviterName, companyName, invitationCode, professionalType, customMessage } = params;
-  const acceptUrl = `https://lmicheck.com/login?tab=signup/${invitationCode}`;
+  // Use dynamic domain for professional registration  
+  const domain = Deno.env.get("FRONTEND_URL") || "https://llhofjbijjxkfezidxyi.lovableproject.com";
+  const acceptUrl = `${domain}/professional-registration?code=${invitationCode}`;
   
   return `
     <!DOCTYPE html>
