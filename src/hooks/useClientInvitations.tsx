@@ -214,21 +214,32 @@ export function useClientInvitations() {
     mutationFn: async ({ invitationId, type }: { invitationId: string; type: 'email' | 'sms' | 'both' }) => {
       return withTimeout(
         (async () => {
-          const { data: { session } } = await supabase.auth.getSession();
+          // Ensure we have a fresh session
+          const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+          
+          if (sessionError || !session?.access_token) {
+            throw new Error('Authentication session expired. Please refresh the page and try again.');
+          }
+
           const { data, error } = await supabase.functions.invoke('manage-invitation', {
             body: { 
               invitationId, 
               action: 'resend',
               type 
             },
-            headers: session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : undefined,
+            headers: { 
+              Authorization: `Bearer ${session.access_token}`,
+              'Content-Type': 'application/json'
+            },
           });
 
           if (error) {
+            console.error('Send invitation error:', error);
             throw new Error(error.message || 'Failed to send invitation');
           }
 
           if (!data?.success) {
+            console.error('Send invitation failed:', data);
             throw new Error(data?.error || 'Failed to send invitation');
           }
 
@@ -253,21 +264,32 @@ export function useClientInvitations() {
   // Resend invitation mutation
   const resendInvitationMutation = useMutation({
     mutationFn: async ({ invitationId, type = 'email' }: { invitationId: string; type?: 'email' | 'sms' | 'both' }) => {
-      const { data: { session } } = await supabase.auth.getSession();
+      // Ensure we have a fresh session
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError || !session?.access_token) {
+        throw new Error('Authentication session expired. Please refresh the page and try again.');
+      }
+
       const { data, error } = await supabase.functions.invoke('manage-invitation', {
         body: { 
           invitationId, 
           action: 'resend',
           type 
         },
-        headers: session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : undefined,
+        headers: { 
+          Authorization: `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json'
+        },
       });
 
       if (error) {
+        console.error('Resend invitation error:', error);
         throw new Error(error.message || 'Failed to resend invitation');
       }
 
       if (!data?.success) {
+        console.error('Resend invitation failed:', data);
         throw new Error(data?.error || 'Failed to resend invitation');
       }
 
@@ -288,20 +310,31 @@ export function useClientInvitations() {
   // Revoke invitation mutation
   const revokeInvitationMutation = useMutation({
     mutationFn: async (invitationId: string) => {
-      const { data: { session } } = await supabase.auth.getSession();
+      // Ensure we have a fresh session
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError || !session?.access_token) {
+        throw new Error('Authentication session expired. Please refresh the page and try again.');
+      }
+
       const { data, error } = await supabase.functions.invoke('manage-invitation', {
         body: { 
           invitationId, 
           action: 'revoke'
         },
-        headers: session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : undefined,
+        headers: { 
+          Authorization: `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json'
+        },
       });
 
       if (error) {
+        console.error('Revoke invitation error:', error);
         throw new Error(error.message || 'Failed to revoke invitation');
       }
 
       if (!data?.success) {
+        console.error('Revoke invitation failed:', data);
         throw new Error(data?.error || 'Failed to revoke invitation');
       }
 

@@ -19,10 +19,14 @@ const handler = async (req: Request): Promise<Response> => {
 
   try {
     const { invitationId, action, type = 'email' }: ManageInvitationRequest = await req.json();
+    console.log(`Starting ${action} for invitation ${invitationId}, type: ${type}`);
 
     // Get the current user
     const authHeader = req.headers.get('Authorization');
+    console.log('Auth header present:', !!authHeader, authHeader?.substring(0, 20) + '...');
+    
     if (!authHeader) {
+      console.error('No authorization header provided');
       return new Response(
         JSON.stringify({ error: 'Authentication required' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -38,9 +42,15 @@ const handler = async (req: Request): Promise<Response> => {
     );
 
     const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
+    console.log('User authentication result:', { userId: user?.id, error: userError?.message });
+    
     if (userError || !user) {
+      console.error('Authentication failed:', userError?.message);
       return new Response(
-        JSON.stringify({ error: 'Invalid authentication' }),
+        JSON.stringify({ 
+          error: 'Invalid authentication', 
+          details: userError?.message || 'User not found' 
+        }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
