@@ -63,12 +63,14 @@ const CancelAccountDialog: React.FC = () => {
 
       if (adminError) {
         console.error('Error fetching admin users:', adminError);
-        setError('Failed to submit cancellation request. Please try again.');
+        setError(`Failed to fetch administrators: ${adminError.message}`);
         return;
       }
 
+      console.log('Found admin users:', adminUsers);
+
       if (!adminUsers || adminUsers.length === 0) {
-        setError('No administrators found to process your request. Please contact support.');
+        setError('No administrators found in the system. Please contact support directly.');
         return;
       }
 
