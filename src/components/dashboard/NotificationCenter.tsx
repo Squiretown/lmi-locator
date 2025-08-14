@@ -10,6 +10,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import { formatDistanceToNow } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
+import { AccountRequestNotification } from '@/components/admin/AccountRequestNotification';
 
 interface Notification {
   id: string;
@@ -179,11 +180,19 @@ export const NotificationCenter: React.FC = () => {
         return '💳';
       case 'account_status':
         return '👤';
+      case 'account_cancellation':
+        return '⚠️';
+      case 'account_deletion':
+        return '🗑️';
       case 'system_maintenance':
         return '🔧';
       default:
         return '🔔';
     }
+  };
+
+  const isAccountRequest = (type: string | null) => {
+    return type === 'account_cancellation' || type === 'account_deletion';
   };
 
   return (
@@ -228,59 +237,67 @@ export const NotificationCenter: React.FC = () => {
           ) : (
             <div className="space-y-1">
               {notifications.map((notification) => (
-                <div
-                  key={notification.id}
-                  className={`p-3 cursor-pointer hover:bg-accent transition-colors border-l-2 ${
-                    !notification.is_read 
-                      ? notification.priority === 'urgent'
-                        ? 'border-l-destructive bg-destructive/10'
-                        : notification.priority === 'high'
-                        ? 'border-l-orange-500 bg-orange-50 dark:bg-orange-900/20'
-                        : 'border-l-primary bg-accent/50'
-                      : 'border-l-transparent'
-                  }`}
-                  onClick={() => handleNotificationClick(notification)}
-                >
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="text-sm">
-                          {getNotificationIcon(notification.notification_type)}
-                        </span>
-                        {notification.title && (
-                          <p className="font-medium text-sm truncate">
-                            {notification.title}
-                          </p>
-                        )}
-                        {!notification.is_read && (
-                          <div className="w-2 h-2 rounded-full bg-primary flex-shrink-0" />
-                        )}
-                      </div>
-                      <p className="text-sm text-muted-foreground line-clamp-2">
-                        {notification.message}
-                      </p>
-                      <div className="flex items-center justify-between mt-2">
-                        <p className="text-xs text-muted-foreground">
-                          {formatDistanceToNow(new Date(notification.created_at), { addSuffix: true })}
+                isAccountRequest(notification.notification_type) ? (
+                  <AccountRequestNotification
+                    key={notification.id}
+                    notification={notification}
+                    onUpdate={fetchNotifications}
+                  />
+                ) : (
+                  <div
+                    key={notification.id}
+                    className={`p-3 cursor-pointer hover:bg-accent transition-colors border-l-2 ${
+                      !notification.is_read 
+                        ? notification.priority === 'urgent'
+                          ? 'border-l-destructive bg-destructive/10'
+                          : notification.priority === 'high'
+                          ? 'border-l-orange-500 bg-orange-50 dark:bg-orange-900/20'
+                          : 'border-l-primary bg-accent/50'
+                        : 'border-l-transparent'
+                    }`}
+                    onClick={() => handleNotificationClick(notification)}
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="text-sm">
+                            {getNotificationIcon(notification.notification_type)}
+                          </span>
+                          {notification.title && (
+                            <p className="font-medium text-sm truncate">
+                              {notification.title}
+                            </p>
+                          )}
+                          {!notification.is_read && (
+                            <div className="w-2 h-2 rounded-full bg-primary flex-shrink-0" />
+                          )}
+                        </div>
+                        <p className="text-sm text-muted-foreground line-clamp-2">
+                          {notification.message}
                         </p>
-                        {notification.link_url && (
-                          <ExternalLink className="h-3 w-3 text-muted-foreground" />
-                        )}
+                        <div className="flex items-center justify-between mt-2">
+                          <p className="text-xs text-muted-foreground">
+                            {formatDistanceToNow(new Date(notification.created_at), { addSuffix: true })}
+                          </p>
+                          {notification.link_url && (
+                            <ExternalLink className="h-3 w-3 text-muted-foreground" />
+                          )}
+                        </div>
                       </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 w-6 p-0"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          deleteNotification(notification.id);
+                        }}
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
                     </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-6 w-6 p-0"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        deleteNotification(notification.id);
-                      }}
-                    >
-                      <X className="h-3 w-3" />
-                    </Button>
                   </div>
-                </div>
+                )
               ))}
             </div>
           )}

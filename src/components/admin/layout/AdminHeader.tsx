@@ -3,6 +3,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Home, User } from 'lucide-react';
+import { NotificationCenter } from '@/components/dashboard/NotificationCenter';
 
 const AdminHeader: React.FC = () => {
   const navigate = useNavigate();
@@ -57,6 +58,8 @@ const AdminHeader: React.FC = () => {
 
       {/* Right side - Actions */}
       <div className="flex items-center space-x-4">
+        <NotificationCenter />
+        
         <Button 
           variant="ghost" 
           size="sm"
