@@ -185,29 +185,30 @@ const handler = async (req: Request): Promise<Response> => {
               profileCreated = true;
               console.log('Professional team relationship created successfully');
             
-            // Create notification for the inviter
-            const { data: inviterProfessional } = await supabaseClient
-              .from('professionals')
-              .select('user_id, name')
-              .eq('id', invitation.professional_id)
-              .single();
+              // Create notification for the inviter
+              const { data: inviterProfessional } = await supabaseClient
+                .from('professionals')
+                .select('user_id, name')
+                .eq('id', invitation.professional_id)
+                .single();
 
-            if (inviterProfessional) {
-              await supabaseClient
-                .from('notifications')
-                .insert({
-                  user_id: inviterProfessional.user_id,
-                  notification_type: 'invitation_accepted',
-                  title: 'Invitation Accepted!',
-                  message: `${invitation.client_name || 'A professional'} has accepted your ${invitation.target_professional_role || 'team'} invitation.`,
-                  data: {
-                    invitationId: invitation.id,
-                    acceptedBy: acceptedByUserId,
-                    acceptedByName: invitation.client_name,
-                    professionalType: invitation.target_professional_role
-                  },
-                  is_read: false
-                });
+              if (inviterProfessional) {
+                await supabaseClient
+                  .from('notifications')
+                  .insert({
+                    user_id: inviterProfessional.user_id,
+                    notification_type: 'invitation_accepted',
+                    title: 'Invitation Accepted!',
+                    message: `${invitation.client_name || 'A professional'} has accepted your ${invitation.target_professional_role || 'team'} invitation.`,
+                    data: {
+                      invitationId: invitation.id,
+                      acceptedBy: acceptedByUserId,
+                      acceptedByName: invitation.client_name,
+                      professionalType: invitation.target_professional_role
+                    },
+                    is_read: false
+                  });
+              }
             }
           }
         }
