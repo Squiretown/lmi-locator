@@ -139,7 +139,12 @@ export function useMortgageTeamManagement() {
   const { data: realtorPartners = [], isLoading: isLoadingRealtors } = useQuery({
     queryKey: ['realtor-partners-unified', currentProfessional?.id],
     queryFn: async () => {
-      if (!currentProfessional?.id) return [];
+      if (!currentProfessional?.id) {
+        console.log('❌ No current professional ID for realtor partners query');
+        return [];
+      }
+
+      console.log('🔍 Fetching realtor partners for professional:', currentProfessional.id);
 
       // First get team relationships
       const { data: teamData, error: teamError } = await supabase
@@ -148,30 +153,44 @@ export function useMortgageTeamManagement() {
         .eq('mortgage_professional_id', currentProfessional.id)
         .eq('status', 'active');
 
+      console.log('📊 Team data query result:', { teamData, teamError });
+
       if (teamError) {
-        console.error('Error fetching realtor partners:', teamError);
+        console.error('❌ Error fetching realtor partners:', teamError);
         return [];
       }
 
-      if (!teamData || teamData.length === 0) return [];
+      if (!teamData || teamData.length === 0) {
+        console.log('⚠️ No team data found for professional:', currentProfessional.id);
+        return [];
+      }
 
       // Get realtor details for each team member
       const realtorIds = teamData.map(team => team.realtor_id);
+      console.log('🎯 Fetching realtor details for IDs:', realtorIds);
+
       const { data: realtorsData, error: realtorsError } = await supabase
         .from('professionals')
         .select('id, name, company, email, phone, license_number, status')
         .in('id', realtorIds)
         .eq('status', 'active');
 
+      console.log('👥 Realtors data query result:', { realtorsData, realtorsError });
+
       if (realtorsError) {
-        console.error('Error fetching realtor details:', realtorsError);
+        console.error('❌ Error fetching realtor details:', realtorsError);
         return [];
       }
 
       // Combine team and realtor data
-      return teamData.map(team => {
+      const result = teamData.map(team => {
         const realtor = realtorsData?.find(r => r.id === team.realtor_id);
-        if (!realtor) return null;
+        if (!realtor) {
+          console.warn('⚠️ No realtor found for ID:', team.realtor_id);
+          return null;
+        }
+        
+        console.log('✅ Creating realtor partner:', { team, realtor });
         
         return {
           id: team.id,
@@ -187,6 +206,9 @@ export function useMortgageTeamManagement() {
           source: 'explicit' as const
         };
       }).filter(Boolean) as RealtorPartner[];
+
+      console.log('🎉 Final realtor partners result:', result);
+      return result;
     },
     enabled: !!currentProfessional?.id,
   });
