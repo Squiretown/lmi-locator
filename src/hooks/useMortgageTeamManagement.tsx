@@ -135,13 +135,58 @@ export function useMortgageTeamManagement() {
     enabled: !!currentProfessional?.id,
   });
 
-  // For now, return empty array for realtor partners until professional_teams is properly configured
+  // Fetch realtor partners from professional_teams
   const { data: realtorPartners = [], isLoading: isLoadingRealtors } = useQuery({
     queryKey: ['realtor-partners-unified', currentProfessional?.id],
     queryFn: async () => {
       if (!currentProfessional?.id) return [];
-      // Return empty for now - to be implemented when professional team relationships are established
-      return [];
+
+      // First get team relationships
+      const { data: teamData, error: teamError } = await supabase
+        .from('professional_teams')
+        .select('id, role, status, realtor_id')
+        .eq('mortgage_professional_id', currentProfessional.id)
+        .eq('status', 'active');
+
+      if (teamError) {
+        console.error('Error fetching realtor partners:', teamError);
+        return [];
+      }
+
+      if (!teamData || teamData.length === 0) return [];
+
+      // Get realtor details for each team member
+      const realtorIds = teamData.map(team => team.realtor_id);
+      const { data: realtorsData, error: realtorsError } = await supabase
+        .from('professionals')
+        .select('id, name, company, email, phone, license_number, status')
+        .in('id', realtorIds)
+        .eq('status', 'active');
+
+      if (realtorsError) {
+        console.error('Error fetching realtor details:', realtorsError);
+        return [];
+      }
+
+      // Combine team and realtor data
+      return teamData.map(team => {
+        const realtor = realtorsData?.find(r => r.id === team.realtor_id);
+        if (!realtor) return null;
+        
+        return {
+          id: team.id,
+          realtor: {
+            id: realtor.id,
+            name: realtor.name,
+            company: realtor.company,
+            email: realtor.email,
+            phone: realtor.phone,
+            license_number: realtor.license_number,
+          },
+          role: team.role,
+          source: 'explicit' as const
+        };
+      }).filter(Boolean) as RealtorPartner[];
     },
     enabled: !!currentProfessional?.id,
   });

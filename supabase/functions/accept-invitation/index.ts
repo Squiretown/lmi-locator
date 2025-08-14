@@ -145,6 +145,12 @@ const handler = async (req: Request): Promise<Response> => {
 
         // Create team relationship
         if (professionalId) {
+          console.log('Creating team relationship for:', {
+            professionalId,
+            inviterId: invitation.professional_id,
+            targetRole: invitation.target_professional_role
+          });
+
           const teamData = invitation.target_professional_role === 'realtor' ? {
             mortgage_professional_id: invitation.professional_id,
             realtor_id: professionalId,
@@ -157,15 +163,27 @@ const handler = async (req: Request): Promise<Response> => {
             status: 'active'
           };
 
-          const { error: teamError } = await supabaseClient
+          // Check if relationship already exists
+          const { data: existingTeam } = await supabaseClient
             .from('professional_teams')
-            .insert(teamData);
+            .select('id')
+            .eq('mortgage_professional_id', teamData.mortgage_professional_id)
+            .eq('realtor_id', teamData.realtor_id)
+            .single();
 
-          if (teamError) {
-            console.error('Error creating team relationship:', teamError);
-          } else {
+          if (existingTeam) {
+            console.log('Team relationship already exists, skipping creation');
             profileCreated = true;
-            console.log('Professional team relationship created successfully');
+          } else {
+            const { error: teamError } = await supabaseClient
+              .from('professional_teams')
+              .insert(teamData);
+
+            if (teamError) {
+              console.error('Error creating team relationship:', teamError);
+            } else {
+              profileCreated = true;
+              console.log('Professional team relationship created successfully');
             
             // Create notification for the inviter
             const { data: inviterProfessional } = await supabaseClient
