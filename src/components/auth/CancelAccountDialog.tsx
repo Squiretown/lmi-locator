@@ -44,60 +44,34 @@ const CancelAccountDialog: React.FC = () => {
     setIsLoading(true);
     
     try {
-      // Verify password first
-      const { error: verifyError } = await supabase.auth.signInWithPassword({
-        email: user?.email || "",
-        password: password,
+      // Get current session for authentication
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError || !session) {
+        setError('You must be logged in to submit a cancellation request');
+        return;
+      }
+
+      // Call the edge function to handle the cancellation request
+      const { data, error } = await supabase.functions.invoke('submit-cancellation-request', {
+        body: { currentPassword: password },
+        headers: {
+          Authorization: `Bearer ${session.access_token}`
+        }
       });
 
-      if (verifyError) {
-        setError('Incorrect password. Please verify your current password and try again.');
+      if (error) {
+        console.error('Error submitting cancellation request:', error);
+        setError(error.message || 'Failed to submit cancellation request. Please try again.');
         return;
       }
 
-      // Get all admin users first
-      const { data: adminUsers, error: adminError } = await supabase
-        .from('user_profiles')
-        .select('user_id')
-        .eq('user_type', 'admin');
-
-      if (adminError) {
-        console.error('Error fetching admin users:', adminError);
-        setError(`Failed to fetch administrators: ${adminError.message}`);
+      if (!data?.success) {
+        setError(data?.error || 'Failed to submit cancellation request');
         return;
       }
 
-      console.log('Found admin users:', adminUsers);
-
-      if (!adminUsers || adminUsers.length === 0) {
-        setError('No administrators found in the system. Please contact support directly.');
-        return;
-      }
-
-      // Create notifications for all admin users with correct user_id
-      const adminNotifications = adminUsers.map(admin => ({
-        user_id: admin.user_id, // This should be the admin's user_id, not the requesting user's id
-        notification_type: 'account_cancellation_request',
-        title: 'Account Cancellation Request',
-        message: `User ${user?.email} has requested account cancellation. Please review and approve.`,
-        data: {
-          requesting_user_id: user?.id,
-          requesting_user_email: user?.email,
-          request_type: 'account_cancellation'
-        }
-      }));
-
-      const { error: notificationError } = await supabase
-        .from('notifications')
-        .insert(adminNotifications);
-
-      if (notificationError) {
-        console.error('Error creating cancellation request:', notificationError);
-        setError('Failed to submit cancellation request. Please try again.');
-        return;
-      }
-
-      toast.success('Account cancellation request submitted successfully. An admin will review your request.');
+      toast.success(data.message || 'Account cancellation request submitted successfully. An admin will review your request.');
       setIsOpen(false);
       
     } catch (error) {
