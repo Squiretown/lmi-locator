@@ -104,6 +104,24 @@ serve(async (req) => {
         });
       }
 
+      const { error: profileError } = await supabase
+        .from('user_profiles')
+        .delete()
+        .eq('user_id', user_id);
+
+      if (profileError) {
+        console.error(`Failed to delete user profile: ${profileError.message}`);
+        return new Response(JSON.stringify({
+          success: false,
+          error: `Failed to delete user profile: ${profileError.message}`
+        }), {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" }
+        });
+      }
+
+      console.log(`Successfully deleted user profile for ${user_id}`);
+
       console.log(`Successfully deleted user ${user_id} from authentication system`);
       
       return new Response(JSON.stringify({
