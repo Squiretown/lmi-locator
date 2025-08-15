@@ -116,17 +116,28 @@ export function usePermissionsSystem() {
 
   const assignRoleToUser = async (userId: string, role: string): Promise<{ success: boolean; error?: Error }> => {
     try {
-      const { data, error } = await supabase.functions.invoke('admin-update-user-role', {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error('No active session');
+      }
+
+      const { data, error } = await supabase.functions.invoke('update-user-role', {
         body: {
-          targetUserId: userId,
-          newRole: role,
-          reason: 'Role assignment via user management interface'
+          userId,
+          newRole: role
+        },
+        headers: {
+          Authorization: `Bearer ${session.access_token}`
         }
       });
 
       if (error) {
         console.error('Error assigning role:', error);
         return { success: false, error: new Error(error.message || 'Failed to assign role') };
+      }
+
+      if (!data?.success) {
+        return { success: false, error: new Error(data?.error || 'Failed to assign role') };
       }
 
       // Refresh user permissions after successful role change

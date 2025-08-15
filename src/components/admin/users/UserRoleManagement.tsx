@@ -85,10 +85,13 @@ export const UserRoleManagement: React.FC<UserRoleManagementProps> = ({
         onRoleUpdate?.();
         setIsOpen(false);
       } else {
-        toast.error('Failed to update user role');
+        const errorMessage = result.error?.message || 'Failed to update user role';
+        toast.error(errorMessage);
       }
     } catch (error) {
-      toast.error('An error occurred while updating the role');
+      console.error('Error updating role:', error);
+      const errorMessage = error instanceof Error ? error.message : 'An error occurred while updating the role';
+      toast.error(errorMessage);
     } finally {
       setIsUpdating(false);
     }
