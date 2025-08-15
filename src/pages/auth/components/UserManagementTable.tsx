@@ -154,6 +154,7 @@ export const UserManagementTable: React.FC<UserManagementTableProps> = ({
                     status={getUserType(user)}
                     isEmailVerified={isEmailVerified(user)}
                     lastSignIn={user.last_sign_in_at}
+                    user={user}
                   />
                 </TableCell>
                 <TableCell>

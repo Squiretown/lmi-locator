@@ -9,6 +9,7 @@ export const useUserManagementActions = () => {
   const {
     isLoading,
     suspendUser,
+    unsuspendUser,
     changeUserEmail,
     changeUserRole,
     sendEmailToUser,
@@ -38,6 +39,9 @@ export const useUserManagementActions = () => {
       switch (action) {
         case 'suspend':
           result = await suspendUser(user.id, data.reason, parseInt(data.duration));
+          break;
+        case 'unsuspend':
+          result = await unsuspendUser(user.id);
           break;
         case 'changeEmail':
           result = await changeUserEmail(user.id, data.newEmail);

@@ -66,6 +66,19 @@ export const useUserActions = () => {
         throw new Error(data?.error || 'Unknown error occurred');
       }
 
+      // Force logout the suspended user
+      try {
+        await supabase.functions.invoke('force-logout-user', {
+          body: { userId },
+          headers: {
+            Authorization: `Bearer ${session.access_token}`
+          }
+        });
+      } catch (logoutError) {
+        console.warn('Failed to force logout suspended user:', logoutError);
+        // Don't fail the whole operation if logout fails
+      }
+
       toast.success('User suspended successfully');
       return { success: true };
     } catch (error) {
@@ -73,6 +86,52 @@ export const useUserActions = () => {
       const errorMessage = error instanceof Error ? error.message : 'Failed to suspend user';
       toast.error(`Failed to suspend user: ${errorMessage}`);
       await logAdminError('suspend_user', error, userId);
+      return { success: false, error };
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const unsuspendUser = async (userId: string) => {
+    try {
+      setIsLoading(true);
+      
+      if (!userId) {
+        throw new Error('User ID is required');
+      }
+
+      console.log('Unsuspending user:', userId);
+      
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error('No active session');
+      }
+
+      // Call edge function to unsuspend user
+      const { data, error } = await supabase.functions.invoke('unsuspend-user', {
+        body: { userId },
+        headers: {
+          Authorization: `Bearer ${session.access_token}`
+        }
+      });
+
+      if (error) {
+        console.error('Edge function error:', error);
+        throw error;
+      }
+
+      if (!data?.success) {
+        console.error('Edge function returned failure:', data);
+        throw new Error(data?.error || 'Unknown error occurred');
+      }
+
+      toast.success('User unsuspended successfully');
+      return { success: true };
+    } catch (error) {
+      console.error('Error unsuspending user:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Failed to unsuspend user';
+      toast.error(`Failed to unsuspend user: ${errorMessage}`);
+      await logAdminError('unsuspend_user', error, userId);
       return { success: false, error };
     } finally {
       setIsLoading(false);
@@ -350,6 +409,7 @@ export const useUserActions = () => {
   return {
     isLoading,
     suspendUser,
+    unsuspendUser,
     changeUserEmail,
     changeUserRole,
     sendEmailToUser,

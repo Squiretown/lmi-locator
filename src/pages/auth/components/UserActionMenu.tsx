@@ -37,6 +37,7 @@ export const UserActionMenu: React.FC<UserActionMenuProps> = ({
   onAction,
 }) => {
   const isAdmin = user.user_metadata?.user_type === 'admin';
+  const isSuspended = user.user_metadata?.suspended === true;
 
   return (
     <DropdownMenu>
@@ -104,14 +105,25 @@ export const UserActionMenu: React.FC<UserActionMenuProps> = ({
               Activate User
             </DropdownMenuItem>
             
-            <DropdownMenuItem 
-              onClick={() => onAction('suspend', user)}
-              disabled={isAdmin}
-              className="text-orange-600"
-            >
-              <Clock className="mr-2 h-4 w-4" />
-              Suspend User
-            </DropdownMenuItem>
+            {!isSuspended ? (
+              <DropdownMenuItem 
+                onClick={() => onAction('suspend', user)}
+                disabled={isAdmin}
+                className="text-orange-600"
+              >
+                <Clock className="mr-2 h-4 w-4" />
+                Suspend User
+              </DropdownMenuItem>
+            ) : (
+              <DropdownMenuItem 
+                onClick={() => onAction('unsuspend', user)}
+                disabled={isAdmin}
+                className="text-green-600"
+              >
+                <UserCheck className="mr-2 h-4 w-4" />
+                Unsuspend User
+              </DropdownMenuItem>
+            )}
           </DropdownMenuSubContent>
         </DropdownMenuSub>
 
