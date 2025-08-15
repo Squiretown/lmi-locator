@@ -34,47 +34,93 @@ serve(async (req) => {
     // Get user JWT from request
     const authHeader = req.headers.get('Authorization') || '';
     const token = authHeader.replace('Bearer ', '');
-    
+
     if (!token) {
-      throw new Error("No authorization token provided");
+      return new Response(JSON.stringify({ success: false, error: 'Authorization token is required' }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" }
+      });
     }
 
     // Verify the JWT and get the user
     const { data: { user }, error: userError } = await supabase.auth.getUser(token);
-    
+
     if (userError || !user) {
-      throw new Error("Invalid authorization token");
+      return new Response(JSON.stringify({ success: false, error: 'Invalid authorization token' }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" }
+      });
     }
 
     // Check if user is admin
     const isAdmin = user.user_metadata?.user_type === 'admin';
-    
+
     if (!isAdmin) {
-      throw new Error("Administrative privileges required to suspend users");
+      return new Response(JSON.stringify({ success: false, error: 'Administrative privileges required to suspend users' }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" }
+      });
     }
 
     // Get userId, reason, and duration from request body
-    const body = await req.json();
+    const body = await req.json().catch(() => null);
+    if (!body) {
+      return new Response(JSON.stringify({ success: false, error: 'Invalid request body' }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" }
+      });
+    }
     console.log('Received request body:', body);
-    
+
     const { userId, reason, duration } = body;
-    
+
     // Detailed validation with specific error messages
     if (!userId) {
       console.error('Missing userId in request');
-      throw new Error("User ID is required");
+      return new Response(JSON.stringify({ success: false, error: 'User ID is required' }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" }
+      });
     }
     if (!reason || reason.trim() === '') {
       console.error('Missing or empty reason in request');
-      throw new Error("Suspension reason is required");
+      return new Response(JSON.stringify({ success: false, error: 'Suspension reason is required' }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" }
+      });
     }
     if (!duration) {
       console.error('Missing duration in request');
-      throw new Error("Suspension duration is required");
+      return new Response(JSON.stringify({ success: false, error: 'Suspension duration is required' }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" }
+      });
     }
-    
-    console.log('Validated suspension data:', { userId, reason, duration: duration });
 
+    // Fetch target user to check role
+    const { data: targetUser, error: getUserError } = await supabase.auth.admin.getUserById(userId);
+    if (getUserError || !targetUser.user) {
+      return new Response(JSON.stringify({ success: false, error: 'Target user not found' }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" }
+      });
+    }
+
+    const targetRole = targetUser.user.user_metadata?.user_type;
+    if (targetUser.user.id === user.id) {
+      return new Response(JSON.stringify({ success: false, error: 'You cannot suspend your own account' }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" }
+      });
+    }
+    if (targetRole === 'admin') {
+      return new Response(JSON.stringify({ success: false, error: 'Cannot suspend administrator accounts' }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" }
+      });
+    }
+
+    console.log('Validated suspension data:', { userId, reason, duration });
     console.log(`Admin user ${user.id} attempting to suspend user ${userId} for ${duration} hours`);
 
     // Calculate suspension end time
@@ -91,7 +137,7 @@ serve(async (req) => {
         suspended_at: new Date().toISOString()
       }
     });
-    
+
     if (updateError) {
       throw new Error(`Failed to suspend user: ${updateError.message}`);
     }
@@ -105,10 +151,10 @@ serve(async (req) => {
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
-    
+
   } catch (error) {
     console.error("Error suspending user:", error);
-    
+
     return new Response(JSON.stringify({
       success: false,
       error: error.message || "Unknown error occurred",
