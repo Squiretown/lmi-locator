@@ -112,27 +112,33 @@ export const useInvitedContacts = () => {
     }
   };
 
-  // Send invitation
+  // Send invitation (resend)
   const sendInvitation = async (invitationId: string, type: 'email' | 'sms' | 'both' = 'email') => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      const { data, error } = await supabase.functions.invoke('send-invitation', {
-        body: { invitationId, type },
-        headers: session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : undefined,
+      if (!session) throw new Error('No active session');
+
+      const { data, error } = await supabase.functions.invoke('manage-invitation', {
+        body: { 
+          invitationId, 
+          action: 'resend',
+          type 
+        },
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json'
+        }
       });
 
       if (error) {
         throw new Error(error.message || 'Failed to send invitation');
       }
 
-      if (!data?.success || (!data.emailSent && !data.smsSent)) {
+      if (!data?.success) {
         throw new Error(data?.error || 'Failed to send invitation');
       }
 
-      let sentType: string[] = [];
-      if (data.emailSent) sentType.push('email');
-      if (data.smsSent) sentType.push('SMS');
-      toast.success(`Invitation sent via ${sentType.join(' & ')} successfully!`);
+      toast.success(`Invitation sent via ${type} successfully!`);
       await fetchContacts();
       return data;
     } catch (error: any) {

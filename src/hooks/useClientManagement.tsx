@@ -161,14 +161,22 @@ export function useClientManagement() {
       // Send invitation if requested
       if (clientData.sendInvitation && clientData.email) {
         try {
+          const { data: { session } } = await supabase.auth.getSession();
+          if (!session) throw new Error('No active session');
+
           const { error: inviteError } = await supabase.functions.invoke('send-invitation', {
             body: {
               email: clientData.email,
-              type: clientData.invitationType || 'email',
+              type: 'client',
               clientName: `${clientData.first_name} ${clientData.last_name}`,
               clientPhone: clientData.phone,
+              invitationType: clientData.invitationType || 'email',
               templateType: clientData.templateType || 'default',
               customMessage: clientData.customMessage
+            },
+            headers: {
+              Authorization: `Bearer ${session.access_token}`,
+              'Content-Type': 'application/json'
             }
           });
 

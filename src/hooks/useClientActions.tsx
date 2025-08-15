@@ -204,13 +204,20 @@ export const useClientActions = () => {
       );
 
       // Call edge function to actually send the communication
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('No active session');
+
       const { error: sendError } = await supabase.functions.invoke('send-invitation', {
         body: {
           email: recipient,
           type: 'client',
           clientName: `${client.first_name} ${client.last_name}`,
           customMessage: content,
-          templateType: template.type
+          invitationType: template.type
+        },
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json'
         }
       });
 

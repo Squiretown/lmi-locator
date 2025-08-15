@@ -104,6 +104,9 @@ export function useLendingTeamManagement() {
   // Invite lending team member
   const inviteTeamMemberMutation = useMutation({
     mutationFn: async (invitation: LendingTeamInvitation) => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('No active session');
+
       const { data, error } = await supabase.functions.invoke('send-invitation', {
         body: {
           email: invitation.professional_email,
@@ -112,6 +115,10 @@ export function useLendingTeamManagement() {
           role: invitation.role,
           customMessage: invitation.custom_message,
         },
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json'
+        }
       });
 
       if (error) throw error;

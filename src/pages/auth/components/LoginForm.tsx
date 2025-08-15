@@ -116,7 +116,8 @@ const LoginForm: React.FC = () => {
           console.error('Admin verification failed:', adminError);
           setAuthError('Admin access verification failed. You may not have admin privileges.');
           // Sign out as this user doesn't have admin access
-          await signIn(values.email, values.password);
+          const { signOut } = useAuth();
+          await signOut();
           return;
         }
         

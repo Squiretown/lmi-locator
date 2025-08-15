@@ -59,8 +59,8 @@ serve(async (req) => {
       throw new Error("User ID and new role are required");
     }
 
-    // Validate role - support UI role names
-    const validRoles = ['admin', 'mortgage_professional', 'realtor', 'user'];
+    // Validate role - support UI role names including 'client'
+    const validRoles = ['admin', 'mortgage_professional', 'realtor', 'user', 'client'];
     if (!validRoles.includes(newRole)) {
       throw new Error(`Invalid role: ${newRole}. Valid roles are: ${validRoles.join(', ')}`);
     }
