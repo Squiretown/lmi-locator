@@ -6,6 +6,26 @@ import { toast } from 'sonner';
 export const useUserActions = () => {
   const [isLoading, setIsLoading] = useState(false);
 
+  const logAdminError = async (operation: string, error: any, targetUserId?: string) => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
+      await supabase.from('admin_error_logs').insert({
+        admin_user_id: session.user.id,
+        error_type: error.code || 'unknown',
+        error_message: error.message || String(error),
+        error_details: error,
+        operation,
+        target_user_id: targetUserId,
+        ip_address: null,
+        user_agent: navigator.userAgent
+      });
+    } catch (logError) {
+      console.error('Failed to log admin error:', logError);
+    }
+  };
+
   const suspendUser = async (userId: string, reason: string, duration: number) => {
     try {
       setIsLoading(true);
@@ -156,27 +176,116 @@ export const useUserActions = () => {
     }
   };
 
+  const deleteUser = async (userId: string) => {
+    try {
+      setIsLoading(true);
+      console.log('Attempting to completely delete user from auth:', userId);
+      
+      const { data: { session }, error: sessionError } = await supabase.auth.refreshSession();
+      
+      if (sessionError || !session) {
+        console.error('Session refresh failed:', sessionError);
+        const error = new Error('Authentication required - please log in again');
+        await logAdminError('delete_user', error, userId);
+        throw error;
+      }
+
+      const { data, error } = await supabase.functions.invoke('delete-user', {
+        body: { user_id: userId },
+        headers: {
+          Authorization: `Bearer ${session.access_token}`
+        }
+      });
+
+      if (error) {
+        console.error('Edge function error:', error);
+        if (error.message?.includes('User not found') || error.message?.includes('404')) {
+          console.log(`User ${userId} was already deleted`);
+          toast.info("User was already deleted");
+          return { success: true };
+        }
+        await logAdminError('delete_user', error, userId);
+        throw error;
+      }
+
+      if (!data?.success) {
+        if (data?.error?.includes('User not found') || data?.error?.includes('404')) {
+          console.log(`User ${userId} was already deleted`);
+          toast.info("User was already deleted");
+          return { success: true };
+        }
+        await logAdminError('delete_user', new Error(data?.error || 'Unknown error occurred'), userId);
+        throw new Error(data?.error || 'Unknown error occurred');
+      }
+
+      toast.success('User deleted successfully from authentication system');
+      return { success: true };
+    } catch (error) {
+      console.error('Error deleting user:', error);
+      
+      if (error instanceof Error && (error.message?.includes('User not found') || error.message?.includes('404'))) {
+        toast.info("User was already deleted");
+        return { success: true };
+      }
+      
+      await logAdminError('delete_user', error, userId);
+      toast.error('Failed to delete user');
+      return { success: false, error };
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const disableUser = async (userId: string) => {
+    try {
+      setIsLoading(true);
+      console.log('Attempting to delete user profile only:', userId);
+      
+      const { error: deleteError } = await supabase
+        .from('user_profiles')
+        .delete()
+        .eq('user_id', userId);
+
+      if (deleteError) {
+        await logAdminError('disable_user', deleteError, userId);
+        throw deleteError;
+      }
+
+      toast.success('User profile removed successfully');
+      return { success: true };
+    } catch (error) {
+      console.error('Error removing user profile:', error);
+      await logAdminError('disable_user', error, userId);
+      toast.error('Failed to remove user profile');
+      return { success: false, error };
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleBulkAction = async (action: string, userIds: string[], data?: any) => {
+    if (isLoading) {
+      toast.warning('Another action is already in progress');
+      return { success: false };
+    }
+
     try {
       setIsLoading(true);
       
-      // Process each user individually for now
-      // In a production system, you might want to create a bulk operations edge function
       const results = await Promise.allSettled(
         userIds.map(async (userId) => {
           switch (action) {
             case 'activate':
-              // For now, just remove suspension metadata
               const { data: { session } } = await supabase.auth.getSession();
               if (!session) throw new Error('No active session');
               
               return await supabase.functions.invoke('update-user-role', {
-                body: { userId, newRole: 'client' }, // Default to client role
+                body: { userId, newRole: 'client' },
                 headers: { Authorization: `Bearer ${session.access_token}` }
               });
             
             case 'deactivate':
-              return await suspendUser(userId, 'Bulk deactivation', 8760); // 1 year
+              return await suspendUser(userId, 'Bulk deactivation', 8760);
             
             case 'sendEmail':
               return await sendEmailToUser(userId, data?.message || 'Bulk message from admin');
@@ -188,7 +297,6 @@ export const useUserActions = () => {
               return await resetUserPassword(userId);
             
             case 'export':
-              // This would typically export user data
               return { success: true };
             
             default:
@@ -223,6 +331,9 @@ export const useUserActions = () => {
     changeUserRole,
     sendEmailToUser,
     resetUserPassword,
+    deleteUser,
+    disableUser,
     handleBulkAction,
+    logAdminError,
   };
 };

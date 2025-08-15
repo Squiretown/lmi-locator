@@ -5,13 +5,16 @@ import { useUserManagement } from './useUserManagement';
 import type { AdminUser } from '../types/admin-user';
 
 export const useUserManagementActions = () => {
-  const { refetch, handleDeleteUser, handleDisableUser } = useUserManagement();
+  const { refetch } = useUserManagement();
   const {
+    isLoading,
     suspendUser,
     changeUserEmail,
     changeUserRole,
     sendEmailToUser,
     resetUserPassword,
+    deleteUser,
+    disableUser,
     handleBulkAction,
   } = useUserActions();
 
@@ -28,36 +31,40 @@ export const useUserManagementActions = () => {
   };
 
   const handleActionConfirm = async (user: AdminUser, action: string, data?: any) => {
-    if (!user || !action) return;
+    if (!user || !action || isLoading) return;
 
     try {
+      let result;
       switch (action) {
         case 'suspend':
-          await suspendUser(user.id, data.reason, parseInt(data.duration));
+          result = await suspendUser(user.id, data.reason, parseInt(data.duration));
           break;
         case 'changeEmail':
-          await changeUserEmail(user.id, data.newEmail);
+          result = await changeUserEmail(user.id, data.newEmail);
           break;
         case 'changeRole':
-          await changeUserRole(user.id, data.newRole);
+          result = await changeUserRole(user.id, data.newRole);
           break;
         case 'sendEmail':
-          await sendEmailToUser(user.id, data.message);
+          result = await sendEmailToUser(user.id, data.message);
           break;
         case 'resetPassword':
-          await resetUserPassword(user.id);
+          result = await resetUserPassword(user.id);
           break;
         case 'delete':
-          await handleDeleteUser(user.id);
+          result = await deleteUser(user.id);
           break;
         case 'disableUser':
-          await handleDisableUser(user.id);
+          result = await disableUser(user.id);
           break;
         default:
           console.log('Action not implemented:', action);
+          return;
       }
 
-      await refetch();
+      if (result?.success) {
+        await refetch();
+      }
     } catch (error) {
       console.error('Error performing action:', error);
     }
@@ -95,19 +102,20 @@ export const useUserManagementActions = () => {
   };
 
   const handleBulkActionWrapper = async (action: string, userIds: string[], data?: any) => {
-    try {
-      await handleBulkAction(action, userIds, data);
-      await refetch();
-      toast.success(`Bulk action "${action}" completed successfully`);
-      return { success: true };
-    } catch (error) {
-      console.error('Error performing bulk action:', error);
-      toast.error('Failed to perform bulk action');
+    if (isLoading) {
+      toast.warning('Another action is already in progress');
       return { success: false };
     }
+
+    const result = await handleBulkAction(action, userIds, data);
+    if (result?.success) {
+      await refetch();
+    }
+    return result;
   };
 
   return {
+    isLoading,
     handleUserAction,
     handleActionConfirm,
     handleProfessionalActionConfirm,
