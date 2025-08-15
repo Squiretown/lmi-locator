@@ -204,10 +204,10 @@ export const useUserActions = () => {
       setIsLoading(true);
       console.log('Attempting to completely delete user from auth:', userId);
       
-      const { data: { session }, error: sessionError } = await supabase.auth.refreshSession();
-      
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+
       if (sessionError || !session) {
-        console.error('Session refresh failed:', sessionError);
+        console.error('Failed to retrieve session:', sessionError);
         const error = new Error('Authentication required - please log in again');
         await logAdminError('delete_user', error, userId);
         throw error;
