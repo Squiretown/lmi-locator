@@ -189,31 +189,21 @@ export const useTeamManagement = () => {
       name?: string;
       customMessage?: string;
     }) => {
-      const { data: invitation, error } = await supabase
-        .from('client_invitations')
-        .insert({
-          client_email: data.email,
-          client_name: data.name,
-          invitation_target_type: 'professional',
-          target_professional_role: 'realtor',
-          custom_message: data.customMessage,
-          professional_id: (await supabase.auth.getUser()).data.user?.id,
-        })
-        .select()
-        .single();
+      if (!currentProfessional?.id) {
+        throw new Error('No professional profile found');
+      }
 
-      if (error) throw error;
-
-      // Send invitation email via edge function
-      const { error: emailError } = await supabase.functions.invoke('send-invitation', {
+      const { data: result, error } = await supabase.functions.invoke('send-invitation', {
         body: {
-          invitationId: invitation.id,
+          email: data.email,
           type: 'professional',
+          professionalType: 'realtor',
+          customMessage: data.customMessage,
         },
       });
 
-      if (emailError) throw emailError;
-      return invitation;
+      if (error) throw error;
+      return result;
     },
     onSuccess: () => {
       toast.success('Realtor invitation sent successfully');
@@ -231,12 +221,16 @@ export const useTeamManagement = () => {
       realtorId: string;
       notes?: string;
     }) => {
+      if (!currentProfessional?.id) {
+        throw new Error('No professional profile found');
+      }
+
       const { data: team, error } = await supabase
         .from('professional_teams')
         .insert({
           realtor_id: data.realtorId,
           notes: data.notes,
-          mortgage_professional_id: (await supabase.auth.getUser()).data.user?.id,
+          mortgage_professional_id: currentProfessional.id,
         })
         .select()
         .single();
@@ -261,16 +255,18 @@ export const useTeamManagement = () => {
       realtorId?: string;
       assignedBy?: string;
     }) => {
+      if (!currentProfessional?.id) {
+        throw new Error('No professional profile found');
+      }
+
       const assignments = [];
-      const user = await supabase.auth.getUser();
-      const userId = user.data.user?.id;
 
       // Always assign mortgage professional
       assignments.push({
         client_id: data.clientId,
-        professional_id: userId,
+        professional_id: currentProfessional.id,
         professional_role: 'mortgage_professional',
-        assigned_by: data.assignedBy || userId,
+        assigned_by: data.assignedBy || currentProfessional.id,
       });
 
       // Assign realtor if specified
@@ -279,7 +275,7 @@ export const useTeamManagement = () => {
           client_id: data.clientId,
           professional_id: data.realtorId,
           professional_role: 'realtor',
-          assigned_by: data.assignedBy || userId,
+          assigned_by: data.assignedBy || currentProfessional.id,
         });
       }
 
