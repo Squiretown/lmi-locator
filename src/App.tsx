@@ -68,6 +68,7 @@ import ApiKeysPage from "./pages/admin/ApiKeysPage";
 import LogsPage from "./pages/admin/LogsPage";
 import HelpPage from "./pages/admin/HelpPage";
 import UserSettingsPage from "./pages/auth/SettingsPage";
+import TestBrokerInvitation from "./pages/TestBrokerInvitation";
 
 const queryClient = new QueryClient();
 
@@ -81,6 +82,7 @@ const App = () => (
             {/* Public Routes */}
             <Route path="/" element={<Index />} />
             <Route path="/test-edge" element={<EdgeFunctionTest />} />
+            <Route path="/test-broker-invitation" element={<TestBrokerInvitation />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/client-login" element={<ClientLoginPage />} />
             <Route path="/client-registration" element={<ClientRegistration />} />

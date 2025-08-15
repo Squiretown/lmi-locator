@@ -7,12 +7,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { useInvitedContacts } from '@/hooks/useInvitedContacts';
+import { useMortgageTeamManagement } from '@/hooks/useMortgageTeamManagement';
 import { Loader2 } from 'lucide-react';
 
 const inviteSchema = z.object({
   email: z.string().email('Please enter a valid email address'),
-  name: z.string().min(1, 'Name is required'),
+  role: z.string().min(1, 'Role is required'),
   message: z.string().optional(),
 });
 
@@ -25,7 +25,7 @@ interface InviteBrokerFormProps {
 export const InviteBrokerForm: React.FC<InviteBrokerFormProps> = ({
   onSuccess,
 }) => {
-  const { createInvitation, isCreatingInvitation } = useInvitedContacts();
+  const { inviteProfessional, isInviting } = useMortgageTeamManagement();
 
   const {
     register,
@@ -38,9 +38,11 @@ export const InviteBrokerForm: React.FC<InviteBrokerFormProps> = ({
 
   const onSubmit = async (data: InviteFormValues) => {
     try {
-      await createInvitation({
+      await inviteProfessional({
         email: data.email,
-        name: data.name,
+        role: data.role,
+        message: data.message,
+        professionalType: 'mortgage_professional',
       });
       reset();
       onSuccess();
@@ -52,18 +54,6 @@ export const InviteBrokerForm: React.FC<InviteBrokerFormProps> = ({
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
       <div className="space-y-2">
-        <Label htmlFor="name">Broker Name</Label>
-        <Input
-          id="name"
-          {...register('name')}
-          placeholder="Enter broker's full name"
-        />
-        {errors.name && (
-          <p className="text-sm text-red-600">{errors.name.message}</p>
-        )}
-      </div>
-
-      <div className="space-y-2">
         <Label htmlFor="email">Email Address</Label>
         <Input
           id="email"
@@ -73,6 +63,18 @@ export const InviteBrokerForm: React.FC<InviteBrokerFormProps> = ({
         />
         {errors.email && (
           <p className="text-sm text-red-600">{errors.email.message}</p>
+        )}
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="role">Role</Label>
+        <Input
+          id="role"
+          {...register('role')}
+          placeholder="Enter the broker's role"
+        />
+        {errors.role && (
+          <p className="text-sm text-red-600">{errors.role.message}</p>
         )}
       </div>
 
@@ -91,12 +93,12 @@ export const InviteBrokerForm: React.FC<InviteBrokerFormProps> = ({
           type="button"
           variant="outline"
           onClick={onSuccess}
-          disabled={isCreatingInvitation}
+          disabled={isInviting}
         >
           Cancel
         </Button>
-        <Button type="submit" disabled={isCreatingInvitation}>
-          {isCreatingInvitation && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+        <Button type="submit" disabled={isInviting}>
+          {isInviting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
           Send Invitation
         </Button>
       </div>
