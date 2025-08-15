@@ -54,11 +54,26 @@ serve(async (req) => {
     }
 
     // Get userId, reason, and duration from request body
-    const { userId, reason, duration } = await req.json();
+    const body = await req.json();
+    console.log('Received request body:', body);
     
-    if (!userId || !reason || !duration) {
-      throw new Error("User ID, reason, and duration are required");
+    const { userId, reason, duration } = body;
+    
+    // Detailed validation with specific error messages
+    if (!userId) {
+      console.error('Missing userId in request');
+      throw new Error("User ID is required");
     }
+    if (!reason || reason.trim() === '') {
+      console.error('Missing or empty reason in request');
+      throw new Error("Suspension reason is required");
+    }
+    if (!duration) {
+      console.error('Missing duration in request');
+      throw new Error("Suspension duration is required");
+    }
+    
+    console.log('Validated suspension data:', { userId, reason, duration: duration });
 
     console.log(`Admin user ${user.id} attempting to suspend user ${userId} for ${duration} hours`);
 

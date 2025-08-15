@@ -30,6 +30,19 @@ export const useUserActions = () => {
     try {
       setIsLoading(true);
       
+      // Validate inputs
+      if (!userId) {
+        throw new Error('User ID is required');
+      }
+      if (!reason || reason.trim() === '') {
+        throw new Error('Suspension reason is required');
+      }
+      if (!duration || isNaN(duration) || duration <= 0) {
+        throw new Error('Valid suspension duration is required');
+      }
+
+      console.log('Suspending user with data:', { userId, reason, duration });
+      
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
         throw new Error('No active session');
@@ -43,13 +56,23 @@ export const useUserActions = () => {
         }
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Edge function error:', error);
+        throw error;
+      }
+
+      if (!data?.success) {
+        console.error('Edge function returned failure:', data);
+        throw new Error(data?.error || 'Unknown error occurred');
+      }
 
       toast.success('User suspended successfully');
       return { success: true };
     } catch (error) {
       console.error('Error suspending user:', error);
-      toast.error('Failed to suspend user');
+      const errorMessage = error instanceof Error ? error.message : 'Failed to suspend user';
+      toast.error(`Failed to suspend user: ${errorMessage}`);
+      await logAdminError('suspend_user', error, userId);
       return { success: false, error };
     } finally {
       setIsLoading(false);

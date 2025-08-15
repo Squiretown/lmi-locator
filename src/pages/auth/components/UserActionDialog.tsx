@@ -34,6 +34,33 @@ export const UserActionDialog: React.FC<UserActionDialogProps> = ({
   });
 
   const handleSubmit = () => {
+    // Validate required fields based on action
+    if (action === 'suspend') {
+      if (!formData.reason.trim()) {
+        toast.error('Suspension reason is required');
+        return;
+      }
+      if (!formData.duration || formData.duration === '') {
+        toast.error('Suspension duration is required');
+        return;
+      }
+      console.log('Suspend form data:', { 
+        userId: user?.id, 
+        reason: formData.reason, 
+        duration: formData.duration 
+      });
+    }
+    
+    if (action === 'changeEmail' && !formData.newEmail.trim()) {
+      toast.error('New email address is required');
+      return;
+    }
+    
+    if (action === 'sendEmail' && !formData.message.trim()) {
+      toast.error('Message is required');
+      return;
+    }
+
     onConfirm(formData);
     setFormData({
       reason: '',
