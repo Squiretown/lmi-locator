@@ -18,6 +18,7 @@ import { ProfessionalActions } from './ProfessionalActions';
 import { UserStatusBadge } from './UserStatusBadge';
 import { UserTypeBadge } from './UserTypeBadge';
 import { UserRoleManagement } from '@/components/admin/users/UserRoleManagement';
+import { UserPagination } from '@/components/users/UserPagination';
 import type { AdminUser } from '../types/admin-user';
 
 interface UserManagementTableProps {
@@ -44,6 +45,10 @@ export const UserManagementTable: React.FC<UserManagementTableProps> = ({
   onUserSelection,
   onSelectAll,
   filteredUsers,
+  currentPage,
+  totalPages,
+  usersPerPage,
+  onPageChange,
 }) => {
   const getUserType = (user: AdminUser) => {
     return user.user_metadata?.user_type || 'client';
@@ -175,6 +180,16 @@ export const UserManagementTable: React.FC<UserManagementTableProps> = ({
           </TableBody>
         </Table>
       </div>
+      
+      {totalPages > 1 && (
+        <UserPagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalUsers={filteredUsers.length}
+          usersPerPage={usersPerPage}
+          onPageChange={onPageChange}
+        />
+      )}
     </div>
   );
 };

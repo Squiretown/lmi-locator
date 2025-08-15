@@ -102,10 +102,13 @@ export const UserManagementContainer: React.FC = () => {
     }
   };
 
-  // Enhanced search functionality
+  // Enhanced search functionality with full name support
   const filteredUsers = users?.filter(user => {
     const searchLower = searchQuery.toLowerCase();
-    const displayName = user.user_metadata?.first_name || user.user_metadata?.last_name || '';
+    const firstName = user.user_metadata?.first_name || '';
+    const lastName = user.user_metadata?.last_name || '';
+    const fullName = `${firstName} ${lastName}`.trim();
+    const displayName = firstName || lastName || '';
     const userId = user.id.toLowerCase();
     const userType = user.user_metadata?.user_type?.toLowerCase() || '';
     const email = user.email?.toLowerCase() || '';
@@ -113,6 +116,7 @@ export const UserManagementContainer: React.FC = () => {
     return (
       userId.includes(searchLower) ||
       displayName.toLowerCase().includes(searchLower) ||
+      fullName.toLowerCase().includes(searchLower) ||
       userType.includes(searchLower) ||
       email.includes(searchLower)
     );
