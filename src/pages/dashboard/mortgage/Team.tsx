@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Users, UserPlus, Mail, Phone, Building, AlertCircle } from "lucide-react";
+import { Users, UserPlus, Mail, Phone, Building, AlertCircle, RefreshCw } from "lucide-react";
 import { useMortgageTeamStats } from '@/hooks/useMortgageTeamStats';
 import { useMortgageTeamManagement } from '@/hooks/useMortgageTeamManagement';
 import { useProfessionalInvitations } from '@/hooks/useProfessionalInvitations';
@@ -18,11 +18,13 @@ const MortgageTeam: React.FC = () => {
     realtorPartners, 
     isLoading: isLoadingTeam, 
     contactProfessional,
-    isContacting 
+    isContacting,
+    refetchRealtorPartners
   } = useMortgageTeamManagement();
   
   const {
-    invitations: professionalInvitations,
+    invitations: pendingInvitations, // Only pending/sent invitations
+    acceptedInvitations, // Accepted invitations for debugging
     stats: professionalStats,
     resendInvitation,
     revokeInvitation,
@@ -116,8 +118,8 @@ const MortgageTeam: React.FC = () => {
             <AlertCircle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{professionalInvitations.length}</div>
-            <p className="text-xs text-muted-foreground">Professional invites</p>
+            <div className="text-2xl font-bold">{pendingInvitations.length}</div>
+            <p className="text-xs text-muted-foreground">Pending invites only</p>
           </CardContent>
         </Card>
       </div>
@@ -188,9 +190,25 @@ const MortgageTeam: React.FC = () => {
       {/* Realtor Partners */}
       <Card>
         <CardHeader>
-          <CardTitle>Realtor Partners</CardTitle>
+          <CardTitle className="flex items-center justify-between">
+            <span>Realtor Partners</span>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => refetchRealtorPartners()}
+              disabled={isLoadingTeam}
+            >
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Refresh
+            </Button>
+          </CardTitle>
           <CardDescription>
             Your trusted realtor partners for client referrals
+            {acceptedInvitations.length > 0 && (
+              <span className="block text-xs text-muted-foreground mt-1">
+                Debug: {acceptedInvitations.length} accepted invitation(s) should appear here
+              </span>
+            )}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -251,20 +269,20 @@ const MortgageTeam: React.FC = () => {
       </Card>
 
       {/* Pending Professional Invitations */}
-      {professionalInvitations.length > 0 && (
+      {pendingInvitations.length > 0 && (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               Pending Professional Invitations
-              <Badge variant="destructive">{professionalInvitations.length}</Badge>
+              <Badge variant="destructive">{pendingInvitations.length}</Badge>
             </CardTitle>
             <CardDescription>
-              Invitations sent to professionals awaiting response
+              Invitations sent to professionals awaiting response (pending/sent only)
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {professionalInvitations.map((invitation) => (
+              {pendingInvitations.map((invitation) => (
                 <div key={invitation.id} className="flex items-center justify-between p-4 border rounded-lg">
                   <div className="flex items-center space-x-4">
                     <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center">

@@ -136,7 +136,7 @@ export function useMortgageTeamManagement() {
   });
 
   // Fetch realtor partners from professional_teams
-  const { data: realtorPartners = [], isLoading: isLoadingRealtors } = useQuery({
+  const { data: realtorPartners = [], isLoading: isLoadingRealtors, refetch: refetchRealtorPartners } = useQuery({
     queryKey: ['realtor-partners-unified', currentProfessional?.id],
     queryFn: async () => {
       if (!currentProfessional?.id) {
@@ -157,7 +157,7 @@ export function useMortgageTeamManagement() {
 
       if (teamError) {
         console.error('❌ Error fetching realtor partners:', teamError);
-        return [];
+        throw teamError;
       }
 
       if (!teamData || teamData.length === 0) {
@@ -179,7 +179,7 @@ export function useMortgageTeamManagement() {
 
       if (realtorsError) {
         console.error('❌ Error fetching realtor details:', realtorsError);
-        return [];
+        throw realtorsError;
       }
 
       // Combine team and realtor data
@@ -211,6 +211,8 @@ export function useMortgageTeamManagement() {
       return result;
     },
     enabled: !!currentProfessional?.id,
+    staleTime: 0, // Always refetch to ensure fresh data
+    retry: 3,
   });
 
   // Enhanced invitation system for both company and explicit teams
@@ -369,6 +371,7 @@ export function useMortgageTeamManagement() {
     inviteProfessional: inviteProfessionalMutation.mutate,
     contactProfessional: contactProfessionalMutation.mutate,
     updateProfessionalVisibility: updateVisibilityMutation.mutate,
+    refetchRealtorPartners, // Add manual refresh capability
     
     // Loading states for actions
     isInviting: inviteProfessionalMutation.isPending,

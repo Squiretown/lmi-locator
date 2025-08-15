@@ -27,8 +27,8 @@ export const useProfessionalInvitations = () => {
     enabled: !!user?.id,
   });
 
-  // Fetch professional invitations
-  const { data: invitations = [], isLoading } = useQuery({
+  // Fetch ALL professional invitations
+  const { data: allInvitations = [], isLoading } = useQuery({
     queryKey: ['professional-invitations', professional?.id],
     queryFn: async () => {
       if (!professional?.id) return [];
@@ -46,13 +46,21 @@ export const useProfessionalInvitations = () => {
     enabled: !!professional?.id,
   });
 
+  // Filter to only pending/sent invitations (not accepted ones)
+  const pendingInvitations = allInvitations.filter(inv => 
+    inv.status === 'pending' || inv.status === 'sent'
+  );
+
+  // Get accepted invitations separately (these should be shown in realtor partners)
+  const acceptedInvitations = allInvitations.filter(inv => inv.status === 'accepted');
+
   // Get invitation stats
   const stats = {
-    total: invitations.length,
-    pending: invitations.filter(inv => inv.status === 'pending').length,
-    sent: invitations.filter(inv => inv.status === 'sent').length,
-    accepted: invitations.filter(inv => inv.status === 'accepted').length,
-    revoked: invitations.filter(inv => inv.status === 'revoked').length,
+    total: allInvitations.length,
+    pending: allInvitations.filter(inv => inv.status === 'pending').length,
+    sent: allInvitations.filter(inv => inv.status === 'sent').length,
+    accepted: allInvitations.filter(inv => inv.status === 'accepted').length,
+    revoked: allInvitations.filter(inv => inv.status === 'revoked').length,
   };
 
   // Resend invitation mutation
@@ -140,7 +148,9 @@ export const useProfessionalInvitations = () => {
   }, [professional?.id, queryClient]);
 
   return {
-    invitations,
+    invitations: pendingInvitations, // Only return pending/sent invitations
+    allInvitations, // All invitations for stats
+    acceptedInvitations, // Accepted invitations for realtor partners
     stats,
     isLoading,
     resendInvitation: resendInvitationMutation.mutate,
