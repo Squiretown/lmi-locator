@@ -114,10 +114,32 @@ export function usePermissionsSystem() {
     return permissionNames.every(permission => hasPermission(permission));
   };
 
-  const assignRoleToUser = async (userId: string, role: string): Promise<{ success: boolean; error?: Error }> => {
+  const assignRoleToUser = async (
+    userId: string,
+    role: string
+  ): Promise<{ success: boolean; error?: Error }> => {
     try {
-      // For now, just log the role assignment since user_roles table might not be ready
-      console.log('Role assignment requested:', { userId, role });
+      const {
+        data: { session }
+      } = await supabase.auth.getSession();
+
+      if (!session) {
+        throw new Error('No active session');
+      }
+
+      const { data, error } = await supabase.functions.invoke('update-user-role', {
+        body: { userId, newRole: role },
+        headers: {
+          Authorization: `Bearer ${session.access_token}`
+        }
+      });
+
+      if (error) throw error;
+
+      if (!data?.success) {
+        throw new Error(data?.error || 'Failed to update user role');
+      }
+
       return { success: true };
     } catch (error) {
       console.error('Error assigning role:', error);
