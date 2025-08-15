@@ -48,6 +48,9 @@ export const InviteBrokerForm: React.FC<InviteBrokerFormProps> = ({
       onSuccess();
     } catch (error) {
       console.error('Error sending invitation:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Failed to send invitation';
+      // Show error toast here - the error will also be handled by the mutation's onError
+      console.error('Invitation error:', errorMessage);
     }
   };
 

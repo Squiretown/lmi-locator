@@ -17,8 +17,30 @@ const handler = async (req: Request): Promise<Response> => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  if (req.method !== 'POST') {
+    return new Response(
+      JSON.stringify({ error: 'Method not allowed' }),
+      { status: 405, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  }
+
   try {
-    const { invitationId, action, type = 'email' }: ManageInvitationRequest = await req.json();
+    let requestBody;
+    try {
+      const bodyText = await req.text();
+      if (!bodyText.trim()) {
+        throw new Error('Request body is empty');
+      }
+      requestBody = JSON.parse(bodyText);
+    } catch (parseError) {
+      console.error('JSON parsing error:', parseError);
+      return new Response(
+        JSON.stringify({ error: 'Invalid JSON in request body' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const { invitationId, action, type = 'email' }: ManageInvitationRequest = requestBody;
     console.log(`Starting ${action} for invitation ${invitationId}, type: ${type}`);
 
     // Get the current user

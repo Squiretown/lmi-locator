@@ -193,6 +193,9 @@ export const useTeamManagement = () => {
         throw new Error('No professional profile found');
       }
 
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('No active session');
+
       const { data: result, error } = await supabase.functions.invoke('send-invitation', {
         body: {
           email: data.email,
@@ -200,6 +203,10 @@ export const useTeamManagement = () => {
           professionalType: 'realtor',
           customMessage: data.customMessage,
         },
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json'
+        }
       });
 
       if (error) throw error;

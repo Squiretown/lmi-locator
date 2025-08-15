@@ -218,6 +218,9 @@ export function useMortgageTeamManagement() {
   // Enhanced invitation system for both company and explicit teams
   const inviteProfessionalMutation = useMutation({
     mutationFn: async ({ email, role, message, permissions, professionalType }: TeamInvitation) => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('No active session');
+
       const { data, error } = await supabase.functions.invoke('send-invitation', {
         body: {
           email,
@@ -225,6 +228,10 @@ export function useMortgageTeamManagement() {
           customMessage: message,
           professionalType: professionalType || 'team_member',
           role
+        },
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json'
         }
       });
 
