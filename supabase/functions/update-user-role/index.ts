@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.21.0";
 
@@ -53,11 +52,17 @@ serve(async (req) => {
       throw new Error("Administrative privileges required to update user role");
     }
 
-    // Get userId and newRole from request body
+    // Get userId and newRole from request body (matching frontend payload)
     const { userId, newRole } = await req.json();
     
     if (!userId || !newRole) {
       throw new Error("User ID and new role are required");
+    }
+
+    // Validate role - support UI role names
+    const validRoles = ['admin', 'mortgage_professional', 'realtor', 'user'];
+    if (!validRoles.includes(newRole)) {
+      throw new Error(`Invalid role: ${newRole}. Valid roles are: ${validRoles.join(', ')}`);
     }
 
     console.log(`Admin user ${user.id} attempting to update role for user ${userId} to ${newRole}`);
