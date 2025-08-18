@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { getProfessionalByUserId } from '@/lib/api/professionals/queries';
+import type { UnifiedInvitationPayload, StandardInvitationHeaders } from '@/types/invitations';
 
 interface ProfessionalTeam {
   id: string;
@@ -196,17 +197,27 @@ export const useTeamManagement = () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error('No active session');
 
-      const { data: result, error } = await supabase.functions.invoke('send-invitation', {
-        body: {
+      const unifiedPayload: UnifiedInvitationPayload = {
+        target: 'professional',
+        channel: 'email',
+        recipient: {
           email: data.email,
-          type: 'professional',
-          professionalType: 'realtor',
-          customMessage: data.customMessage,
+          name: data.name
         },
-        headers: {
-          Authorization: `Bearer ${session.access_token}`,
-          'Content-Type': 'application/json'
+        context: {
+          role: 'realtor',
+          customMessage: data.customMessage
         }
+      };
+
+      const headers: StandardInvitationHeaders = {
+        Authorization: `Bearer ${session.access_token}`,
+        'Content-Type': 'application/json'
+      };
+
+      const { data: result, error } = await supabase.functions.invoke('send-invitation', {
+        body: unifiedPayload,
+        headers
       });
 
       if (error) throw error;

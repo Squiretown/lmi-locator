@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import type { UnifiedInvitationPayload, StandardInvitationHeaders } from '@/types/invitations';
 
 interface LendingTeamMember {
   id: string;
@@ -107,18 +108,26 @@ export function useLendingTeamManagement() {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error('No active session');
 
-      const { data, error } = await supabase.functions.invoke('send-invitation', {
-        body: {
-          email: invitation.professional_email,
-          type: 'professional',
-          professionalType: 'mortgage_professional',
-          role: invitation.role,
-          customMessage: invitation.custom_message,
+      const unifiedPayload: UnifiedInvitationPayload = {
+        target: 'professional',
+        channel: 'email',
+        recipient: {
+          email: invitation.professional_email
         },
-        headers: {
-          Authorization: `Bearer ${session.access_token}`,
-          'Content-Type': 'application/json'
+        context: {
+          role: 'mortgage_professional',
+          customMessage: invitation.custom_message
         }
+      };
+
+      const headers: StandardInvitationHeaders = {
+        Authorization: `Bearer ${session.access_token}`,
+        'Content-Type': 'application/json'
+      };
+
+      const { data, error } = await supabase.functions.invoke('send-invitation', {
+        body: unifiedPayload,
+        headers
       });
 
       if (error) throw error;

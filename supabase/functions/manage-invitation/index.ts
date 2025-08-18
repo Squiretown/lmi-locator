@@ -133,15 +133,24 @@ const handler = async (req: Request): Promise<Response> => {
         );
       }
 
-      // Route to appropriate sending function based on invitation target type
-      const functionName = invitation.invitation_target_type === 'client' ? 'send-client-invitation' : 'send-invitation';
-      console.log(`Using function ${functionName} for invitation target type: ${invitation.invitation_target_type}`);
+      // Always use send-invitation for resends with unified payload
+      console.log(`Resending invitation ${invitationId} with target type: ${invitation.invitation_target_type}, channel: ${type}`);
       
-      // Call the appropriate function to resend
-      const { data: sendResult, error: sendError } = await supabaseClient.functions.invoke(functionName, {
+      // Call send-invitation with unified payload for resend
+      const { data: sendResult, error: sendError } = await supabaseClient.functions.invoke('send-invitation', {
         body: { 
           invitationId,
-          type 
+          target: invitation.invitation_target_type,
+          channel: type,
+          recipient: {
+            email: invitation.client_email,
+            name: invitation.client_name,
+            phone: invitation.client_phone
+          },
+          context: {
+            customMessage: invitation.custom_message,
+            role: invitation.target_professional_role
+          }
         }
       });
 

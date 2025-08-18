@@ -7,9 +7,28 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Unified invitation payload interface
+interface UnifiedInvitationPayload {
+  target?: 'client' | 'professional';
+  channel?: 'email' | 'sms' | 'both';
+  recipient?: {
+    email: string;
+    name?: string;
+    phone?: string;
+  };
+  context?: {
+    role?: string;
+    customMessage?: string;
+    teamContext?: any;
+    templateType?: string;
+  };
+  invitationId?: string;
+}
+
+// Legacy interface for backward compatibility
 interface InvitationRequest {
   email: string;
-  type: 'client' | 'professional' | 'realtor';
+  type: 'client' | 'professional' | 'realtor' | 'email' | 'sms' | 'both';
   inviterName?: string;
   companyName?: string;
   customMessage?: string;
@@ -17,6 +36,7 @@ interface InvitationRequest {
   clientPhone?: string;
   professionalType?: string;
   role?: string;
+  invitationType?: 'email' | 'sms' | 'both';
 }
 
 // Initialize Resend with validation
@@ -72,16 +92,69 @@ serve(async (req: Request) => {
 
     console.log("User authenticated:", user.email);
 
-    // Parse request body
-    const body: InvitationRequest = await req.json();
-    console.log("Request body:", body);
+    // Parse request body and normalize to unified format
+    const rawBody: any = await req.json();
+    console.log("Request body:", rawBody);
 
-    // Validate required fields
-    if (!body.email || !body.type) {
-      throw new Error("Email and type are required fields");
+    // Normalize to unified payload format with backward compatibility
+    let payload: UnifiedInvitationPayload;
+    
+    if (rawBody.target && rawBody.channel && rawBody.recipient) {
+      // New unified format
+      payload = rawBody;
+    } else {
+      // Legacy format - normalize
+      const email = rawBody.email || rawBody.recipient?.email;
+      const type = rawBody.type;
+      
+      if (!email || !type) {
+        throw new Error("Email and type are required fields");
+      }
+
+      // Determine target and channel from legacy type field
+      let target: 'client' | 'professional';
+      let channel: 'email' | 'sms' | 'both';
+
+      if (['client'].includes(type)) {
+        target = 'client';
+      } else if (['professional', 'realtor'].includes(type)) {
+        target = 'professional';
+      } else if (['email', 'sms', 'both'].includes(type)) {
+        // If type is a channel, infer target from context or default to client
+        target = rawBody.professionalType || rawBody.role ? 'professional' : 'client';
+        channel = type as 'email' | 'sms' | 'both';
+      } else {
+        throw new Error("Invalid type specified");
+      }
+
+      // Set channel if not determined above
+      if (!channel) {
+        channel = rawBody.invitationType || 'email';
+      }
+
+      payload = {
+        target,
+        channel,
+        recipient: {
+          email,
+          name: rawBody.clientName || rawBody.name,
+          phone: rawBody.clientPhone || rawBody.phone
+        },
+        context: {
+          role: rawBody.professionalType || rawBody.role,
+          customMessage: rawBody.customMessage,
+          templateType: rawBody.templateType
+        },
+        invitationId: rawBody.invitationId
+      };
     }
 
-    if (!isValidEmail(body.email)) {
+    // Validate unified payload
+    if (!payload.recipient?.email || !payload.target) {
+      throw new Error("Email and target are required fields");
+    }
+
+    if (!isValidEmail(payload.recipient.email)) {
       throw new Error("Invalid email format");
     }
 
@@ -131,10 +204,8 @@ serve(async (req: Request) => {
 
     // Support resend-by-id and prevent duplicate active invitations
     type TargetType = 'client' | 'professional';
-    const isProfessionalTarget = (t: string | undefined) => t === 'professional' || t === 'realtor';
-
-    // Parse body as any to allow optional invitationId
-    const rawBody: any = body as any;
+    const channel = payload.channel || 'email';
+    const targetType: TargetType = payload.target;
 
     // Helper to build and send email/SMS based on invitation type
     const sendEmailForInvitation = async (
@@ -213,11 +284,11 @@ serve(async (req: Request) => {
     const companyName = enhancedProfessional.company || "Our Team";
 
     // 1) Resend by existing invitation ID
-    if (rawBody?.invitationId) {
+    if (payload.invitationId) {
       const { data: existing, error: fetchExistingError } = await supabase
         .from('client_invitations')
         .select('id, invitation_code, client_email, invitation_target_type, status')
-        .eq('id', rawBody.invitationId)
+        .eq('id', payload.invitationId)
         .single();
 
       if (fetchExistingError || !existing) {
@@ -231,8 +302,8 @@ serve(async (req: Request) => {
       const emailResult = await sendEmailForInvitation(
         existing as any,
         existing.invitation_target_type === 'professional' ? 'professional' : 'client',
-        rawBody.customMessage,
-        rawBody.professionalType || rawBody.role
+        payload.context?.customMessage,
+        payload.context?.role
       );
 
       return new Response(
@@ -242,16 +313,7 @@ serve(async (req: Request) => {
     }
 
     // 2) Create or reuse existing active invitation (pre-check)
-    if (!rawBody.email || !rawBody.type) {
-      throw new Error('Email and type are required fields');
-    }
-
-    if (!isValidEmail(rawBody.email)) {
-      throw new Error('Invalid email format');
-    }
-
-    const targetType: TargetType = isProfessionalTarget(rawBody.type) ? 'professional' : 'client';
-    const emailLower = String(rawBody.email).toLowerCase();
+    const emailLower = String(payload.recipient.email).toLowerCase();
 
     // Look for an existing active invitation
     const { data: activeInvite } = await supabase
@@ -268,8 +330,8 @@ serve(async (req: Request) => {
       const emailResult = await sendEmailForInvitation(
         activeInvite as any,
         targetType === 'professional' ? 'professional' : 'client',
-        rawBody.customMessage,
-        rawBody.professionalType || rawBody.role
+        payload.context?.customMessage,
+        payload.context?.role
       );
 
       return new Response(
@@ -282,21 +344,19 @@ serve(async (req: Request) => {
     const invitationCode = Math.random().toString(36).substring(2, 15);
     const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
 
-  // Determine invitation type - support email, sms, both
-  const invitationType = rawBody.invitationType || rawBody.type || 'email';
-  
+  // Use channel for invitation_type (never set to target type)
   const invitationData = {
     professional_id: professional.id,
     client_email: emailLower,
     invitation_code: invitationCode,
-    invitation_type: invitationType,
+    invitation_type: channel,
     invitation_target_type: targetType,
     status: 'pending',
     expires_at: expiresAt.toISOString(),
-    custom_message: rawBody.customMessage,
-    client_name: rawBody.clientName,
-    client_phone: rawBody.clientPhone,
-    target_professional_role: rawBody.professionalType || rawBody.role,
+    custom_message: payload.context?.customMessage,
+    client_name: payload.recipient.name,
+    client_phone: payload.recipient.phone,
+    target_professional_role: payload.context?.role,
   };
 
     const { data: invitation, error: inviteError } = await supabase
@@ -315,8 +375,8 @@ serve(async (req: Request) => {
     const emailResult = await sendEmailForInvitation(
       invitation as any,
       targetType === 'professional' ? 'professional' : 'client',
-      rawBody.customMessage,
-      rawBody.professionalType || rawBody.role
+      payload.context?.customMessage,
+      payload.context?.role
     );
 
     return new Response(

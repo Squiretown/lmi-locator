@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import type { UnifiedInvitationPayload, StandardInvitationHeaders } from '@/types/invitations';
 
 interface InvitedContact {
   id: string;
@@ -82,15 +83,31 @@ export const useInvitedContacts = () => {
 
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      const { data, error } = await supabase.functions.invoke('send-invitation', {
-        body: {
+      if (!session?.access_token) {
+        throw new Error('Authentication session expired. Please refresh and try again.');
+      }
+
+      const unifiedPayload: UnifiedInvitationPayload = {
+        target: 'client',
+        channel: 'email',
+        recipient: {
           email: params.email,
-          type: 'client',
-          clientName: params.name,
-          clientPhone: params.phone,
-          customMessage: params.customMessage
+          name: params.name,
+          phone: params.phone
         },
-        headers: session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : undefined,
+        context: {
+          customMessage: params.customMessage
+        }
+      };
+
+      const headers: StandardInvitationHeaders = {
+        Authorization: `Bearer ${session.access_token}`,
+        'Content-Type': 'application/json'
+      };
+
+      const { data, error } = await supabase.functions.invoke('send-invitation', {
+        body: unifiedPayload,
+        headers,
       });
 
       if (error) {
@@ -118,16 +135,18 @@ export const useInvitedContacts = () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error('No active session');
 
+      const headers: StandardInvitationHeaders = {
+        Authorization: `Bearer ${session.access_token}`,
+        'Content-Type': 'application/json'
+      };
+
       const { data, error } = await supabase.functions.invoke('manage-invitation', {
         body: { 
           invitationId, 
           action: 'resend',
           type 
         },
-        headers: {
-          Authorization: `Bearer ${session.access_token}`,
-          'Content-Type': 'application/json'
-        }
+        headers
       });
 
       if (error) {

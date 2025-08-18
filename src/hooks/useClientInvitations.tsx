@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import type { UnifiedInvitationPayload, StandardInvitationHeaders } from '@/types/invitations';
 
 export interface ClientInvitation {
   id: string;
@@ -173,17 +174,28 @@ export function useClientInvitations() {
 
           const { data: { session } } = await supabase.auth.getSession();
 
-          const { data, error } = await supabase.functions.invoke('send-invitation', {
-            body: {
+          const unifiedPayload: UnifiedInvitationPayload = {
+            target: 'client',
+            channel: invitationData.invitationType || 'email',
+            recipient: {
               email: invitationData.email,
-              type: 'client',
-              clientName: invitationData.name,
-              clientPhone: invitationData.phone,
-              customMessage: invitationData.customMessage,
-              invitationType: invitationData.invitationType || 'email',
-              templateType: invitationData.templateType || 'default'
+              name: invitationData.name,
+              phone: invitationData.phone
             },
-            headers: session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : undefined,
+            context: {
+              customMessage: invitationData.customMessage,
+              templateType: invitationData.templateType || 'default'
+            }
+          };
+
+          const headers: StandardInvitationHeaders = {
+            Authorization: `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json'
+          };
+
+          const { data, error } = await supabase.functions.invoke('send-invitation', {
+            body: unifiedPayload,
+            headers,
           });
 
           if (error) {
@@ -221,16 +233,18 @@ export function useClientInvitations() {
             throw new Error('Authentication session expired. Please refresh the page and try again.');
           }
 
+          const headers: StandardInvitationHeaders = {
+            Authorization: `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json'
+          };
+
           const { data, error } = await supabase.functions.invoke('manage-invitation', {
             body: { 
               invitationId, 
               action: 'resend',
               type 
             },
-            headers: { 
-              Authorization: `Bearer ${session.access_token}`,
-              'Content-Type': 'application/json'
-            },
+            headers,
           });
 
           if (error) {
@@ -271,16 +285,18 @@ export function useClientInvitations() {
         throw new Error('Authentication session expired. Please refresh the page and try again.');
       }
 
+      const headers: StandardInvitationHeaders = {
+        Authorization: `Bearer ${session.access_token}`,
+        'Content-Type': 'application/json'
+      };
+
       const { data, error } = await supabase.functions.invoke('manage-invitation', {
         body: { 
           invitationId, 
           action: 'resend',
           type 
         },
-        headers: { 
-          Authorization: `Bearer ${session.access_token}`,
-          'Content-Type': 'application/json'
-        },
+        headers,
       });
 
       if (error) {
@@ -317,15 +333,17 @@ export function useClientInvitations() {
         throw new Error('Authentication session expired. Please refresh the page and try again.');
       }
 
+      const headers: StandardInvitationHeaders = {
+        Authorization: `Bearer ${session.access_token}`,
+        'Content-Type': 'application/json'
+      };
+
       const { data, error } = await supabase.functions.invoke('manage-invitation', {
         body: { 
           invitationId, 
           action: 'revoke'
         },
-        headers: { 
-          Authorization: `Bearer ${session.access_token}`,
-          'Content-Type': 'application/json'
-        },
+        headers,
       });
 
       if (error) {
