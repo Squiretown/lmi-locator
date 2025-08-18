@@ -4,8 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Users, UserPlus, Clock, Zap } from 'lucide-react';
 import { PropertyChecker } from '@/components/dashboard/realtor/PropertyChecker';
-import { RecentActivity } from '@/components/dashboard/realtor/RecentActivity';
-import { RecentContacts } from '@/components/dashboard/realtor/RecentContacts';
+import { RealtorOverview as RealtorOverviewComponent } from '@/components/dashboard/realtor/RealtorOverview';
 import { ProfessionalTeam } from '@/components/dashboard/realtor/ProfessionalTeam';
 import { InviteClientDialog } from '@/components/clients/InviteClientDialog';
 import { useRealtorClientManagement } from '@/hooks/useRealtorClientManagement';
@@ -114,8 +113,7 @@ const RealtorOverview: React.FC = () => {
 
       {/* Bottom Section - Recent Activity and Recent Contacts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <RecentActivity />
-        <RecentContacts />
+        <RealtorOverviewComponent />
       </div>
 
       {/* Invite Client Dialog */}

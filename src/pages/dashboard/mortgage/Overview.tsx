@@ -4,8 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Users, UserPlus, TrendingUp, Settings } from 'lucide-react';
 import { PropertyChecker } from '@/components/dashboard/realtor/PropertyChecker';
-import { RecentActivity } from '@/components/dashboard/realtor/RecentActivity';
-import { RecentContacts } from '@/components/dashboard/realtor/RecentContacts';
+import { MortgageOverview as MortgageOverviewComponent } from '@/components/dashboard/mortgage/MortgageOverview';
 import { TeamVisibilityManager } from '@/components/teams/TeamVisibilityManager';
 import { InviteClientDialog } from '@/components/clients/InviteClientDialog';
 import { useMortgageClientManagement } from '@/hooks/useMortgageClientManagement';
@@ -117,8 +116,7 @@ const MortgageOverview: React.FC = () => {
 
       {/* Bottom Section - Recent Activity and Recent Contacts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <RecentActivity />
-        <RecentContacts />
+        <MortgageOverviewComponent />
       </div>
 
       {/* Invite Client Dialog */}
