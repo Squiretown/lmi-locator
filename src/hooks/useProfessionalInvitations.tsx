@@ -65,11 +65,16 @@ export const useProfessionalInvitations = () => {
 
   // Resend invitation mutation
   const resendInvitationMutation = useMutation({
-    mutationFn: async ({ invitationId }: { invitationId: string }) => {
-      const { data, error } = await supabase.functions.invoke('send-invitation', {
-        body: { invitationId },
+    mutationFn: async ({ invitationId, channel = 'email' }: { invitationId: string; channel?: 'email' | 'sms' | 'both' }) => {
+      const { data, error } = await supabase.functions.invoke('manage-invitation', {
+        body: { 
+          action: 'resend',
+          invitationId,
+          channel
+        },
         headers: {
           Authorization: `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
+          'Content-Type': 'application/json'
         },
       });
 
@@ -101,6 +106,7 @@ export const useProfessionalInvitations = () => {
         },
         headers: {
           Authorization: `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
+          'Content-Type': 'application/json'
         },
       });
 

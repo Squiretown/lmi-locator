@@ -159,12 +159,23 @@ const AdminTester: React.FC = () => {
     }
 
     runTest('Invitation Sending', async () => {
+      const { data: { session } } = await supabase.auth.getSession();
       return await supabase.functions.invoke('send-invitation', {
         body: { 
-          email: testEmail,
-          type: 'client',
-          clientName: 'Test User',
-          testMode: true
+          target: 'client',
+          channel: 'email',
+          recipient: {
+            email: testEmail,
+            name: 'Test User'
+          },
+          context: {
+            templateType: 'test',
+            customMessage: 'This is a test invitation from admin panel'
+          }
+        },
+        headers: {
+          Authorization: `Bearer ${session?.access_token}`,
+          'Content-Type': 'application/json'
         }
       });
     });

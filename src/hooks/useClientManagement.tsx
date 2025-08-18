@@ -166,13 +166,17 @@ export function useClientManagement() {
 
           const { error: inviteError } = await supabase.functions.invoke('send-invitation', {
             body: {
-              email: clientData.email,
-              type: 'client',
-              clientName: `${clientData.first_name} ${clientData.last_name}`,
-              clientPhone: clientData.phone,
-              invitationType: clientData.invitationType || 'email',
-              templateType: clientData.templateType || 'default',
-              customMessage: clientData.customMessage
+              target: 'client',
+              channel: clientData.invitationType || 'email',
+              recipient: {
+                email: clientData.email,
+                name: `${clientData.first_name} ${clientData.last_name}`,
+                phone: clientData.phone
+              },
+              context: {
+                templateType: clientData.templateType || 'default',
+                customMessage: clientData.customMessage
+              }
             },
             headers: {
               Authorization: `Bearer ${session.access_token}`,
