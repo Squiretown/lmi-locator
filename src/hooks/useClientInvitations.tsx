@@ -239,11 +239,11 @@ export function useClientInvitations() {
           };
 
           const { data, error } = await supabase.functions.invoke('manage-invitation', {
-        body: { 
-          invitationId, 
-          action: 'resend',
-          channel: type 
-        },
+            body: { 
+              invitationId, 
+              action: 'resend',
+              type: type 
+            },
             headers,
           });
 
@@ -294,7 +294,7 @@ export function useClientInvitations() {
         body: { 
           invitationId, 
           action: 'resend',
-          channel: type 
+          type: type 
         },
         headers,
       });

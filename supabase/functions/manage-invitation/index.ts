@@ -10,6 +10,7 @@ interface ManageInvitationRequest {
   invitationId: string;
   action: 'resend' | 'revoke';
   type?: 'email' | 'sms' | 'both';
+  channel?: 'email' | 'sms' | 'both'; // For backwards compatibility
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -40,8 +41,10 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    const { invitationId, action, type = 'email' }: ManageInvitationRequest = requestBody;
-    console.log(`Starting ${action} for invitation ${invitationId}, type: ${type}`);
+    const { invitationId, action, type, channel }: ManageInvitationRequest = requestBody;
+    // Accept both type and channel for backwards compatibility
+    const invitationType = type || channel || 'email';
+    console.log(`Starting ${action} for invitation ${invitationId}, type: ${invitationType}`);
 
     // Get the current user
     const authHeader = req.headers.get('Authorization');
@@ -85,10 +88,19 @@ const handler = async (req: Request): Promise<Response> => {
       .single();
 
     if (inviteError || !invitation) {
+      console.error(`Invitation ${invitationId} not found for user ${user.id}:`, inviteError);
       return new Response(
         JSON.stringify({ error: 'Invitation not found' }),
         { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
+    }
+
+    // Log identity verification for debugging
+    console.log(`Identity verification: User ${user.id} managing invitation ${invitationId} (professional_id: ${invitation.professional_id})`);
+    
+    // Additional verification logging
+    if (invitation.professional_id !== user.id) {
+      console.warn(`User ${user.id} attempting to manage invitation ${invitationId} belonging to professional ${invitation.professional_id}`);
     }
 
     if (action === 'revoke') {
@@ -122,7 +134,7 @@ const handler = async (req: Request): Promise<Response> => {
       );
 
     } else if (action === 'resend') {
-      console.log(`Resending invitation ${invitationId} by user ${user.id}, type: ${type}`);
+      console.log(`Resending invitation ${invitationId} by user ${user.id}, type: ${invitationType}`);
       
       // Check if invitation is still valid for resending
       if (invitation.status === 'accepted' || invitation.status === 'revoked') {
@@ -134,14 +146,14 @@ const handler = async (req: Request): Promise<Response> => {
       }
 
       // Always use send-invitation for resends with unified payload
-      console.log(`Resending invitation ${invitationId} with target type: ${invitation.invitation_target_type}, channel: ${type}`);
+      console.log(`Resending invitation ${invitationId} with target type: ${invitation.invitation_target_type}, channel: ${invitationType}`);
       
       // Call send-invitation with unified payload for resend
       const { data: sendResult, error: sendError } = await supabaseClient.functions.invoke('send-invitation', {
         body: { 
           invitationId,
           target: invitation.invitation_target_type,
-          channel: type,
+          channel: invitationType,
           recipient: {
             email: invitation.client_email,
             name: invitation.client_name,

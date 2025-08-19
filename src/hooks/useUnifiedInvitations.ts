@@ -19,7 +19,7 @@ interface SendInvitationParams {
 interface ManageInvitationParams {
   invitationId: string;
   action: 'resend' | 'revoke';
-  channel?: InvitationChannel;
+  type?: InvitationChannel;
 }
 
 /**
@@ -83,7 +83,11 @@ export function useUnifiedInvitations() {
       const headers = createInvitationHeaders(session.access_token);
 
       const { data, error } = await supabase.functions.invoke('manage-invitation', {
-        body: params,
+        body: {
+          invitationId: params.invitationId,
+          action: params.action,
+          type: params.type
+        },
         headers
       });
 

@@ -3,6 +3,7 @@ import { useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuthContext } from '@/hooks/useAuthContext';
+import { createInvitationHeaders } from '@/lib/utils/invitationUtils';
 
 export const useProfessionalInvitations = () => {
   const { user } = useAuthContext();
@@ -65,17 +66,19 @@ export const useProfessionalInvitations = () => {
 
   // Resend invitation mutation
   const resendInvitationMutation = useMutation({
-    mutationFn: async ({ invitationId, channel = 'email' }: { invitationId: string; channel?: 'email' | 'sms' | 'both' }) => {
+    mutationFn: async ({ invitationId, type = 'email' }: { invitationId: string; type?: 'email' | 'sms' | 'both' }) => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('No active session');
+
+      const headers = createInvitationHeaders(session.access_token);
+
       const { data, error } = await supabase.functions.invoke('manage-invitation', {
         body: { 
           action: 'resend',
           invitationId,
-          channel
+          type
         },
-        headers: {
-          Authorization: `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
-          'Content-Type': 'application/json'
-        },
+        headers,
       });
 
       if (error) throw error;
@@ -99,15 +102,17 @@ export const useProfessionalInvitations = () => {
   // Revoke invitation mutation
   const revokeInvitationMutation = useMutation({
     mutationFn: async (invitationId: string) => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('No active session');
+
+      const headers = createInvitationHeaders(session.access_token);
+
       const { data, error } = await supabase.functions.invoke('manage-invitation', {
         body: {
           action: 'revoke',
           invitationId,
         },
-        headers: {
-          Authorization: `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
-          'Content-Type': 'application/json'
-        },
+        headers,
       });
 
       if (error) throw error;
