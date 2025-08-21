@@ -109,5 +109,14 @@ verify_jwt = true
 [functions.accept-invitation]
 verify_jwt = false
 
-[functions.manage-invitation]
+[functions.validate-user-invitation]
+verify_jwt = false
+
+[functions.accept-user-invitation] 
+verify_jwt = false
+
+[functions.send-user-invitation]
+verify_jwt = true
+
+[functions.manage-user-invitation]
 verify_jwt = true

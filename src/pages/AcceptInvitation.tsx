@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Loader2, CheckCircle, XCircle, Users, FileText } from 'lucide-react';
+import { Loader2, CheckCircle, XCircle, Users } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
@@ -23,7 +23,7 @@ interface InvitationData {
 }
 
 const AcceptInvitation: React.FC = () => {
-  const { code } = useParams<{ code: string }>();
+  const { code, token } = useParams<{ code?: string; token?: string }>();
   const navigate = useNavigate();
   const { user, signIn, signUp } = useAuth();
   const [invitation, setInvitation] = useState<InvitationData | null>(null);
@@ -34,14 +34,71 @@ const AcceptInvitation: React.FC = () => {
   const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signin');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [isUnifiedSystem, setIsUnifiedSystem] = useState(false);
 
   useEffect(() => {
-    if (code) {
-      fetchInvitation();
+    if (token) {
+      // New unified system using tokens
+      setIsUnifiedSystem(true);
+      fetchUnifiedInvitation();
+    } else if (code) {
+      // Legacy system using codes
+      setIsUnifiedSystem(false);
+      fetchLegacyInvitation();
+    } else {
+      setError('No invitation identifier provided');
+      setLoading(false);
     }
-  }, [code]);
+  }, [code, token]);
 
-  const fetchInvitation = async () => {
+  const fetchUnifiedInvitation = async () => {
+    try {
+      setLoading(true);
+      const { data, error } = await supabase.functions.invoke('validate-user-invitation', {
+        body: { token }
+      });
+
+      if (error) throw error;
+
+      if (!data.valid) {
+        setError(data.error || 'Invalid invitation');
+        return;
+      }
+
+      // Transform unified invitation data to match legacy interface
+      const unifiedInvitation = {
+        id: data.invitation.id,
+        client_name: data.invitation.firstName && data.invitation.lastName 
+          ? `${data.invitation.firstName} ${data.invitation.lastName}` 
+          : data.invitation.firstName,
+        client_email: data.invitation.email,
+        professional_id: data.invitation.invitedBy,
+        invitation_type: 'unified',
+        invitation_category: 'unified',
+        invitation_target_type: data.invitation.userType,
+        target_professional_role: data.invitation.professionalType,
+        custom_message: data.invitation.customMessage,
+        expires_at: data.invitation.expiresAt,
+        status: 'pending',
+        team_showcase: null
+      };
+
+      setInvitation(unifiedInvitation);
+      setEmail(data.invitation.email);
+
+      // If user is not logged in, show auth form
+      if (!user) {
+        setShowAuth(true);
+      }
+    } catch (err) {
+      console.error('Error fetching unified invitation:', err);
+      setError('Failed to load invitation');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchLegacyInvitation = async () => {
     try {
       setLoading(true);
       const { data, error } = await supabase
@@ -73,7 +130,7 @@ const AcceptInvitation: React.FC = () => {
         setShowAuth(true);
       }
     } catch (err) {
-      console.error('Error fetching invitation:', err);
+      console.error('Error fetching legacy invitation:', err);
       setError('Failed to load invitation');
     } finally {
       setLoading(false);
@@ -123,34 +180,63 @@ const AcceptInvitation: React.FC = () => {
 
     try {
       setAccepting(true);
-      const { data, error } = await supabase.functions.invoke('accept-invitation', {
-        body: {
-          invitationCode: code,
-          userEmail: user.email
-        }
-      });
-
-      if (error) {
-        throw error;
-      }
-
-      if (!data?.success) {
-        throw new Error(data?.error || 'Failed to accept invitation');
-      }
-
-      toast.success('Invitation accepted successfully!');
       
-      // Navigate to appropriate dashboard based on invitation type
-      setTimeout(() => {
-        const dashboardRoute = data.userType === 'mortgage_professional' 
-          ? '/dashboard/mortgage'
-          : data.userType === 'realtor' 
-          ? '/dashboard/realtor'
-          : '/dashboard/client';
-          
-        console.log('Navigating to:', dashboardRoute, 'for user type:', data.userType);
-        navigate(dashboardRoute, { replace: true });
-      }, 2000);
+      if (isUnifiedSystem) {
+        // Use new unified system
+        const { data, error } = await supabase.functions.invoke('accept-user-invitation', {
+          body: {
+            token: token!,
+            password: null, // User is already authenticated
+            userData: {
+              firstName: invitation.client_name?.split(' ')[0] || '',
+              lastName: invitation.client_name?.split(' ').slice(1).join(' ') || '',
+            }
+          }
+        });
+
+        if (error) throw error;
+        if (!data?.success) throw new Error(data?.error || 'Failed to accept invitation');
+
+        toast.success('Invitation accepted successfully!');
+        
+        // Navigate based on user type from unified system
+        setTimeout(() => {
+          const dashboardRoute = invitation.invitation_target_type === 'mortgage_professional' 
+            ? '/dashboard/mortgage'
+            : invitation.invitation_target_type === 'realtor' 
+            ? '/dashboard/realtor'
+            : '/dashboard/client';
+            
+          console.log('Navigating to:', dashboardRoute, 'for user type:', invitation.invitation_target_type);
+          navigate(dashboardRoute, { replace: true });
+        }, 2000);
+
+      } else {
+        // Use legacy system
+        const { data, error } = await supabase.functions.invoke('accept-invitation', {
+          body: {
+            invitationCode: code,
+            userEmail: user.email
+          }
+        });
+
+        if (error) throw error;
+        if (!data?.success) throw new Error(data?.error || 'Failed to accept invitation');
+
+        toast.success('Invitation accepted successfully!');
+        
+        // Navigate to appropriate dashboard based on invitation type
+        setTimeout(() => {
+          const dashboardRoute = data.userType === 'mortgage_professional' 
+            ? '/dashboard/mortgage'
+            : data.userType === 'realtor' 
+            ? '/dashboard/realtor'
+            : '/dashboard/client';
+            
+          console.log('Navigating to:', dashboardRoute, 'for user type:', data.userType);
+          navigate(dashboardRoute, { replace: true });
+        }, 2000);
+      }
 
     } catch (err) {
       console.error('Error accepting invitation:', err);
@@ -208,7 +294,7 @@ const AcceptInvitation: React.FC = () => {
             <CardDescription>
               You've been invited to join as a {invitation.invitation_target_type === 'professional' 
                 ? invitation.target_professional_role || 'professional' 
-                : 'client'}. Please sign in or create an account to continue.
+                : invitation.invitation_target_type === 'client' ? 'client' : invitation.invitation_target_type}. Please sign in or create an account to continue.
             </CardDescription>
             {invitation.custom_message && (
               <div className="mt-4 p-3 bg-secondary/30 rounded-md text-sm">
@@ -271,7 +357,7 @@ const AcceptInvitation: React.FC = () => {
           <CardDescription>
             You've been invited to join as a {invitation.invitation_target_type === 'professional' 
               ? invitation.target_professional_role || 'professional' 
-              : 'client'}
+              : invitation.invitation_target_type === 'client' ? 'client' : invitation.invitation_target_type}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
