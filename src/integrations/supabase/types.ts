@@ -1548,6 +1548,47 @@ export type Database = {
         }
         Relationships: []
       }
+      invitation_audit_log: {
+        Row: {
+          action: string
+          details: Json | null
+          id: string
+          invitation_id: string | null
+          ip_address: unknown | null
+          performed_at: string | null
+          performed_by: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          action: string
+          details?: Json | null
+          id?: string
+          invitation_id?: string | null
+          ip_address?: unknown | null
+          performed_at?: string | null
+          performed_by?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          action?: string
+          details?: Json | null
+          id?: string
+          invitation_id?: string | null
+          ip_address?: unknown | null
+          performed_at?: string | null
+          performed_by?: string | null
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invitation_audit_log_invitation_id_fkey"
+            columns: ["invitation_id"]
+            isOneToOne: false
+            referencedRelation: "user_invitations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lending_teams: {
         Row: {
           created_at: string
@@ -3165,6 +3206,114 @@ export type Database = {
           },
         ]
       }
+      user_invitations: {
+        Row: {
+          accepted_at: string | null
+          attempts: number | null
+          company_name: string | null
+          created_at: string | null
+          custom_message: string | null
+          email: string
+          email_sent: boolean | null
+          estimated_budget: number | null
+          expires_at: string
+          first_name: string | null
+          id: string
+          invite_code: string
+          invite_token: string
+          invited_by_name: string | null
+          invited_by_user_id: string | null
+          last_name: string | null
+          last_reminder_sent: string | null
+          license_number: string | null
+          license_state: string | null
+          metadata: Json | null
+          phone: string | null
+          preferred_contact: string | null
+          professional_type: string | null
+          property_interest: string | null
+          requires_approval: boolean | null
+          send_via: string | null
+          sent_at: string | null
+          service_areas: Json | null
+          sms_sent: boolean | null
+          specializations: Json | null
+          status: string | null
+          user_type: string
+          years_experience: number | null
+        }
+        Insert: {
+          accepted_at?: string | null
+          attempts?: number | null
+          company_name?: string | null
+          created_at?: string | null
+          custom_message?: string | null
+          email: string
+          email_sent?: boolean | null
+          estimated_budget?: number | null
+          expires_at?: string
+          first_name?: string | null
+          id?: string
+          invite_code: string
+          invite_token?: string
+          invited_by_name?: string | null
+          invited_by_user_id?: string | null
+          last_name?: string | null
+          last_reminder_sent?: string | null
+          license_number?: string | null
+          license_state?: string | null
+          metadata?: Json | null
+          phone?: string | null
+          preferred_contact?: string | null
+          professional_type?: string | null
+          property_interest?: string | null
+          requires_approval?: boolean | null
+          send_via?: string | null
+          sent_at?: string | null
+          service_areas?: Json | null
+          sms_sent?: boolean | null
+          specializations?: Json | null
+          status?: string | null
+          user_type: string
+          years_experience?: number | null
+        }
+        Update: {
+          accepted_at?: string | null
+          attempts?: number | null
+          company_name?: string | null
+          created_at?: string | null
+          custom_message?: string | null
+          email?: string
+          email_sent?: boolean | null
+          estimated_budget?: number | null
+          expires_at?: string
+          first_name?: string | null
+          id?: string
+          invite_code?: string
+          invite_token?: string
+          invited_by_name?: string | null
+          invited_by_user_id?: string | null
+          last_name?: string | null
+          last_reminder_sent?: string | null
+          license_number?: string | null
+          license_state?: string | null
+          metadata?: Json | null
+          phone?: string | null
+          preferred_contact?: string | null
+          professional_type?: string | null
+          property_interest?: string | null
+          requires_approval?: boolean | null
+          send_via?: string | null
+          sent_at?: string | null
+          service_areas?: Json | null
+          sms_sent?: boolean | null
+          specializations?: Json | null
+          status?: string | null
+          user_type?: string
+          years_experience?: number | null
+        }
+        Relationships: []
+      }
       user_profiles: {
         Row: {
           address: string | null
@@ -3803,6 +3952,10 @@ export type Database = {
         Args: { geom1: unknown; geom2: unknown }
         Returns: boolean
       }
+      expire_old_invitations: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
       find_census_tract_flexible: {
         Args: { input_tract_id: string }
         Returns: {
@@ -3835,6 +3988,10 @@ export type Database = {
         }[]
       }
       generate_invitation_code: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      generate_invite_code: {
         Args: Record<PropertyKey, never>
         Returns: string
       }
@@ -4163,6 +4320,16 @@ export type Database = {
       jsonb: {
         Args: { "": unknown }
         Returns: Json
+      }
+      log_invitation_action: {
+        Args: {
+          p_action: string
+          p_details?: Json
+          p_invitation_id: string
+          p_ip_address?: unknown
+          p_user_agent?: string
+        }
+        Returns: string
       }
       log_security_event: {
         Args:
