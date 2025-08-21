@@ -49,6 +49,31 @@ const unifiedInvitationSchema = z.discriminatedUnion('userType', [
 
 type InvitationFormData = z.infer<typeof unifiedInvitationSchema>;
 
+// Define a unified form data type that includes all possible fields as optional
+// This helps avoid TypeScript errors with discriminated union field access
+type UnifiedFormData = {
+  email: string;
+  userType: 'client' | 'realtor' | 'mortgage_professional';
+  firstName: string;
+  lastName: string;
+  phone?: string;
+  sendVia: 'email' | 'sms' | 'both';
+  customMessage?: string;
+  
+  // Client fields (optional - only present when userType is 'client')
+  propertyInterest?: 'buying' | 'selling' | 'refinancing';
+  estimatedBudget?: number;
+  preferredContact?: 'email' | 'phone' | 'text';
+  
+  // Professional fields (optional - only present when userType is professional)
+  professionalType?: 'realtor' | 'mortgage_broker' | 'lender';
+  licenseNumber?: string;
+  licenseState?: string;
+  companyName?: string;
+  yearsExperience?: number;
+  requiresApproval?: boolean;
+};
+
 interface UnifiedInvitationFormProps {
   onSubmit: (data: CreateInvitationRequest) => Promise<void>;
   isLoading?: boolean;
@@ -69,7 +94,7 @@ export const UnifiedInvitationForm: React.FC<UnifiedInvitationFormProps> = ({
     watch,
     reset,
     formState: { errors, isSubmitting }
-  } = useForm<InvitationFormData>({
+  } = useForm<UnifiedFormData>({
     resolver: zodResolver(unifiedInvitationSchema),
     defaultValues: {
       userType: defaultUserType,
@@ -87,7 +112,12 @@ export const UnifiedInvitationForm: React.FC<UnifiedInvitationFormProps> = ({
     setUserType(watchedUserType);
   }, [watchedUserType]);
 
-  const handleFormSubmit = async (data: InvitationFormData) => {
+  // Helper function to safely access error messages
+  const getFieldError = (fieldName: keyof UnifiedFormData) => {
+    return (errors as any)[fieldName];
+  };
+
+  const handleFormSubmit = async (data: UnifiedFormData) => {
     try {
       await onSubmit(data as CreateInvitationRequest);
       reset();
@@ -229,8 +259,8 @@ export const UnifiedInvitationForm: React.FC<UnifiedInvitationFormProps> = ({
                       <SelectItem value="refinancing">Refinancing</SelectItem>
                     </SelectContent>
                   </Select>
-                  {errors.propertyInterest && (
-                    <p className="text-sm text-destructive mt-1">{(errors as any).propertyInterest.message}</p>
+                  {getFieldError('propertyInterest') && (
+                    <p className="text-sm text-destructive mt-1">{getFieldError('propertyInterest').message}</p>
                   )}
                 </div>
 
@@ -242,8 +272,8 @@ export const UnifiedInvitationForm: React.FC<UnifiedInvitationFormProps> = ({
                     {...register('estimatedBudget', { valueAsNumber: true })}
                     placeholder="Enter estimated budget (optional)"
                   />
-                  {errors.estimatedBudget && (
-                    <p className="text-sm text-destructive mt-1">{(errors as any).estimatedBudget.message}</p>
+                  {getFieldError('estimatedBudget') && (
+                    <p className="text-sm text-destructive mt-1">{getFieldError('estimatedBudget').message}</p>
                   )}
                 </div>
 
@@ -286,8 +316,8 @@ export const UnifiedInvitationForm: React.FC<UnifiedInvitationFormProps> = ({
                       <SelectItem value="lender">Lender</SelectItem>
                     </SelectContent>
                   </Select>
-                  {errors.professionalType && (
-                    <p className="text-sm text-destructive mt-1">{(errors as any).professionalType.message}</p>
+                  {getFieldError('professionalType') && (
+                    <p className="text-sm text-destructive mt-1">{getFieldError('professionalType').message}</p>
                   )}
                 </div>
 
