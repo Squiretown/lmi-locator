@@ -215,7 +215,7 @@ export function useUnifiedClientInvitations() {
     sent: invitations.filter(i => i.status === 'sent').length,
     accepted: invitations.filter(i => i.status === 'accepted').length,
     expired: invitations.filter(i => i.status === 'expired').length,
-    cancelled: invitations.filter(i => i.status === 'cancelled').length,
+    revoked: invitations.filter(inv => inv.status === 'cancelled').length,
   };
 
   return {

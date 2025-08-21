@@ -7,7 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useForm } from 'react-hook-form';
-import { CreateInvitationData } from '@/hooks/useClientInvitations';
+import { CreateClientInvitationData } from '@/hooks/useUnifiedClientInvitations';
 import { useMortgageTeamManagement } from '@/hooks/useMortgageTeamManagement';
 import { ClientTeamShowcase } from '@/components/clients/ClientTeamShowcase';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -16,7 +16,7 @@ import { Mail, MessageSquare, Users, Eye } from 'lucide-react';
 interface InviteClientDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSubmit: (data: CreateInvitationData) => Promise<any>;
+  onSubmit: (data: CreateClientInvitationData) => Promise<any>;
   isLoading?: boolean;
 }
 
@@ -27,7 +27,7 @@ export const InviteClientDialog: React.FC<InviteClientDialogProps> = ({
   isLoading = false,
 }) => {
   const { teamMembers } = useMortgageTeamManagement();
-  const { register, handleSubmit, reset, watch, setValue, formState: { errors } } = useForm<CreateInvitationData>({
+  const { register, handleSubmit, reset, watch, setValue, formState: { errors } } = useForm<CreateClientInvitationData>({
     defaultValues: {
       invitationType: 'email',
       templateType: 'default',
@@ -36,7 +36,7 @@ export const InviteClientDialog: React.FC<InviteClientDialogProps> = ({
 
   const invitationType = watch('invitationType');
 
-  const handleFormSubmit = async (data: CreateInvitationData) => {
+  const handleFormSubmit = async (data: CreateClientInvitationData) => {
     try {
       await onSubmit(data);
       reset();

@@ -5,11 +5,11 @@ import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { EmailPreferencesDialog, EmailPreferences } from './EmailPreferencesDialog';
-import { useInvitedContacts } from '@/hooks/useInvitedContacts';
+import { useUnifiedClientInvitations } from '@/hooks/useUnifiedClientInvitations';
 
 export const MarketingSection: React.FC = () => {
   const [showComingSoon, setShowComingSoon] = useState(false);
-  const { createInvitation } = useInvitedContacts();
+  const { createInvitation } = useUnifiedClientInvitations();
 
   const handleCreateList = () => {
     setShowComingSoon(true);
@@ -28,6 +28,7 @@ export const MarketingSection: React.FC = () => {
         await createInvitation({
           email: recipientEmail,
           name: recipientEmail.split('@')[0], // Use email prefix as name fallback
+          invitationType: 'email'
         });
       } catch (error) {
         console.error('Failed to track invitation:', error);

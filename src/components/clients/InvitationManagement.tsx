@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { CopyInvitationCode } from '@/components/teams/CopyInvitationCode';
-import { useClientInvitations } from '@/hooks/useClientInvitations';
+import { useUnifiedClientInvitations } from '@/hooks/useUnifiedClientInvitations';
 import { InviteClientDialog } from './InviteClientDialog';
 import { 
   Users, 
@@ -48,7 +48,7 @@ export const InvitationManagement: React.FC = () => {
     isResendingInvitation,
     revokeInvitation,
     isRevokingInvitation,
-  } = useClientInvitations();
+  } = useUnifiedClientInvitations();
 
   // Filter invitations based on search query and archive setting
   const filteredInvitations = invitations.filter(invitation => {

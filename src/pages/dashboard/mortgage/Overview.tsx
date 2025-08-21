@@ -8,13 +8,13 @@ import { MortgageOverview as MortgageOverviewComponent } from '@/components/dash
 import { TeamVisibilityManager } from '@/components/teams/TeamVisibilityManager';
 import { InviteClientDialog } from '@/components/clients/InviteClientDialog';
 import { useMortgageClientManagement } from '@/hooks/useMortgageClientManagement';
-import { useClientInvitations } from '@/hooks/useClientInvitations';
+import { useUnifiedClientInvitations } from '@/hooks/useUnifiedClientInvitations';
 import { useMortgageTeamStats } from '@/hooks/useMortgageTeamStats';
 import { toast } from 'sonner';
 
 const MortgageOverview: React.FC = () => {
   const { clients } = useMortgageClientManagement();
-  const { createInvitation, stats: inviteStats } = useClientInvitations();
+  const { createInvitation, stats: inviteStats } = useUnifiedClientInvitations();
   const { stats } = useMortgageTeamStats();
   const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
 

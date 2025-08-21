@@ -8,12 +8,12 @@ import { RealtorOverview as RealtorOverviewComponent } from '@/components/dashbo
 import { ProfessionalTeam } from '@/components/dashboard/realtor/ProfessionalTeam';
 import { InviteClientDialog } from '@/components/clients/InviteClientDialog';
 import { useRealtorClientManagement } from '@/hooks/useRealtorClientManagement';
-import { useClientInvitations } from '@/hooks/useClientInvitations';
+import { useUnifiedClientInvitations } from '@/hooks/useUnifiedClientInvitations';
 import { toast } from 'sonner';
 
 const RealtorOverview: React.FC = () => {
   const { clients } = useRealtorClientManagement();
-  const { createInvitation, stats } = useClientInvitations();
+  const { createInvitation, stats } = useUnifiedClientInvitations();
   const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
 
   const activeClients = clients.filter(client => client.status === 'active').length;

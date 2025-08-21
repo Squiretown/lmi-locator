@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Plus, Send, Trash2 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { useInvitedContacts } from '@/hooks/useInvitedContacts';
+import { useUnifiedClientInvitations } from '@/hooks/useUnifiedClientInvitations';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 
@@ -17,13 +17,13 @@ export const InviteContact: React.FC = () => {
   const [customMessage, setCustomMessage] = useState('');
   
   const { 
-    contacts, 
+    invitations: contacts, 
     isLoading, 
     isCreatingInvitation, 
     createInvitation, 
-    sendInvitation,
-    deleteInvitation 
-  } = useInvitedContacts();
+    resendInvitation,
+    revokeInvitation 
+  } = useUnifiedClientInvitations();
 
   const handleCreate = async () => {
     if (!email.trim()) {
@@ -35,6 +35,7 @@ export const InviteContact: React.FC = () => {
       await createInvitation({ 
         email: email.trim(), 
         name: name.trim() || undefined,
+        invitationType: 'email',
         customMessage: customMessage.trim() || undefined
       });
       setEmail('');
@@ -48,18 +49,18 @@ export const InviteContact: React.FC = () => {
 
   const handleSendInvitation = async (invitationId: string) => {
     try {
-      await sendInvitation(invitationId, 'email');
+      await resendInvitation({ invitationId, type: 'email' });
     } catch (error) {
       console.error('Error sending invitation:', error);
     }
   };
 
   const handleDeleteInvitation = async (invitationId: string) => {
-    if (confirm('Are you sure you want to delete this invitation?')) {
+    if (confirm('Are you sure you want to cancel this invitation?')) {
       try {
-        await deleteInvitation(invitationId);
+        await revokeInvitation(invitationId);
       } catch (error) {
-        console.error('Error deleting invitation:', error);
+        console.error('Error cancelling invitation:', error);
       }
     }
   };

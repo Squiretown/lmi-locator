@@ -5,7 +5,7 @@ import { UserPlus, Mail, Calculator, Search, Users, Calendar } from 'lucide-reac
 import { CreateClientDialog } from '@/components/clients/CreateClientDialog';
 import { InviteClientDialog } from '@/components/clients/InviteClientDialog';
 import { useRealtorClientManagement } from '@/hooks/useRealtorClientManagement';
-import { useClientInvitations } from '@/hooks/useClientInvitations';
+import { useUnifiedClientInvitations } from '@/hooks/useUnifiedClientInvitations';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -18,7 +18,7 @@ export const QuickActions: React.FC = () => {
   const [calculatorResult, setCalculatorResult] = useState<string>('');
 
   const { createClient, isCreating } = useRealtorClientManagement();
-  const { createInvitation, isCreatingInvitation } = useClientInvitations();
+  const { createInvitation, isCreatingInvitation } = useUnifiedClientInvitations();
 
   const handleCreateClient = async (data: any) => {
     try {

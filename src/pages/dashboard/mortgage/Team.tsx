@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Users, UserPlus, Mail, Phone, Building, AlertCircle, RefreshCw } from "lucide-react";
 import { useMortgageTeamStats } from '@/hooks/useMortgageTeamStats';
 import { useMortgageTeamManagement } from '@/hooks/useMortgageTeamManagement';
-import { useProfessionalInvitations } from '@/hooks/useProfessionalInvitations';
+import { useUnifiedInvitationSystem } from '@/hooks/useUnifiedInvitationSystem';
 import { InviteProfessionalDialog } from '@/components/teams/InviteProfessionalDialog';
 
 
@@ -23,14 +23,22 @@ const MortgageTeam: React.FC = () => {
   } = useMortgageTeamManagement();
   
   const {
-    invitations: pendingInvitations, // Only pending/sent invitations
-    acceptedInvitations, // Accepted invitations for debugging
+    invitations: allInvitations,
     stats: professionalStats,
-    resendInvitation,
-    revokeInvitation,
-    isResendingInvitation,
-    isRevokingInvitation,
-  } = useProfessionalInvitations();
+    manageInvitation,
+    isManaging
+  } = useUnifiedInvitationSystem();
+
+  // Filter for professional invitations only
+  const professionalInvitations = allInvitations.filter(inv => 
+    inv.user_type?.toLowerCase() === 'professional'
+  );
+  const pendingInvitations = professionalInvitations.filter(inv => 
+    inv.status === 'pending' || inv.status === 'sent'
+  );
+  const acceptedInvitations = professionalInvitations.filter(inv => 
+    inv.status === 'accepted'
+  );
 
   const handleContactProfessional = async (professionalId: string, type: 'email' | 'sms') => {
     try {
@@ -287,13 +295,13 @@ const MortgageTeam: React.FC = () => {
                   <div className="flex items-center space-x-4">
                     <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center">
                       <span className="text-orange-600 font-semibold">
-                        {invitation.client_name?.split(' ').map(n => n[0]).join('').toUpperCase() || 'P'}
+                        {invitation.first_name?.charAt(0)?.toUpperCase() || invitation.email.charAt(0).toUpperCase()}
                       </span>
                     </div>
                     <div>
-                      <h4 className="font-semibold">{invitation.client_name}</h4>
+                      <h4 className="font-semibold">{invitation.first_name && invitation.last_name ? `${invitation.first_name} ${invitation.last_name}` : invitation.email}</h4>
                       <p className="text-sm text-muted-foreground">
-                        {invitation.client_email} • {invitation.target_professional_role}
+                        {invitation.email} • {invitation.professional_type || 'Professional'}
                       </p>
                       <p className="text-xs text-muted-foreground">
                         Sent {new Date(invitation.created_at).toLocaleDateString()}
@@ -307,18 +315,24 @@ const MortgageTeam: React.FC = () => {
                     <Button 
                       variant="outline" 
                       size="sm"
-                      onClick={() => resendInvitation({ invitationId: invitation.id })}
-                      disabled={isResendingInvitation}
+                      onClick={() => manageInvitation({ 
+                        invitationId: invitation.id, 
+                        action: 'resend' 
+                      })}
+                      disabled={isManaging}
                     >
                       Resend
                     </Button>
                     <Button 
                       variant="outline" 
                       size="sm" 
-                      onClick={() => revokeInvitation(invitation.id)}
-                      disabled={isRevokingInvitation}
+                      onClick={() => manageInvitation({ 
+                        invitationId: invitation.id, 
+                        action: 'cancel' 
+                      })}
+                      disabled={isManaging}
                     >
-                      Revoke
+                      Cancel
                     </Button>
                   </div>
                 </div>

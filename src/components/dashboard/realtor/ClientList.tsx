@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ListFilter, Plus, Search, Users, Mail } from 'lucide-react';
 import { useRealtorClientManagement } from '@/hooks/useRealtorClientManagement';
-import { useClientInvitations } from '@/hooks/useClientInvitations';
+import { useUnifiedClientInvitations } from '@/hooks/useUnifiedClientInvitations';
 import { ClientTable } from '@/components/clients/ClientTable';
 import { CreateClientDialog } from '@/components/clients/CreateClientDialog';
 import { ClientDetailsDialog } from '@/components/clients/ClientDetailsDialog';
@@ -25,7 +25,7 @@ export const ClientList = () => {
     refetch,
   } = useRealtorClientManagement();
 
-  const { stats } = useClientInvitations();
+  const { stats } = useUnifiedClientInvitations();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [showCreateDialog, setShowCreateDialog] = useState(false);

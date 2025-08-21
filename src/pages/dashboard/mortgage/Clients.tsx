@@ -7,7 +7,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Users, UserPlus, Mail, Phone, Calendar, ChevronDown, Search, AlertCircle } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useClientManagement } from '@/hooks/useClientManagement';
-import { useClientInvitations } from '@/hooks/useClientInvitations';
+import { useUnifiedClientInvitations } from '@/hooks/useUnifiedClientInvitations';
 import { ClientTable } from '@/components/clients/ClientTable';
 import { CreateClientDialog } from '@/components/clients/CreateClientDialog';
 import { EditClientDialog } from '@/components/clients/EditClientDialog';
@@ -40,7 +40,7 @@ const MortgageClients: React.FC = () => {
     stats,
     createInvitation,
     isCreatingInvitation,
-  } = useClientInvitations();
+  } = useUnifiedClientInvitations();
 
   // Filter clients based on search query
   const filteredClients = clients.filter(client => {

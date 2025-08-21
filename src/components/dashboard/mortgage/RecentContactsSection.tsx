@@ -3,11 +3,11 @@ import React from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { useInvitedContacts } from '@/hooks/useInvitedContacts';
+import { useUnifiedClientInvitations } from '@/hooks/useUnifiedClientInvitations';
 import { formatDistanceToNow } from 'date-fns';
 
 export const RecentContactsSection: React.FC = () => {
-  const { contacts, isLoading } = useInvitedContacts();
+  const { invitations: contacts, isLoading } = useUnifiedClientInvitations();
 
   if (isLoading) {
     return (
