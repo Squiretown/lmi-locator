@@ -4,7 +4,7 @@ import { Resend } from "npm:resend@2.0.0";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-supabase-authorization, x-client-info, apikey, content-type',
 };
 
 interface SendInvitationRequest {
@@ -47,9 +47,13 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    // Get authenticated user
-    const authHeader = req.headers.get('Authorization');
+    // Get authenticated user - check both possible auth headers
+    const authHeader = req.headers.get('Authorization') || req.headers.get('X-Supabase-Authorization');
+    console.log('Auth check - Authorization:', req.headers.get('Authorization') ? 'present' : 'missing');
+    console.log('Auth check - X-Supabase-Authorization:', req.headers.get('X-Supabase-Authorization') ? 'present' : 'missing');
+    
     if (!authHeader) {
+      console.error('No authorization header found in request');
       return new Response(
         JSON.stringify({ error: 'Authorization header required' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
