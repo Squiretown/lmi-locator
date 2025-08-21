@@ -80,31 +80,41 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
+    // Get the user's professional profile to verify ownership
+    const { data: professional, error: profError } = await supabaseClient
+      .from('professionals')
+      .select('id')
+      .eq('user_id', user.id)
+      .single();
+
+    if (profError || !professional) {
+      console.error(`Professional profile not found for user ${user.id}:`, profError);
+      return new Response(
+        JSON.stringify({ error: 'Professional profile not found' }),
+        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     // Find the invitation and verify ownership
     const { data: invitation, error: inviteError } = await supabaseClient
       .from('client_invitations')
       .select('*')
       .eq('id', invitationId)
+      .eq('professional_id', professional.id) // Verify ownership
       .single();
 
     if (inviteError || !invitation) {
-      console.error(`Invitation ${invitationId} not found for user ${user.id}:`, inviteError);
+      console.error(`Invitation ${invitationId} not found for professional ${professional.id}:`, inviteError);
       return new Response(
-        JSON.stringify({ error: 'Invitation not found' }),
+        JSON.stringify({ error: 'Invitation not found or access denied' }),
         { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Log identity verification for debugging
-    console.log(`Identity verification: User ${user.id} managing invitation ${invitationId} (professional_id: ${invitation.professional_id})`);
-    
-    // Additional verification logging
-    if (invitation.professional_id !== user.id) {
-      console.warn(`User ${user.id} attempting to manage invitation ${invitationId} belonging to professional ${invitation.professional_id}`);
-    }
+    console.log(`Identity verified: Professional ${professional.id} managing invitation ${invitationId}`);
 
     if (action === 'revoke') {
-      console.log(`Revoking invitation ${invitationId} by user ${user.id}`);
+      console.log(`Revoking invitation ${invitationId} by professional ${professional.id}`);
       
       // Revoke the invitation
       const { error: updateError } = await supabaseClient
@@ -113,7 +123,8 @@ const handler = async (req: Request): Promise<Response> => {
           status: 'revoked',
           updated_at: new Date().toISOString()
         })
-        .eq('id', invitationId);
+        .eq('id', invitationId)
+        .eq('professional_id', professional.id); // Double-check ownership
 
       if (updateError) {
         console.error(`Failed to revoke invitation ${invitationId}:`, updateError);
@@ -134,7 +145,7 @@ const handler = async (req: Request): Promise<Response> => {
       );
 
     } else if (action === 'resend') {
-      console.log(`Resending invitation ${invitationId} by user ${user.id}, type: ${invitationType}`);
+      console.log(`Resending invitation ${invitationId} by professional ${professional.id}, type: ${invitationType}`);
       
       // Check if invitation is still valid for resending
       if (invitation.status === 'accepted' || invitation.status === 'revoked') {
