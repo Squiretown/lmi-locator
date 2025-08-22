@@ -101,12 +101,18 @@ export const AcceptInvitationPage: React.FC = () => {
     try {
       setAccepting(true);
       
+      // Get current session for X-Supabase-Authorization header
+      const { data: { session } } = await supabase.auth.getSession();
+      
       const { data, error } = await supabase.functions.invoke('accept-user-invitation', {
         body: {
           token,
           email: user.email,
-          password: 'existing-user', // Placeholder since user already exists
-        }
+          // No password required for existing users
+        },
+        headers: session?.access_token ? {
+          'X-Supabase-Authorization': session.access_token
+        } : {}
       });
 
       if (error) throw error;
@@ -179,7 +185,7 @@ export const AcceptInvitationPage: React.FC = () => {
       console.error('Error accepting invitation:', err);
       const errorMessage = err instanceof Error ? err.message : 'Failed to accept invitation';
       
-      if (errorMessage.includes('account with this email already exists')) {
+      if (errorMessage.includes('account with this email already exists') || errorMessage.includes('shouldSignIn')) {
         setShowSignIn(true);
         toast.error('An account with this email already exists. Please sign in instead.');
       } else {
