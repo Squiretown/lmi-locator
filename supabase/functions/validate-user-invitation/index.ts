@@ -24,9 +24,16 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
+    // Use service role for updating invitation status (when marking as expired)
+    // But anon key is fine for read operations
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? ''
+    );
+
+    const supabaseServiceClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
     const requestData: ValidateInvitationRequest = await req.json();
@@ -88,8 +95,8 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Check if invitation has expired
     if (new Date(invitation.expires_at) < new Date()) {
-      // Automatically mark as expired
-      await supabaseClient
+      // Automatically mark as expired using service role client
+      await supabaseServiceClient
         .from('user_invitations')
         .update({ status: 'expired' })
         .eq('id', invitation.id);
@@ -140,8 +147,8 @@ const handler = async (req: Request): Promise<Response> => {
       }
     };
 
-    // Log validation attempt
-    await supabaseClient.rpc('log_invitation_action', {
+    // Log validation attempt using service client
+    await supabaseServiceClient.rpc('log_invitation_action', {
       p_invitation_id: invitation.id,
       p_action: 'validated',
       p_details: {

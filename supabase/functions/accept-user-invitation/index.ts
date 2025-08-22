@@ -31,10 +31,13 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
+    // Use service role for admin operations and auth management
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? ''
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
+    
+    console.log('Using service role client for admin operations');
 
     const requestData: AcceptInvitationRequest = await req.json();
     
@@ -93,13 +96,120 @@ const handler = async (req: Request): Promise<Response> => {
     const { data: existingUser } = await supabaseClient.auth.admin.getUserByEmail(requestData.email);
     
     if (existingUser.user) {
-      // User exists - they should sign in instead
+      // User exists - handle existing user acceptance
+      console.log('User already exists, handling existing user acceptance');
+      
+      // Create user profile for existing user
+      const profileData = {
+        user_id: existingUser.user.id,
+        user_type: invitation.user_type,
+        first_name: requestData.userData?.firstName || invitation.first_name,
+        last_name: requestData.userData?.lastName || invitation.last_name,
+        email: requestData.email,
+        phone: requestData.userData?.phone || invitation.phone,
+      };
+
+      // Check if profile already exists
+      const { data: existingProfile } = await supabaseClient
+        .from('user_profiles')
+        .select('user_id')
+        .eq('user_id', existingUser.user.id)
+        .single();
+
+      if (!existingProfile) {
+        const { error: profileError } = await supabaseClient
+          .from('user_profiles')
+          .insert(profileData);
+
+        if (profileError) {
+          console.error('Failed to create user profile for existing user:', profileError);
+        }
+      }
+
+      // Create type-specific profiles for existing user
+      if (invitation.user_type === 'client') {
+        const { data: existingClient } = await supabaseClient
+          .from('client_profiles')
+          .select('id')
+          .eq('id', existingUser.user.id)
+          .single();
+
+        if (!existingClient) {
+          const { error: clientError } = await supabaseClient
+            .from('client_profiles')
+            .insert({
+              id: existingUser.user.id,
+              professional_id: invitation.invited_by_user_id,
+              first_name: profileData.first_name,
+              last_name: profileData.last_name,
+              email: profileData.email,
+              phone: profileData.phone,
+            });
+
+          if (clientError) {
+            console.error('Failed to create client profile for existing user:', clientError);
+          }
+        }
+      } else if (invitation.user_type === 'realtor' || invitation.user_type === 'mortgage_professional') {
+        const { data: existingProfessional } = await supabaseClient
+          .from('professionals')
+          .select('id')
+          .eq('id', existingUser.user.id)
+          .single();
+
+        if (!existingProfessional) {
+          const { error: professionalError } = await supabaseClient
+            .from('professionals')
+            .insert({
+              id: existingUser.user.id,
+              user_id: existingUser.user.id,
+              type: invitation.professional_type,
+              name: `${profileData.first_name || ''} ${profileData.last_name || ''}`.trim(),
+              company: invitation.company_name,
+              license_number: invitation.license_number,
+              phone: profileData.phone,
+              status: invitation.requires_approval ? 'pending' : 'active',
+            });
+
+          if (professionalError) {
+            console.error('Failed to create professional profile for existing user:', professionalError);
+          }
+        }
+      }
+
+      // Mark invitation as accepted
+      await supabaseClient
+        .from('user_invitations')
+        .update({
+          status: 'accepted',
+          accepted_at: new Date().toISOString()
+        })
+        .eq('id', invitation.id);
+
+      // Log acceptance
+      await supabaseClient.rpc('log_invitation_action', {
+        p_invitation_id: invitation.id,
+        p_action: 'accepted',
+        p_details: {
+          user_id: existingUser.user.id,
+          email: requestData.email,
+          user_type: invitation.user_type,
+          existing_user: true
+        },
+        p_ip_address: req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip'),
+        p_user_agent: req.headers.get('user-agent'),
+      });
+
       return new Response(
-        JSON.stringify({ 
-          error: 'An account with this email already exists. Please sign in instead.',
-          shouldSignIn: true 
+        JSON.stringify({
+          success: true,
+          userId: existingUser.user.id,
+          userType: invitation.user_type,
+          email: requestData.email,
+          existingUser: true,
+          message: 'Invitation accepted successfully for existing user'
         }),
-        { status: 409, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 

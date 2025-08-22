@@ -89,15 +89,15 @@ export function useUnifiedClientInvitations() {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error('No active session');
 
-      // Check for existing invitation
-      const { data: existing } = await supabase
-        .from('user_invitations')
-        .select('id, status')
-        .eq('email', invitationData.email.toLowerCase())
-        .eq('invited_by_user_id', session.user.id)
-        .eq('user_type', 'client')
-        .in('status', ['pending', 'sent'])
-        .maybeSingle();
+    // Update the duplicate checking rule in useUnifiedClientInvitations to match backend
+    const { data: existing } = await supabase
+      .from('user_invitations')
+      .select('id, status')
+      .eq('email', invitationData.email.toLowerCase())
+      .eq('invited_by_user_id', session.user.id)
+      .eq('user_type', 'client')
+      .in('status', ['pending', 'sent'])
+      .maybeSingle();
 
       if (existing) {
         throw new Error('An active invitation already exists for this email address');

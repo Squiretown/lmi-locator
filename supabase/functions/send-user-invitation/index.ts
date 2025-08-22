@@ -99,18 +99,20 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    // Check for existing pending invitation
+    // Check for existing pending invitations for the same email and user type
+    // Use consistent duplicate checking rule: one pending/sent invitation per email+user_type+inviter
     const { data: existingInvitation } = await supabaseClient
       .from('user_invitations')
       .select('id, status')
-      .eq('email', requestData.email)
+      .eq('email', requestData.email.toLowerCase())
       .eq('user_type', requestData.userType)
-      .eq('status', 'pending')
-      .single();
+      .eq('invited_by_user_id', user.id)
+      .in('status', ['pending', 'sent'])
+      .maybeSingle();
 
     if (existingInvitation) {
       return new Response(
-        JSON.stringify({ error: 'A pending invitation already exists for this email and user type' }),
+        JSON.stringify({ error: 'An active invitation already exists for this email and user type' }),
         { status: 409, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -178,7 +180,40 @@ const handler = async (req: Request): Promise<Response> => {
 
     if (requestData.sendVia === 'email' || requestData.sendVia === 'both') {
       try {
-        const acceptUrl = `${req.headers.get('origin') || 'https://app.example.com'}/accept-invitation/${invitation.invite_token}`;
+        // Generate robust accept URL that works across environments
+        const getAcceptUrl = () => {
+          // Try multiple fallback approaches for base URL
+          const origin = req.headers.get('origin');
+          const referer = req.headers.get('referer');
+          const siteUrl = Deno.env.get('SITE_URL');
+          const supabaseUrl = Deno.env.get('SUPABASE_URL');
+          
+          // Use explicit SITE_URL if available
+          if (siteUrl) return `${siteUrl}/accept-invitation/${invitation.invite_token}`;
+          
+          // Use origin header from request
+          if (origin) return `${origin}/accept-invitation/${invitation.invite_token}`;
+          
+          // Extract from referer header
+          if (referer) {
+            const url = new URL(referer);
+            return `${url.origin}/accept-invitation/${invitation.invite_token}`;
+          }
+          
+          // Convert Supabase URL to app URL (Lovable pattern)
+          if (supabaseUrl?.includes('supabase.co')) {
+            const projectId = supabaseUrl.match(/https:\/\/([^.]+)\.supabase\.co/)?.[1];
+            if (projectId) {
+              return `https://${projectId}.lovable.app/accept-invitation/${invitation.invite_token}`;
+            }
+          }
+          
+          // Final fallback
+          return `https://llhofjbijjxkfezidxyi.lovable.app/accept-invitation/${invitation.invite_token}`;
+        };
+        
+        const acceptUrl = getAcceptUrl();
+        console.log('Generated acceptUrl:', acceptUrl);
         
         const emailSubject = `You've been invited to join as a ${requestData.userType}`;
         const emailHtml = `
