@@ -103,12 +103,6 @@ verify_jwt = false
 [functions.sign-out-all-users]
 verify_jwt = true
 
-[functions.send-invitation]
-verify_jwt = true
-
-[functions.accept-invitation]
-verify_jwt = false
-
 [functions.validate-user-invitation]
 verify_jwt = false
 

@@ -28,16 +28,12 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    // Get authenticated user - prioritize user JWT over anonymous key
-    const authHeader = req.headers.get('X-Supabase-Authorization') || req.headers.get('Authorization');
-    const userJWT = req.headers.get('X-Supabase-Authorization');
-    const anonKey = req.headers.get('Authorization');
+    // Get authenticated user - prioritize user JWT over anonymous key  
+    const userJWT = req.headers.get('X-Supabase-Authorization') || req.headers.get('Authorization');
     
-    console.log('Auth check - Authorization:', anonKey ? 'present' : 'missing');
-    console.log('Auth check - X-Supabase-Authorization:', userJWT ? 'present' : 'missing');
-    console.log('Using header:', userJWT ? 'X-Supabase-Authorization (user JWT)' : 'Authorization (anon key)');
+    console.log('Auth check - userJWT header:', userJWT ? 'present' : 'missing');
     
-    if (!authHeader) {
+    if (!userJWT) {
       console.error('No authorization header found in request');
       return new Response(
         JSON.stringify({ error: 'Authorization header required' }),
@@ -45,10 +41,14 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
+    // Normalize header - ensure Bearer prefix
+    const normalizedJWT = userJWT.startsWith('Bearer ') ? userJWT : `Bearer ${userJWT}`;
+    console.log('Using normalized JWT for auth');
+
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      { global: { headers: { Authorization: authHeader } } }
+      { global: { headers: { Authorization: normalizedJWT } } }
     );
 
     const { data: { user }, error: userError } = await supabaseClient.auth.getUser();

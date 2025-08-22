@@ -47,17 +47,21 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    // Check for existing authenticated user via X-Supabase-Authorization header
-    const userJWT = req.headers.get('X-Supabase-Authorization');
+    // Check for existing authenticated user via headers
+    const userJWT = req.headers.get('X-Supabase-Authorization') || req.headers.get('Authorization');
     let currentUser = null;
     
     if (userJWT) {
+      // Normalize header - ensure Bearer prefix (but avoid double prefixing)
+      const normalizedJWT = userJWT.startsWith('Bearer ') ? userJWT : `Bearer ${userJWT}`;
+      console.log('Checking authentication with normalized JWT');
+      
       // Create a client with user JWT to check if user is authenticated
       const userClient = createClient(
         Deno.env.get('SUPABASE_URL') ?? '',
         Deno.env.get('SUPABASE_ANON_KEY') ?? '',
         {
-          global: { headers: { Authorization: `Bearer ${userJWT}` } }
+          global: { headers: { Authorization: normalizedJWT } }
         }
       );
       
@@ -65,6 +69,8 @@ const handler = async (req: Request): Promise<Response> => {
       if (!userError && user) {
         currentUser = user;
         console.log('Authenticated user found via JWT:', user.email);
+      } else if (userError) {
+        console.log('JWT validation error:', userError.message);
       }
     }
 
