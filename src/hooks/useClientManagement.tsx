@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -161,37 +162,26 @@ export function useClientManagement() {
       // Send invitation if requested
       if (clientData.sendInvitation && clientData.email) {
         try {
-          const { data: { session } } = await supabase.auth.getSession();
-          if (!session) throw new Error('No active session');
+          const { error: invitationError } = await supabase
+            .from('client_invitations')
+            .insert({
+              professional_id: professional.id, // Use professional ID
+              client_id: client.id,
+              client_name: `${clientData.first_name} ${clientData.last_name}`,
+              client_email: clientData.email,
+              client_phone: clientData.phone,
+              invitation_type: clientData.invitationType || 'email',
+              template_type: clientData.templateType || 'default',
+              custom_message: clientData.customMessage,
+              status: 'pending'
+            });
 
-          const { error: inviteError } = await supabase.functions.invoke('send-invitation', {
-            body: {
-              target: 'client',
-              channel: clientData.invitationType || 'email',
-              recipient: {
-                email: clientData.email,
-                name: `${clientData.first_name} ${clientData.last_name}`,
-                phone: clientData.phone
-              },
-              context: {
-                templateType: clientData.templateType || 'default',
-                customMessage: clientData.customMessage
-              }
-            },
-            headers: {
-              Authorization: `Bearer ${session.access_token}`,
-              'Content-Type': 'application/json'
-            }
-          });
-
-          if (inviteError) {
-            console.error('Failed to send invitation:', inviteError);
+          if (invitationError) {
+            console.error('Failed to create invitation:', invitationError);
             toast.error('Client created but invitation failed to send');
-          } else {
-            toast.success('Client created and invitation sent successfully');
           }
         } catch (error) {
-          console.error('Error sending invitation:', error);
+          console.error('Invitation error:', error);
           toast.error('Client created but invitation failed to send');
         }
       }
