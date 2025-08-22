@@ -12,7 +12,6 @@ import ProtectedRoute from "./components/auth/ProtectedRoute";
 import { EdgeFunctionTest } from "./components/EdgeFunctionTest";
 import { ClientRegistration } from "./pages/ClientRegistration";
 import { RegistrationSuccess } from "./pages/RegistrationSuccess";
-import AcceptInvitation from "./pages/AcceptInvitation";
 import { AcceptInvitationPage } from "./components/invitations/AcceptInvitationPage";
 import UnifiedInvitationDemo from "./pages/UnifiedInvitationDemo";
 
@@ -89,8 +88,6 @@ const App = () => (
             <Route path="/client-login" element={<ClientLoginPage />} />
             <Route path="/client-registration" element={<ClientRegistration />} />
             <Route path="/registration-success" element={<RegistrationSuccess />} />
-            <Route path="/accept-invitation/:code" element={<AcceptInvitation />} />
-            <Route path="/accept-invitation/:token" element={<AcceptInvitationPage />} />
             <Route path="/invitation-acceptance/:token" element={<AcceptInvitationPage />} />
             <Route path="/unified-invitation-demo" element={<UnifiedInvitationDemo />} />
             <Route path="/product" element={<ProductPage />} />

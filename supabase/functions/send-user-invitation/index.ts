@@ -189,27 +189,27 @@ const handler = async (req: Request): Promise<Response> => {
           const supabaseUrl = Deno.env.get('SUPABASE_URL');
           
           // Use explicit SITE_URL if available
-          if (siteUrl) return `${siteUrl}/accept-invitation/${invitation.invite_token}`;
+          if (siteUrl) return `${siteUrl}/invitation-acceptance/${invitation.invite_token}`;
           
           // Use origin header from request
-          if (origin) return `${origin}/accept-invitation/${invitation.invite_token}`;
+          if (origin) return `${origin}/invitation-acceptance/${invitation.invite_token}`;
           
           // Extract from referer header
           if (referer) {
             const url = new URL(referer);
-            return `${url.origin}/accept-invitation/${invitation.invite_token}`;
+            return `${url.origin}/invitation-acceptance/${invitation.invite_token}`;
           }
           
           // Convert Supabase URL to app URL (Lovable pattern)
           if (supabaseUrl?.includes('supabase.co')) {
             const projectId = supabaseUrl.match(/https:\/\/([^.]+)\.supabase\.co/)?.[1];
             if (projectId) {
-              return `https://${projectId}.lovable.app/accept-invitation/${invitation.invite_token}`;
+              return `https://${projectId}.lovable.app/invitation-acceptance/${invitation.invite_token}`;
             }
           }
           
           // Final fallback
-          return `https://llhofjbijjxkfezidxyi.lovable.app/accept-invitation/${invitation.invite_token}`;
+          return `https://llhofjbijjxkfezidxyi.lovable.app/invitation-acceptance/${invitation.invite_token}`;
         };
         
         const acceptUrl = getAcceptUrl();

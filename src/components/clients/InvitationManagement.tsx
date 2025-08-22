@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { CopyInvitationCode } from '@/components/teams/CopyInvitationCode';
-import { useUnifiedClientInvitations } from '@/hooks/useUnifiedClientInvitations';
+import { useUnifiedInvitationSystem } from '@/hooks/useUnifiedInvitationSystem';
 import { InviteClientDialog } from './InviteClientDialog';
 import { 
   Users, 
@@ -38,28 +38,34 @@ export const InvitationManagement: React.FC = () => {
   const [showArchived, setShowArchived] = useState(false);
   const {
     invitations,
-    isLoading,
+    isLoadingInvitations: isLoading,
     stats,
-    createInvitation,
-    isCreatingInvitation,
     sendInvitation,
-    isSendingInvitation,
-    resendInvitation,
-    isResendingInvitation,
-    revokeInvitation,
-    isRevokingInvitation,
-  } = useUnifiedClientInvitations();
+    isSending: isCreatingInvitation,
+    manageInvitation,
+    isManaging: isResendingInvitation,
+  } = useUnifiedInvitationSystem();
+
+  // Adapt unified system API to component needs
+  const createInvitation = sendInvitation;
+  const resendInvitation = (params: { invitationId: string; type?: string }) => 
+    manageInvitation({ invitationId: params.invitationId, action: 'resend', sendVia: params.type as any });
+  const revokeInvitation = (invitationId: string) => 
+    manageInvitation({ invitationId, action: 'cancel' });
+  const isSendingInvitation = isCreatingInvitation;
+  const isRevokingInvitation = isResendingInvitation;
 
   // Filter invitations based on search query and archive setting
   const filteredInvitations = invitations.filter(invitation => {
     const searchLower = searchQuery.toLowerCase();
     const matchesSearch = (
-      invitation.client_name?.toLowerCase().includes(searchLower) ||
-      invitation.client_email.toLowerCase().includes(searchLower) ||
-      invitation.invitation_code.toLowerCase().includes(searchLower)
+      invitation.first_name?.toLowerCase().includes(searchLower) ||
+      invitation.last_name?.toLowerCase().includes(searchLower) ||
+      invitation.email.toLowerCase().includes(searchLower) ||
+      invitation.invite_code.toLowerCase().includes(searchLower)
     );
 
-    const isArchived = ['revoked', 'expired'].includes(invitation.status);
+    const isArchived = ['cancelled', 'expired'].includes(invitation.status);
     
     if (showArchived) {
       return matchesSearch; // Show all when archive toggle is on
@@ -78,8 +84,8 @@ export const InvitationManagement: React.FC = () => {
         return <Badge variant="outline" className="text-green-700 border-green-300 bg-green-50"><CheckCircle className="h-3 w-3 mr-1" />Accepted</Badge>;
       case 'expired':
         return <Badge variant="outline" className="text-gray-700 border-gray-300 bg-gray-50"><XCircle className="h-3 w-3 mr-1" />Expired</Badge>;
-      case 'revoked':
-        return <Badge variant="outline" className="text-red-700 border-red-300 bg-red-50"><XCircle className="h-3 w-3 mr-1" />Revoked</Badge>;
+      case 'cancelled':
+        return <Badge variant="outline" className="text-red-700 border-red-300 bg-red-50"><XCircle className="h-3 w-3 mr-1" />Cancelled</Badge>;
       default:
         return <Badge variant="outline">{status}</Badge>;
     }
@@ -94,7 +100,7 @@ export const InvitationManagement: React.FC = () => {
       case 'both':
         return <Badge variant="secondary" className="text-xs"><Mail className="h-3 w-3 mr-1" /><MessageSquare className="h-3 w-3" />Both</Badge>;
       default:
-        return <Badge variant="secondary" className="text-xs">{type}</Badge>;
+        return <Badge variant="secondary" className="text-xs">{type || 'Email'}</Badge>;
     }
   };
 
@@ -103,13 +109,14 @@ export const InvitationManagement: React.FC = () => {
     toast.success('Invitation code copied to clipboard');
   };
 
-  const handleSendInvitation = async (invitationId: string, type: 'email' | 'sms' | 'both') => {
-    try {
-      await sendInvitation({ invitationId, type });
-    } catch (error) {
-      // Error handling is done in the hook
-    }
-  };
+  // Remove the broken handleSendInvitation function since unified system sends automatically
+  // const handleSendInvitation = async (invitationId: string, type: 'email' | 'sms' | 'both') => {
+  //   try {
+  //     await sendInvitation({ invitationId, type });
+  //   } catch (error) {
+  //     // Error handling is done in the hook
+  //   }
+  // };
 
   const handleResendInvitation = async (invitationId: string, type: 'email' | 'sms' | 'both' = 'email') => {
     try {
@@ -250,37 +257,41 @@ export const InvitationManagement: React.FC = () => {
                   {filteredInvitations.map((invitation) => (
                     <tr key={invitation.id} className="border-t">
                       <td className="p-3">
-                        <div>
-                          <div className="font-medium">
-                            {invitation.client_name || 'No name provided'}
-                          </div>
-                          <div className="text-sm text-muted-foreground">
-                            {invitation.client_email}
-                          </div>
-                          {invitation.client_phone && (
-                            <div className="text-xs text-muted-foreground">
-                              {invitation.client_phone}
-                            </div>
-                          )}
-                        </div>
+                         <div>
+                           <div className="font-medium">
+                             {invitation.first_name && invitation.last_name ? 
+                               `${invitation.first_name} ${invitation.last_name}` : 
+                               invitation.first_name || 
+                               invitation.last_name || 
+                               'No name provided'}
+                           </div>
+                           <div className="text-sm text-muted-foreground">
+                             {invitation.email}
+                           </div>
+                           {invitation.phone && (
+                             <div className="text-xs text-muted-foreground">
+                               {invitation.phone}
+                             </div>
+                           )}
+                         </div>
                       </td>
                       <td className="p-3">
-                        <div className="flex items-center gap-2">
-                          <code className="text-sm bg-muted px-2 py-1 rounded">
-                            {invitation.invitation_code}
-                          </code>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => copyInvitationCode(invitation.invitation_code)}
-                          >
-                            <Copy className="h-3 w-3" />
-                          </Button>
-                        </div>
+                         <div className="flex items-center gap-2">
+                           <code className="text-sm bg-muted px-2 py-1 rounded">
+                             {invitation.invite_code}
+                           </code>
+                           <Button
+                             variant="ghost"
+                             size="sm"
+                             onClick={() => copyInvitationCode(invitation.invite_code)}
+                           >
+                             <Copy className="h-3 w-3" />
+                           </Button>
+                         </div>
                       </td>
-                      <td className="p-3">
-                        {getInvitationTypeBadge(invitation.invitation_type)}
-                      </td>
+                       <td className="p-3">
+                         {getInvitationTypeBadge(invitation.send_via)}
+                       </td>
                       <td className="p-3">
                         {getStatusBadge(invitation.status)}
                       </td>
@@ -307,42 +318,33 @@ export const InvitationManagement: React.FC = () => {
                               <MoreHorizontal className="h-4 w-4" />
                             </Button>
                           </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            {invitation.status === 'pending' && (
-                              <DropdownMenuItem
-                                onClick={() => handleSendInvitation(invitation.id, invitation.invitation_type)}
-                                disabled={isSendingInvitation}
-                              >
-                                <Send className="h-4 w-4 mr-2" />
-                                Send Invitation
-                              </DropdownMenuItem>
-                            )}
-                            {invitation.status === 'sent' && (
-                              <DropdownMenuItem
-                                onClick={() => handleResendInvitation(invitation.id, invitation.invitation_type)}
-                                disabled={isResendingInvitation}
-                              >
-                                <RotateCcw className="h-4 w-4 mr-2" />
-                                Resend
-                              </DropdownMenuItem>
-                            )}
-                            <DropdownMenuItem
-                              onClick={() => copyInvitationCode(invitation.invitation_code)}
-                            >
-                              <Copy className="h-4 w-4 mr-2" />
-                              Copy Code
-                            </DropdownMenuItem>
-                            {['pending', 'sent'].includes(invitation.status) && (
-                              <DropdownMenuItem
-                                onClick={() => revokeInvitation(invitation.id)}
-                                disabled={isRevokingInvitation}
-                                className="text-destructive"
-                              >
-                                <XCircle className="h-4 w-4 mr-2" />
-                                Revoke
-                              </DropdownMenuItem>
-                            )}
-                          </DropdownMenuContent>
+                           <DropdownMenuContent align="end">
+                             {invitation.status === 'sent' && (
+                               <DropdownMenuItem
+                                 onClick={() => handleResendInvitation(invitation.id, invitation.send_via)}
+                                 disabled={isResendingInvitation}
+                               >
+                                 <RotateCcw className="h-4 w-4 mr-2" />
+                                 Resend
+                               </DropdownMenuItem>
+                             )}
+                             <DropdownMenuItem
+                               onClick={() => copyInvitationCode(invitation.invite_code)}
+                             >
+                               <Copy className="h-4 w-4 mr-2" />
+                               Copy Code
+                             </DropdownMenuItem>
+                             {['pending', 'sent'].includes(invitation.status) && (
+                               <DropdownMenuItem
+                                 onClick={() => revokeInvitation(invitation.id)}
+                                 disabled={isRevokingInvitation}
+                                 className="text-destructive"
+                               >
+                                 <XCircle className="h-4 w-4 mr-2" />
+                                 Revoke
+                               </DropdownMenuItem>
+                             )}
+                           </DropdownMenuContent>
                         </DropdownMenu>
                       </td>
                     </tr>
@@ -358,7 +360,20 @@ export const InvitationManagement: React.FC = () => {
       <InviteClientDialog
         open={showInviteDialog}
         onOpenChange={setShowInviteDialog}
-        onSubmit={createInvitation}
+        onSubmit={(data) => {
+          // Adapt legacy dialog format to unified system format
+          return createInvitation({
+            email: data.email,
+            userType: 'client',
+            firstName: data.name?.split(' ')[0],
+            lastName: data.name?.split(' ').slice(1).join(' ') || undefined,
+            phone: data.phone,
+            sendVia: data.invitationType,
+            customMessage: data.customMessage,
+            propertyInterest: 'buying', // Default value required by unified system
+            preferredContact: 'email',
+          });
+        }}
         isLoading={isCreatingInvitation}
       />
     </div>

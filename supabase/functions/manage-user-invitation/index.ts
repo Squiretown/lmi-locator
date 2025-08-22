@@ -176,7 +176,7 @@ const handler = async (req: Request): Promise<Response> => {
 
       if (sendVia === 'email' || sendVia === 'both') {
         try {
-          const acceptUrl = `${req.headers.get('origin') || 'https://app.example.com'}/accept-invitation/${updatedInvitation.invite_token}`;
+          const acceptUrl = `${req.headers.get('origin') || 'https://llhofjbijjxkfezidxyi.lovable.app'}/invitation-acceptance/${updatedInvitation.invite_token}`;
           
           const emailSubject = `Reminder: You've been invited to join as a ${invitation.user_type}`;
           const emailHtml = `
