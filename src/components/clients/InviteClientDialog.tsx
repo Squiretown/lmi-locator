@@ -85,16 +85,16 @@ export const InviteClientDialog: React.FC<InviteClientDialogProps> = ({
                   id="email"
                   type="email"
                   {...register('email', {
-                    validate: (value) => {
-                      if (invitationType === 'sms') return true; // Email not required for SMS-only
-                      return (!!value || 'Email is required');
-                    },
+                    required: 'Email is required for all invitations'
                   })}
                   placeholder="john.smith@example.com"
                 />
                 {errors.email && (
                   <p className="text-sm text-destructive">{errors.email.message}</p>
                 )}
+                <p className="text-xs text-muted-foreground">
+                  Email is required (SMS-only coming soon)
+                </p>
               </div>
 
               <div className="space-y-2">

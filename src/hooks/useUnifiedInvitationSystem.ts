@@ -106,18 +106,33 @@ export function useUnifiedInvitationSystem() {
         }
       });
 
-      if (error) throw error;
-      if (!data?.success) throw new Error(data?.error || 'Failed to send invitation');
+      if (error) {
+        const errorMsg = error.message || error.context?.json?.error || 'Failed to send invitation';
+        throw new Error(errorMsg);
+      }
+      if (!data?.success) {
+        const errorMsg = data?.error || 'Failed to send invitation';
+        throw new Error(errorMsg);
+      }
 
       return data;
     },
     onSuccess: (data, variables) => {
-      toast.success(`${variables.userType} invitation sent successfully!`);
+      toast.success(`${variables.userType} invitation sent!`, {
+        description: data.inviteCode ? `Invite code: ${data.inviteCode}` : undefined
+      });
       queryClient.invalidateQueries({ queryKey: ['user-invitations'] });
     },
     onError: (error: Error) => {
       console.error('Failed to send invitation:', error);
-      toast.error(`Failed to send invitation: ${error.message}`);
+      const message = error.message;
+      if (message.includes('already exists') || message.includes('pending invitation')) {
+        toast.error('A pending invitation already exists for this email.');
+      } else if (message.includes('Email and user type are required')) {
+        toast.error('Email and user type are required.');
+      } else {
+        toast.error(`Failed to send invitation: ${message}`);
+      }
     }
   });
 
@@ -135,8 +150,14 @@ export function useUnifiedInvitationSystem() {
         }
       });
 
-      if (error) throw error;
-      if (!data?.success) throw new Error(data?.error || `Failed to ${request.action} invitation`);
+      if (error) {
+        const errorMsg = error.message || error.context?.json?.error || `Failed to ${request.action} invitation`;
+        throw new Error(errorMsg);
+      }
+      if (!data?.success) {
+        const errorMsg = data?.error || `Failed to ${request.action} invitation`;
+        throw new Error(errorMsg);
+      }
 
       return data;
     },

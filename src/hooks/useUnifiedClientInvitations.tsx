@@ -103,13 +103,17 @@ export function useUnifiedClientInvitations() {
         throw new Error('An active invitation already exists for this email address');
       }
 
+      // Normalize data before sending
+      const normalizedEmail = invitationData.email.trim().toLowerCase();
+      const normalizedPhone = invitationData.phone?.replace(/[^\d+]/g, '') || undefined;
+
       // Create unified invitation request (client-specific)
       const unifiedRequest = {
-        email: invitationData.email,
+        email: normalizedEmail,
         userType: 'client' as const,
         firstName: invitationData.name?.split(' ')[0],
         lastName: invitationData.name?.split(' ').slice(1).join(' '),
-        phone: invitationData.phone,
+        phone: normalizedPhone,
         sendVia: invitationData.invitationType,
         customMessage: invitationData.customMessage,
         // Client-specific fields required for the union type
@@ -125,17 +129,33 @@ export function useUnifiedClientInvitations() {
         }
       });
 
-      if (error) throw new Error(error.message || 'Failed to send invitation');
-      if (!data?.success) throw new Error(data?.error || 'Failed to send invitation');
+      if (error) {
+        // Try to extract specific error message from edge function response
+        const errorMsg = error.message || error.context?.json?.error || 'Failed to send invitation';
+        throw new Error(errorMsg);
+      }
+      if (!data?.success) {
+        const errorMsg = data?.error || 'Failed to send invitation';
+        throw new Error(errorMsg);
+      }
 
       return data;
     },
-    onSuccess: () => {
-      toast.success('Client invitation sent successfully!');
+    onSuccess: (data) => {
+      toast.success('Client invitation sent!', {
+        description: data.inviteCode ? `Invite code: ${data.inviteCode}` : undefined
+      });
       queryClient.invalidateQueries({ queryKey: ['unified-client-invitations'] });
     },
     onError: (error: Error) => {
-      toast.error(`Failed to send invitation: ${error.message}`);
+      const message = error.message;
+      if (message.includes('already exists') || message.includes('pending invitation')) {
+        toast.error('A pending invitation already exists for this email.');
+      } else if (message.includes('Email and user type are required')) {
+        toast.error('Email and user type are required.');
+      } else {
+        toast.error(`Failed to send invitation: ${message}`);
+      }
     },
   });
 
@@ -157,8 +177,14 @@ export function useUnifiedClientInvitations() {
         }
       });
 
-      if (error) throw new Error(error.message || 'Failed to resend invitation');
-      if (!data?.success) throw new Error(data?.error || 'Failed to resend invitation');
+      if (error) {
+        const errorMsg = error.message || error.context?.json?.error || 'Failed to resend invitation';
+        throw new Error(errorMsg);
+      }
+      if (!data?.success) {
+        const errorMsg = data?.error || 'Failed to resend invitation';
+        throw new Error(errorMsg);
+      }
 
       return data;
     },
@@ -191,8 +217,14 @@ export function useUnifiedClientInvitations() {
         }
       });
 
-      if (error) throw new Error(error.message || 'Failed to cancel invitation');
-      if (!data?.success) throw new Error(data?.error || 'Failed to cancel invitation');
+      if (error) {
+        const errorMsg = error.message || error.context?.json?.error || 'Failed to cancel invitation';
+        throw new Error(errorMsg);
+      }
+      if (!data?.success) {
+        const errorMsg = data?.error || 'Failed to cancel invitation';
+        throw new Error(errorMsg);
+      }
 
       return data;
     },
