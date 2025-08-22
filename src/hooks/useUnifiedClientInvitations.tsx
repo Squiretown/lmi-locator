@@ -119,6 +119,10 @@ export function useUnifiedClientInvitations() {
 
       const { data, error } = await supabase.functions.invoke('send-user-invitation', {
         body: unifiedRequest,
+        headers: {
+          'X-Supabase-Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json'
+        }
       });
 
       if (error) throw new Error(error.message || 'Failed to send invitation');
@@ -147,6 +151,10 @@ export function useUnifiedClientInvitations() {
           action: 'resend',
           sendVia: type
         },
+        headers: {
+          'X-Supabase-Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json'
+        }
       });
 
       if (error) throw new Error(error.message || 'Failed to resend invitation');
@@ -177,6 +185,10 @@ export function useUnifiedClientInvitations() {
           invitationId, 
           action: 'cancel'  // Note: unified system uses 'cancel' not 'revoke'
         },
+        headers: {
+          'X-Supabase-Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json'
+        }
       });
 
       if (error) throw new Error(error.message || 'Failed to cancel invitation');

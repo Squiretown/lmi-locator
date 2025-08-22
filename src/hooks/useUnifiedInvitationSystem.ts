@@ -100,6 +100,10 @@ export function useUnifiedInvitationSystem() {
 
       const { data, error } = await supabase.functions.invoke('send-user-invitation', {
         body: request,
+        headers: {
+          'X-Supabase-Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json'
+        }
       });
 
       if (error) throw error;
@@ -125,6 +129,10 @@ export function useUnifiedInvitationSystem() {
 
       const { data, error } = await supabase.functions.invoke('manage-user-invitation', {
         body: request,
+        headers: {
+          'X-Supabase-Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json'
+        }
       });
 
       if (error) throw error;
