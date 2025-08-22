@@ -47,10 +47,14 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    // Get authenticated user - check both possible auth headers
-    const authHeader = req.headers.get('Authorization') || req.headers.get('X-Supabase-Authorization');
-    console.log('Auth check - Authorization:', req.headers.get('Authorization') ? 'present' : 'missing');
-    console.log('Auth check - X-Supabase-Authorization:', req.headers.get('X-Supabase-Authorization') ? 'present' : 'missing');
+    // Get authenticated user - prioritize user JWT over anonymous key
+    const authHeader = req.headers.get('X-Supabase-Authorization') || req.headers.get('Authorization');
+    const userJWT = req.headers.get('X-Supabase-Authorization');
+    const anonKey = req.headers.get('Authorization');
+    
+    console.log('Auth check - Authorization:', anonKey ? 'present' : 'missing');
+    console.log('Auth check - X-Supabase-Authorization:', userJWT ? 'present' : 'missing');
+    console.log('Using header:', userJWT ? 'X-Supabase-Authorization (user JWT)' : 'Authorization (anon key)');
     
     if (!authHeader) {
       console.error('No authorization header found in request');
@@ -68,6 +72,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
     if (userError || !user) {
+      console.error('Auth.getUser failed:', userError?.message || 'No user found');
       return new Response(
         JSON.stringify({ error: 'Authentication required' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
