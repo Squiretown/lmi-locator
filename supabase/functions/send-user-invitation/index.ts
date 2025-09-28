@@ -63,8 +63,8 @@ const handler = async (req: Request): Promise<Response> => {
     );
     console.log(`[${requestId}] Headers:`, logHeaders);
 
-    // Get authenticated user - prioritize user JWT over anonymous key
-    const userJWT = req.headers.get('Authorization');
+    // Get authenticated user - support both header formats
+    const userJWT = req.headers.get('Authorization') || req.headers.get('X-Supabase-Authorization');
     console.log(`[${requestId}] Auth header present:`, !!userJWT);
     
     if (!userJWT) {

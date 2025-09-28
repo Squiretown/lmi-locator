@@ -256,7 +256,8 @@ export function useMortgageTeamManagement() {
       console.log('Sending invitation with payload:', invitationPayload);
 
       const { data, error } = await supabase.functions.invoke('send-user-invitation', {
-        body: invitationPayload
+        body: invitationPayload,
+        headers
       });
 
       if (error) throw error;
