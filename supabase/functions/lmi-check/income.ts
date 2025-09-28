@@ -63,7 +63,7 @@ export async function getMedianIncome(geoid: string): Promise<number> {
     return medianIncome;
   } catch (error) {
     console.error('Error fetching median income from Census API:', error);
-    console.error('Median income error stack:', error.stack);
+    console.error('Median income error stack:', error instanceof Error && error.stack ? error.stack : 'No stack trace available');
     console.error('Error fetching median income from Census API:', error);
     throw error;
   }

@@ -93,7 +93,7 @@ serve(async (req) => {
       success: true,
       message: `${type === 'email' ? 'Email' : 'SMS'} sent successfully`,
       recipient: recipient,
-      id: result.id || 'simulated'
+      id: (result as any)?.id || 'simulated'
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
@@ -103,7 +103,7 @@ serve(async (req) => {
     
     return new Response(JSON.stringify({
       success: false,
-      error: error.message || "Unknown error occurred",
+      error: error instanceof Error ? error.message : String(error) || "Unknown error occurred",
     }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },

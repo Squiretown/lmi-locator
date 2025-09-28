@@ -1,5 +1,37 @@
 
-import { determineCensusTract, geocodeAddress as censusGeocode, GeocodedAddress, GeocodingError, geocodeWithCensus } from "../census/index.ts";
+import { 
+  determineCensusTract, 
+  geocodeAddress as censusGeocodeAddress, 
+  GeocodedAddress
+} from "../census/index.ts";
+
+// Define proper interfaces for return types
+interface GeocodingResult {
+  lat?: number;
+  lon?: number;
+  geoid?: string;
+  geocoding_service?: string;
+  status?: 'success' | 'error';
+  error?: string;
+}
+
+// Create a proper error class that can be used as a value
+class CensusGeocodingError extends Error {
+  constructor(message: string, public code?: string) {
+    super(message);
+    this.name = 'CensusGeocodingError';
+  }
+}
+
+// Type guard function for error checking
+function isCensusGeocodingError(error: unknown): error is CensusGeocodingError {
+  return error instanceof CensusGeocodingError;
+}
+
+// Proper error type checking
+function isErrorWithStack(error: unknown): error is Error {
+  return error instanceof Error && 'stack' in error;
+}
 
 /**
  * Geocode an address using Census Geocoder API
@@ -7,59 +39,27 @@ import { determineCensusTract, geocodeAddress as censusGeocode, GeocodedAddress,
  * @param address The address to geocode
  * @returns Geocoding result with coordinates and census tract information
  */
-export async function geocodeWithCensus(address: string): Promise<{
-  lat?: number;
-  lon?: number;
-  geoid?: string;
-  geocoding_service?: string;
-}> {
+export async function geocodeWithCensus(address: string): Promise<GeocodingResult> {
   console.log('Attempting to geocode with Census Geocoder...');
   
   try {
     // Use the improved Census geocoding implementation
-    const result = await censusGeocode(address);
+    const result = await censusGeocodeAddress(address);
     
-    if (!result.coordinates) {
-      // Try the alternative Census geocoding implementation if the main one failed
-      console.log('Primary Census geocoder returned no coordinates, trying alternative implementation...');
-      const altResult = await geocodeWithCensus(address);
-      
-      if (altResult.status !== 'success' || !altResult.lat || !altResult.lon) {
-        console.log('Alternative Census geocoder also failed');
-        return {};
-      }
-      
-      console.log('Successfully geocoded with alternative Census implementation');
-      
-      const response = {
-        lat: altResult.lat,
-        lon: altResult.lon,
-        geocoding_service: 'Census (Alternative)'
+    if (!result || !result.coordinates) {
+      console.log('Primary Census geocoder returned no coordinates');
+      return {
+        status: 'error',
+        error: 'No coordinates returned from Census geocoder',
+        geocoding_service: 'Census'
       };
-      
-      // Try to get census tract from coordinates
-      console.log('Got coordinates from alternative geocoder, attempting tract lookup');
-      
-      const tractId = await determineCensusTract(
-        altResult.lat,
-        altResult.lon
-      );
-      
-      if (tractId) {
-        console.log('Successfully determined census tract:', tractId);
-        return {
-          ...response,
-          geoid: tractId
-        };
-      }
-      
-      return response;
     }
     
-    const response = {
+    const response: GeocodingResult = {
       lat: result.coordinates.lat,
       lon: result.coordinates.lon,
-      geocoding_service: 'Census'
+      geocoding_service: 'Census',
+      status: 'success'
     };
     
     // If we have a tract ID, include it
@@ -91,13 +91,26 @@ export async function geocodeWithCensus(address: string): Promise<{
     console.log('Failed to determine census tract from coordinates');
     return response;
   } catch (error) {
-    if (error instanceof GeocodingError) {
-      console.error(`Census geocoding error: ${error.message} (${error.source}, status: ${error.statusCode})`);
+    console.error('Error with Census geocoding:', error);
+    
+    // Proper error type checking and handling
+    if (isCensusGeocodingError(error)) {
+      console.error('Census geocoding error details:', error.message);
+      if (isErrorWithStack(error)) {
+        console.error('Census geocoding error stack:', error.stack);
+      }
+    } else if (isErrorWithStack(error)) {
+      console.error('Unexpected error in census geocoding:', error.message);
+      console.error('Error stack:', error.stack);
     } else {
-      console.error('Error with Census geocoding:', error);
-      console.error('Census geocoding error stack:', error.stack);
+      console.error('Unknown error in census geocoding:', String(error));
     }
-    throw error;
+    
+    return {
+      status: 'error',
+      error: error instanceof Error ? error.message : 'Unknown census geocoding error',
+      geocoding_service: 'Census'
+    };
   }
 }
 
@@ -115,11 +128,18 @@ export async function getCensusTractFromCoordinates(lat: number, lon: number): P
     // Use the determineCensusTract function from census module
     return await determineCensusTract(lat, lon);
   } catch (error) {
-    if (error instanceof GeocodingError) {
-      console.error(`Census tract lookup error: ${error.message} (${error.source}, status: ${error.statusCode})`);
+    console.error('Error getting census tract from coordinates:', error);
+    
+    // Proper error handling for tract lookup
+    if (isCensusGeocodingError(error)) {
+      console.error('Census tract lookup error details:', error.message);
+      if (isErrorWithStack(error)) {
+        console.error('Census tract lookup error stack:', error.stack);
+      }
+    } else if (isErrorWithStack(error)) {
+      console.error('Unexpected error in tract lookup:', error.message);
     } else {
-      console.error('Error getting census tract from coordinates:', error);
-      console.error('Census tract lookup error stack:', error.stack);
+      console.error('Unknown error in tract lookup:', String(error));
     }
     return null;
   }

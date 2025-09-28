@@ -125,7 +125,7 @@ const handler = async (req: Request): Promise<Response> => {
       return new Response(
         JSON.stringify({ 
           error: 'Invalid request body',
-          details: parseError.message,
+          details: parseError instanceof Error ? parseError.message : String(parseError),
           requestId
         }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

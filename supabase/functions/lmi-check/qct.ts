@@ -93,7 +93,7 @@ export async function getQctStatus(geoid: string): Promise<QctResponse> {
     return mockQctData;
   } catch (error) {
     console.error('Error checking QCT status:', error);
-    console.log('Stack trace:', error.stack);
+    console.log('Stack trace:', error instanceof Error && error.stack ? error.stack : 'No stack trace available');
     console.log('========== QCT CHECK ERROR END ==========');
     
     // Default response if error

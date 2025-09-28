@@ -71,7 +71,7 @@ serve(async (req) => {
   } catch (error) {
     console.error('LMI Tract Search Error:', error);
     return new Response(JSON.stringify({ 
-      error: error.message 
+      error: error instanceof Error ? error.message : String(error) 
     }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -88,13 +88,13 @@ async function searchByTractId(supabase: any, tractId: string, searchId: string)
 
   if (error) throw error;
 
-  const propertyInserts = data.map(prop => ({
+  const propertyInserts = await Promise.all(data.map(async (prop: any) => ({
     tract_result_id: await createTractResult(supabase, searchId, tractId),
     address: prop.address,
     city: prop.city,
     state: prop.state,
     zip_code: prop.zip_code
-  }));
+  })));
 
   if (propertyInserts.length > 0) {
     await supabase.from('tract_properties').insert(propertyInserts);
@@ -112,17 +112,17 @@ async function searchByZipCode(supabase: any, zipCode: string, searchId: string)
 
   if (error) throw error;
 
-  const uniqueTracts = [...new Set(data.map(prop => prop.census_tract))];
+  const uniqueTracts = [...new Set(data.map((prop: any) => prop.census_tract))];
 
   for (const tractId of uniqueTracts) {
-    const tractProperties = data.filter(prop => prop.census_tract === tractId);
-    const propertyInserts = tractProperties.map(prop => ({
-      tract_result_id: await createTractResult(supabase, searchId, tractId),
+    const tractProperties = data.filter((prop: any) => prop.census_tract === tractId);
+    const propertyInserts = await Promise.all(tractProperties.map(async (prop: any) => ({
+      tract_result_id: await createTractResult(supabase, searchId, tractId as string),
       address: prop.address,
       city: prop.city,
       state: prop.state,
       zip_code: prop.zip_code
-    }));
+    })));
 
     if (propertyInserts.length > 0) {
       await supabase.from('tract_properties').insert(propertyInserts);
@@ -141,17 +141,17 @@ async function searchByCity(supabase: any, city: string, searchId: string) {
 
   if (error) throw error;
 
-  const uniqueTracts = [...new Set(data.map(prop => prop.census_tract))];
+  const uniqueTracts = [...new Set(data.map((prop: any) => prop.census_tract))];
 
   for (const tractId of uniqueTracts) {
-    const tractProperties = data.filter(prop => prop.census_tract === tractId);
-    const propertyInserts = tractProperties.map(prop => ({
-      tract_result_id: await createTractResult(supabase, searchId, tractId),
+    const tractProperties = data.filter((prop: any) => prop.census_tract === tractId);
+    const propertyInserts = await Promise.all(tractProperties.map(async (prop: any) => ({
+      tract_result_id: await createTractResult(supabase, searchId, tractId as string),
       address: prop.address,
       city: prop.city,
       state: prop.state,
       zip_code: prop.zip_code
-    }));
+    })));
 
     if (propertyInserts.length > 0) {
       await supabase.from('tract_properties').insert(propertyInserts);

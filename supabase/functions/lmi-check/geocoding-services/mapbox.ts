@@ -71,7 +71,7 @@ export async function geocodeWithMapbox(address: string) {
     };
 
   } catch (error) {
-    console.error('❌ Mapbox geocoding failed:', error.message);
+    console.error('❌ Mapbox geocoding failed:', error instanceof Error ? error.message : String(error));
     throw error;
   }
 }
@@ -163,7 +163,7 @@ async function getCensusTract(lat: number, lon: number): Promise<string> {
     throw new Error('Could not determine census tract from any service');
     
   } catch (error) {
-    console.error('❌ Census tract lookup failed:', error.message);
+    console.error('❌ Census tract lookup failed:', error instanceof Error ? error.message : String(error));
     throw error;
   }
 }

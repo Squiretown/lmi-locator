@@ -89,7 +89,9 @@ export async function geocodeWithEsri(address: string): Promise<{
     return response;
   } catch (error) {
     console.error('Error with ESRI geocoding:', error);
-    console.error('ESRI geocoding error stack:', error.stack);
+    if (error instanceof Error && error.stack) {
+      console.error('ESRI geocoding error stack:', error.stack);
+    }
     // Return empty object instead of throwing
     return {};
   }

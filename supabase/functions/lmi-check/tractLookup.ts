@@ -5,7 +5,9 @@ import { determineCensusTract, geocodeAddress, GeocodedAddress, GeocodingError }
 // Export all the functions
 export { 
   determineCensusTract, 
-  geocodeAddress,
+  geocodeAddress
+};
+export type {
   GeocodedAddress,
   GeocodingError
 };

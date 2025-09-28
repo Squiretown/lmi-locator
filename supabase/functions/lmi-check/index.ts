@@ -43,7 +43,7 @@ serve(async (req) => {
     console.log('📍 Geocoding successful:', geocodeResult.coordinates)
 
     // Step 2: Get census tract
-    const tractId = await getCensusTract(geocodeResult.coordinates.lat, geocodeResult.coordinates.lon)
+    const tractId = await getCensusTract(geocodeResult.coordinates!.lat, geocodeResult.coordinates!.lon)
     console.log('🏠 Found tract ID:', tractId)
 
     // Step 3: Check FFIEC database
@@ -74,8 +74,8 @@ serve(async (req) => {
             : `NOT APPROVED - This location is in a ${getIncomeLevelName(ffiecResult.data.income_level)} Income Census Tract`,
           data_source: 'FFIEC Census Flat File 2025',
           address: geocodeResult.formattedAddress,
-          lat: geocodeResult.coordinates.lat,
-          lon: geocodeResult.coordinates.lon
+          lat: geocodeResult.coordinates!.lat,
+          lon: geocodeResult.coordinates!.lon
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
@@ -113,7 +113,7 @@ serve(async (req) => {
       JSON.stringify({
         success: false,
         status: 'error',
-        error: error.message,
+        error: error instanceof Error ? error.message : String(error),
         lmi_eligible: false,
         is_approved: false,
         median_income: 0,
@@ -122,9 +122,9 @@ serve(async (req) => {
         percentage_of_ami: 0,
         eligibility: 'Unknown',
         lmi_status: 'Not Eligible',
-        approval_message: `ERROR - ${error.message}`,
+        approval_message: `ERROR - ${error instanceof Error ? error.message : String(error)}`,
         data_source: 'Error',
-        message: error.message
+        message: error instanceof Error ? error.message : String(error)
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -187,10 +187,10 @@ async function geocodeWithMapbox(address: string) {
     }
 
   } catch (error) {
-    console.error('❌ Mapbox geocoding failed:', error.message)
+    console.error('❌ Mapbox geocoding failed:', error instanceof Error ? error.message : String(error))
     return { 
       success: false, 
-      error: error.message 
+      error: error instanceof Error ? error.message : String(error)
     }
   }
 }
@@ -233,7 +233,7 @@ async function getCensusTract(lat: number, lon: number): Promise<string> {
     throw new Error('Could not determine census tract')
     
   } catch (error) {
-    console.error('❌ Census tract lookup failed:', error.message)
+    console.error('❌ Census tract lookup failed:', error instanceof Error ? error.message : String(error))
     throw error
   }
 }
@@ -265,7 +265,7 @@ async function checkFFIECDatabase(supabase: any, tractId: string) {
 
   } catch (error) {
     console.error('❌ FFIEC database check failed:', error)
-    return { success: false, error: error.message }
+    return { success: false, error: error instanceof Error ? error.message : String(error) }
   }
 }
 

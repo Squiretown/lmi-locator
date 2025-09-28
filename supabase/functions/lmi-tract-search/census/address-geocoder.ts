@@ -58,7 +58,7 @@ export async function geocodeAddress(address: string): Promise<GeocodedAddress> 
       throw error;
     }
     throw new GeocodingError(
-      `Geocoding failed: ${error.message}`, 
+      `Geocoding failed: ${error instanceof Error ? error.message : String(error)}`, 
       500, 
       'census'
     );
