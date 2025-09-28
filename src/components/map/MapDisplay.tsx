@@ -27,7 +27,11 @@ const MapDisplay: React.FC<MapDisplayProps> = ({ lat, lon, isEligible, tractId, 
         const minLoadingTime = new Promise(resolve => setTimeout(resolve, 1500));
         
         // Try to get token from edge function
-        const tokenPromise = supabase.functions.invoke('get-mapbox-token');
+        // Function 'get-mapbox-token' does not exist - using environment variable
+        const tokenPromise = Promise.resolve({ 
+          data: { token: process.env.REACT_APP_MAPBOX_TOKEN || '' }, 
+          error: null 
+        });
         
         const [{ data: tokenData, error: tokenError }] = await Promise.all([
           tokenPromise,

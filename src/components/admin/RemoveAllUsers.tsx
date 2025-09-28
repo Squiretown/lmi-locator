@@ -32,9 +32,9 @@ const RemoveAllUsers: React.FC = () => {
     setIsLoading(true);
     
     try {
-      const { data: response, error } = await supabase.functions.invoke('remove-all-users', {
-        body: { confirmation }
-      });
+      // Function 'remove-all-users' does not exist
+      const error = new Error('Function not implemented');
+      const response = null;
       
       if (error) {
         console.error('Error removing users:', error);

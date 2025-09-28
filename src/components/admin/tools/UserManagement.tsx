@@ -19,11 +19,9 @@ export const UserManagement: React.FC = () => {
         throw new Error('No active session');
       }
 
-      const { data, error } = await supabase.functions.invoke('normalize-user-data', {
-        headers: {
-          Authorization: `Bearer ${session.access_token}`
-        }
-      });
+      // Function 'normalize-user-data' does not exist
+      const error = new Error('Function not implemented');
+      const data = null;
 
       if (error || !data?.success) {
         throw new Error(data?.error || 'Failed to normalize user data');

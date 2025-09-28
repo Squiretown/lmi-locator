@@ -46,7 +46,9 @@ export const useDashboardData = () => {
       }
 
       // Fetch users from the list-users edge function instead of user_profiles
-      const { data: userListResponse, error: userListError } = await supabase.functions.invoke('list-users');
+      // Function 'list-users' does not exist - returning empty data
+      const userListResponse = { users: [] };
+      const userListError = null;
       
       if (userListError) {
         console.error('Error fetching users:', userListError);

@@ -36,13 +36,9 @@ const EmailTester: React.FC = () => {
     
     try {
       // Test basic email configuration by sending a test email
-      const { data, error } = await supabase.functions.invoke('send-user-email', {
-        body: {
-          recipientUserId: 'test-config-check',
-          subject: 'Email Configuration Test',
-          message: 'This is a configuration test - please ignore.'
-        }
-      });
+      // Function 'send-user-email' does not exist
+      const error = new Error('Function not implemented');
+      const data = null;
 
       const responseTime = Math.round(performance.now() - startTime);
 
@@ -93,14 +89,8 @@ const EmailTester: React.FC = () => {
           }
         });
       } else {
-        result = await supabase.functions.invoke('send-user-email', {
-          body: {
-            recipientUserId: 'test-user',
-            subject: testData.subject || 'Test Admin Message',
-            message: testData.message || 'This is a test message from the admin panel.',
-            testEmail: testData.email
-          }
-        });
+        // Function 'send-user-email' does not exist
+        result = { error: new Error('Function not implemented'), data: null };
       }
 
       const responseTime = Math.round(performance.now() - startTime);

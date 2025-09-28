@@ -176,13 +176,9 @@ export function BulkMessaging() {
             
             const emailPromises = batch.map(async (userId) => {
               try {
-                const { data: emailResult, error: emailError } = await supabase.functions.invoke('send-user-email', {
-                  body: {
-                    userId: userId,
-                    subject: data.title,
-                    message: data.message,
-                  }
-                });
+                // Function 'send-user-email' does not exist
+                const emailError = new Error('Function not implemented');
+                const emailResult = null;
 
                 if (emailError) throw emailError;
                 return { success: true, userId };

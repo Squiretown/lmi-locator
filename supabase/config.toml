@@ -94,14 +94,8 @@ password = "supabase_smtp_password"
 
 # Configure Edge Functions.
 [functions]
-[functions.get-mapbox-token]
-verify_jwt = false
-
 [functions.send-property-results]
 verify_jwt = false
-
-[functions.sign-out-all-users]
-verify_jwt = true
 
 [functions.validate-user-invitation]
 verify_jwt = false

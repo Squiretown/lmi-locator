@@ -71,9 +71,8 @@ const AdminTester: React.FC = () => {
     }
 
     runTest('User Management', async () => {
-      return await supabase.functions.invoke('get-user-type-name', {
-        body: { userId: testUserId }
-      });
+      // Function 'get-user-type-name' does not exist
+      throw new Error('Function not implemented');
     });
   };
 
@@ -84,9 +83,8 @@ const AdminTester: React.FC = () => {
     }
 
     runTest('User Permissions', async () => {
-      return await supabase.functions.invoke('get-user-permissions', {
-        body: { userId: testUserId }
-      });
+      // Function 'get-user-permissions' does not exist
+      throw new Error('Function not implemented');
     });
   };
 
@@ -97,13 +95,8 @@ const AdminTester: React.FC = () => {
     }
 
     runTest('User Creation', async () => {
-      return await supabase.functions.invoke('create-user', {
-        body: { 
-          email: testEmail,
-          userType: testUserType,
-          testMode: true // Prevent actual user creation
-        }
-      });
+      // Function 'create-user' does not exist
+      throw new Error('Function not implemented');
     });
   };
 
@@ -114,24 +107,15 @@ const AdminTester: React.FC = () => {
     }
 
     runTest('Permission Check', async () => {
-      return await supabase.functions.invoke('user-has-permission', {
-        body: { 
-          userId: testUserId,
-          permission: testPermission
-        }
-      });
+      // Function 'user-has-permission' does not exist
+      throw new Error('Function not implemented');
     });
   };
 
   const testBulkUserOperation = () => {
     runTest('Bulk User Operation', async () => {
-      return await supabase.functions.invoke('list-users', {
-        body: { 
-          page: 1,
-          limit: 5,
-          testMode: true
-        }
-      });
+      // Function 'list-users' does not exist
+      throw new Error('Function not implemented');
     });
   };
 
@@ -142,13 +126,8 @@ const AdminTester: React.FC = () => {
     }
 
     runTest('Notification Sending', async () => {
-      return await supabase.functions.invoke('notify-admin', {
-        body: { 
-          userId: testUserId,
-          message: 'Test notification from admin panel',
-          testMode: true
-        }
-      });
+      // Function 'notify-admin' does not exist
+      throw new Error('Function not implemented');
     });
   };
 

@@ -104,13 +104,9 @@ export function ComposeMessage() {
 
         // Send email if selected
         if (data.send_email) {
-          const { data: emailResult, error: emailError } = await supabase.functions.invoke('send-user-email', {
-            body: {
-              userId: data.recipient_id,
-              subject: data.title,
-              message: data.message,
-            }
-          });
+          // Function 'send-user-email' does not exist
+          const emailError = new Error('Function not implemented');
+          const emailResult = null;
 
           if (emailError) {
             console.error('Email sending failed:', emailError);
