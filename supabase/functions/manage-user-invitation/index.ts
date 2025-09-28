@@ -11,9 +11,11 @@ interface ManageInvitationRequest {
   invitationId: string;
   action: 'resend' | 'cancel';
   sendVia?: 'email' | 'sms' | 'both';
+  customMessage?: string;
 }
 
-const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
+// const resendApiKey = Deno.env.get("RESEND_API_KEY");
+// const resend = resendApiKey ? new Resend(resendApiKey) : null;
 
 const handler = async (req: Request): Promise<Response> => {
   if (req.method === 'OPTIONS') {
@@ -175,38 +177,9 @@ const handler = async (req: Request): Promise<Response> => {
       let smsSent = false;
 
       if (sendVia === 'email' || sendVia === 'both') {
-        try {
-          const acceptUrl = `${req.headers.get('origin') || 'https://llhofjbijjxkfezidxyi.lovable.app'}/invitation-acceptance/${updatedInvitation.invite_token}`;
-          
-          const emailSubject = `Reminder: You've been invited to join as a ${invitation.user_type}`;
-          const emailHtml = `
-            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-              <h2>Invitation Reminder</h2>
-              <p>Hi ${invitation.first_name || 'there'},</p>
-              <p>This is a reminder that ${invitation.invited_by_name} has invited you to join as a <strong>${invitation.user_type}</strong>.</p>
-              ${invitation.custom_message ? `<p><em>"${invitation.custom_message}"</em></p>` : ''}
-              <div style="margin: 30px 0;">
-                <a href="${acceptUrl}" style="background: #0066cc; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; display: inline-block;">
-                  Accept Invitation
-                </a>
-              </div>
-              <p>Or copy and paste this link: <br><a href="${acceptUrl}">${acceptUrl}</a></p>
-              <p>This invitation will expire in 7 days.</p>
-              <p>Your invitation code is: <strong>${updatedInvitation.invite_code}</strong></p>
-            </div>
-          `;
-
-          await resend.emails.send({
-            from: 'Invitations <noreply@resend.dev>',
-            to: [invitation.email],
-            subject: emailSubject,
-            html: emailHtml,
-          });
-
-          emailSent = true;
-        } catch (emailError) {
-          console.error('Email sending failed:', emailError);
-        }
+        // Email sending disabled for now - would send invitation reminder
+        console.log('Email sending disabled - would send invitation reminder to:', invitation.email);
+        emailSent = false; // Set to false until email service is properly configured
       }
 
       // Update with send results

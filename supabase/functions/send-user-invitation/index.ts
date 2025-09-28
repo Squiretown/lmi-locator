@@ -42,7 +42,10 @@ const handler = async (req: Request): Promise<Response> => {
 
   if (req.method !== 'POST') {
     return new Response(
-      JSON.stringify({ error: 'Method not allowed' }),
+      JSON.stringify({ 
+        error: 'Method not allowed. Expected POST.',
+        received: req.method 
+      }),
       { status: 405, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
@@ -226,69 +229,9 @@ const handler = async (req: Request): Promise<Response> => {
     let smsSent = false;
 
     if (requestData.sendVia === 'email' || requestData.sendVia === 'both') {
-      try {
-        // Generate robust accept URL that works across environments
-        const getAcceptUrl = () => {
-          // Try multiple fallback approaches for base URL
-          const origin = req.headers.get('origin');
-          const referer = req.headers.get('referer');
-          const siteUrl = Deno.env.get('SITE_URL');
-          const supabaseUrl = Deno.env.get('SUPABASE_URL');
-          
-          // Use explicit SITE_URL if available
-          if (siteUrl) return `${siteUrl}/invitation-acceptance/${invitation.invite_token}`;
-          
-          // Use origin header from request
-          if (origin) return `${origin}/invitation-acceptance/${invitation.invite_token}`;
-          
-          // Extract from referer header
-          if (referer) {
-            const url = new URL(referer);
-            return `${url.origin}/invitation-acceptance/${invitation.invite_token}`;
-          }
-          
-          // Convert Supabase URL to app URL (Lovable pattern)
-          if (supabaseUrl?.includes('supabase.co')) {
-            const projectId = supabaseUrl.match(/https:\/\/([^.]+)\.supabase\.co/)?.[1];
-            if (projectId) {
-              return `https://${projectId}.lovable.app/invitation-acceptance/${invitation.invite_token}`;
-            }
-          }
-          
-          // Final fallback
-          return `https://llhofjbijjxkfezidxyi.lovable.app/invitation-acceptance/${invitation.invite_token}`;
-        };
-        
-        const acceptUrl = getAcceptUrl();
-        console.log('Generated acceptUrl:', acceptUrl);
-        
-        const emailSubject = `You've been invited to join as a ${requestData.userType}`;
-        const emailHtml = `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-            <h2>You've Been Invited!</h2>
-            <p>Hi ${requestData.firstName || 'there'},</p>
-            <p>${inviterName} has invited you to join as a <strong>${requestData.userType}</strong>.</p>
-            ${requestData.customMessage ? `<p><em>"${requestData.customMessage}"</em></p>` : ''}
-            <div style="margin: 30px 0;">
-              <a href="${acceptUrl}" style="background: #0066cc; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; display: inline-block;">
-                Accept Invitation
-              </a>
-            </div>
-            <p>Or copy and paste this link: <br><a href="${acceptUrl}">${acceptUrl}</a></p>
-            <p>This invitation will expire in 7 days.</p>
-            <p>Your invitation code is: <strong>${invitation.invite_code}</strong></p>
-          </div>
-        `;
-
-        // Email sending temporarily disabled
-        console.log('Email sending disabled - would send invitation to:', requestData.email);
-        console.log('Generated acceptUrl:', acceptUrl);
-        
-        // Mock successful email sending for testing
-        emailSent = true;
-      } catch (emailError) {
-        console.error('Email sending failed:', emailError);
-      }
+      // Email sending disabled for now - would send invitation
+      console.log('Email sending disabled - would send invitation to:', requestData.email);
+      emailSent = false; // Set to false until email service is properly configured
     }
 
     // Update invitation status and tracking

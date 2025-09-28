@@ -128,13 +128,24 @@ const handler = async (req: Request): Promise<Response> => {
       
       let targetUser = currentUser;
       
-      // If no current user but no password, check if user exists
+      // If no current user but no password, check if user exists via user_profiles
       if (!targetUser) {
-        const { data: existingUser } = await supabaseClient.auth.admin.getUserByEmail(requestData.email);
-        if (existingUser.user) {
-          targetUser = existingUser.user;
-          console.log('Found existing user for email:', requestData.email);
-        } else {
+        const { data: existingProfile } = await supabaseClient
+          .from('user_profiles')
+          .select('user_id')
+          .eq('email', requestData.email.toLowerCase())
+          .maybeSingle();
+        
+        if (existingProfile?.user_id) {
+          // Get user by ID
+          const { data: userData } = await supabaseClient.auth.admin.getUserById(existingProfile.user_id);
+          if (userData?.user) {
+            targetUser = userData.user;
+            console.log('Found existing user for email:', requestData.email);
+          }
+        }
+        
+        if (!targetUser) {
           return new Response(
             JSON.stringify({ 
               error: 'User account not found. Please provide a password to create a new account.',
@@ -282,10 +293,14 @@ const handler = async (req: Request): Promise<Response> => {
         );
       }
 
-      // Check if user with this email already exists
-      const { data: existingUser } = await supabaseClient.auth.admin.getUserByEmail(requestData.email);
+      // Check if user with this email already exists via user_profiles
+      const { data: existingProfile } = await supabaseClient
+        .from('user_profiles')
+        .select('user_id')
+        .eq('email', requestData.email.toLowerCase())
+        .maybeSingle();
       
-      if (existingUser.user) {
+      if (existingProfile?.user_id) {
         return new Response(
           JSON.stringify({ 
             error: 'An account with this email already exists. Please sign in instead.',
