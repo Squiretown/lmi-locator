@@ -239,8 +239,17 @@ export function useMortgageTeamManagement() {
         'Content-Type': 'application/json'
       };
 
-      const { data, error } = await supabase.functions.invoke('send-invitation', {
-        body: unifiedPayload,
+      const { data, error } = await supabase.functions.invoke('send-user-invitation', {
+        body: {
+          email,
+          userType: professionalType || 'realtor',
+          firstName: email.split('@')[0], // Simple fallback
+          lastName: '',
+          phone: '',
+          sendVia: 'email',
+          customMessage: message,
+          templateType: 'standard'
+        },
         headers
       });
 
