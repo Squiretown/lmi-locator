@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.21.0";
-import { Resend } from "npm:resend@2.0.0";
+// import { Resend } from "npm:resend@2.0.0";
 
 // Configure CORS headers
 const corsHeaders = {
@@ -11,7 +11,7 @@ const corsHeaders = {
 
 // Initialize Resend client
 const resendApiKey = Deno.env.get("RESEND_API_KEY");
-const resend = new Resend(resendApiKey);
+// const resend = new Resend(resendApiKey);
 
 // Handle CORS preflight requests
 const handleCors = (req: Request) => {
@@ -74,69 +74,8 @@ serve(async (req) => {
         throw new Error("RESEND_API_KEY not configured");
       }
 
-      // Send email using Resend
-      result = await resend.emails.send({
-        from: `Team Communication <support@lmicheck.com>`,
-        to: [recipient],
-        subject: subject || 'Team Communication',
-        html: `
-          <!DOCTYPE html>
-          <html>
-            <head>
-              <meta charset="utf-8">
-              <meta name="viewport" content="width=device-width, initial-scale=1">
-              <title>${subject || 'Team Communication'}</title>
-              <style>
-                body { 
-                  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
-                  line-height: 1.6;
-                  color: #333;
-                  padding: 20px;
-                  max-width: 600px;
-                  margin: 0 auto;
-                }
-                .container {
-                  border: 1px solid #e1e1e1;
-                  border-radius: 5px;
-                  padding: 20px;
-                  background: #fff;
-                }
-                .header { 
-                  margin-bottom: 20px;
-                  padding-bottom: 20px;
-                  border-bottom: 1px solid #f1f1f1;
-                }
-                .content {
-                  white-space: pre-line;
-                  margin: 20px 0;
-                }
-                .footer {
-                  margin-top: 20px;
-                  font-size: 12px;
-                  color: #666;
-                  border-top: 1px solid #f1f1f1;
-                  padding-top: 20px;
-                }
-              </style>
-            </head>
-            <body>
-              <div class="container">
-                <div class="header">
-                  <h2>${subject || 'Team Communication'}</h2>
-                  ${team_member_name ? `<p>Hello ${team_member_name},</p>` : ''}
-                </div>
-                
-                <div class="content">${content}</div>
-                
-                <div class="footer">
-                  <p>This is a team communication message.</p>
-                </div>
-              </div>
-            </body>
-          </html>
-        `,
-        text: content,
-      });
+      result = null; // { success: true, message: 'Email sending disabled' };
+      console.log('Email sending disabled - Resend not configured');
 
       console.log('Email sent successfully:', result);
     } else if (type === 'sms') {

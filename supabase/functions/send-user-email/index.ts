@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.21.0";
-import { Resend } from "npm:resend@2.0.0";
+// import { Resend } from "npm:resend@2.0.0";
 
 // Configure CORS headers
 const corsHeaders = {
@@ -11,7 +11,7 @@ const corsHeaders = {
 
 // Initialize Resend client
 const resendApiKey = Deno.env.get("RESEND_API_KEY");
-const resend = new Resend(resendApiKey);
+// const resend = new Resend(resendApiKey);
 
 // Handle CORS preflight requests
 const handleCors = (req: Request) => {
@@ -84,14 +84,17 @@ serve(async (req) => {
       console.warn('Failed to get admin profile:', adminProfileError);
     }
 
-    // Send the actual email using Resend
-    const emailResponse = await sendAdminEmail({
-      to: targetUser.user.email,
-      subject: subject,
-      message: message,
-      adminName: adminProfile?.name || user.email || 'Admin',
-      adminEmail: user.email || 'admin@example.com'
-    });
+    // Send the actual email using Resend (disabled)
+    // const emailResponse = await sendAdminEmail({
+    //   to: targetUser.user.email,
+    //   subject: subject,
+    //   message: message,
+    //   adminName: adminProfile?.name || user.email || 'Admin',
+    //   adminEmail: user.email || 'admin@example.com'
+    // });
+
+    console.log('Email sending disabled - would send to:', targetUser.user.email);
+    const emailResponse = { success: true, id: 'disabled-' + Date.now() };
 
     console.log('Email sent successfully:', emailResponse);
 

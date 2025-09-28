@@ -239,18 +239,24 @@ export function useMortgageTeamManagement() {
         'Content-Type': 'application/json'
       };
 
+      // Create proper payload structure matching edge function expectations  
+      const invitationPayload = {
+        email: email.trim().toLowerCase(),
+        userType: professionalType || 'realtor',
+        firstName: email.split('@')[0], // Extract from email since no name provided
+        lastName: '',
+        phone: '',
+        sendVia: 'email' as const,
+        customMessage: message || '',
+        // Professional-specific fields
+        professionalType: professionalType || 'realtor' as const,
+        requiresApproval: false
+      };
+
+      console.log('Sending invitation with payload:', invitationPayload);
+
       const { data, error } = await supabase.functions.invoke('send-user-invitation', {
-        body: {
-          email,
-          userType: professionalType || 'realtor',
-          firstName: email.split('@')[0], // Simple fallback
-          lastName: '',
-          phone: '',
-          sendVia: 'email',
-          customMessage: message,
-          templateType: 'standard'
-        },
-        headers
+        body: invitationPayload
       });
 
       if (error) throw error;

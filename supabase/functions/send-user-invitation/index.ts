@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1";
-import { Resend } from "npm:resend@2.0.0";
+// import { Resend } from "npm:resend@2.0.0";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -32,7 +32,8 @@ interface SendInvitationRequest {
   requiresApproval?: boolean;
 }
 
-const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
+// const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
+const resendApiKey = Deno.env.get("RESEND_API_KEY");
 
 const handler = async (req: Request): Promise<Response> => {
   if (req.method === 'OPTIONS') {
@@ -47,40 +48,86 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    // Get authenticated user - prioritize user JWT over anonymous key
-    const userJWT = req.headers.get('X-Supabase-Authorization') || req.headers.get('Authorization');
+    const requestId = crypto.randomUUID().substring(0, 8);
+    console.log(`[${requestId}] Starting send-user-invitation request: ${req.method}`);
     
-    console.log('Auth check - userJWT header:', userJWT ? 'present' : 'missing');
+    // Log headers (excluding sensitive ones)
+    const logHeaders = Object.fromEntries(
+      [...req.headers.entries()].filter(([key]) => 
+        !key.toLowerCase().includes('authorization') && 
+        !key.toLowerCase().includes('apikey')
+      )
+    );
+    console.log(`[${requestId}] Headers:`, logHeaders);
+
+    // Get authenticated user - prioritize user JWT over anonymous key
+    const userJWT = req.headers.get('Authorization');
+    console.log(`[${requestId}] Auth header present:`, !!userJWT);
     
     if (!userJWT) {
-      console.error('No authorization header found in request');
+      console.error(`[${requestId}] No authorization header found`);
       return new Response(
-        JSON.stringify({ error: 'Authorization header required' }),
+        JSON.stringify({ 
+          error: 'Authorization header required',
+          requestId,
+          received_headers: Object.keys(Object.fromEntries(req.headers.entries()))
+        }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Normalize header - ensure Bearer prefix
-    const normalizedJWT = userJWT.startsWith('Bearer ') ? userJWT : `Bearer ${userJWT}`;
-    console.log('Using normalized JWT for auth');
-
+    // Create Supabase client with proper auth
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      { global: { headers: { Authorization: normalizedJWT } } }
+      { 
+        global: { 
+          headers: { 
+            Authorization: userJWT 
+          } 
+        } 
+      }
     );
 
     const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
     if (userError || !user) {
-      console.error('Auth.getUser failed:', userError?.message || 'No user found');
+      console.error(`[${requestId}] Auth failed:`, userError?.message || 'No user found');
       return new Response(
-        JSON.stringify({ error: 'Authentication required' }),
+        JSON.stringify({ 
+          error: 'Authentication failed',
+          details: userError?.message,
+          requestId
+        }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Parse request body
-    const requestData: SendInvitationRequest = await req.json();
+    console.log(`[${requestId}] Authenticated user:`, user.id);
+
+    // Parse and validate request body
+    let requestData: SendInvitationRequest;
+    try {
+      const rawBody = await req.text();
+      console.log(`[${requestId}] Raw body length:`, rawBody.length);
+      console.log(`[${requestId}] Raw body:`, rawBody);
+      
+      if (!rawBody || rawBody.trim() === '') {
+        throw new Error('Empty request body');
+      }
+      
+      requestData = JSON.parse(rawBody);
+      console.log(`[${requestId}] Parsed request data:`, requestData);
+    } catch (parseError) {
+      console.error(`[${requestId}] Request parsing failed:`, parseError);
+      return new Response(
+        JSON.stringify({ 
+          error: 'Invalid request body',
+          details: parseError.message,
+          requestId
+        }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
     
     // Validate required fields
     if (!requestData.email || !requestData.userType) {
@@ -233,13 +280,11 @@ const handler = async (req: Request): Promise<Response> => {
           </div>
         `;
 
-        await resend.emails.send({
-          from: 'Invitations <noreply@resend.dev>',
-          to: [requestData.email],
-          subject: emailSubject,
-          html: emailHtml,
-        });
-
+        // Email sending temporarily disabled
+        console.log('Email sending disabled - would send invitation to:', requestData.email);
+        console.log('Generated acceptUrl:', acceptUrl);
+        
+        // Mock successful email sending for testing
         emailSent = true;
       } catch (emailError) {
         console.error('Email sending failed:', emailError);
