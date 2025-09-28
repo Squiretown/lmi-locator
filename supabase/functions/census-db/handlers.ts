@@ -22,7 +22,7 @@ export async function handleApiRequest(supabase: SupabaseClient, action: string,
     console.error(`Error handling API request for action ${action}:`, error);
     return {
       success: false,
-      error: error.message || `Unknown error processing ${action} action`,
+      error: error instanceof Error ? error.message : `Unknown error processing ${action} action`,
       timestamp: new Date().toISOString()
     };
   }
@@ -33,7 +33,14 @@ async function handleGetDashboardStats(supabase: SupabaseClient) {
   console.log("Fetching dashboard statistics");
   
   // Initialize response object with default values
-  const response = {
+  const response: {
+    userCount: number;
+    propertyCount: number;
+    realtorCount: number;
+    searchHistory: any[];
+    success: boolean;
+    timestamp: string;
+  } = {
     userCount: 0,
     propertyCount: 0,
     realtorCount: 0,
@@ -133,7 +140,7 @@ async function handleGetDashboardStats(supabase: SupabaseClient) {
       realtorCount: 0,
       searchHistory: [],
       success: false,
-      error: error.message || "Unknown error in getDashboardStats",
+      error: error instanceof Error ? error.message : "Unknown error in getDashboardStats",
       timestamp: new Date().toISOString()
     };
   }
@@ -161,7 +168,7 @@ async function handleSearchByAddress(supabase: SupabaseClient, params: any) {
     console.error("Error in searchByAddress:", error);
     return {
       success: false,
-      error: error.message || "Unknown error in searchByAddress"
+      error: error instanceof Error ? error.message : "Unknown error in searchByAddress"
     };
   }
 }
@@ -227,7 +234,8 @@ async function handleSearchBatch(supabase: SupabaseClient, params: any) {
       query = query.eq('tract_id', tractId.trim());
     } else if (state && county) {
       // State + county search - convert state abbreviation to FIPS code
-      const stateCode = STATE_CODES[state.toUpperCase()];
+      const stateKey = state.toUpperCase() as keyof typeof STATE_CODES;
+      const stateCode = STATE_CODES[stateKey];
       if (!stateCode) {
         throw new Error(`Invalid state abbreviation: ${state}`);
       }
@@ -235,7 +243,8 @@ async function handleSearchBatch(supabase: SupabaseClient, params: any) {
       // Convert county name to code (simplified for NY, extend as needed)
       let countyCode = null;
       if (stateCode === '36') { // NY
-        countyCode = NY_COUNTY_CODES[county.toUpperCase()];
+        const countyKey = county.toUpperCase() as keyof typeof NY_COUNTY_CODES;
+        countyCode = NY_COUNTY_CODES[countyKey];
       }
       
       if (countyCode) {
@@ -246,7 +255,8 @@ async function handleSearchBatch(supabase: SupabaseClient, params: any) {
       }
     } else if (state) {
       // State-only search - convert state abbreviation to FIPS code
-      const stateCode = STATE_CODES[state.toUpperCase()];
+      const stateKey = state.toUpperCase() as keyof typeof STATE_CODES;
+      const stateCode = STATE_CODES[stateKey];
       if (!stateCode) {
         throw new Error(`Invalid state abbreviation: ${state}`);
       }
@@ -324,7 +334,7 @@ async function handleSearchBatch(supabase: SupabaseClient, params: any) {
     console.error("Error in searchBatch:", error);
     return {
       success: false,
-      error: error.message || "Unknown error in searchBatch",
+      error: error instanceof Error ? error.message : "Unknown error in searchBatch",
       tracts: [],
       summary: { totalTracts: 0, lmiTracts: 0, propertyCount: 0, lmiPercentage: 0 }
     };
@@ -366,13 +376,15 @@ async function handleSearchTracts(supabase: SupabaseClient, params: any) {
         break;
       case 'county':
         if (state) {
-          const stateCode = STATE_CODES[state.toUpperCase()];
+          const stateKey = state.toUpperCase() as keyof typeof STATE_CODES;
+          const stateCode = STATE_CODES[stateKey];
           if (!stateCode) {
             throw new Error(`Invalid state abbreviation: ${state}`);
           }
           // For county search, try to match county code if available
           if (stateCode === '36') { // NY
-            const countyCode = NY_COUNTY_CODES[searchValue.toUpperCase()];
+            const countyKey = searchValue.toUpperCase() as keyof typeof NY_COUNTY_CODES;
+            const countyCode = NY_COUNTY_CODES[countyKey];
             if (countyCode) {
               query = query.eq('state_code', stateCode).eq('county_code', countyCode);
             } else {
@@ -429,7 +441,7 @@ async function handleSearchTracts(supabase: SupabaseClient, params: any) {
     console.error("Error in searchTracts:", error);
     return {
       success: false,
-      error: error.message || "Unknown error in searchTracts",
+      error: error instanceof Error ? error.message : "Unknown error in searchTracts",
       results: []
     };
   }

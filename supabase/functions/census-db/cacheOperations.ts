@@ -45,7 +45,7 @@ export async function cacheCensusResult(supabase: any, tractId: string, data: an
     return { success: true };
   } catch (error) {
     console.error("Error caching Census result:", error);
-    return { success: false, error: error.message };
+    return { success: false, error: error instanceof Error ? error.message : String(error) };
   }
 }
 
@@ -73,6 +73,6 @@ export async function getCachedCensusResult(supabase: any, tractId: string) {
     return { success: true, data: data.data };
   } catch (error) {
     console.error("Error retrieving cached Census result:", error);
-    return { success: false, error: error.message };
+    return { success: false, error: error instanceof Error ? error.message : String(error) };
   }
 }

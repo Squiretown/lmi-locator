@@ -36,7 +36,7 @@ export async function handleSearchBatch(supabase: any, params: any) {
       
       if (properties && properties.length > 0) {
         const tractIds = properties
-          .map(p => p.census_tract)
+          .map((p: any) => p.census_tract)
           .filter(Boolean);
         
         if (tractIds.length > 0) {
@@ -93,19 +93,19 @@ export async function handleSearchBatch(supabase: any, params: any) {
     return processSearchResults(tracts);
   } catch (error) {
     console.error("Error in search batch operation:", error);
-    return { success: false, error: error.message || "Unknown error in batch search" };
+    return { success: false, error: error instanceof Error ? error.message : "Unknown error in batch search" };
   }
 }
 
 // Process search results into a standardized format
-function processSearchResults(tracts) {
+function processSearchResults(tracts: any) {
   // Calculate summary statistics
-  const lmiTracts = tracts ? tracts.filter(t => t.lmi_status).length : 0;
+  const lmiTracts = tracts ? tracts.filter((t: any) => t.lmi_status).length : 0;
   const totalTracts = tracts ? tracts.length : 0;
-  const propertyCount = tracts ? tracts.reduce((sum, t) => sum + (t.property_count || 0), 0) : 0;
+  const propertyCount = tracts ? tracts.reduce((sum: number, t: any) => sum + (t.property_count || 0), 0) : 0;
   
   // Enhance tract data with property counts and geometry
-  const enhancedTracts = tracts ? tracts.map(tract => {
+  const enhancedTracts = tracts ? tracts.map((tract: any) => {
     // For a real implementation, we'd fetch actual geometries from a GeoJSON source
     // For now, generate a simple polygon near the US center
     const offsetX = (Math.random() - 0.5) * 10;
@@ -170,7 +170,7 @@ export async function handleSearchCreate(supabase: any, params: any) {
     };
   } catch (error) {
     console.error("Error creating search:", error);
-    return { success: false, error: error.message || "Unknown error creating search" };
+    return { success: false, error: error instanceof Error ? error.message : "Unknown error creating search" };
   }
 }
 
@@ -203,7 +203,7 @@ export async function handleSearchResults(supabase: any, params: any) {
     };
   } catch (error) {
     console.error("Error getting search results:", error);
-    return { success: false, error: error.message || "Unknown error retrieving search results" };
+    return { success: false, error: error instanceof Error ? error.message : "Unknown error retrieving search results" };
   }
 }
 
@@ -229,7 +229,7 @@ export async function handleSearchStatus(supabase: any, params: any) {
     };
   } catch (error) {
     console.error("Error checking search status:", error);
-    return { success: false, error: error.message || "Unknown error checking search status" };
+    return { success: false, error: error instanceof Error ? error.message : "Unknown error checking search status" };
   }
 }
 
@@ -256,6 +256,6 @@ export async function saveSearch(supabase: any, address: string, result: any, us
     return { success: true, id: data.id };
   } catch (error) {
     console.error("Error saving search:", error);
-    return { success: false, error: error.message };
+    return { success: false, error: error instanceof Error ? error.message : String(error) };
   }
 }

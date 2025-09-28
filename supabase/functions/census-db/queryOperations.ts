@@ -21,7 +21,7 @@ export async function getSearchHistory(supabase: any, userId?: string, limit: nu
     return { success: true, data };
   } catch (error) {
     console.error("Error retrieving search history:", error);
-    return { success: false, error: error.message };
+    return { success: false, error: error instanceof Error ? error.message : String(error) };
   }
 }
 
@@ -36,7 +36,7 @@ export async function getPopularSearches(supabase: any, limit: number = 5) {
     return { success: true, data };
   } catch (error) {
     console.error("Error retrieving popular searches:", error);
-    return { success: false, error: error.message };
+    return { success: false, error: error instanceof Error ? error.message : String(error) };
   }
 }
 
@@ -80,6 +80,6 @@ export async function getDashboardStats(supabase: any) {
     };
   } catch (error) {
     console.error("Error retrieving dashboard stats:", error);
-    return { success: false, error: error.message };
+    return { success: false, error: error instanceof Error ? error.message : String(error) };
   }
 }
