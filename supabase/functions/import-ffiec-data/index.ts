@@ -135,8 +135,8 @@ serve(async (req) => {
           totalProcessed++
 
         } catch (rowError) {
-          console.warn(`Error processing row ${j}:`, rowError.message)
-          errors.push(`Row ${j}: ${rowError.message}`)
+          console.warn(`Error processing row ${j}:`, rowError instanceof Error ? rowError.message : String(rowError))
+          errors.push(`Row ${j}: ${rowError instanceof Error ? rowError.message : String(rowError)}`)
         }
       }
 
@@ -198,13 +198,13 @@ serve(async (req) => {
     )
 
   } catch (error) {
-    console.error('Import process failed:', error.message)
+    console.error('Import process failed:', error instanceof Error ? error.message : String(error))
     
     return new Response(
       JSON.stringify({
         success: false,
-        error: error.message,
-        stack: error.stack
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

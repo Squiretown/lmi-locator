@@ -158,7 +158,7 @@ async function handleProcessBatch(supabase: any, data: any) {
           processedCount++;
         } catch (error) {
           failedCount++;
-          errors.push({ record, error: error.message });
+          errors.push({ record, error: error instanceof Error ? error.message : String(error) });
         }
       }
     } else if (job?.job_type === 'census_data') {
@@ -189,7 +189,7 @@ async function handleProcessBatch(supabase: any, data: any) {
           processedCount++;
         } catch (error) {
           failedCount++;
-          errors.push({ record, error: error.message });
+          errors.push({ record, error: error instanceof Error ? error.message : String(error) });
         }
       }
     }
@@ -253,7 +253,7 @@ async function handleProcessBatch(supabase: any, data: any) {
       .from('ffiec_import_jobs')
       .update({ 
         status: 'failed',
-        error_details: { error: error.message }
+        error_details: { error: error instanceof Error ? error.message : String(error) }
       })
       .eq('id', jobId);
 

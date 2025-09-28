@@ -51,7 +51,9 @@ export async function orchestrateGeocoding(address: string): Promise<GeocodingRe
     return getMockGeocodeData(address);
   } catch (error) {
     console.error('Fatal error in geocoding orchestration:', error);
-    console.error('Orchestration error stack:', error.stack);
+    if (error instanceof Error && error.stack) {
+      console.error('Orchestration error stack:', error.stack);
+    }
     
     // Absolute fallback to mock data
     console.warn('Falling back to mock geocode data after critical error');
@@ -99,7 +101,7 @@ async function tryCensusGeocoding(address: string): Promise<GeocodingResult | nu
       return {
         lat: result.lat,
         lon: result.lon,
-        tractId: result.tractId || result.geoid,
+        tractId: (result as any).tractId || result.geoid,
         geocoding_service: result.geocoding_service || 'Census'
       };
     }

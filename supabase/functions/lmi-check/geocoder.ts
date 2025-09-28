@@ -20,7 +20,9 @@ export async function geocodeAddress(address: string): Promise<GeocodingResult> 
     return result;
   } catch (error) {
     console.error('Unhandled error in geocoding process:', error);
-    console.error('Geocoding error stack:', error.stack);
+    if (error instanceof Error && error.stack) {
+      console.error('Geocoding error stack:', error.stack);
+    }
     
     // If for some reason the orchestrator fails, we have one last fallback here
     console.error('========== GEOCODING END (ERROR) ==========');

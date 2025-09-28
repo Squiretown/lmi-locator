@@ -187,7 +187,9 @@ serve(async (req) => {
     }
   } catch (error) {
     console.error("Error in HUD LMI check:", error);
-    console.error("Error stack:", error.stack);
+    if (error instanceof Error && error.stack) {
+      console.error("Error stack:", error.stack);
+    }
     
     console.log('========== HUD LMI CHECK FUNCTION END (ERROR) ==========');
     

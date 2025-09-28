@@ -66,11 +66,21 @@ serve(async (req) => {
         return await updateStateGeometry(supabase, state, county, batchSize);
       }
     } else if (action === 'getProgress') {
-      // Check progress of geometry updates
-      const { data: progress } = await supabase
+      // Check progress of geometry updates - simple count queries
+      const { data: totalTracts, count: totalCount } = await supabase
         .from('census_tracts')
-        .select('state, COUNT(*) as total, COUNT(geometry) as with_geometry', { count: 'exact' })
-        .group('state');
+        .select('*', { count: 'exact', head: true });
+
+      const { data: withGeometry, count: geometryCount } = await supabase
+        .from('census_tracts')
+        .select('*', { count: 'exact', head: true })
+        .not('geometry', 'is', null);
+
+      const progress = {
+        total: totalCount || 0,
+        with_geometry: geometryCount || 0,
+        percentage: totalCount ? Math.round(((geometryCount || 0) / totalCount) * 100) : 0
+      };
 
       return new Response(
         JSON.stringify({ progress }),
@@ -86,7 +96,7 @@ serve(async (req) => {
   } catch (error) {
     console.error('Error:', error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: error instanceof Error ? error.message : String(error) }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
     );
   }

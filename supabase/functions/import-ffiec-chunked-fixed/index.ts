@@ -62,7 +62,7 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({
         success: false,
-        error: error.message,
+        error: error instanceof Error ? error.message : String(error),
         timestamp: new Date().toISOString()
       }),
       { 
@@ -89,7 +89,7 @@ async function startImportJob(supabase: any, chunkSize: number) {
 
     // Parse CSV to count rows
     const csvText = await fileData.text()
-    const lines = csvText.split('\n').filter(line => line.trim())
+    const lines = csvText.split('\n').filter((line: string) => line.trim())
     const totalRows = lines.length - 1 // Exclude header row
     const totalChunks = Math.ceil(totalRows / chunkSize)
 
@@ -199,9 +199,9 @@ async function processNextChunk(supabase: any, jobId: string, chunkSize: number)
     }
 
     const csvText = await fileData.text()
-    const lines = csvText.split('\n').filter(line => line.trim())
+    const lines = csvText.split('\n').filter((line: string) => line.trim())
     const headerLine = lines[0]
-    const headers = headerLine.split(',').map(h => h.trim().replace(/"/g, ''))
+    const headers = headerLine.split(',').map((h: string) => h.trim().replace(/"/g, ''))
 
     console.log('📋 CSV Headers found:', headers.slice(0, 10)) // Log first 10 headers
 
@@ -220,11 +220,11 @@ async function processNextChunk(supabase: any, jobId: string, chunkSize: number)
 
       try {
         // Parse CSV row
-        const values = lines[i].split(',').map(v => v.trim().replace(/"/g, ''))
+        const values = lines[i].split(',').map((v: string) => v.trim().replace(/"/g, ''))
         
         // Create row object from CSV
         const rowData: any = {}
-        headers.forEach((header, index) => {
+        headers.forEach((header: string, index: number) => {
           rowData[header] = values[index] || null
         })
 
@@ -237,7 +237,7 @@ async function processNextChunk(supabase: any, jobId: string, chunkSize: number)
         }
 
       } catch (rowError) {
-        console.warn(`⚠️ Error processing row ${i}:`, rowError.message)
+        console.warn(`⚠️ Error processing row ${i}:`, rowError instanceof Error ? rowError.message : String(rowError))
         // Continue processing other rows
       }
     }
@@ -304,7 +304,7 @@ async function processNextChunk(supabase: any, jobId: string, chunkSize: number)
       .from('import_jobs')
       .update({
         status: 'failed',
-        error_message: error.message,
+        error_message: error instanceof Error ? error.message : String(error),
         updated_at: new Date().toISOString()
       })
       .eq('id', jobId)
@@ -368,7 +368,7 @@ function transformFFIECToCensusTracts(ffiecRow: any): any | null {
     }
 
   } catch (error) {
-    console.warn('⚠️ Error transforming FFIEC row:', error.message)
+    console.warn('⚠️ Error transforming FFIEC row:', error instanceof Error ? error.message : String(error))
     return null
   }
 }
