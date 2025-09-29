@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import type { UnifiedInvitationPayload, StandardInvitationHeaders } from '@/types/invitations';
+import { createInvitationHeaders } from '@/lib/utils/invitationUtils';
 
 interface LendingTeamMember {
   id: string;
@@ -120,13 +121,10 @@ export function useLendingTeamManagement() {
         }
       };
 
-      const headers: StandardInvitationHeaders = {
-        Authorization: `Bearer ${session.access_token}`,
-        'Content-Type': 'application/json'
-      };
+      const headers = createInvitationHeaders(session.access_token);
 
       const { data, error } = await supabase.functions.invoke('send-invitation', {
-        body: unifiedPayload,
+        body: JSON.stringify(unifiedPayload),
         headers
       });
 

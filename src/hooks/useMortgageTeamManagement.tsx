@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useRealtimeTeamUpdates } from './useRealtimeTeamUpdates';
 import type { UnifiedInvitationPayload, StandardInvitationHeaders } from '@/types/invitations';
+import { createInvitationHeaders } from '@/lib/utils/invitationUtils';
 
 // Enhanced data structures for unified team management
 interface LendingTeamMember {
@@ -234,10 +235,7 @@ export function useMortgageTeamManagement() {
         }
       };
 
-      const headers: StandardInvitationHeaders = {
-        Authorization: `Bearer ${session.access_token}`,
-        'Content-Type': 'application/json'
-      };
+      const headers = createInvitationHeaders(session.access_token);
 
       // Create proper payload structure matching edge function expectations  
       const invitationPayload = {
@@ -256,7 +254,7 @@ export function useMortgageTeamManagement() {
       console.log('Sending invitation with payload:', invitationPayload);
 
       const { data, error } = await supabase.functions.invoke('send-invitation', {
-        body: unifiedPayload,
+        body: JSON.stringify(unifiedPayload),
         headers
       });
 
