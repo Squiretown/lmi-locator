@@ -54,6 +54,7 @@ export function validateInvitationPayload(payload: any): payload is UnifiedInvit
 export function createInvitationHeaders(accessToken: string) {
   return {
     Authorization: `Bearer ${accessToken}`,
+    'X-Supabase-Authorization': `Bearer ${accessToken}`,
     'Content-Type': 'application/json'
-  };
+  } as const;
 }

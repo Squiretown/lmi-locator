@@ -139,6 +139,7 @@ const AdminTester: React.FC = () => {
 
     runTest('Invitation Sending', async () => {
       const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('No active session');
       return await supabase.functions.invoke('send-invitation', {
         body: { 
           target: 'client',
@@ -153,7 +154,8 @@ const AdminTester: React.FC = () => {
           }
         },
         headers: {
-          Authorization: `Bearer ${session?.access_token}`,
+          Authorization: `Bearer ${session.access_token}`,
+          'X-Supabase-Authorization': `Bearer ${session.access_token}`,
           'Content-Type': 'application/json'
         }
       });

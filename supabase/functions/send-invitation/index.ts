@@ -50,8 +50,11 @@ const handler = async (req: Request): Promise<Response> => {
     let unifiedPayload: UnifiedInvitationPayload;
     
     try {
+      console.log(`[${requestId}] Raw body length:`, rawBody?.length ?? 0);
+      console.log(`[${requestId}] Raw body preview:`, rawBody?.slice(0, 300));
       unifiedPayload = JSON.parse(rawBody);
     } catch (parseError) {
+      console.error(`[${requestId}] Failed to parse JSON body:`, parseError instanceof Error ? parseError.message : String(parseError));
       return new Response(
         JSON.stringify({ error: 'Invalid request body', requestId }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
