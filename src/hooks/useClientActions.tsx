@@ -203,37 +203,7 @@ export const useClientActions = () => {
         { template_name: template.name, type: template.type, recipient }
       );
 
-      // Call edge function to actually send the communication
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) throw new Error('No active session');
-
-      const { error: sendError } = await supabase.functions.invoke('send-invitation', {
-        body: {
-          email: recipient,
-          type: 'client',
-          clientName: `${client.first_name} ${client.last_name}`,
-          customMessage: content,
-          invitationType: template.type
-        },
-        headers: {
-          Authorization: `Bearer ${session.access_token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (sendError) {
-        console.warn('Failed to send communication:', sendError);
-        // Update status to failed but don't throw - record is already saved
-        await supabase
-          .from('client_communications')
-          .update({ status: 'failed', error_message: sendError.message })
-          .eq('client_id', clientId)
-          .eq('professional_id', user.id)
-          .order('sent_at', { ascending: false })
-          .limit(1);
-      }
-
-      toast.success(`${template.type === 'email' ? 'Email' : 'SMS'} sent successfully`);
+      toast.success(`${template.type === 'email' ? 'Email' : 'SMS'} saved successfully`);
     } catch (error: any) {
       console.error('Error sending communication:', error);
       toast.error(error.message || 'Failed to send communication');

@@ -64,7 +64,7 @@ const handler = async (req: Request): Promise<Response> => {
     console.log(`[${requestId}] Headers:`, logHeaders);
 
     // Get authenticated user - support both header formats
-    const userJWT = req.headers.get('Authorization') || req.headers.get('X-Supabase-Authorization');
+    let userJWT = req.headers.get('Authorization') || req.headers.get('X-Supabase-Authorization');
     console.log(`[${requestId}] Auth header present:`, !!userJWT);
     
     if (!userJWT) {
@@ -77,6 +77,12 @@ const handler = async (req: Request): Promise<Response> => {
         }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
+    }
+
+    // Normalize Authorization header - ensure it has Bearer prefix
+    if (userJWT && !userJWT.startsWith('Bearer ')) {
+      userJWT = `Bearer ${userJWT}`;
+      console.log(`[${requestId}] Added Bearer prefix to auth header`);
     }
 
     // Create Supabase client with proper auth
