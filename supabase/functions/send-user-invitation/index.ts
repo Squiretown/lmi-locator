@@ -64,7 +64,7 @@ const handler = async (req: Request): Promise<Response> => {
     console.log(`[${requestId}] Headers:`, logHeaders);
 
     // Get authenticated user - support both header formats
-    let userJWT = req.headers.get('Authorization') || req.headers.get('X-Supabase-Authorization');
+    let userJWT = req.headers.get('X-Supabase-Authorization') || req.headers.get('Authorization');
     console.log(`[${requestId}] Auth header present:`, !!userJWT);
     
     if (!userJWT) {

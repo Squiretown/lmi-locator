@@ -29,7 +29,7 @@ const handler = async (req: Request): Promise<Response> => {
     console.log(`[${requestId}] Starting manage-invitation shim request`);
 
     // Get authenticated user - support both header formats
-    const userJWT = req.headers.get('Authorization') || req.headers.get('X-Supabase-Authorization');
+    const userJWT = req.headers.get('X-Supabase-Authorization') || req.headers.get('Authorization');
     
     if (!userJWT) {
       console.error(`[${requestId}] No authorization header found`);
