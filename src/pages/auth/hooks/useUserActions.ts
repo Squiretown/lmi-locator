@@ -8,11 +8,11 @@ export const useUserActions = () => {
 
   const logAdminError = async (operation: string, error: any, targetUserId?: string) => {
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) return;
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
 
       await supabase.from('admin_error_logs').insert({
-        admin_user_id: session.user.id,
+        admin_user_id: user.id,
         error_type: error.code || 'unknown',
         error_message: error.message || String(error),
         error_details: error,
@@ -43,17 +43,9 @@ export const useUserActions = () => {
 
       console.log('Suspending user with data:', { userId, reason, duration });
       
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        throw new Error('No active session');
-      }
-
       // Call edge function to suspend user
       const { data, error } = await supabase.functions.invoke('suspend-user', {
-        body: { userId, reason, duration },
-        headers: {
-          Authorization: `Bearer ${session.access_token}`
-        }
+        body: { userId, reason, duration }
       });
 
       if (error) {
@@ -66,13 +58,10 @@ export const useUserActions = () => {
         throw new Error(data?.error || 'Unknown error occurred');
       }
 
-      // Force logout the suspended user
+      // Force logout the suspended user (best-effort)
       try {
         await supabase.functions.invoke('force-logout-user', {
-          body: { userId },
-          headers: {
-            Authorization: `Bearer ${session.access_token}`
-          }
+          body: { userId }
         });
       } catch (logoutError) {
         console.warn('Failed to force logout suspended user:', logoutError);
@@ -102,17 +91,9 @@ export const useUserActions = () => {
 
       console.log('Unsuspending user:', userId);
       
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        throw new Error('No active session');
-      }
-
       // Call edge function to unsuspend user
       const { data, error } = await supabase.functions.invoke('unsuspend-user', {
-        body: { userId },
-        headers: {
-          Authorization: `Bearer ${session.access_token}`
-        }
+        body: { userId }
       });
 
       if (error) {
@@ -142,17 +123,9 @@ export const useUserActions = () => {
     try {
       setIsLoading(true);
       
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        throw new Error('No active session');
-      }
-
       // Call edge function to update user email
       const { data, error } = await supabase.functions.invoke('update-user-email', {
-        body: { userId, newEmail },
-        headers: {
-          Authorization: `Bearer ${session.access_token}`
-        }
+        body: { userId, newEmail }
       });
 
       if (error) throw error;
@@ -172,17 +145,9 @@ export const useUserActions = () => {
     try {
       setIsLoading(true);
       
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        throw new Error('No active session');
-      }
-
       // Call edge function to update user role
       const { data, error } = await supabase.functions.invoke('update-user-role', {
-        body: { userId, newRole },
-        headers: {
-          Authorization: `Bearer ${session.access_token}`
-        }
+        body: { userId, newRole }
       });
 
       if (error) throw error;
@@ -202,17 +167,9 @@ export const useUserActions = () => {
     try {
       setIsLoading(true);
       
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        throw new Error('No active session');
-      }
-
       // Call edge function to send email
       const { data, error } = await supabase.functions.invoke('send-user-email', {
-        body: { userId, message },
-        headers: {
-          Authorization: `Bearer ${session.access_token}`
-        }
+        body: { userId, message }
       });
 
       if (error) throw error;
@@ -232,17 +189,9 @@ export const useUserActions = () => {
     try {
       setIsLoading(true);
       
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        throw new Error('No active session');
-      }
-
       // Call edge function to reset user password
       const { data, error } = await supabase.functions.invoke('reset-user-password', {
-        body: { userId },
-        headers: {
-          Authorization: `Bearer ${session.access_token}`
-        }
+        body: { userId }
       });
 
       if (error) throw error;
@@ -263,20 +212,17 @@ export const useUserActions = () => {
       setIsLoading(true);
       console.log('Attempting to completely delete user from auth:', userId);
       
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      const { data: { user } } = await supabase.auth.getUser();
 
-      if (sessionError || !session) {
-        console.error('Failed to retrieve session:', sessionError);
+      if (!user) {
+        console.error('Failed to retrieve user');
         const error = new Error('Authentication required - please log in again');
         await logAdminError('delete_user', error, userId);
         throw error;
       }
 
       const { data, error } = await supabase.functions.invoke('delete-user', {
-        body: { user_id: userId },
-        headers: {
-          Authorization: `Bearer ${session.access_token}`
-        }
+        body: { user_id: userId }
       });
 
       if (error) {
@@ -358,12 +304,8 @@ export const useUserActions = () => {
         userIds.map(async (userId) => {
           switch (action) {
             case 'activate':
-              const { data: { session } } = await supabase.auth.getSession();
-              if (!session) throw new Error('No active session');
-              
               return await supabase.functions.invoke('update-user-role', {
-                body: { userId, newRole: 'client' },
-                headers: { Authorization: `Bearer ${session.access_token}` }
+                body: { userId, newRole: 'client' }
               });
             
             case 'deactivate':

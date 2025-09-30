@@ -15,27 +15,23 @@ export const useUserManagement = () => {
       
       console.log('Fetching auth users via admin API...');
       
-      // Get current session to check if user is admin
-      const { data: { session } } = await supabase.auth.getSession();
+      // Check current user and admin privileges
+      const { data: { user } } = await supabase.auth.getUser();
       
-      if (!session) {
+      if (!user) {
         const error = new Error('No active session found');
         throw error;
       }
 
       // Check if current user is admin
-      const userType = session.user?.user_metadata?.user_type;
+      const userType = user.user_metadata?.user_type;
       if (userType !== 'admin') {
         const error = new Error('Admin privileges required to view users');
         throw error;
       }
 
       // Use the admin listUsers function via edge function
-      const { data: authData, error: authError } = await supabase.functions.invoke('list-users', {
-        headers: {
-          Authorization: `Bearer ${session.access_token}`
-        }
-      });
+      const { data: authData, error: authError } = await supabase.functions.invoke('list-users');
 
       if (authError) {
         console.error('Failed to fetch auth users:', authError);
