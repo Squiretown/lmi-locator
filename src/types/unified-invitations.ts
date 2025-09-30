@@ -97,6 +97,11 @@ export interface SendInvitationResponse {
   message: string;
 }
 
+export interface ValidateInvitationRequest {
+  token?: string;
+  code?: string;
+}
+
 export interface ValidateInvitationResponse {
   valid: boolean;
   error?: string;
