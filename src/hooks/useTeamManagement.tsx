@@ -195,9 +195,9 @@ export const useTeamManagement = () => {
       }
 
       // Get fresh session to avoid stale JWT tokens
-      await getValidSession();
+      const session = await getValidSession();
 
-      // Supabase SDK automatically uses the fresh token
+      // Pass fresh token explicitly in headers
       const { data: result, error } = await supabase.functions.invoke('send-user-invitation', {
         body: {
           email: data.email,
@@ -206,6 +206,9 @@ export const useTeamManagement = () => {
           lastName: data.name?.split(' ').slice(1).join(' ') || undefined,
           sendVia: 'email',
           customMessage: data.customMessage,
+        },
+        headers: {
+          Authorization: `Bearer ${session.access_token}`
         }
       });
 

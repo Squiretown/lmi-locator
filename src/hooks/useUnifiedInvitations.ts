@@ -33,11 +33,11 @@ export function useUnifiedInvitations() {
   const sendInvitationMutation = useMutation({
     mutationFn: async (params: SendInvitationParams) => {
       // Get fresh session to avoid stale JWT tokens
-      await getValidSession();
+      const session = await getValidSession();
 
       const nameParts = params.name?.split(' ') || [];
       
-      // Supabase SDK automatically uses the fresh token
+      // Pass fresh token explicitly in headers
       const { data, error } = await supabase.functions.invoke('send-user-invitation', {
         body: {
           email: params.email,
@@ -48,6 +48,9 @@ export function useUnifiedInvitations() {
           sendVia: params.channel,
           customMessage: params.customMessage,
           professionalType: params.role !== 'client' ? params.role : undefined,
+        },
+        headers: {
+          Authorization: `Bearer ${session.access_token}`
         }
       });
 
@@ -73,14 +76,17 @@ export function useUnifiedInvitations() {
   const manageInvitationMutation = useMutation({
     mutationFn: async (params: ManageInvitationParams) => {
       // Get fresh session to avoid stale JWT tokens
-      await getValidSession();
+      const session = await getValidSession();
 
-      // Supabase SDK automatically uses the fresh token
+      // Pass fresh token explicitly in headers
       const { data, error } = await supabase.functions.invoke('manage-user-invitation', {
         body: {
           invitationId: params.invitationId,
           action: params.action,
           sendVia: params.type
+        },
+        headers: {
+          Authorization: `Bearer ${session.access_token}`
         }
       });
 

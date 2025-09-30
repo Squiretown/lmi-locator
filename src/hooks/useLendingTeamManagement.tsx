@@ -106,15 +106,18 @@ export function useLendingTeamManagement() {
   const inviteTeamMemberMutation = useMutation({
     mutationFn: async (invitation: LendingTeamInvitation) => {
       // Get fresh session to avoid stale JWT tokens
-      await getValidSession();
+      const session = await getValidSession();
 
-      // Supabase SDK automatically uses the fresh token
+      // Pass fresh token explicitly in headers
       const { data, error } = await supabase.functions.invoke('send-user-invitation', {
         body: {
           email: invitation.professional_email,
           userType: 'mortgage_professional',
           sendVia: 'email',
           customMessage: invitation.custom_message
+        },
+        headers: {
+          Authorization: `Bearer ${session.access_token}`
         }
       });
 

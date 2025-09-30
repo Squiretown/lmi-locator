@@ -220,7 +220,7 @@ export function useMortgageTeamManagement() {
   const inviteProfessionalMutation = useMutation({
     mutationFn: async ({ email, role, message, permissions, professionalType }: TeamInvitation) => {
       // Get fresh session to avoid stale JWT tokens
-      await getValidSession();
+      const session = await getValidSession();
 
       // Create proper payload structure matching edge function expectations  
       const invitationPayload = {
@@ -238,9 +238,12 @@ export function useMortgageTeamManagement() {
 
       console.log('Sending invitation with payload:', invitationPayload);
 
-      // Supabase SDK automatically uses the fresh token from getValidSession
+      // Pass fresh token explicitly in headers
       const { data, error } = await supabase.functions.invoke('send-user-invitation', {
-        body: invitationPayload
+        body: invitationPayload,
+        headers: {
+          Authorization: `Bearer ${session.access_token}`
+        }
       });
 
       if (error) throw error;
