@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1";
-// import { Resend } from "npm:resend@2.0.0";
+import { Resend } from "https://esm.sh/resend@2.0.0";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -32,8 +32,7 @@ interface SendInvitationRequest {
   requiresApproval?: boolean;
 }
 
-// const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
-const resendApiKey = Deno.env.get("RESEND_API_KEY");
+const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
 const handler = async (req: Request): Promise<Response> => {
   if (req.method === 'OPTIONS') {
@@ -235,9 +234,47 @@ const handler = async (req: Request): Promise<Response> => {
     let smsSent = false;
 
     if (requestData.sendVia === 'email' || requestData.sendVia === 'both') {
-      // Email sending disabled for now - would send invitation
-      console.log('Email sending disabled - would send invitation to:', requestData.email);
-      emailSent = false; // Set to false until email service is properly configured
+      try {
+        const inviteLink = `${Deno.env.get('SUPABASE_URL')}/auth/v1/verify?token=${invitation.invite_token}&type=invite`;
+        
+        const emailResponse = await resend.emails.send({
+          from: 'LMI Check <notifications@support247.solutions>',
+          to: [requestData.email],
+          subject: `${inviterName} invited you to join LMI Check`,
+          html: `
+            <!DOCTYPE html>
+            <html>
+              <head><meta charset="utf-8"></head>
+              <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+                <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; border-radius: 10px 10px 0 0; text-align: center;">
+                  <h1 style="color: white; margin: 0;">You're Invited! 🎉</h1>
+                </div>
+                <div style="background: #f9fafb; padding: 30px; border-radius: 0 0 10px 10px;">
+                  <p style="font-size: 16px; color: #374151; line-height: 1.6;">
+                    <strong>${inviterName}</strong> has invited you to join <strong>LMI Check</strong> as a <strong>${requestData.userType}</strong>.
+                  </p>
+                  ${requestData.customMessage ? `<div style="background: white; padding: 15px; border-left: 4px solid #667eea; margin: 20px 0;"><em>"${requestData.customMessage}"</em></div>` : ''}
+                  <div style="text-align: center; margin: 30px 0;">
+                    <a href="${inviteLink}" style="background: #667eea; color: white; padding: 15px 40px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold;">Accept Invitation</a>
+                  </div>
+                  <p style="font-size: 14px; color: #6b7280;">
+                    <strong>Your invitation code:</strong> <code style="background: white; padding: 5px 10px; border-radius: 3px; color: #1f2937;">${invitation.invite_code}</code>
+                  </p>
+                  <p style="font-size: 12px; color: #9ca3af; margin-top: 30px;">
+                    This invitation expires on <strong>${new Date(invitation.expires_at).toLocaleDateString()}</strong>.
+                  </p>
+                </div>
+              </body>
+            </html>
+          `
+        });
+        
+        console.log('✅ Invitation email sent:', emailResponse.id);
+        emailSent = true;
+      } catch (emailError) {
+        console.error('❌ Failed to send invitation email:', emailError);
+        emailSent = false;
+      }
     }
 
     // Update invitation status and tracking
