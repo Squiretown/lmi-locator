@@ -223,8 +223,6 @@ export function useMortgageTeamManagement() {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error('No active session');
 
-      const headers = createInvitationHeaders(session.access_token);
-
       // Create proper payload structure matching edge function expectations  
       const invitationPayload = {
         email: email.trim().toLowerCase(),
@@ -241,9 +239,9 @@ export function useMortgageTeamManagement() {
 
       console.log('Sending invitation with payload:', invitationPayload);
 
+      // Don't pass custom headers - let Supabase handle auth automatically
       const { data, error } = await supabase.functions.invoke('send-user-invitation', {
-        body: invitationPayload,
-        headers
+        body: invitationPayload
       });
 
       if (error) throw error;

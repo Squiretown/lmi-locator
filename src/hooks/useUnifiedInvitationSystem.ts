@@ -98,6 +98,7 @@ export function useUnifiedInvitationSystem() {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error('No active session');
 
+      // Don't pass custom headers - let Supabase handle auth automatically
       const { data, error } = await supabase.functions.invoke('send-user-invitation', {
         body: {
           email: request.email,
@@ -108,10 +109,6 @@ export function useUnifiedInvitationSystem() {
           sendVia: (request as any).sendVia || 'email',
           customMessage: request.customMessage,
           professionalType: (request as any).professionalType,
-        },
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`,
-          'Content-Type': 'application/json'
         }
       });
 
@@ -151,12 +148,9 @@ export function useUnifiedInvitationSystem() {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error('No active session');
 
+      // Don't pass custom headers - let Supabase handle auth automatically
       const { data, error } = await supabase.functions.invoke('manage-user-invitation', {
-        body: request,
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`,
-          'Content-Type': 'application/json'
-        }
+        body: request
       });
 
       if (error) {
