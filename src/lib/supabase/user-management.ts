@@ -1,5 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
+import { getValidSession } from "@/lib/auth/getValidSession";
 
 /**
  * Deletes the current user's account using secure server-side validation
@@ -9,23 +10,12 @@ import { supabase } from "@/integrations/supabase/client";
  */
 export async function deleteUserAccount(currentPassword: string): Promise<{ success: boolean; error: Error | null }> {
   try {
-    // Get current session for authentication
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-    
-    if (sessionError || !session) {
-      console.error("Not authenticated:", sessionError);
-      return { 
-        success: false, 
-        error: new Error("You must be logged in to delete your account")
-      };
-    }
+    // Ensure fresh session before invoking edge function
+    await getValidSession();
 
     // Call the secure Edge Function for account deletion
     const { data, error } = await supabase.functions.invoke('secure-delete-user-account', {
-      body: { currentPassword },
-      headers: {
-        Authorization: `Bearer ${session.access_token}`
-      }
+      body: { currentPassword }
     });
 
     if (error) {

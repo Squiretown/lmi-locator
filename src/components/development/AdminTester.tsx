@@ -9,7 +9,7 @@ import { RefreshCcwIcon, ShieldIcon, UsersIcon, BellIcon, MailIcon } from 'lucid
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import StatusBadge from './StatusBadge';
-import { createInvitationHeaders } from '@/lib/utils/invitationUtils';
+import { getValidSession } from '@/lib/auth/getValidSession';
 interface TestResult {
   success: boolean;
   error?: string;
@@ -138,8 +138,7 @@ const AdminTester: React.FC = () => {
     }
 
     runTest('Invitation Sending', async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) throw new Error('No active session');
+      await getValidSession();
       return await supabase.functions.invoke('send-user-invitation', {
         body: {
           email: testEmail,
@@ -148,8 +147,7 @@ const AdminTester: React.FC = () => {
           lastName: 'User',
           sendVia: 'email',
           customMessage: 'This is a test invitation from admin panel'
-        },
-        headers: createInvitationHeaders(session.access_token)
+        }
       });
     });
   };

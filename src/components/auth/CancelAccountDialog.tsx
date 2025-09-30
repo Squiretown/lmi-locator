@@ -16,6 +16,7 @@ import { Label } from '@/components/ui/label';
 import { AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { supabase } from '@/integrations/supabase/client';
+import { getValidSession } from '@/lib/auth/getValidSession';
 import { toast } from 'sonner';
 
 const CancelAccountDialog: React.FC = () => {
@@ -44,20 +45,12 @@ const CancelAccountDialog: React.FC = () => {
     setIsLoading(true);
     
     try {
-      // Get current session for authentication
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      
-      if (sessionError || !session) {
-        setError('You must be logged in to submit a cancellation request');
-        return;
-      }
+      // Validate session so auth header is fresh
+      await getValidSession();
 
       // Call the edge function to handle the cancellation request
       const { data, error } = await supabase.functions.invoke('submit-cancellation-request', {
-        body: { currentPassword: password },
-        headers: {
-          Authorization: `Bearer ${session.access_token}`
-        }
+        body: { currentPassword: password }
       });
 
       if (error) {

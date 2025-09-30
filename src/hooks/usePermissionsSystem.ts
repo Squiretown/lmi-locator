@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
+import { getValidSession } from '@/lib/auth/getValidSession';
 
 interface Permission {
   id: string;
@@ -116,18 +117,12 @@ export function usePermissionsSystem() {
 
   const assignRoleToUser = async (userId: string, role: string): Promise<{ success: boolean; error?: Error }> => {
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        throw new Error('No active session');
-      }
+      await getValidSession();
 
       const { data, error } = await supabase.functions.invoke('update-user-role', {
         body: {
           userId,
           newRole: role
-        },
-        headers: {
-          Authorization: `Bearer ${session.access_token}`
         }
       });
 

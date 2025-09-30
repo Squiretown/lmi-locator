@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { getValidSession } from '@/lib/auth/getValidSession';
 import { toast } from 'sonner';
 
 export interface AdminErrorLog {
@@ -51,17 +52,14 @@ export const useAdminErrorLogs = () => {
 
   const resolveError = async (logId: string) => {
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        throw new Error('No active session');
-      }
+      const { user } = await getValidSession();
 
       const { error: updateError } = await supabase
         .from('admin_error_logs')
         .update({
           resolved: true,
           resolved_at: new Date().toISOString(),
-          resolved_by: session.user.id
+          resolved_by: user.id
         })
         .eq('id', logId);
 
@@ -124,17 +122,14 @@ export const useAdminErrorLogs = () => {
 
   const resolveBulkErrors = async (logIds: string[]) => {
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        throw new Error('No active session');
-      }
+      const { user } = await getValidSession();
 
       const { error: updateError } = await supabase
         .from('admin_error_logs')
         .update({
           resolved: true,
           resolved_at: new Date().toISOString(),
-          resolved_by: session.user.id
+          resolved_by: user.id
         })
         .in('id', logIds);
 
@@ -155,16 +150,10 @@ export const useAdminErrorLogs = () => {
     try {
       if (log.operation === 'delete_user' && log.target_user_id) {
         // Retry user deletion
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session) {
-          throw new Error('No active session');
-        }
+        await getValidSession();
 
         const { data, error } = await supabase.functions.invoke('delete-user', {
-          body: { userId: log.target_user_id },
-          headers: {
-            Authorization: `Bearer ${session.access_token}`
-          }
+          body: { userId: log.target_user_id }
         });
 
         if (error || !data?.success) {

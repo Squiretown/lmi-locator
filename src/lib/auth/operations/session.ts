@@ -1,5 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
+import { getValidSession } from "@/lib/auth/getValidSession";
 
 export async function signOutUser() {
   try {
@@ -14,22 +15,12 @@ export async function signOutAllUsers() {
   try {
     console.log("Starting sign out all users process");
     
-    // Get current auth token to confirm we're authenticated
-    const { data: { session } } = await supabase.auth.getSession();
-    
-    if (!session) {
-      console.error("No active session found");
-      return { success: false, error: new Error("No active session") };
-    }
-    
-    console.log("Session found, proceeding with sign out all users");
+    // Ensure fresh session before invoking edge function
+    await getValidSession();
     
     // Call the Supabase edge function to sign out all users
     const { error, data } = await supabase.functions.invoke('sign-out-all-users', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${session.access_token}`
-      }
+      method: 'POST'
     });
     
     if (error) {
