@@ -20,33 +20,6 @@ import type {
   InvitationStatus
 } from '@/types/unified-invitations';
 
-/**
- * CRITICAL: Refresh session to get a fresh JWT token
- * Edge functions fail with "Auth session missing" when token is stale
- */
-async function getValidSession() {
-  console.log('Refreshing session to get fresh JWT token...');
-  
-  // Force refresh the session to get a new token
-  const { data, error } = await supabase.auth.refreshSession();
-  
-  if (error) {
-    console.error('Session refresh failed:', error);
-    throw new Error('Authentication failed. Please sign in again.');
-  }
-  
-  if (!data.session) {
-    throw new Error('No active session. Please sign in.');
-  }
-  
-  console.log('Session refreshed successfully:', {
-    userId: data.session.user.id,
-    expiresAt: new Date(data.session.expires_at! * 1000).toISOString()
-  });
-  
-  return data.session;
-}
-
 export function useUnifiedInvitationSystem() {
   const queryClient = useQueryClient();
   const [filters, setFilters] = useState<InvitationFilters>({});
@@ -60,13 +33,13 @@ export function useUnifiedInvitationSystem() {
   } = useQuery({
     queryKey: ['user-invitations', filters],
     queryFn: async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) throw new Error('No active session');
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('No active session');
 
       let query = supabase
         .from('user_invitations')
         .select('*')
-        .eq('invited_by_user_id', session.user.id)
+        .eq('invited_by_user_id', user.id)
         .order('created_at', { ascending: false });
 
       if (filters.status && filters.status.length > 0) {
@@ -120,9 +93,6 @@ export function useUnifiedInvitationSystem() {
     mutationFn: async (request: CreateInvitationRequest): Promise<SendInvitationResponse> => {
       console.log('=== SEND INVITATION START ===');
       
-      // 1. Get fresh session with valid JWT
-      const session = await getValidSession();
-      
       console.log('Preparing invitation request:', {
         email: request.email,
         userType: request.userType,
@@ -157,7 +127,7 @@ export function useUnifiedInvitationSystem() {
 
       console.log('Calling edge function with payload:', payload);
 
-      // 3. Call edge function - Supabase SDK automatically includes fresh auth token
+      // Supabase SDK automatically includes auth header
       const { data, error } = await supabase.functions.invoke('send-user-invitation', {
         body: payload
       });
@@ -256,10 +226,6 @@ export function useUnifiedInvitationSystem() {
   const manageInvitationMutation = useMutation({
     mutationFn: async (request: ManageInvitationRequest) => {
       console.log('=== MANAGE INVITATION START ===');
-      
-      // Get fresh session
-      const session = await getValidSession();
-      
       console.log('Managing invitation:', request);
 
       const { data, error } = await supabase.functions.invoke('manage-user-invitation', {
