@@ -9,7 +9,7 @@ import { RefreshCcwIcon, MailIcon, SendIcon } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import StatusBadge from './StatusBadge';
-import { createInvitationHeaders } from '@/lib/utils/invitationUtils';
+import { getValidSession } from '@/lib/auth/getValidSession';
 interface EmailTestResult {
   success: boolean;
   error?: string;
@@ -68,7 +68,7 @@ const EmailTester: React.FC = () => {
       let result;
       
       if (emailType === 'client-invitation') {
-        const { data: { session } } = await supabase.auth.getSession();
+        await getValidSession();
         result = await supabase.functions.invoke('send-user-invitation', {
           body: {
             email: testData.email,
@@ -78,8 +78,7 @@ const EmailTester: React.FC = () => {
             phone: testData.phone,
             sendVia: 'email',
             customMessage: 'This is a test invitation'
-          },
-          headers: createInvitationHeaders(session?.access_token || '')
+          }
         });
       } else {
         // Function 'send-user-email' does not exist
