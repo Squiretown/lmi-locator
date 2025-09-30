@@ -14,5 +14,5 @@ export async function getValidSession() {
     throw new Error('Authentication failed. Please sign in again.');
   }
   
-  return data.session;
+  return data.session;  // ← Fixed: lowercase 's', no space
 }
