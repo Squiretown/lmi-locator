@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { getValidSession } from '@/lib/auth/getValidSession';
 import type { AdminUser } from '../types/admin-user';
 
 export const useUserManagement = () => {
@@ -29,6 +30,9 @@ export const useUserManagement = () => {
         const error = new Error('Admin privileges required to view users');
         throw error;
       }
+
+      // Ensure fresh session before invoking edge function
+      await getValidSession();
 
       // Use the admin listUsers function via edge function
       const { data: authData, error: authError } = await supabase.functions.invoke('list-users');

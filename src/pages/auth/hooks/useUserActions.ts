@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { getValidSession } from '@/lib/auth/getValidSession';
 
 export const useUserActions = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -42,6 +43,9 @@ export const useUserActions = () => {
       }
 
       console.log('Suspending user with data:', { userId, reason, duration });
+      
+      // Ensure fresh session
+      await getValidSession();
       
       // Call edge function to suspend user
       const { data, error } = await supabase.functions.invoke('suspend-user', {
@@ -91,6 +95,9 @@ export const useUserActions = () => {
 
       console.log('Unsuspending user:', userId);
       
+      // Ensure fresh session
+      await getValidSession();
+
       // Call edge function to unsuspend user
       const { data, error } = await supabase.functions.invoke('unsuspend-user', {
         body: { userId }
@@ -123,6 +130,9 @@ export const useUserActions = () => {
     try {
       setIsLoading(true);
       
+      // Ensure fresh session
+      await getValidSession();
+
       // Call edge function to update user email
       const { data, error } = await supabase.functions.invoke('update-user-email', {
         body: { userId, newEmail }
@@ -145,6 +155,9 @@ export const useUserActions = () => {
     try {
       setIsLoading(true);
       
+      // Ensure fresh session
+      await getValidSession();
+
       // Call edge function to update user role
       const { data, error } = await supabase.functions.invoke('update-user-role', {
         body: { userId, newRole }
@@ -167,6 +180,9 @@ export const useUserActions = () => {
     try {
       setIsLoading(true);
       
+      // Ensure fresh session
+      await getValidSession();
+
       // Call edge function to send email
       const { data, error } = await supabase.functions.invoke('send-user-email', {
         body: { userId, message }
@@ -189,6 +205,9 @@ export const useUserActions = () => {
     try {
       setIsLoading(true);
       
+      // Ensure fresh session
+      await getValidSession();
+
       // Call edge function to reset user password
       const { data, error } = await supabase.functions.invoke('reset-user-password', {
         body: { userId }
@@ -220,6 +239,9 @@ export const useUserActions = () => {
         await logAdminError('delete_user', error, userId);
         throw error;
       }
+
+      // Ensure fresh session
+      await getValidSession();
 
       const { data, error } = await supabase.functions.invoke('delete-user', {
         body: { user_id: userId }
@@ -304,9 +326,7 @@ export const useUserActions = () => {
         userIds.map(async (userId) => {
           switch (action) {
             case 'activate':
-              return await supabase.functions.invoke('update-user-role', {
-                body: { userId, newRole: 'client' }
-              });
+              return await changeUserRole(userId, 'client');
             
             case 'deactivate':
               return await suspendUser(userId, 'Bulk deactivation', 8760);

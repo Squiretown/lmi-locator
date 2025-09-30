@@ -4,6 +4,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { getValidSession } from '@/lib/auth/getValidSession';
 import { toast } from 'sonner';
 import type {
   UserInvitation,
@@ -33,8 +34,7 @@ export function useUnifiedInvitationSystem() {
   } = useQuery({
     queryKey: ['user-invitations', filters],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('No active session');
+      const { user } = await getValidSession();
 
       let query = supabase
         .from('user_invitations')
@@ -126,6 +126,9 @@ export function useUnifiedInvitationSystem() {
       };
 
       console.log('Calling edge function with payload:', payload);
+
+      // Ensure fresh session before invoking edge function
+      await getValidSession();
 
       // Supabase SDK automatically includes auth header
       const { data, error } = await supabase.functions.invoke('send-user-invitation', {
@@ -227,6 +230,9 @@ export function useUnifiedInvitationSystem() {
     mutationFn: async (request: ManageInvitationRequest) => {
       console.log('=== MANAGE INVITATION START ===');
       console.log('Managing invitation:', request);
+
+      // Ensure fresh session before invoking edge function
+      await getValidSession();
 
       const { data, error } = await supabase.functions.invoke('manage-user-invitation', {
         body: request
