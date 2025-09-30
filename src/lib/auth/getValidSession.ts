@@ -8,7 +8,7 @@ import { supabase } from '@/integrations/supabase/client';
  * @returns Fresh Supabase session with valid JWT token
  */
 export async function getValidSession() {
-  const { data, error } = await supabase.auth.refreshSession();
+  const { data, error } = await supabase.auth.refreshsession();
   
   if (error || !data.session) {
     throw new Error('Authentication failed. Please sign in again.');
