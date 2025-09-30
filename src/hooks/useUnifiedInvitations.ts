@@ -35,24 +35,21 @@ export function useUnifiedInvitations() {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error('No active session');
 
-      const payload = createUnifiedInvitationPayload(
-        params.target,
-        params.channel,
-        params.email,
-        {
-          name: params.name,
-          phone: params.phone,
-          role: params.role,
-          customMessage: params.customMessage,
-          templateType: params.templateType,
-          teamContext: params.teamContext
-        }
-      );
-
       const headers = createInvitationHeaders(session.access_token);
 
-      const { data, error } = await supabase.functions.invoke('send-invitation', {
-        body: payload,
+      const nameParts = params.name?.split(' ') || [];
+      
+      const { data, error } = await supabase.functions.invoke('send-user-invitation', {
+        body: {
+          email: params.email,
+          userType: params.target === 'client' ? 'client' : params.role || 'realtor',
+          firstName: nameParts[0],
+          lastName: nameParts.slice(1).join(' '),
+          phone: params.phone,
+          sendVia: params.channel,
+          customMessage: params.customMessage,
+          professionalType: params.role !== 'client' ? params.role : undefined,
+        },
         headers
       });
 
@@ -82,11 +79,11 @@ export function useUnifiedInvitations() {
 
       const headers = createInvitationHeaders(session.access_token);
 
-      const { data, error } = await supabase.functions.invoke('manage-invitation', {
+      const { data, error } = await supabase.functions.invoke('manage-user-invitation', {
         body: {
           invitationId: params.invitationId,
           action: params.action,
-          type: params.type
+          sendVia: params.type
         },
         headers
       });

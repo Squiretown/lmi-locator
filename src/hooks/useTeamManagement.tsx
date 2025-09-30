@@ -215,8 +215,15 @@ export const useTeamManagement = () => {
         'Content-Type': 'application/json'
       };
 
-      const { data: result, error } = await supabase.functions.invoke('send-invitation', {
-        body: unifiedPayload,
+      const { data: result, error } = await supabase.functions.invoke('send-user-invitation', {
+        body: {
+          email: data.email,
+          userType: 'realtor',
+          firstName: data.name?.split(' ')[0],
+          lastName: data.name?.split(' ').slice(1).join(' ') || undefined,
+          sendVia: 'email',
+          customMessage: data.customMessage,
+        },
         headers
       });
 

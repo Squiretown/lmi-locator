@@ -115,14 +115,18 @@ const handler = async (req: Request): Promise<Response> => {
         );
       }
 
-      // Log cancellation
-      await supabaseClient.rpc('log_invitation_action', {
-        p_invitation_id: invitation.id,
-        p_action: 'cancelled',
-        p_details: { cancelled_by: user.id },
-        p_ip_address: req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip'),
-        p_user_agent: req.headers.get('user-agent'),
-      });
+      // Log cancellation (non-critical - don't fail request if logging fails)
+      try {
+        await supabaseClient.rpc('log_invitation_action', {
+          p_invitation_id: invitation.id,
+          p_action: 'cancelled',
+          p_details: { cancelled_by: user.id },
+          p_ip_address: req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip'),
+          p_user_agent: req.headers.get('user-agent'),
+        });
+      } catch (rpcError) {
+        console.warn('Failed to log invitation cancellation:', rpcError);
+      }
 
       return new Response(
         JSON.stringify({ 
@@ -194,19 +198,23 @@ const handler = async (req: Request): Promise<Response> => {
         })
         .eq('id', invitation.id);
 
-      // Log resend
-      await supabaseClient.rpc('log_invitation_action', {
-        p_invitation_id: invitation.id,
-        p_action: 'resent',
-        p_details: {
-          email_sent: emailSent,
-          sms_sent: smsSent,
-          send_via: sendVia,
-          attempt: invitation.attempts + 1
-        },
-        p_ip_address: req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip'),
-        p_user_agent: req.headers.get('user-agent'),
-      });
+      // Log resend (non-critical - don't fail request if logging fails)
+      try {
+        await supabaseClient.rpc('log_invitation_action', {
+          p_invitation_id: invitation.id,
+          p_action: 'resent',
+          p_details: {
+            email_sent: emailSent,
+            sms_sent: smsSent,
+            send_via: sendVia,
+            attempt: invitation.attempts + 1
+          },
+          p_ip_address: req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip'),
+          p_user_agent: req.headers.get('user-agent'),
+        });
+      } catch (rpcError) {
+        console.warn('Failed to log invitation resend:', rpcError);
+      }
 
       return new Response(
         JSON.stringify({ 

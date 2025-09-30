@@ -223,18 +223,6 @@ export function useMortgageTeamManagement() {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error('No active session');
 
-      const unifiedPayload: UnifiedInvitationPayload = {
-        target: 'professional',
-        channel: 'email',
-        recipient: {
-          email
-        },
-        context: {
-          role: professionalType || 'team_member',
-          customMessage: message
-        }
-      };
-
       const headers = createInvitationHeaders(session.access_token);
 
       // Create proper payload structure matching edge function expectations  
@@ -253,8 +241,8 @@ export function useMortgageTeamManagement() {
 
       console.log('Sending invitation with payload:', invitationPayload);
 
-      const { data, error } = await supabase.functions.invoke('send-invitation', {
-        body: JSON.stringify(unifiedPayload),
+      const { data, error } = await supabase.functions.invoke('send-user-invitation', {
+        body: invitationPayload,
         headers
       });
 

@@ -109,22 +109,15 @@ export function useLendingTeamManagement() {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error('No active session');
 
-      const unifiedPayload: UnifiedInvitationPayload = {
-        target: 'professional',
-        channel: 'email',
-        recipient: {
-          email: invitation.professional_email
-        },
-        context: {
-          role: 'mortgage_professional',
-          customMessage: invitation.custom_message
-        }
-      };
-
       const headers = createInvitationHeaders(session.access_token);
 
-      const { data, error } = await supabase.functions.invoke('send-invitation', {
-        body: JSON.stringify(unifiedPayload),
+      const { data, error } = await supabase.functions.invoke('send-user-invitation', {
+        body: {
+          email: invitation.professional_email,
+          userType: 'mortgage_professional',
+          sendVia: 'email',
+          customMessage: invitation.custom_message
+        },
         headers
       });
 

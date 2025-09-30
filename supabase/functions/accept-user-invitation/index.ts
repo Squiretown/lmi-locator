@@ -255,20 +255,24 @@ const handler = async (req: Request): Promise<Response> => {
         })
         .eq('id', invitation.id);
 
-      // Log acceptance for existing user
-      await supabaseClient.rpc('log_invitation_action', {
-        p_invitation_id: invitation.id,
-        p_action: 'accepted',
-        p_details: {
-          user_id: targetUser.id,
-          email: requestData.email,
-          user_type: invitation.user_type,
-          existing_user: true,
-          authenticated: !!currentUser
-        },
-        p_ip_address: req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip'),
-        p_user_agent: req.headers.get('user-agent'),
-      });
+      // Log acceptance for existing user (non-critical - don't fail request if logging fails)
+      try {
+        await supabaseClient.rpc('log_invitation_action', {
+          p_invitation_id: invitation.id,
+          p_action: 'accepted',
+          p_details: {
+            user_id: targetUser.id,
+            email: requestData.email,
+            user_type: invitation.user_type,
+            existing_user: true,
+            authenticated: !!currentUser
+          },
+          p_ip_address: req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip'),
+          p_user_agent: req.headers.get('user-agent'),
+        });
+      } catch (rpcError) {
+        console.warn('Failed to log invitation acceptance:', rpcError);
+      }
 
       return new Response(
         JSON.stringify({
@@ -400,19 +404,23 @@ const handler = async (req: Request): Promise<Response> => {
         })
         .eq('id', invitation.id);
 
-      // Log acceptance for new user
-      await supabaseClient.rpc('log_invitation_action', {
-        p_invitation_id: invitation.id,
-        p_action: 'accepted',
-        p_details: {
-          user_id: authData.user.id,
-          email: requestData.email,
-          user_type: invitation.user_type,
-          new_user: true
-        },
-        p_ip_address: req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip'),
-        p_user_agent: req.headers.get('user-agent'),
-      });
+      // Log acceptance for new user (non-critical - don't fail request if logging fails)
+      try {
+        await supabaseClient.rpc('log_invitation_action', {
+          p_invitation_id: invitation.id,
+          p_action: 'accepted',
+          p_details: {
+            user_id: authData.user.id,
+            email: requestData.email,
+            user_type: invitation.user_type,
+            new_user: true
+          },
+          p_ip_address: req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip'),
+          p_user_agent: req.headers.get('user-agent'),
+        });
+      } catch (rpcError) {
+        console.warn('Failed to log invitation acceptance:', rpcError);
+      }
 
       return new Response(
         JSON.stringify({

@@ -98,18 +98,17 @@ export function useUnifiedInvitationSystem() {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error('No active session');
 
-      const unifiedPayload = {
-        target: request.userType === 'client' ? 'client' : 'professional',
-        channel: (request as any).sendVia || 'email',
-        recipient: { email: request.email },
-        context: {
-          role: (request as any).professionalType || request.userType,
+      const { data, error } = await supabase.functions.invoke('send-user-invitation', {
+        body: {
+          email: request.email,
+          userType: request.userType,
+          firstName: (request as any).firstName,
+          lastName: (request as any).lastName,
+          phone: (request as any).phone,
+          sendVia: (request as any).sendVia || 'email',
           customMessage: request.customMessage,
+          professionalType: (request as any).professionalType,
         },
-      } as const;
-
-      const { data, error } = await supabase.functions.invoke('send-invitation', {
-        body: unifiedPayload,
         headers: {
           'Authorization': `Bearer ${session.access_token}`,
           'Content-Type': 'application/json'

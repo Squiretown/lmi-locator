@@ -147,17 +147,21 @@ const handler = async (req: Request): Promise<Response> => {
       }
     };
 
-    // Log validation attempt using service client
-    await supabaseServiceClient.rpc('log_invitation_action', {
-      p_invitation_id: invitation.id,
-      p_action: 'validated',
-      p_details: {
-        method: requestData.token ? 'token' : 'code',
-        valid: true
-      },
-      p_ip_address: req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip'),
-      p_user_agent: req.headers.get('user-agent'),
-    });
+    // Log validation attempt using service client (non-critical - don't fail request if logging fails)
+    try {
+      await supabaseServiceClient.rpc('log_invitation_action', {
+        p_invitation_id: invitation.id,
+        p_action: 'validated',
+        p_details: {
+          method: requestData.token ? 'token' : 'code',
+          valid: true
+        },
+        p_ip_address: req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip'),
+        p_user_agent: req.headers.get('user-agent'),
+      });
+    } catch (rpcError) {
+      console.warn('Failed to log invitation validation:', rpcError);
+    }
 
     return new Response(
       JSON.stringify(invitationDetails),

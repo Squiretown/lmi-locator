@@ -257,18 +257,22 @@ const handler = async (req: Request): Promise<Response> => {
       .update(updateData)
       .eq('id', invitation.id);
 
-    // Log the action
-    await supabaseClient.rpc('log_invitation_action', {
-      p_invitation_id: invitation.id,
-      p_action: 'sent',
-      p_details: {
-        email_sent: emailSent,
-        sms_sent: smsSent,
-        send_via: requestData.sendVia,
-      },
-      p_ip_address: req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip'),
-      p_user_agent: req.headers.get('user-agent'),
-    });
+    // Log the action (non-critical - don't fail request if logging fails)
+    try {
+      await supabaseClient.rpc('log_invitation_action', {
+        p_invitation_id: invitation.id,
+        p_action: 'sent',
+        p_details: {
+          email_sent: emailSent,
+          sms_sent: smsSent,
+          send_via: requestData.sendVia,
+        },
+        p_ip_address: req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip'),
+        p_user_agent: req.headers.get('user-agent'),
+      });
+    } catch (rpcError) {
+      console.warn('Failed to log invitation action:', rpcError);
+    }
 
     return new Response(
       JSON.stringify({

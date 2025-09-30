@@ -69,20 +69,16 @@ const EmailTester: React.FC = () => {
       
       if (emailType === 'client-invitation') {
         const { data: { session } } = await supabase.auth.getSession();
-        result = await supabase.functions.invoke('send-invitation', {
-          body: JSON.stringify({
-            target: 'client',
-            channel: 'email',
-            recipient: {
-              email: testData.email,
-              name: testData.name,
-              phone: testData.phone
-            },
-            context: {
-              templateType: 'test',
-              customMessage: 'This is a test invitation'
-            }
-          }),
+        result = await supabase.functions.invoke('send-user-invitation', {
+          body: {
+            email: testData.email,
+            userType: 'client',
+            firstName: testData.name.split(' ')[0] || 'Test',
+            lastName: testData.name.split(' ').slice(1).join(' ') || 'User',
+            phone: testData.phone,
+            sendVia: 'email',
+            customMessage: 'This is a test invitation'
+          },
           headers: createInvitationHeaders(session?.access_token || '')
         });
       } else {
