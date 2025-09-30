@@ -2,7 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import type { UnifiedInvitationPayload, InvitationTarget, InvitationChannel } from '@/types/invitations';
-import { createUnifiedInvitationPayload, createInvitationHeaders } from '@/lib/utils/invitationUtils';
+import { getValidSession } from '@/lib/auth/getValidSession';
 
 interface SendInvitationParams {
   target: InvitationTarget;
@@ -32,13 +32,12 @@ export function useUnifiedInvitations() {
   // Send new invitation
   const sendInvitationMutation = useMutation({
     mutationFn: async (params: SendInvitationParams) => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) throw new Error('No active session');
-
-      const headers = createInvitationHeaders(session.access_token);
+      // Get fresh session to avoid stale JWT tokens
+      await getValidSession();
 
       const nameParts = params.name?.split(' ') || [];
       
+      // Supabase SDK automatically uses the fresh token
       const { data, error } = await supabase.functions.invoke('send-user-invitation', {
         body: {
           email: params.email,
@@ -49,8 +48,7 @@ export function useUnifiedInvitations() {
           sendVia: params.channel,
           customMessage: params.customMessage,
           professionalType: params.role !== 'client' ? params.role : undefined,
-        },
-        headers
+        }
       });
 
       if (error) throw error;
@@ -74,18 +72,16 @@ export function useUnifiedInvitations() {
   // Manage existing invitation (resend/revoke)
   const manageInvitationMutation = useMutation({
     mutationFn: async (params: ManageInvitationParams) => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) throw new Error('No active session');
+      // Get fresh session to avoid stale JWT tokens
+      await getValidSession();
 
-      const headers = createInvitationHeaders(session.access_token);
-
+      // Supabase SDK automatically uses the fresh token
       const { data, error } = await supabase.functions.invoke('manage-user-invitation', {
         body: {
           invitationId: params.invitationId,
           action: params.action,
           sendVia: params.type
-        },
-        headers
+        }
       });
 
       if (error) throw error;

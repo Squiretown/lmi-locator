@@ -3,8 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useRealtimeTeamUpdates } from './useRealtimeTeamUpdates';
-import type { UnifiedInvitationPayload, StandardInvitationHeaders } from '@/types/invitations';
-import { createInvitationHeaders } from '@/lib/utils/invitationUtils';
+import { getValidSession } from '@/lib/auth/getValidSession';
 
 // Enhanced data structures for unified team management
 interface LendingTeamMember {
@@ -220,8 +219,8 @@ export function useMortgageTeamManagement() {
   // Enhanced invitation system for both company and explicit teams
   const inviteProfessionalMutation = useMutation({
     mutationFn: async ({ email, role, message, permissions, professionalType }: TeamInvitation) => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) throw new Error('No active session');
+      // Get fresh session to avoid stale JWT tokens
+      await getValidSession();
 
       // Create proper payload structure matching edge function expectations  
       const invitationPayload = {
@@ -239,7 +238,7 @@ export function useMortgageTeamManagement() {
 
       console.log('Sending invitation with payload:', invitationPayload);
 
-      // Don't pass custom headers - let Supabase handle auth automatically
+      // Supabase SDK automatically uses the fresh token from getValidSession
       const { data, error } = await supabase.functions.invoke('send-user-invitation', {
         body: invitationPayload
       });

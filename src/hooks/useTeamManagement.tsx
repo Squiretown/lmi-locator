@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { getProfessionalByUserId } from '@/lib/api/professionals/queries';
-import type { UnifiedInvitationPayload, StandardInvitationHeaders } from '@/types/invitations';
+import { getValidSession } from '@/lib/auth/getValidSession';
 
 interface ProfessionalTeam {
   id: string;
@@ -194,27 +194,10 @@ export const useTeamManagement = () => {
         throw new Error('No professional profile found');
       }
 
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) throw new Error('No active session');
+      // Get fresh session to avoid stale JWT tokens
+      await getValidSession();
 
-      const unifiedPayload: UnifiedInvitationPayload = {
-        target: 'professional',
-        channel: 'email',
-        recipient: {
-          email: data.email,
-          name: data.name
-        },
-        context: {
-          role: 'realtor',
-          customMessage: data.customMessage
-        }
-      };
-
-      const headers: StandardInvitationHeaders = {
-        Authorization: `Bearer ${session.access_token}`,
-        'Content-Type': 'application/json'
-      };
-
+      // Supabase SDK automatically uses the fresh token
       const { data: result, error } = await supabase.functions.invoke('send-user-invitation', {
         body: {
           email: data.email,
@@ -223,8 +206,7 @@ export const useTeamManagement = () => {
           lastName: data.name?.split(' ').slice(1).join(' ') || undefined,
           sendVia: 'email',
           customMessage: data.customMessage,
-        },
-        headers
+        }
       });
 
       if (error) throw error;

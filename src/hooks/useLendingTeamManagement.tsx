@@ -1,8 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import type { UnifiedInvitationPayload, StandardInvitationHeaders } from '@/types/invitations';
-import { createInvitationHeaders } from '@/lib/utils/invitationUtils';
+import { getValidSession } from '@/lib/auth/getValidSession';
 
 interface LendingTeamMember {
   id: string;
@@ -106,19 +105,17 @@ export function useLendingTeamManagement() {
   // Invite lending team member
   const inviteTeamMemberMutation = useMutation({
     mutationFn: async (invitation: LendingTeamInvitation) => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) throw new Error('No active session');
+      // Get fresh session to avoid stale JWT tokens
+      await getValidSession();
 
-      const headers = createInvitationHeaders(session.access_token);
-
+      // Supabase SDK automatically uses the fresh token
       const { data, error } = await supabase.functions.invoke('send-user-invitation', {
         body: {
           email: invitation.professional_email,
           userType: 'mortgage_professional',
           sendVia: 'email',
           customMessage: invitation.custom_message
-        },
-        headers
+        }
       });
 
       if (error) throw error;
