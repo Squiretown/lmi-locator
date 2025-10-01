@@ -33,16 +33,17 @@ import ClientSearch from "./pages/dashboard/client/Search";
 // Realtor Dashboard Pages
 import RealtorOverview from "./pages/dashboard/realtor/Overview";
 import RealtorClients from "./pages/dashboard/realtor/Clients";
-import RealtorProperties from "./pages/dashboard/realtor/Properties";
-import RealtorAnalytics from "./pages/dashboard/realtor/Analytics";
-import RealtorMarketing from "./pages/dashboard/realtor/Marketing";
+import MortgageAnalytics from "./pages/dashboard/mortgage/Analytics";
+// REMOVED: import RealtorProperties from "./pages/dashboard/realtor/Properties";
+// REMOVED: import RealtorAnalytics from "./pages/dashboard/realtor/Analytics";
+// REMOVED: import RealtorMarketing from "./pages/dashboard/realtor/Marketing";
 import RealtorTeam from "./pages/dashboard/realtor/Team";
 
 // Mortgage Dashboard Pages
 import MortgageOverview from "./pages/dashboard/mortgage/Overview";
 import MortgageClients from "./pages/dashboard/mortgage/Clients";
 import MortgageTeam from "./pages/dashboard/mortgage/Team";
-import MortgageAnalytics from "./pages/dashboard/mortgage/Analytics";
+// REMOVED: import MortgageAnalytics from "./pages/dashboard/mortgage/Analytics";
 
 // Admin Layout and Pages
 import AdminLayout from "./components/admin/layout/AdminLayout";
