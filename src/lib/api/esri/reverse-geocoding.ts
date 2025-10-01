@@ -1,16 +1,19 @@
-// DEPRECATED: Direct API access with API key
-// Use secure-reverse-geocoding.ts for secure API access through edge functions
-
-import { secureReverseGeocodeWithEsri } from './secure-reverse-geocoding';
+// FILE: src/lib/api/esri/secure-reverse-geocoding.ts
+import { invokeEdgeFunction } from '@/lib/supabase/edge-functions';
 
 /**
- * @deprecated Use secureReverseGeocodeWithEsri instead for secure API access
+ * Secure reverse geocoding function using edge function
+ * ✅ FIXED: Now uses invokeEdgeFunction with proper auth header
  */
-export const reverseGeocodeWithEsri = async (lat: number, lon: number): Promise<{
-  address: string;
-  city?: string;
-  state?: string;
-  zip?: string;
-}> => {
-  return await secureReverseGeocodeWithEsri(lat, lon);
+export const secureReverseGeocodeWithEsri = async (lat: number, lon: number) => {
+  const { data, error } = await invokeEdgeFunction('secure-esri-reverse-geocode', { 
+    lat, 
+    lon 
+  });
+
+  if (error) {
+    throw new Error(error.message || 'Reverse geocoding failed');
+  }
+
+  return data;
 };
