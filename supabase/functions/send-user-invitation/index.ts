@@ -62,53 +62,56 @@ const handler = async (req: Request): Promise<Response> => {
     );
     console.log(`[${requestId}] Headers:`, logHeaders);
 
-    // Get authenticated user - support both header formats
-    let userJWT = req.headers.get('X-Supabase-Authorization') || req.headers.get('Authorization');
-    console.log(`[${requestId}] Auth header present:`, !!userJWT);
+    // Get JWT from Authorization header
+    const authHeader = req.headers.get('Authorization');
+    console.log(`[${requestId}] Auth header present:`, !!authHeader);
     
-    if (!userJWT) {
+    if (!authHeader) {
       console.error(`[${requestId}] No authorization header found`);
       return new Response(
         JSON.stringify({ 
           error: 'Authorization header required',
-          requestId,
-          received_headers: Object.keys(Object.fromEntries(req.headers.entries()))
+          requestId
         }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Normalize Authorization header - ensure it has Bearer prefix
-    if (userJWT && !userJWT.startsWith('Bearer ')) {
-      userJWT = `Bearer ${userJWT}`;
-      console.log(`[${requestId}] Added Bearer prefix to auth header`);
-    }
+    // Extract JWT token (remove 'Bearer ' prefix if present)
+    const jwt = authHeader.replace('Bearer ', '').trim();
+    
+    // Create Supabase admin client (uses service role key)
+    const supabaseAdmin = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    );
 
-    // Create Supabase client with proper auth
+    // Verify the JWT and get the user
+    const { data: { user }, error: userError } = await supabaseAdmin.auth.getUser(jwt);
+    if (userError || !user) {
+      console.error(`[${requestId}] Auth failed:`, userError?.message || 'No user found');
+      return new Response(
+        JSON.stringify({ 
+          error: 'Authentication failed',
+          details: userError?.message || 'Invalid or expired token',
+          requestId
+        }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    
+    // Create client with user context for database operations
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
       { 
         global: { 
           headers: { 
-            Authorization: userJWT 
+            Authorization: authHeader
           } 
         } 
       }
     );
-
-    const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
-    if (userError || !user) {
-      console.error(`[${requestId}] Auth failed:`, userError?.message || 'No user found');
-      return new Response(
-        JSON.stringify({ 
-          error: 'Authentication failed',
-          details: userError?.message,
-          requestId
-        }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
 
     console.log(`[${requestId}] Authenticated user:`, user.id);
 
