@@ -33,9 +33,6 @@ import ClientSearch from "./pages/dashboard/client/Search";
 // Realtor Dashboard Pages
 import RealtorOverview from "./pages/dashboard/realtor/Overview";
 import RealtorClients from "./pages/dashboard/realtor/Clients";
-import RealtorProperties from "./pages/dashboard/realtor/Properties";
-import RealtorAnalytics from "./pages/dashboard/realtor/Analytics";
-import RealtorMarketing from "./pages/dashboard/realtor/Marketing";
 import RealtorTeam from "./pages/dashboard/realtor/Team";
 
 // Mortgage Dashboard Pages
@@ -137,21 +134,6 @@ const App = () => (
               <Route path="realtor/clients" element={
                 <ProtectedRoute allowedUserTypes={['realtor']}>
                   <RealtorClients />
-                </ProtectedRoute>
-              } />
-              <Route path="realtor/properties" element={
-                <ProtectedRoute allowedUserTypes={['realtor']}>
-                  <RealtorProperties />
-                </ProtectedRoute>
-              } />
-              <Route path="realtor/analytics" element={
-                <ProtectedRoute allowedUserTypes={['realtor']}>
-                  <RealtorAnalytics />
-                </ProtectedRoute>
-              } />
-              <Route path="realtor/marketing" element={
-                <ProtectedRoute allowedUserTypes={['realtor']}>
-                  <RealtorMarketing />
                 </ProtectedRoute>
               } />
               <Route path="realtor/team" element={

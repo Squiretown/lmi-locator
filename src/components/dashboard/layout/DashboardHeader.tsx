@@ -40,10 +40,7 @@ const DashboardHeader: React.FC = () => {
         return [
           { title: "Dashboard", url: "/dashboard/realtor", icon: Home },
           { title: "Clients", url: "/dashboard/realtor/clients", icon: Users },
-          { title: "Properties", url: "/dashboard/realtor/properties", icon: Building },
           { title: "Team", url: "/dashboard/realtor/team", icon: UserCheck },
-          { title: "Marketing", url: "/dashboard/realtor/marketing", icon: Megaphone },
-          { title: "Analytics", url: "/dashboard/realtor/analytics", icon: BarChart3 },
         ];
       
       case 'mortgage_professional':
