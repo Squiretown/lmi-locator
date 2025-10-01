@@ -30,12 +30,10 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    // Get authenticated user - prioritize user JWT over anonymous key  
-    const userJWT = req.headers.get('X-Supabase-Authorization') || req.headers.get('Authorization');
+    // Get JWT from authorization header
+    const authHeader = req.headers.get('Authorization');
     
-    console.log('Auth check - userJWT header:', userJWT ? 'present' : 'missing');
-    
-    if (!userJWT) {
+    if (!authHeader) {
       console.error('No authorization header found in request');
       return new Response(
         JSON.stringify({ error: 'Authorization header required' }),
@@ -43,24 +41,41 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    // Normalize header - ensure Bearer prefix
-    const normalizedJWT = userJWT.startsWith('Bearer ') ? userJWT : `Bearer ${userJWT}`;
-    console.log('Using normalized JWT for auth');
+    // Extract JWT token
+    const jwt = authHeader.replace('Bearer ', '');
 
-    const supabaseClient = createClient(
+    // Create admin client to verify JWT
+    const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      { global: { headers: { Authorization: normalizedJWT } } }
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false
+        }
+      }
     );
 
-    const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
+    // Verify the JWT and get user
+    const { data: { user }, error: userError } = await supabaseAdmin.auth.getUser(jwt);
     if (userError || !user) {
-      console.error('Auth.getUser failed:', userError?.message || 'No user found');
+      console.error('JWT verification failed:', userError?.message || 'No user found');
       return new Response(
-        JSON.stringify({ error: 'Authentication required' }),
+        JSON.stringify({ error: 'Invalid or expired token' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+
+    // Create client for database operations with user's auth
+    const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      { 
+        global: { 
+          headers: { Authorization: authHeader } 
+        } 
+      }
+    );
 
     const requestData: ManageInvitationRequest = await req.json();
     
