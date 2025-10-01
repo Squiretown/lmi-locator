@@ -176,11 +176,6 @@ const App = () => (
                   <MortgageTeam />
                 </ProtectedRoute>
               } />
-              <Route path="mortgage/analytics" element={
-                <ProtectedRoute allowedUserTypes={['mortgage_professional']}>
-                  <MortgageAnalytics />
-                </ProtectedRoute>
-              } />
             </Route>
             
             {/* Admin Routes */}
