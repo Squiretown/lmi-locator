@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -45,12 +44,11 @@ export const useUserActions = () => {
 
       console.log('Suspending user with data:', { userId, reason, duration });
       
-      // Ensure fresh session
-      await getValidSession();
-      
-      // Call edge function to suspend user
-      const { data, error } = await supabase.functions.invoke('suspend-user', {
-        body: { userId, reason, duration }
+      // ✅ FIXED: Using invokeEdgeFunction
+      const { data, error } = await invokeEdgeFunction('suspend-user', { 
+        userId, 
+        reason, 
+        duration 
       });
 
       if (error) {
@@ -65,9 +63,7 @@ export const useUserActions = () => {
 
       // Force logout the suspended user (best-effort)
       try {
-        await supabase.functions.invoke('force-logout-user', {
-          body: { userId }
-        });
+        await invokeEdgeFunction('force-logout-user', { userId });
       } catch (logoutError) {
         console.warn('Failed to force logout suspended user:', logoutError);
         // Don't fail the whole operation if logout fails
@@ -96,12 +92,8 @@ export const useUserActions = () => {
 
       console.log('Unsuspending user:', userId);
       
-      // Ensure fresh session
-      await getValidSession();
-
-      // Call edge function to unsuspend user
+      // ✅ FIXED: Using invokeEdgeFunction
       const { data, error } = await invokeEdgeFunction('unsuspend-user', { userId });
-      });
 
       if (error) {
         console.error('Edge function error:', error);
@@ -130,12 +122,10 @@ export const useUserActions = () => {
     try {
       setIsLoading(true);
       
-      // Ensure fresh session
-      await getValidSession();
-
-      // Call edge function to update user email
-      const { data, error } = await supabase.functions.invoke('update-user-email', {
-        body: { userId, newEmail }
+      // ✅ FIXED: Using invokeEdgeFunction
+      const { data, error } = await invokeEdgeFunction('update-user-email', { 
+        userId, 
+        newEmail 
       });
 
       if (error) throw error;
@@ -155,12 +145,10 @@ export const useUserActions = () => {
     try {
       setIsLoading(true);
       
-      // Ensure fresh session
-      await getValidSession();
-
-      // Call edge function to update user role
-      const { data, error } = await supabase.functions.invoke('update-user-role', {
-        body: { userId, newRole }
+      // ✅ FIXED: Using invokeEdgeFunction
+      const { data, error } = await invokeEdgeFunction('update-user-role', { 
+        userId, 
+        newRole 
       });
 
       if (error) throw error;
@@ -180,12 +168,10 @@ export const useUserActions = () => {
     try {
       setIsLoading(true);
       
-      // Ensure fresh session
-      await getValidSession();
-
-      // Call edge function to send email
-      const { data, error } = await supabase.functions.invoke('send-user-email', {
-        body: { userId, message }
+      // ✅ FIXED: Using invokeEdgeFunction
+      const { data, error } = await invokeEdgeFunction('send-user-email', { 
+        userId, 
+        message 
       });
 
       if (error) throw error;
@@ -205,13 +191,8 @@ export const useUserActions = () => {
     try {
       setIsLoading(true);
       
-      // Ensure fresh session
-      await getValidSession();
-
-      // Call edge function to reset user password
-      const { data, error } = await supabase.functions.invoke('reset-user-password', {
-        body: { userId }
-      });
+      // ✅ FIXED: Using invokeEdgeFunction
+      const { data, error } = await invokeEdgeFunction('reset-user-password', { userId });
 
       if (error) throw error;
 
@@ -240,11 +221,9 @@ export const useUserActions = () => {
         throw error;
       }
 
-      // Ensure fresh session
-      await getValidSession();
-
-      const { data, error } = await supabase.functions.invoke('delete-user', {
-        body: { user_id: userId }
+      // ✅ FIXED: Using invokeEdgeFunction
+      const { data, error } = await invokeEdgeFunction('delete-user', { 
+        user_id: userId 
       });
 
       if (error) {
