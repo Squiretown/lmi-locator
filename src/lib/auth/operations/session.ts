@@ -1,6 +1,6 @@
-
+// FILE: src/lib/auth/operations/session.ts
 import { supabase } from "@/integrations/supabase/client";
-import { getValidSession } from "@/lib/auth/getValidSession";
+import { invokeEdgeFunction } from "@/lib/supabase/edge-functions";
 
 export async function signOutUser() {
   try {
@@ -15,11 +15,8 @@ export async function signOutAllUsers() {
   try {
     console.log("Starting sign out all users process");
     
-    // Ensure fresh session before invoking edge function
-    await getValidSession();
-    
-    // Call the Supabase edge function to sign out all users
-    const { error, data } = await supabase.functions.invoke('sign-out-all-users', {
+    // ✅ FIXED: Using invokeEdgeFunction with proper auth header
+    const { error, data } = await invokeEdgeFunction('sign-out-all-users', {
       method: 'POST'
     });
     
@@ -74,6 +71,59 @@ export async function validateSession(): Promise<{
     }
     
     // Check if session is expired
+    const now = Math.floor(Date.now() / 1000);
+    if (session.expires_at && session.expires_at < now) {
+      await supabase.auth.signOut();
+      return { isValid: false, session: null, error: "Session expired" };
+    }
+    
+    // Check for suspicious activity (rapid token changes, etc.)
+    const lastActivity = sessionStorage.getItem('last_activity');
+    const currentTime = Date.now().toString();
+    
+    if (lastActivity) {
+      const timeDiff = parseInt(currentTime) - parseInt(lastActivity);
+      // If no activity for more than 30 minutes, require re-authentication
+      if (timeDiff > 30 * 60 * 1000) {
+        await supabase.auth.signOut();
+        return { isValid: false, session: null, error: "Session timeout due to inactivity" };
+      }
+    }
+    
+    sessionStorage.setItem('last_activity', currentTime);
+    
+    return { isValid: true, session, error: undefined };
+  } catch (error) {
+    console.error('Session validation error:', error);
+    return { isValid: false, session: null, error: (error as Error).message };
+  }
+}
+
+/**
+ * Secure session invalidation
+ */
+export async function invalidateSession(reason: string = 'user_logout') {
+  try {
+    // Log the session termination for security audit
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (session?.user) {
+      console.log(`Session invalidated for user ${session.user.id}: ${reason}`);
+    }
+    
+    // Clear all session storage
+    sessionStorage.clear();
+    localStorage.removeItem('supabase.auth.token');
+    
+    // Sign out from Supabase
+    await supabase.auth.signOut();
+    
+    return { success: true };
+  } catch (error) {
+    console.error('Error during session invalidation:', error);
+    return { success: false, error: error as Error };
+  }
+}    // Check if session is expired
     const now = Math.floor(Date.now() / 1000);
     if (session.expires_at && session.expires_at < now) {
       await supabase.auth.signOut();
