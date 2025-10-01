@@ -1,4 +1,10 @@
-
+/* Hide Lovable edit button */
+[data-lovable-edit-button],
+[class*="lovable-edit"],
+.lovable-edit-button {
+  display: none !important;
+  visibility: hidden !important;
+}
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
