@@ -1,14 +1,14 @@
-import { supabase } from '@/integrations/supabase/client';
-import { getValidSession } from '@/lib/auth/getValidSession';
+// FILE: src/lib/api/esri/secure-geocoding.ts
+import { invokeEdgeFunction } from '@/lib/supabase/edge-functions';
 
 /**
  * Secure geocoding function using edge function
+ * ✅ FIXED: Now uses invokeEdgeFunction with proper auth header
  */
 export const secureGeocodeWithEsri = async (address: string, maxLocations: number = 1) => {
-  await getValidSession();
-
-  const { data, error } = await supabase.functions.invoke('secure-esri-geocode', {
-    body: { address, maxLocations }
+  const { data, error } = await invokeEdgeFunction('secure-esri-geocode', { 
+    address, 
+    maxLocations 
   });
 
   if (error) {
