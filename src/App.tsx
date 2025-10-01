@@ -1,157 +1,243 @@
 import React from 'react';
-import { useAuth } from "@/hooks/useAuth";
-import { ProfileMenu } from "@/components/auth/ProfileMenu";
-import { NotificationCenter } from "@/components/dashboard/NotificationCenter";
-import { Button } from "@/components/ui/button";
-import { NavLink, useLocation } from "react-router-dom";
-import { cn } from "@/lib/utils";
-import { 
-  Home, 
-  Search, 
-  Heart, 
-  Users, 
-  Building, 
-  // REMOVED: Megaphone (for Marketing),
-  // REMOVED: BarChart3 (for Analytics),
-  UserCheck
-} from "lucide-react";
+import { Toaster } from "@/components/ui/toaster";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import Index from "./pages/Index";
+import LoginPage from "./pages/auth/LoginPage";
+import ClientLoginPage from "./pages/auth/ClientLoginPage";
+import { AuthProvider } from "@/providers/AuthProvider";
+import ProtectedRoute from "./components/auth/ProtectedRoute";
 
-interface NavigationItem {
-  title: string;
-  url: string;
-  icon: React.ComponentType<{ className?: string }>;
-}
+import { ClientRegistration } from "./pages/ClientRegistration";
+import { RegistrationSuccess } from "./pages/RegistrationSuccess";
+import { AcceptInvitationPage } from "./components/invitations/AcceptInvitationPage";
+import UnifiedInvitationDemo from "./pages/UnifiedInvitationDemo";
 
-const DashboardHeader: React.FC = () => {
-  const { userType } = useAuth();
-  const location = useLocation();
+// Import all page components
+import ProductPage from "./pages/ProductPage";
+import ResourcesPage from "./pages/ResourcesPage";
+import PricingPage from "./pages/PricingPage";
+import SubscriptionPage from "./pages/SubscriptionPage";
+import CustomersPage from "./pages/CustomersPage";
+import BlogPage from "./pages/BlogPage";
+import ContactPage from "./pages/ContactPage";
 
-  const getNavigationItems = (): NavigationItem[] => {
-    switch (userType) {
-      case 'client':
-        return [
-          { title: "Dashboard", url: "/dashboard/client", icon: Home },
-          { title: "Search", url: "/dashboard/client/search", icon: Search },
-          { title: "Saved Properties", url: "/dashboard/client/saved-properties", icon: Heart },
-        ];
-      
-      case 'realtor':
-        return [
-          { title: "Dashboard", url: "/dashboard/realtor", icon: Home },
-          { title: "Clients", url: "/dashboard/realtor/clients", icon: Users },
-          { title: "Properties", url: "/dashboard/realtor/properties", icon: Building },
-          { title: "Team", url: "/dashboard/realtor/team", icon: UserCheck },
-          // REMOVED: Marketing navigation item
-          // { title: "Marketing", url: "/dashboard/realtor/marketing", icon: Megaphone },
-          // REMOVED: Analytics navigation item
-          // { title: "Analytics", url: "/dashboard/realtor/analytics", icon: BarChart3 },
-        ];
-      
-      case 'mortgage_professional':
-      case 'mortgage':
-        return [
-          { title: "Dashboard", url: "/dashboard/mortgage", icon: Home },
-          { title: "Clients", url: "/dashboard/mortgage/clients", icon: Users },
-          { title: "Team", url: "/dashboard/mortgage/team", icon: UserCheck },
-          // REMOVED: Analytics navigation item
-          // { title: "Analytics", url: "/dashboard/mortgage/analytics", icon: BarChart3 },
-        ];
-      
-      default:
-        return [
-          { title: "Dashboard", url: "/dashboard/client", icon: Home },
-        ];
-    }
-  };
+// Dashboard Layout and Pages
+import DashboardLayout from "./components/dashboard/layout/DashboardLayout";
+import ClientOverview from "./pages/dashboard/client/Overview";
+import SavedProperties from "./pages/dashboard/client/SavedProperties";
+import ClientSearch from "./pages/dashboard/client/Search";
 
-  const navigationItems = getNavigationItems();
+// Realtor Dashboard Pages
+import RealtorOverview from "./pages/dashboard/realtor/Overview";
+import RealtorClients from "./pages/dashboard/realtor/Clients";
+import RealtorProperties from "./pages/dashboard/realtor/Properties";
+import RealtorTeam from "./pages/dashboard/realtor/Team";
+// REMOVED Analytics: import RealtorAnalytics from "./pages/dashboard/realtor/Analytics";
+// REMOVED Marketing: import RealtorMarketing from "./pages/dashboard/realtor/Marketing";
 
-  const isActiveRoute = (url: string) => {
-    if (url === location.pathname) return true;
-    if (url.endsWith('/client') || url.endsWith('/realtor') || url.endsWith('/mortgage')) {
-      return location.pathname === url;
-    }
-    return location.pathname.startsWith(url);
-  };
+// Mortgage Dashboard Pages
+import MortgageOverview from "./pages/dashboard/mortgage/Overview";
+import MortgageClients from "./pages/dashboard/mortgage/Clients";
+import MortgageTeam from "./pages/dashboard/mortgage/Team";
+// REMOVED Analytics: import MortgageAnalytics from "./pages/dashboard/mortgage/Analytics";
 
-  const getPortalTitle = () => {
-    switch (userType) {
-      case 'client': return 'Client Portal';
-      case 'realtor': return 'Realtor Portal';
-      case 'mortgage_professional':
-      case 'mortgage': return 'Mortgage Portal';
-      default: return 'Dashboard';
-    }
-  };
+// Admin Layout and Pages
+import AdminLayout from "./components/admin/layout/AdminLayout";
+import AdminContactsPage from "./pages/admin/AdminContactsPage";
+import { Dashboard as AdminDashboard } from "./components/admin/dashboard/DashboardContainer";
+import UserManagement from "./pages/auth/UserManagement";
+import AdminTools from "./pages/auth/AdminTools";
+import SettingsPage from "./pages/admin/SettingsPage";
+import SystemLogsPage from "./pages/admin/SystemLogsPage";
+import ErrorLogs from "./pages/admin/ErrorLogs";
+import DataProtectionPage from "./pages/admin/DataProtectionPage";
+import SearchHistoryPage from "./pages/admin/SearchHistoryPage";
+import ContactsPage from "./pages/admin/ContactsPage";
 
-  return (
-    <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-14 items-center">
-        <div className="mr-4 hidden md:flex">
-          <NavLink className="mr-6 flex items-center space-x-2" to={navigationItems[0]?.url || '/dashboard/client'}>
-            <span className="hidden font-bold sm:inline-block">
-              {getPortalTitle()}
-            </span>
-          </NavLink>
-          {navigationItems.length > 1 && (
-            <nav className="flex items-center space-x-6 text-sm font-medium">
-              {navigationItems.map((item) => (
-                <NavLink
-                  key={item.url}
-                  to={item.url}
-                  className={cn(
-                    "transition-colors hover:text-foreground/80 flex items-center space-x-2",
-                    isActiveRoute(item.url) ? "text-foreground" : "text-foreground/60"
-                  )}
-                >
-                  <item.icon className="h-4 w-4" />
-                  <span>{item.title}</span>
-                </NavLink>
-              ))}
-            </nav>
-          )}
-        </div>
-        
-        {/* Mobile navigation */}
-        <div className="flex flex-1 items-center space-x-2 md:hidden">
-          <span className="font-bold">
-            {getPortalTitle()}
-          </span>
-        </div>
-        
-        <div className="flex flex-1 items-center justify-between space-x-2 md:justify-end">
-          <div className="w-full flex-1 md:w-auto md:flex-none">
-            {/* Mobile menu could go here if needed */}
-          </div>
-          <nav className="flex items-center space-x-2">
-            <NotificationCenter />
-            <ProfileMenu />
-          </nav>
-        </div>
-      </div>
-      
-      {/* Mobile navigation menu - only show if there are multiple nav items */}
-      {navigationItems.length > 1 && (
-        <div className="border-t md:hidden">
-          <nav className="container flex items-center space-x-4 py-2 overflow-x-auto">
-            {navigationItems.map((item) => (
-              <NavLink
-                key={item.url}
-                to={item.url}
-                className={cn(
-                  "flex flex-col items-center space-y-1 px-3 py-2 text-xs font-medium transition-colors hover:text-foreground/80 whitespace-nowrap",
-                  isActiveRoute(item.url) ? "text-foreground" : "text-foreground/60"
-                )}
-              >
-                <item.icon className="h-4 w-4" />
-                <span>{item.title}</span>
-              </NavLink>
-            ))}
-          </nav>
-        </div>
-      )}
-    </header>
-  );
-};
+// Previously Missing Admin Components
+import SubscriptionManagement from "./pages/admin/SubscriptionManagement";
+import { MarketingDashboard } from "./components/admin/marketing-dashboard/MarketingDashboard";
+import AdminMessaging from "./pages/admin/messaging";
+import PermissionsPage from "./pages/admin/PermissionsPage";
+import DatabasePage from "./pages/admin/DatabasePage";
+import ApiKeysPage from "./pages/admin/ApiKeysPage";
+import LogsPage from "./pages/admin/LogsPage";
+import HelpPage from "./pages/admin/HelpPage";
+import UserSettingsPage from "./pages/auth/SettingsPage";
+import TestBrokerInvitation from "./pages/TestBrokerInvitation";
 
-export default DashboardHeader;
+const queryClient = new QueryClient();
+
+const App = () => (
+  <QueryClientProvider client={queryClient}>
+    <TooltipProvider>
+      <Toaster />
+      <BrowserRouter>
+        <AuthProvider>
+          <Routes>
+            {/* Public Routes */}
+            <Route path="/" element={<Index />} />
+            
+            <Route path="/test-broker-invitation" element={<TestBrokerInvitation />} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/client-login" element={<ClientLoginPage />} />
+            <Route path="/client-registration" element={<ClientRegistration />} />
+            <Route path="/registration-success" element={<RegistrationSuccess />} />
+            <Route path="/invitation-acceptance/:token" element={<AcceptInvitationPage />} />
+            <Route path="/unified-invitation-demo" element={<UnifiedInvitationDemo />} />
+            
+            {/* Public Pages */}
+            <Route path="/product" element={<ProductPage />} />
+            <Route path="/resources" element={<ResourcesPage />} />
+            <Route path="/pricing" element={<PricingPage />} />
+            <Route path="/subscription" element={
+              <ProtectedRoute>
+                <SubscriptionPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/customers" element={<CustomersPage />} />
+            <Route path="/blog" element={<BlogPage />} />
+            <Route path="/contact" element={<ContactPage />} />
+            
+            {/* User Settings Route */}
+            <Route path="/settings" element={
+              <ProtectedRoute>
+                <UserSettingsPage />
+              </ProtectedRoute>
+            } />
+            
+            {/* Dashboard Routes */}
+            <Route path="/dashboard" element={<DashboardLayout />}>
+              {/* Client Dashboard */}
+              <Route path="client" element={
+                <ProtectedRoute allowedUserTypes={['client']}>
+                  <ClientOverview />
+                </ProtectedRoute>
+              } />
+              <Route path="client/saved-properties" element={
+                <ProtectedRoute allowedUserTypes={['client']}>
+                  <SavedProperties />
+                </ProtectedRoute>
+              } />
+              <Route path="client/search" element={
+                <ProtectedRoute allowedUserTypes={['client']}>
+                  <ClientSearch />
+                </ProtectedRoute>
+              } />
+              
+              {/* Realtor Dashboard */}
+              <Route path="realtor" element={
+                <ProtectedRoute allowedUserTypes={['realtor']}>
+                  <RealtorOverview />
+                </ProtectedRoute>
+              } />
+              <Route path="realtor/clients" element={
+                <ProtectedRoute allowedUserTypes={['realtor']}>
+                  <RealtorClients />
+                </ProtectedRoute>
+              } />
+              <Route path="realtor/properties" element={
+                <ProtectedRoute allowedUserTypes={['realtor']}>
+                  <RealtorProperties />
+                </ProtectedRoute>
+              } />
+              {/* REMOVED Analytics Route
+              <Route path="realtor/analytics" element={
+                <ProtectedRoute allowedUserTypes={['realtor']}>
+                  <RealtorAnalytics />
+                </ProtectedRoute>
+              } />
+              */}
+              {/* REMOVED Marketing Route
+              <Route path="realtor/marketing" element={
+                <ProtectedRoute allowedUserTypes={['realtor']}>
+                  <RealtorMarketing />
+                </ProtectedRoute>
+              } />
+              */}
+              <Route path="realtor/team" element={
+                <ProtectedRoute allowedUserTypes={['realtor']}>
+                  <RealtorTeam />
+                </ProtectedRoute>
+              } />
+              
+              {/* Mortgage Dashboard */}
+              <Route path="mortgage" element={
+                <ProtectedRoute allowedUserTypes={['mortgage_professional']}>
+                  <MortgageOverview />
+                </ProtectedRoute>
+              } />
+              <Route path="mortgage/clients" element={
+                <ProtectedRoute allowedUserTypes={['mortgage_professional']}>
+                  <MortgageClients />
+                </ProtectedRoute>
+              } />
+              <Route path="mortgage/team" element={
+                <ProtectedRoute allowedUserTypes={['mortgage_professional']}>
+                  <MortgageTeam />
+                </ProtectedRoute>
+              } />
+              {/* REMOVED Analytics Route
+              <Route path="mortgage/analytics" element={
+                <ProtectedRoute allowedUserTypes={['mortgage_professional']}>
+                  <MortgageAnalytics />
+                </ProtectedRoute>
+              } />
+              */}
+            </Route>
+            
+            {/* Admin Routes */}
+            <Route path="/admin" element={
+              <ProtectedRoute requiredUserType="admin">
+                <AdminLayout />
+              </ProtectedRoute>
+            }>
+              {/* Admin Dashboard */}
+              <Route index element={<AdminDashboard />} />
+              
+              {/* Admin Management Pages */}
+              <Route path="users" element={<UserManagement />} />
+              <Route path="tools" element={<AdminTools />} />
+              <Route path="settings" element={<SettingsPage />} />
+              <Route path="contacts" element={<AdminContactsPage />} />
+              
+              {/* Admin Pages */}
+              <Route path="subscriptions" element={<SubscriptionManagement />} />
+              <Route path="marketing" element={<MarketingDashboard />} />
+              <Route path="messaging" element={<AdminMessaging />} />
+              <Route path="permissions" element={<PermissionsPage />} />
+              <Route path="database" element={<DatabasePage />} />
+              <Route path="api-keys" element={<ApiKeysPage />} />
+              <Route path="logs" element={<LogsPage />} />
+              <Route path="help" element={<HelpPage />} />
+              
+              {/* Admin System Pages */}
+              <Route path="system-logs" element={<SystemLogsPage />} />
+              <Route path="error-logs" element={<ErrorLogs />} />
+              <Route path="data-protection" element={<DataProtectionPage />} />
+              <Route path="search-history" element={<SearchHistoryPage />} />
+              
+              {/* Professional Contact Pages */}
+              <Route path="contacts/:professionalId" element={<ContactsPage />} />
+            </Route>
+            
+            {/* Catch-all route for 404 */}
+            <Route path="*" element={
+              <div className="min-h-screen flex items-center justify-center">
+                <div className="text-center">
+                  <h1 className="text-4xl font-bold mb-4">404 - Page Not Found</h1>
+                  <p className="text-muted-foreground mb-4">The page you're looking for doesn't exist.</p>
+                  <a href="/" className="text-primary hover:underline">Go back home</a>
+                </div>
+              </div>
+            } />
+          </Routes>
+        </AuthProvider>
+      </BrowserRouter>
+    </TooltipProvider>
+  </QueryClientProvider>
+);
+
+export default App;
