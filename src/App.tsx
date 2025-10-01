@@ -9,7 +9,7 @@ import LoginPage from "./pages/auth/LoginPage";
 import ClientLoginPage from "./pages/auth/ClientLoginPage";
 import { AuthProvider } from "@/providers/AuthProvider";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
-import { EdgeFunctionTest } from "./components/EdgeFunctionTest";
+
 import { ClientRegistration } from "./pages/ClientRegistration";
 import { RegistrationSuccess } from "./pages/RegistrationSuccess";
 import { AcceptInvitationPage } from "./components/invitations/AcceptInvitationPage";
@@ -82,7 +82,7 @@ const App = () => (
           <Routes>
             {/* Public Routes */}
             <Route path="/" element={<Index />} />
-            <Route path="/test-edge" element={<EdgeFunctionTest />} />
+            
             <Route path="/test-broker-invitation" element={<TestBrokerInvitation />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/client-login" element={<ClientLoginPage />} />
