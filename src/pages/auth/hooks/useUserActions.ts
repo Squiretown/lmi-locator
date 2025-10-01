@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { getValidSession } from '@/lib/auth/getValidSession';
+import { invokeEdgeFunction } from '@/lib/supabase/edge-functions';
 
 export const useUserActions = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -99,8 +100,7 @@ export const useUserActions = () => {
       await getValidSession();
 
       // Call edge function to unsuspend user
-      const { data, error } = await supabase.functions.invoke('unsuspend-user', {
-        body: { userId }
+      const { data, error } = await invokeEdgeFunction('unsuspend-user', { userId });
       });
 
       if (error) {
