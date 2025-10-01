@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { getValidSession } from '@/lib/auth/getValidSession';
+import { invokeEdgeFunction } from '@/lib/supabase/edge-functions';
 import { toast } from 'sonner';
 import type {
   UserInvitation,
@@ -131,8 +132,10 @@ export function useUnifiedInvitationSystem() {
       await getValidSession();
 
       // Supabase SDK automatically includes auth header
-      const { data, error } = await supabase.functions.invoke('send-user-invitation', {
-        body: payload
+     import { invokeEdgeFunction } from '@/lib/supabase/edge-functions';
+
+// Replace the invoke call with:
+const { data, error } = await invokeEdgeFunction('send-user-invitation', payload);
       });
 
       console.log('Edge function response:', { 
