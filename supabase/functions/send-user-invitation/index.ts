@@ -204,7 +204,8 @@ const handler = async (req: Request): Promise<Response> => {
       
       // Professional-specific fields  
       ...(requestData.userType !== 'client' && {
-        professional_type: requestData.professionalType,
+        professional_type: requestData.professionalType || 
+          (requestData.userType === 'mortgage_professional' ? 'mortgage_broker' : requestData.userType),
         license_number: requestData.licenseNumber,
         license_state: requestData.licenseState,
         company_name: requestData.companyName,
