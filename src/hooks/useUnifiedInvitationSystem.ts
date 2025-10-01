@@ -100,7 +100,7 @@ export function useUnifiedInvitationSystem() {
         sendVia: (request as any).sendVia || 'email'
       });
 
-      // 2. Prepare payload
+      // Prepare payload
       const payload = {
         email: request.email,
         userType: request.userType,
@@ -128,15 +128,8 @@ export function useUnifiedInvitationSystem() {
 
       console.log('Calling edge function with payload:', payload);
 
-      // Ensure fresh session before invoking edge function
-      await getValidSession();
-
-      // Supabase SDK automatically includes auth header
-     import { invokeEdgeFunction } from '@/lib/supabase/edge-functions';
-
-// Replace the invoke call with:
-const { data, error } = await invokeEdgeFunction('send-user-invitation', payload);
-      });
+      // ✅ FIXED: Using invokeEdgeFunction which includes auth header
+      const { data, error } = await invokeEdgeFunction('send-user-invitation', payload);
 
       console.log('Edge function response:', { 
         success: !!data?.success, 
@@ -144,7 +137,7 @@ const { data, error } = await invokeEdgeFunction('send-user-invitation', payload
         data 
       });
 
-      // 4. Handle errors
+      // Handle errors
       if (error) {
         console.error('Edge function error details:', {
           message: error.message,
@@ -234,12 +227,8 @@ const { data, error } = await invokeEdgeFunction('send-user-invitation', payload
       console.log('=== MANAGE INVITATION START ===');
       console.log('Managing invitation:', request);
 
-      // Ensure fresh session before invoking edge function
-      await getValidSession();
-
-      const { data, error } = await supabase.functions.invoke('manage-user-invitation', {
-        body: request
-      });
+      // ✅ FIXED: Using invokeEdgeFunction
+      const { data, error } = await invokeEdgeFunction('manage-user-invitation', request);
 
       console.log('Manage invitation response:', { data, error });
 
@@ -264,6 +253,7 @@ const { data, error } = await invokeEdgeFunction('send-user-invitation', payload
   const validateInvitationMutation = useMutation({
     mutationFn: async (request: ValidateInvitationRequest): Promise<ValidateInvitationResponse> => {
       const { token, code } = request;
+      // Note: Validation doesn't require auth since it's used by non-logged-in users
       const { data, error } = await supabase.functions.invoke('validate-user-invitation', {
         body: token ? { token } : { code }
       });
@@ -280,6 +270,7 @@ const { data, error } = await invokeEdgeFunction('send-user-invitation', payload
   // Accept invitation (for new users)
   const acceptInvitationMutation = useMutation({
     mutationFn: async (request: AcceptInvitationRequest): Promise<AcceptInvitationResponse> => {
+      // Note: Accept doesn't require auth since user is creating account
       const { data, error } = await supabase.functions.invoke('accept-user-invitation', {
         body: request
       });
