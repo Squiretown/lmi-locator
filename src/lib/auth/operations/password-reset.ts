@@ -1,13 +1,25 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { extractRetrySeconds } from './utils';
 
+/**
+ * Send a password reset email to the specified address
+ * ✅ Now uses correct production URL for lmicheck.com
+ */
 export async function resetPassword(email: string, redirectTo?: string) {
   try {
     console.log('Attempting to send password reset to:', email);
     
+    // ✅ FIX: Use production domain if no redirectTo specified
+    const baseUrl = window.location.origin;
+    const defaultRedirectUrl = baseUrl.includes('localhost') 
+      ? `${baseUrl}/reset-password`
+      : `https://lmicheck.com/reset-password`;
+    
+    const finalRedirectUrl = redirectTo || defaultRedirectUrl;
+    console.log(`Using redirect URL: ${finalRedirectUrl}`);
+    
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: redirectTo || `${window.location.origin}/reset-password`,
+      redirectTo: finalRedirectUrl,
     });
     
     if (error) {
@@ -35,6 +47,10 @@ export async function resetPassword(email: string, redirectTo?: string) {
   }
 }
 
+/**
+ * Update user password using a valid recovery token
+ * This is called after the user clicks the reset link and arrives at /reset-password
+ */
 export async function updatePasswordWithToken(newPassword: string) {
   try {
     console.log('Attempting to update password with token');
