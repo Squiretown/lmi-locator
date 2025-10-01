@@ -52,7 +52,6 @@ const DashboardHeader: React.FC = () => {
           { title: "Dashboard", url: "/dashboard/mortgage", icon: Home },
           { title: "Clients", url: "/dashboard/mortgage/clients", icon: Users },
           { title: "Team", url: "/dashboard/mortgage/team", icon: UserCheck },
-          { title: "Analytics", url: "/dashboard/mortgage/analytics", icon: BarChart3 },
         ];
       
       default:
