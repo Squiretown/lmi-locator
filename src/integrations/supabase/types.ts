@@ -3914,7 +3914,7 @@ export type Database = {
         Returns: undefined
       }
       delete_user_references: {
-        Args: { p_user_id: string }
+        Args: { target_user_id: string }
         Returns: Json
       }
       diagnose_user_data: {
@@ -4424,7 +4424,7 @@ export type Database = {
         Args:
           | { tbl_oid: unknown; use_typmod?: boolean }
           | { use_typmod?: boolean }
-        Returns: string
+        Returns: number
       }
       postgis_addbbox: {
         Args: { "": unknown }
