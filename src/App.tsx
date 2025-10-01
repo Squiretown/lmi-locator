@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -34,15 +33,15 @@ import ClientSearch from "./pages/dashboard/client/Search";
 import RealtorOverview from "./pages/dashboard/realtor/Overview";
 import RealtorClients from "./pages/dashboard/realtor/Clients";
 import RealtorProperties from "./pages/dashboard/realtor/Properties";
-// REMOVED Analytics: import RealtorAnalytics from "./pages/dashboard/realtor/Analytics";
-// REMOVED Marketing: import RealtorMarketing from "./pages/dashboard/realtor/Marketing";
 import RealtorTeam from "./pages/dashboard/realtor/Team";
+// REMOVED: import RealtorAnalytics from "./pages/dashboard/realtor/Analytics";
+// REMOVED: import RealtorMarketing from "./pages/dashboard/realtor/Marketing";
 
 // Mortgage Dashboard Pages
 import MortgageOverview from "./pages/dashboard/mortgage/Overview";
 import MortgageClients from "./pages/dashboard/mortgage/Clients";
 import MortgageTeam from "./pages/dashboard/mortgage/Team";
-import MortgageAnalytics from "./pages/dashboard/mortgage/Analytics";
+// REMOVED: import MortgageAnalytics from "./pages/dashboard/mortgage/Analytics";
 
 // Admin Layout and Pages
 import AdminLayout from "./components/admin/layout/AdminLayout";
@@ -55,11 +54,9 @@ import SystemLogsPage from "./pages/admin/SystemLogsPage";
 import ErrorLogs from "./pages/admin/ErrorLogs";
 import DataProtectionPage from "./pages/admin/DataProtectionPage";
 import SearchHistoryPage from "./pages/admin/SearchHistoryPage";
-// Removed RealtorsPage as it's consolidated into professionals
-// Removed MortgageBrokersPage as it's consolidated into professionals
 import ContactsPage from "./pages/admin/ContactsPage";
 
-// Previously Missing Admin Components - Now Added
+// Previously Missing Admin Components
 import SubscriptionManagement from "./pages/admin/SubscriptionManagement";
 import { MarketingDashboard } from "./components/admin/marketing-dashboard/MarketingDashboard";
 import AdminMessaging from "./pages/admin/messaging";
@@ -144,21 +141,12 @@ const App = () => (
                   <RealtorProperties />
                 </ProtectedRoute>
               } />
-              <Route path="realtor/analytics" element={
-                <ProtectedRoute allowedUserTypes={['realtor']}>
-                  <RealtorAnalytics />
-                </ProtectedRoute>
-              } />
-              <Route path="realtor/marketing" element={
-                <ProtectedRoute allowedUserTypes={['realtor']}>
-                  <RealtorMarketing />
-                </ProtectedRoute>
-              } />
               <Route path="realtor/team" element={
                 <ProtectedRoute allowedUserTypes={['realtor']}>
                   <RealtorTeam />
                 </ProtectedRoute>
               } />
+              {/* REMOVED: Analytics and Marketing routes */}
               
               {/* Mortgage Dashboard */}
               <Route path="mortgage" element={
@@ -176,11 +164,7 @@ const App = () => (
                   <MortgageTeam />
                 </ProtectedRoute>
               } />
-              <Route path="mortgage/analytics" element={
-                <ProtectedRoute allowedUserTypes={['mortgage_professional']}>
-                  <MortgageAnalytics />
-                </ProtectedRoute>
-              } />
+              {/* REMOVED: Analytics route */}
             </Route>
             
             {/* Admin Routes */}
@@ -197,10 +181,8 @@ const App = () => (
               <Route path="tools" element={<AdminTools />} />
               <Route path="settings" element={<SettingsPage />} />
               <Route path="contacts" element={<AdminContactsPage />} />
-              {/* Realtor management consolidated into professionals page */}
-              {/* Mortgage brokers management consolidated into professionals page */}
               
-              {/* Previously Missing Admin Routes - Now Fixed */}
+              {/* Admin Pages */}
               <Route path="subscriptions" element={<SubscriptionManagement />} />
               <Route path="marketing" element={<MarketingDashboard />} />
               <Route path="messaging" element={<AdminMessaging />} />
