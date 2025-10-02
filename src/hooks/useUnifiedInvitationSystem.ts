@@ -60,6 +60,24 @@ export function useUnifiedInvitationSystem() {
 
       if (error) throw error;
 
+      // Check for expired invitations and update them
+      const now = new Date();
+      const expiredInvitations = (data || []).filter(
+        i => i.status === 'pending' && new Date(i.expires_at) < now
+      );
+
+      if (expiredInvitations.length > 0) {
+        // Update expired invitations in background (don't await to prevent UI freeze)
+        supabase
+          .from('user_invitations')
+          .update({ status: 'expired' })
+          .in('id', expiredInvitations.map(i => i.id))
+          .then(() => {
+            // Silently refetch after updating expired invitations
+            queryClient.invalidateQueries({ queryKey: ['user-invitations'] });
+          });
+      }
+
       // Apply search filter on client side
       let filteredData = (data || []) as UserInvitation[];
       
@@ -83,7 +101,7 @@ export function useUnifiedInvitationSystem() {
   const stats: InvitationStats = {
     total: invitations.length,
     pending: invitations.filter(i => i.status === 'pending').length,
-    sent: invitations.filter(i => i.status === 'sent').length,
+    sent: invitations.filter(i => i.email_sent === true).length, // Cumulative metric: all successfully delivered emails
     accepted: invitations.filter(i => i.status === 'accepted').length,
     expired: invitations.filter(i => i.status === 'expired').length,
     cancelled: invitations.filter(i => i.status === 'cancelled').length,

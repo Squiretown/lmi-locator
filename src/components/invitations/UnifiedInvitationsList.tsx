@@ -79,8 +79,6 @@ export const UnifiedInvitationsList: React.FC<UnifiedInvitationsListProps> = ({
     switch (status) {
       case 'pending':
         return <Badge variant="outline" className="text-amber-700 border-amber-300 bg-amber-50"><Clock className="h-3 w-3 mr-1" />Pending</Badge>;
-      case 'sent':
-        return <Badge variant="outline" className="text-blue-700 border-blue-300 bg-blue-50"><Mail className="h-3 w-3 mr-1" />Sent</Badge>;
       case 'accepted':
         return <Badge variant="outline" className="text-green-700 border-green-300 bg-green-50"><CheckCircle className="h-3 w-3 mr-1" />Accepted</Badge>;
       case 'expired':
@@ -349,7 +347,7 @@ export const UnifiedInvitationsList: React.FC<UnifiedInvitationsListProps> = ({
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            {['pending', 'sent'].includes(invitation.status) && (
+                            {invitation.status === 'pending' && (
                               <DropdownMenuItem
                                 onClick={() => handleResend(invitation)}
                                 disabled={isManaging}
@@ -370,7 +368,7 @@ export const UnifiedInvitationsList: React.FC<UnifiedInvitationsListProps> = ({
                               <ExternalLink className="h-4 w-4 mr-2" />
                               Copy Link
                             </DropdownMenuItem>
-                            {['pending', 'sent'].includes(invitation.status) && (
+                            {invitation.status === 'pending' && (
                               <DropdownMenuItem
                                 onClick={() => handleCancel(invitation)}
                                 disabled={isManaging}

@@ -283,7 +283,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Update invitation status and tracking
     const updateData: any = {
-      status: emailSent ? 'sent' : 'pending',
+      status: 'pending', // Always start as pending, regardless of email delivery
       email_sent: emailSent,
       sms_sent: smsSent,
       attempts: 1,
