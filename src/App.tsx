@@ -85,6 +85,7 @@ const App = () => (
             <Route path="/client-login" element={<ClientLoginPage />} />
             <Route path="/client-registration" element={<ClientRegistration />} />
             <Route path="/registration-success" element={<RegistrationSuccess />} />
+            <Route path="/accept-invitation/:token" element={<AcceptInvitationPage />} />
             <Route path="/invitation-acceptance/:token" element={<AcceptInvitationPage />} />
             <Route path="/unified-invitation-demo" element={<UnifiedInvitationDemo />} />
             <Route path="/product" element={<ProductPage />} />
