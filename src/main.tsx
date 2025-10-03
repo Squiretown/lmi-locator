@@ -17,7 +17,7 @@ const queryClient = new QueryClient({
 })
 
 createRoot(document.getElementById("root")!).render(
-  <ThemeProvider defaultTheme="system" storageKey="ui-theme">
+  <ThemeProvider defaultTheme="light" storageKey="ui-theme">
     <QueryClientProvider client={queryClient}>
       <MotionConfig reducedMotion="user">
         <App />
