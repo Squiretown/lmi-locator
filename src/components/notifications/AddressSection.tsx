@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { MapPin } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
@@ -19,8 +18,12 @@ export const AddressSection: React.FC<AddressSectionProps> = ({
 }) => {
   return (
     <div className="flex items-start gap-4 mb-6">
-      <div className="w-32 h-32 bg-gray-100 rounded-lg flex items-center justify-center">
-        <MapPin className="h-8 w-8 text-gray-400" />
+      <div className="w-32 h-32 bg-white rounded-lg flex items-center justify-center overflow-hidden p-3 border border-gray-200">
+        <img 
+          src="https://llhofjbijjxkfezidxyi.supabase.co/storage/v1/object/public/branding/lmi-logo.svg" 
+          alt="LMI Logo" 
+          className="w-full h-full object-contain"
+        />
       </div>
       
       <div className="flex-1">
