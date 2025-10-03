@@ -18,7 +18,7 @@ export const AddressSection: React.FC<AddressSectionProps> = ({
 }) => {
   return (
     <div className="flex items-start gap-4 mb-6">
-      <div className="w-32 h-32 bg-white rounded-lg flex items-center justify-center overflow-hidden p-3 border border-gray-200">
+      <div className="w-32 h-32 bg-white rounded-lg flex items-center justify-center overflow-hidden p-2 border border-gray-200">
         <img 
           src="https://llhofjbijjxkfezidxyi.supabase.co/storage/v1/object/public/branding/lmi-logo.svg" 
           alt="LMI Logo" 
