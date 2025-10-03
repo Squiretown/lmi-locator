@@ -39,6 +39,28 @@ const STATE_TO_FIPS: Record<string, string> = {
   'WI': '55', 'WY': '56', 'DC': '11', 'PR': '72'
 };
 
+/**
+ * Normalize geometry to MultiPolygon format for database storage
+ * Census APIs return Polygon for single-part tracts, but DB expects MultiPolygon
+ */
+function normalizeToMultiPolygon(geometry: any): any {
+  if (!geometry) return null;
+  
+  if (geometry.type === 'Polygon') {
+    // Convert Polygon to MultiPolygon by wrapping coordinates in array
+    return {
+      type: 'MultiPolygon',
+      coordinates: [geometry.coordinates]
+    };
+  } else if (geometry.type === 'MultiPolygon') {
+    // Already MultiPolygon, return as-is
+    return geometry;
+  } else {
+    console.warn(`⚠️ Unexpected geometry type: ${geometry.type}`);
+    return geometry;
+  }
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -147,7 +169,9 @@ async function fetchTractGeometry(tractId: string): Promise<any> {
     
     if (data.features && data.features.length > 0) {
       console.log(`✅ Found geometry for ${tractId}`);
-      return data.features[0].geometry;
+      const geometry = data.features[0].geometry;
+      // Normalize to MultiPolygon if needed
+      return normalizeToMultiPolygon(geometry);
     }
 
     console.log(`⚠️ No geometry found for tract ${tractId}, trying alternative`);
@@ -179,7 +203,9 @@ async function fetchTractGeometryAlternative(tractId: string): Promise<any> {
     
     if (data.features && data.features.length > 0) {
       console.log(`✅ Found geometry from alternative API for ${tractId}`);
-      return data.features[0].geometry;
+      const geometry = data.features[0].geometry;
+      // Normalize to MultiPolygon if needed
+      return normalizeToMultiPolygon(geometry);
     }
 
     return null;
