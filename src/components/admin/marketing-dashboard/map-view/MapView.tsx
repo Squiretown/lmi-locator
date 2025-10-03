@@ -267,6 +267,16 @@ const MapView: React.FC<MapViewProps> = ({ onExportResults }) => {
           <MapContainer 
             tracts={showLmiOnly ? tracts.filter(t => t.isLmiEligible) : tracts}
             onTractClick={handleTractClick}
+            selectedTract={selectedTract}
+            selectedTracts={selectedTracts}
+            onSelectTract={(tract) => {
+              const exists = selectedTracts.some(t => t.tractId === tract.tractId);
+              if (exists) {
+                setSelectedTracts(selectedTracts.filter(t => t.tractId !== tract.tractId));
+              } else {
+                setSelectedTracts([...selectedTracts, tract]);
+              }
+            }}
             ref={mapRef}
           />
         </div>
@@ -277,6 +287,15 @@ const MapView: React.FC<MapViewProps> = ({ onExportResults }) => {
             <TractInfoPanel 
               tract={selectedTract}
               onClose={() => setSelectedTract(null)}
+              isSelected={selectedTracts.some(t => t.tractId === selectedTract.tractId)}
+              onToggleSelect={() => {
+                const exists = selectedTracts.some(t => t.tractId === selectedTract.tractId);
+                if (exists) {
+                  setSelectedTracts(selectedTracts.filter(t => t.tractId !== selectedTract.tractId));
+                } else {
+                  setSelectedTracts([...selectedTracts, selectedTract]);
+                }
+              }}
             />
           </div>
         )}
