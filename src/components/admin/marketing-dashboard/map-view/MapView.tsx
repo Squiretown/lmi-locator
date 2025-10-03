@@ -1,5 +1,5 @@
 // File: src/components/admin/marketing-dashboard/map-view/MapView.tsx
-// DEBUGGING VERSION - Add console logs to see what's happening
+// FIXED VERSION - Shows proper county names with fallback to codes
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Button } from "@/components/ui/button";
@@ -15,6 +15,77 @@ import { supabase } from '@/integrations/supabase/client';
 interface MapViewProps {
   onExportResults?: (results: any[]) => void;
 }
+
+// Florida county code to name mapping
+const FLORIDA_COUNTY_NAMES: Record<string, string> = {
+  '001': 'Alachua',
+  '003': 'Baker',
+  '005': 'Bay',
+  '007': 'Bradford',
+  '009': 'Brevard',
+  '011': 'Broward',
+  '013': 'Calhoun',
+  '015': 'Charlotte',
+  '017': 'Citrus',
+  '019': 'Clay',
+  '021': 'Collier',
+  '023': 'Columbia',
+  '027': 'DeSoto',
+  '029': 'Dixie',
+  '031': 'Duval',
+  '033': 'Escambia',
+  '035': 'Flagler',
+  '037': 'Franklin',
+  '039': 'Gadsden',
+  '041': 'Gilchrist',
+  '043': 'Glades',
+  '045': 'Gulf',
+  '047': 'Hamilton',
+  '049': 'Hardee',
+  '051': 'Hendry',
+  '053': 'Hernando',
+  '055': 'Highlands',
+  '057': 'Hillsborough',
+  '059': 'Holmes',
+  '061': 'Indian River',
+  '063': 'Jackson',
+  '065': 'Jefferson',
+  '067': 'Lafayette',
+  '069': 'Lake',
+  '071': 'Lee',
+  '073': 'Leon',
+  '075': 'Levy',
+  '077': 'Liberty',
+  '079': 'Madison',
+  '081': 'Manatee',
+  '083': 'Marion',
+  '085': 'Martin',
+  '086': 'Miami-Dade',
+  '087': 'Monroe',
+  '089': 'Nassau',
+  '091': 'Okaloosa',
+  '093': 'Okeechobee',
+  '095': 'Orange',
+  '097': 'Osceola',
+  '099': 'Palm Beach',
+  '101': 'Pasco',
+  '103': 'Pinellas',
+  '105': 'Polk',
+  '107': 'Putnam',
+  '109': 'St. Johns',
+  '111': 'St. Lucie',
+  '113': 'Santa Rosa',
+  '115': 'Sarasota',
+  '117': 'Seminole',
+  '119': 'Sumter',
+  '121': 'Suwannee',
+  '123': 'Taylor',
+  '125': 'Union',
+  '127': 'Volusia',
+  '129': 'Wakulla',
+  '131': 'Walton',
+  '133': 'Washington'
+};
 
 const MapView: React.FC<MapViewProps> = ({ onExportResults }) => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -93,28 +164,40 @@ const MapView: React.FC<MapViewProps> = ({ onExportResults }) => {
     { code: 'WY', name: 'Wyoming' }
   ];
 
+  /**
+   * Get readable county name from code
+   */
+  const getCountyName = (countyCode: string, countyName: string | null, stateCode: string): string => {
+    // If we already have a readable name, use it
+    if (countyName && countyName !== countyCode && countyName.length > 3) {
+      return countyName;
+    }
+
+    // For Florida, use our mapping
+    if (stateCode === 'FL' || stateCode === '12') {
+      const mappedName = FLORIDA_COUNTY_NAMES[countyCode];
+      if (mappedName) {
+        return mappedName;
+      }
+    }
+
+    // Fallback: show code with County suffix
+    return `County ${countyCode}`;
+  };
+
   // Load counties when state changes
   useEffect(() => {
     const fetchCounties = async () => {
-      console.log('🔄 fetchCounties useEffect triggered');
-      console.log('📍 selectedState:', selectedState);
-      
       if (!selectedState) {
-        console.log('⚠️ No state selected, clearing counties');
         setCountiesForState([]);
         return;
       }
 
       setLoadingCounties(true);
-      setSelectedCounty(""); // Reset county selection when state changes
-      console.log('🔄 Loading counties for state:', selectedState);
+      setSelectedCounty("");
+      console.log('🔍 Loading counties for:', selectedState);
 
       try {
-        console.log('📡 Calling census-db function with params:', { 
-          action: 'searchBatch',
-          params: { state: selectedState }
-        });
-        
         // Call census-db to get all tracts for this state
         const { data, error } = await supabase.functions.invoke('census-db', {
           body: {
@@ -125,93 +208,55 @@ const MapView: React.FC<MapViewProps> = ({ onExportResults }) => {
           }
         });
 
-        console.log('📥 census-db response received');
-        console.log('❓ error:', error);
-        console.log('📊 data:', data);
-
         if (error) {
-          console.error('❌ Error from census-db:', error);
+          console.error('❌ Error loading counties:', error);
           throw error;
         }
 
-        if (!data) {
-          console.warn('⚠️ No data returned from census-db');
-          throw new Error('No data returned');
-        }
-
-        console.log('✅ Data structure:', {
-          hasData: !!data,
-          hasTracts: !!(data && data.tracts),
-          isArray: Array.isArray(data?.tracts),
-          tractCount: data?.tracts?.length || 0
-        });
+        console.log('📊 Response data:', data);
 
         // Extract unique counties from the tracts
         const countyMap = new Map<string, { fips: string; name: string }>();
         
         if (data && data.tracts && Array.isArray(data.tracts)) {
-          console.log('🔍 Processing', data.tracts.length, 'tracts');
-          console.log('📋 Sample tract:', data.tracts[0]);
+          console.log(`📋 Processing ${data.tracts.length} tracts`);
           
-          data.tracts.forEach((tract: any, index: number) => {
-            // Debug first few tracts
-            if (index < 3) {
-              console.log(`Tract ${index}:`, {
-                tractId: tract.tractId,
-                county: tract.county,
-                county_code: tract.county_code,
-                state: tract.state
-              });
-            }
-            
-            // Try multiple ways to get county info
-            const countyCode = tract.county_code || tract.county || tract.countyCode;
-            const countyName = tract.county || tract.county_code || 'Unknown County';
+          data.tracts.forEach((tract: any) => {
+            // Try multiple field names for county code
+            const countyCode = tract.county_code || tract.countyCode || tract.county;
+            const countyName = tract.county || null;
             
             if (countyCode && !countyMap.has(countyCode)) {
-              console.log(`➕ Adding county: ${countyCode} - ${countyName}`);
+              const displayName = getCountyName(countyCode, countyName, selectedState);
+              
               countyMap.set(countyCode, {
                 fips: countyCode,
-                name: countyName
+                name: displayName
               });
             }
-          });
-        } else {
-          console.error('❌ Invalid data structure:', {
-            data: data,
-            hasTracts: !!(data && data.tracts),
-            tractsType: typeof data?.tracts
           });
         }
 
         const counties = Array.from(countyMap.values())
           .sort((a, b) => a.name.localeCompare(b.name));
         
-        console.log('✅ Extracted counties:', counties);
-        console.log('📊 County count:', counties.length);
-        
+        console.log('✅ Loaded counties:', counties);
         setCountiesForState(counties);
 
         if (counties.length === 0) {
-          console.warn('⚠️ No counties found for', selectedState);
           toast.info("No counties found", {
-            description: `No county data available for ${selectedState}. Try searching by ZIP code or check the database.`
+            description: `No county data available for ${selectedState}. Try searching by ZIP code.`
           });
-        } else {
-          console.log('✅ Successfully loaded', counties.length, 'counties');
         }
 
       } catch (error) {
-        console.error('💥 Error in fetchCounties:', error);
-        console.error('📚 Error stack:', error instanceof Error ? error.stack : 'No stack');
-        
+        console.error('💥 Error fetching counties:', error);
         toast.error("Failed to load counties", {
-          description: error instanceof Error ? error.message : "Could not load county list. Please try another state or search by ZIP code."
+          description: "Could not load county list. Please try searching by ZIP code instead."
         });
         setCountiesForState([]);
       } finally {
         setLoadingCounties(false);
-        console.log('🏁 fetchCounties completed');
       }
     };
 
@@ -237,13 +282,6 @@ const MapView: React.FC<MapViewProps> = ({ onExportResults }) => {
         description: `Searching all census tracts in ${selectedState}. This may take a moment...`
       });
     }
-
-    console.log('🔍 Performing search with:', {
-      state: selectedState,
-      county: selectedCounty,
-      zipCode: selectedZip,
-      radius: searchRadius[0]
-    });
 
     performSearch({
       state: selectedState,
@@ -274,13 +312,6 @@ const MapView: React.FC<MapViewProps> = ({ onExportResults }) => {
     }
   };
 
-  console.log('🎨 Rendering MapView with:', {
-    selectedState,
-    countiesCount: countiesForState.length,
-    loadingCounties,
-    counties: countiesForState
-  });
-
   return (
     <div className="flex h-full">
       {/* Sidebar */}
@@ -309,7 +340,6 @@ const MapView: React.FC<MapViewProps> = ({ onExportResults }) => {
           handleExport={handleExport}
         />
         
-        {/* Geometry Update Panel - only show when collapsed */}
         {sidebarCollapsed && (
           <div className="p-4">
             <GeometryUpdatePanel />
@@ -317,7 +347,7 @@ const MapView: React.FC<MapViewProps> = ({ onExportResults }) => {
         )}
       </div>
 
-      {/* Main Content with Map and Button to toggle sidebar */}
+      {/* Main Content */}
       <div className="flex-1 relative">
         <Button
           variant="outline"
@@ -346,7 +376,6 @@ const MapView: React.FC<MapViewProps> = ({ onExportResults }) => {
           />
         </div>
 
-        {/* Tract info panel */}
         {selectedTract && (
           <div className="absolute bottom-4 right-4 w-80">
             <TractInfoPanel 
