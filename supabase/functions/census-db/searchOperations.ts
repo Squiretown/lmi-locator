@@ -61,32 +61,19 @@ export async function handleSearchBatch(supabase: any, params: any) {
     
     console.log(`Found ${tracts ? tracts.length : 0} tracts in database`);
     
-    // If no results found, generate mock data for demonstration
     if (!tracts || tracts.length === 0) {
-      console.log("No tracts found in database, generating mock data");
+      console.log("No tracts found matching search criteria");
       
-      // For tractId search, create at least one mock result with that ID
-      if (tractId) {
-        const mockTracts = [{
-          tract_id: tractId,
-          lmi_status: Math.random() > 0.5,
-          ami_percentage: Math.floor(Math.random() * 100) + 50,
-          property_count: Math.floor(Math.random() * 1000) + 100,
-        }];
-        
-        return processSearchResults(mockTracts);
-      }
-      
-      // For other searches, generate 3-7 random mock results
-      const mockCount = Math.floor(Math.random() * 5) + 3;
-      const mockTracts = Array.from({ length: mockCount }, (_, i) => ({
-        tract_id: (tractId || `36103${170000 + i}`),
-        lmi_status: Math.random() > 0.5,
-        ami_percentage: Math.floor(Math.random() * 100) + 50,
-        property_count: Math.floor(Math.random() * 1000) + 100,
-      }));
-      
-      return processSearchResults(mockTracts);
+      return {
+        success: true,
+        tracts: [],
+        summary: {
+          totalTracts: 0,
+          lmiTracts: 0,
+          propertyCount: 0,
+          lmiPercentage: 0
+        }
+      };
     }
     
     // Process the real results
