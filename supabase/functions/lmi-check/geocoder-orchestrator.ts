@@ -46,18 +46,22 @@ export async function orchestrateGeocoding(address: string): Promise<GeocodingRe
       return censusResult;
     }
     
-    // Step 3: Fall back to mock data
-    console.log('All geocoding services failed, falling back to mock data');
-    return getMockGeocodeData(address);
+    // Step 3: All services failed - throw error
+    console.error('All geocoding services failed for address:', address);
+    const mockResult = getMockGeocodeData(address);
+    if (!mockResult) {
+      throw new Error('Unable to geocode address. Please verify the address is correct and try again.');
+    }
+    return mockResult;
   } catch (error) {
     console.error('Fatal error in geocoding orchestration:', error);
     if (error instanceof Error && error.stack) {
       console.error('Orchestration error stack:', error.stack);
     }
     
-    // Absolute fallback to mock data
-    console.warn('Falling back to mock geocode data after critical error');
-    return getMockGeocodeData(address);
+    // No fallback - rethrow the error
+    console.error('Critical error in geocoding orchestration - no fallback available');
+    throw new Error('Unable to geocode address. Please verify the address is correct and try again.');
   }
 }
 
@@ -116,16 +120,10 @@ async function tryCensusGeocoding(address: string): Promise<GeocodingResult | nu
 /**
  * Generate mock geocoding data as final fallback
  */
-function getMockGeocodeData(address: string): GeocodingResult {
-  console.log('Generating mock geocode data for:', address);
-  
-  // Hampton Bays coordinates as fallback
-  return {
-    lat: 40.8687,
-    lon: -72.5154,
-    tractId: '36103940100', // Known Hampton Bays tract
-    geocoding_service: 'Mock'
-  };
+function getMockGeocodeData(address: string): GeocodingResult | null {
+  console.error(`All geocoding services failed for address: ${address}`);
+  console.error('Unable to geocode address - no mock data will be returned');
+  return null;
 }
 
 /**
