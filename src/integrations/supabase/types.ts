@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "12.2.3 (519615d)"
+    PostgrestVersion: "13.0.5"
   }
   public: {
     Tables: {
@@ -366,7 +366,7 @@ export type Database = {
           status: string | null
           total_addresses: number | null
           updated_at: string | null
-          user_id: string
+          user_id: string | null
         }
         Insert: {
           addresses: Json
@@ -379,7 +379,7 @@ export type Database = {
           status?: string | null
           total_addresses?: number | null
           updated_at?: string | null
-          user_id: string
+          user_id?: string | null
         }
         Update: {
           addresses?: Json
@@ -392,7 +392,7 @@ export type Database = {
           status?: string | null
           total_addresses?: number | null
           updated_at?: string | null
-          user_id?: string
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -597,7 +597,7 @@ export type Database = {
           search_type: string
           search_value: string
           status: string
-          user_id: string
+          user_id: string | null
         }
         Insert: {
           created_at?: string
@@ -612,7 +612,7 @@ export type Database = {
           search_type: string
           search_value: string
           status?: string
-          user_id: string
+          user_id?: string | null
         }
         Update: {
           created_at?: string
@@ -627,7 +627,7 @@ export type Database = {
           search_type?: string
           search_value?: string
           status?: string
-          user_id?: string
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -2741,33 +2741,45 @@ export type Database = {
       }
       security_audit_log: {
         Row: {
+          acknowledged: boolean | null
+          acknowledged_at: string | null
+          acknowledged_by: string | null
           created_at: string | null
           details: Json | null
           event_type: string
           id: string
           ip_address: string | null
+          severity: string | null
           success: boolean | null
           target_user_id: string | null
           user_agent: string | null
           user_id: string | null
         }
         Insert: {
+          acknowledged?: boolean | null
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
           created_at?: string | null
           details?: Json | null
           event_type: string
           id?: string
           ip_address?: string | null
+          severity?: string | null
           success?: boolean | null
           target_user_id?: string | null
           user_agent?: string | null
           user_id?: string | null
         }
         Update: {
+          acknowledged?: boolean | null
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
           created_at?: string | null
           details?: Json | null
           event_type?: string
           id?: string
           ip_address?: string | null
+          severity?: string | null
           success?: boolean | null
           target_user_id?: string | null
           user_agent?: string | null
@@ -3802,6 +3814,10 @@ export type Database = {
         Args: { geom1: unknown; geom2: unknown }
         Returns: boolean
       }
+      acknowledge_security_alert: {
+        Args: { p_event_ids: string[] }
+        Returns: Json
+      }
       addauth: {
         Args: { "": string }
         Returns: boolean
@@ -3847,7 +3863,7 @@ export type Database = {
       }
       anonymize_user_search_history: {
         Args: { target_user_id: string }
-        Returns: undefined
+        Returns: Json
       }
       box: {
         Args: { "": unknown } | { "": unknown }
@@ -3901,6 +3917,25 @@ export type Database = {
         Args: { p_email: string; p_ip_address: string }
         Returns: boolean
       }
+      check_security_alerts: {
+        Args: {
+          p_severity?: string[]
+          p_since?: string
+          p_unacknowledged_only?: boolean
+        }
+        Returns: {
+          affected_users: string[]
+          alert_id: string
+          alert_type: string
+          details: Json
+          event_count: number
+          first_seen: string
+          ip_addresses: string[]
+          last_seen: string
+          message: string
+          severity: string
+        }[]
+      }
       check_user_permission_simple: {
         Args: { permission_name: string; user_uuid: string }
         Returns: boolean
@@ -3912,6 +3947,10 @@ export type Database = {
       create_default_notification_preferences: {
         Args: { user_uuid: string }
         Returns: undefined
+      }
+      create_test_security_alert: {
+        Args: Record<PropertyKey, never>
+        Returns: string
       }
       delete_user_references: {
         Args: { target_user_id: string }
@@ -4317,6 +4356,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: boolean
       }
+      is_service_role: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
       is_trial_expired: {
         Args: { user_id_param: string }
         Returns: boolean
@@ -4424,7 +4467,7 @@ export type Database = {
         Args:
           | { tbl_oid: unknown; use_typmod?: boolean }
           | { use_typmod?: boolean }
-        Returns: number
+        Returns: string
       }
       postgis_addbbox: {
         Args: { "": unknown }

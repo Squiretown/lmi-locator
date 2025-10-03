@@ -67,6 +67,7 @@ import LogsPage from "./pages/admin/LogsPage";
 import HelpPage from "./pages/admin/HelpPage";
 import UserSettingsPage from "./pages/auth/SettingsPage";
 import TestBrokerInvitation from "./pages/TestBrokerInvitation";
+import SecurityDashboard from "./pages/admin/SecurityDashboard";
 
 const queryClient = new QueryClient();
 
@@ -189,6 +190,7 @@ const App = () => (
               <Route path="help" element={<HelpPage />} />
               
               {/* Admin System Pages */}
+              <Route path="security" element={<SecurityDashboard />} />
               <Route path="system-logs" element={<SystemLogsPage />} />
               <Route path="error-logs" element={<ErrorLogs />} />
               <Route path="data-protection" element={<DataProtectionPage />} />
