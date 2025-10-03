@@ -101,10 +101,10 @@ function processSearchResults(tracts: any) {
     return {
       tractId: tract.tract_id,
       isLmiEligible: tract.lmi_status || false,
-      amiPercentage: tract.ami_percentage || 75,
-      medianIncome: tract.median_income || 50000,
-      incomeCategory: tract.income_category || "Moderate",
-      propertyCount: tract.property_count || Math.floor(Math.random() * 1000) + 100,
+      amiPercentage: tract.ami_percentage ?? 0,
+      medianIncome: tract.median_income ?? 0,
+      incomeCategory: tract.income_level ?? 'Unknown',
+      propertyCount: tract.property_count ?? 0,
       geometry: {
         type: "Polygon",
         coordinates: [[
