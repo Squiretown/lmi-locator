@@ -10,7 +10,7 @@ serve(async (req) => {
 
   try {
     // Get the Mapbox token from Supabase secrets
-    const mapboxToken = Deno.env.get('MAPBOX_TOKEN');
+    const mapboxToken = Deno.env.get('MAPBOX_ACCESS_TOKEN');
     
     if (!mapboxToken) {
       return new Response(
