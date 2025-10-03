@@ -4,7 +4,7 @@ import { toast } from 'sonner';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertCircle, MapPin } from 'lucide-react';
 import MapInitializer from './MapInitializer';
-import { supabase } from '@/integrations/supabase/client';
+import { useMapboxToken } from '@/hooks/useMapboxToken';
 
 interface MapDisplayProps {
   lat?: number;
@@ -17,50 +17,23 @@ interface MapDisplayProps {
 const MapDisplay: React.FC<MapDisplayProps> = ({ lat, lon, isEligible, tractId, address }) => {
   const [mapError, setMapError] = useState<string | null>(null);
   const [tractError, setTractError] = useState<string | null>(null);
-  const [mapboxToken, setMapboxToken] = useState<string | null>(null);
   
-  // Fetch the Mapbox token from Supabase with minimum loading time
+  // Use the existing hook to get Mapbox token
+  const { token: mapboxToken, isLoading, error: tokenError } = useMapboxToken();
+  
+  // Handle token error
   React.useEffect(() => {
-    const fetchMapboxToken = async () => {
-      try {
-        // Create a minimum loading time promise (1.5 seconds)
-        const minLoadingTime = new Promise(resolve => setTimeout(resolve, 1500));
-        
-        // Try to get token from edge function
-        // Function 'get-mapbox-token' does not exist - using environment variable
-        const tokenPromise = Promise.resolve({ 
-          data: { token: process.env.REACT_APP_MAPBOX_TOKEN || '' }, 
-          error: null 
-        });
-        
-        const [{ data: tokenData, error: tokenError }] = await Promise.all([
-          tokenPromise,
-          minLoadingTime
-        ]);
-        
-        if (tokenError) {
-          throw new Error('Failed to get Mapbox token');
-        }
-        
-        if (tokenData && tokenData.token) {
-          setMapboxToken(tokenData.token);
-        } else {
-          throw new Error('No Mapbox token received');
-        }
-      } catch (error) {
-        console.error('Error fetching Mapbox token:', error);
-        setMapError('Could not initialize map due to configuration issues. Please try again later.');
-        toast.error('Map Error', {
-          description: 'Could not initialize map due to configuration issues.'
-        });
-      }
-    };
-    
-    fetchMapboxToken();
-  }, []);
+    if (tokenError) {
+      console.error('Error fetching Mapbox token:', tokenError);
+      setMapError('Could not initialize map due to configuration issues. Please try again later.');
+      toast.error('Map Error', {
+        description: 'Could not initialize map due to configuration issues.'
+      });
+    }
+  }, [tokenError]);
   
   // Display loading state while fetching token
-  if (!mapboxToken) {
+  if (isLoading || !mapboxToken) {
     return (
       <div className="w-full h-[400px] flex items-center justify-center bg-muted/50 rounded-lg">
         <div className="text-center space-y-4">
