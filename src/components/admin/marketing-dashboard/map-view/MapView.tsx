@@ -281,12 +281,6 @@ const MapView: React.FC<MapViewProps> = ({ onExportResults }) => {
           setSelectedTracts={setSelectedTracts}
           handleExport={handleExport}
         />
-        
-        {sidebarCollapsed && (
-          <div className="p-4">
-            <GeometryUpdatePanel />
-          </div>
-        )}
       </div>
 
       {/* Main Content */}
@@ -299,6 +293,11 @@ const MapView: React.FC<MapViewProps> = ({ onExportResults }) => {
         >
           {sidebarCollapsed ? <ChevronRight /> : <ChevronLeft />}
         </Button>
+
+        {/* Floating Geometry Update Panel */}
+        <div className="absolute top-20 right-4 w-[380px] z-10">
+          <GeometryUpdatePanel />
+        </div>
 
         <div className="h-full">
           <MapContainer 
