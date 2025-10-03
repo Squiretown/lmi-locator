@@ -25,15 +25,12 @@ export function useMapbox({
 
   // Initialize map
   useEffect(() => {
-    if (!mapContainer.current) return;
+    if (!mapContainer.current || !accessToken) return;
     
     try {
-      // Set the access token either from props or environment variable
-      const token = accessToken;
-      
-      if (!token) {
-        throw new Error('Mapbox access token is required');
-      }
+      // Set the access token when available
+      const token = accessToken as string;
+      setError(null);
       
       mapboxgl.accessToken = token;
       
