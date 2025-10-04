@@ -1274,6 +1274,33 @@ export type Database = {
         }
         Relationships: []
       }
+      county_fips_codes: {
+        Row: {
+          county_code: string
+          county_name: string
+          created_at: string | null
+          id: string
+          state_abbr: string
+          state_code: string
+        }
+        Insert: {
+          county_code: string
+          county_name: string
+          created_at?: string | null
+          id?: string
+          state_abbr: string
+          state_code: string
+        }
+        Update: {
+          county_code?: string
+          county_name?: string
+          created_at?: string | null
+          id?: string
+          state_abbr?: string
+          state_code?: string
+        }
+        Relationships: []
+      }
       data_import_log: {
         Row: {
           completed_at: string | null

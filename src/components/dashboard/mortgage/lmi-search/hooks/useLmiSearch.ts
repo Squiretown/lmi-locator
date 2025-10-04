@@ -81,10 +81,10 @@ export function useLmiSearch() {
       try {
         console.log(`Fetching counties for state: ${selectedState}`);
         
-        // Fetch real counties from the census_tracts table
+        // Fetch counties from the county_fips_codes table via edge function
         const { data, error } = await supabase.functions.invoke('census-db', {
           body: {
-            action: 'searchBatch',
+            action: 'getCountiesForState',
             params: { state: selectedState }
           }
         });
@@ -93,34 +93,20 @@ export function useLmiSearch() {
           throw error;
         }
 
-        // Extract unique counties from the tracts data
-        const uniqueCounties = new Map();
-        if (data && data.tracts) {
-          data.tracts.forEach((tract: any) => {
-            if (tract.county && !uniqueCounties.has(tract.county)) {
-              uniqueCounties.set(tract.county, {
-                fips: `${selectedState}_${tract.county}`, // Using a combination as fips
-                name: tract.county
-              });
-            }
-          });
+        if (data && data.success && data.counties) {
+          setCounties(data.counties);
+          console.log(`Loaded ${data.counties.length} counties for ${selectedState}`);
+        } else {
+          throw new Error(data?.error || 'No counties returned');
         }
-
-        const countiesArray = Array.from(uniqueCounties.values()).sort((a, b) => a.name.localeCompare(b.name));
-        setCounties(countiesArray);
-        
-        console.log(`Loaded ${countiesArray.length} counties for ${selectedState}`);
       } catch (error) {
         console.error("Error fetching counties:", error);
         
-        // Fallback to a basic list if the real data fetch fails
-        const fallbackCounties = [
-          { fips: `${selectedState}001`, name: `${selectedState} County` }
-        ];
-        setCounties(fallbackCounties);
+        // Set empty array on error - let user know something went wrong
+        setCounties([]);
         
         toast.error("Error", {
-          description: "Failed to load counties. Using fallback data."
+          description: "Failed to load counties. Please try again."
         });
         
         // Log the counties fetch error

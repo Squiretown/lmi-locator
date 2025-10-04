@@ -15,6 +15,8 @@ export async function handleApiRequest(supabase: SupabaseClient, action: string,
         return await handleSearchBatch(supabase, params);
       case 'searchTracts':
         return await handleSearchTracts(supabase, params);
+      case 'getCountiesForState':
+        return await handleGetCountiesForState(supabase, params);
       default:
         throw new Error(`Unknown action: ${action}`);
     }
@@ -184,17 +186,53 @@ const STATE_CODES = {
   'WI': '55', 'WY': '56', 'DC': '11', 'PR': '72'
 };
 
-// County name to FIPS code mapping for NY (Suffolk = 103)
-const NY_COUNTY_CODES = {
-  'SUFFOLK': '103',
-  'NASSAU': '059',
-  'WESTCHESTER': '119',
-  'KINGS': '047',
-  'QUEENS': '081',
-  'NEW YORK': '061',
-  'BRONX': '005',
-  'RICHMOND': '085'
-};
+// Handle get counties for state
+async function handleGetCountiesForState(supabase: SupabaseClient, params: any) {
+  try {
+    const { state } = params;
+    
+    if (!state) {
+      throw new Error("State is required");
+    }
+    
+    console.log(`Fetching counties for state: ${state}`);
+    
+    // Fetch counties from the county_fips_codes table
+    const { data: counties, error } = await supabase
+      .from('county_fips_codes')
+      .select('county_code, county_name, state_code')
+      .eq('state_abbr', state.toUpperCase())
+      .order('county_name');
+    
+    if (error) {
+      console.error('Error fetching counties:', error);
+      throw new Error(`Database error: ${error.message}`);
+    }
+    
+    console.log(`Found ${counties?.length || 0} counties for ${state}`);
+    
+    // Transform to expected format
+    const formattedCounties = (counties || []).map(c => ({
+      fips: c.county_code,
+      name: c.county_name,
+      stateCode: c.state_code
+    }));
+    
+    return {
+      success: true,
+      counties: formattedCounties,
+      state: state.toUpperCase(),
+      timestamp: new Date().toISOString()
+    };
+  } catch (error) {
+    console.error("Error in getCountiesForState:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error in getCountiesForState",
+      counties: []
+    };
+  }
+}
 
 // Handle batch search for census tracts
 async function handleSearchBatch(supabase: SupabaseClient, params: any) {
@@ -240,19 +278,9 @@ async function handleSearchBatch(supabase: SupabaseClient, params: any) {
         throw new Error(`Invalid state abbreviation: ${state}`);
       }
       
-      // Convert county name to code (simplified for NY, extend as needed)
-      let countyCode = null;
-      if (stateCode === '36') { // NY
-        const countyKey = county.toUpperCase() as keyof typeof NY_COUNTY_CODES;
-        countyCode = NY_COUNTY_CODES[countyKey];
-      }
-      
-      if (countyCode) {
-        query = query.eq('state_code', stateCode).eq('county_code', countyCode);
-      } else {
-        // Fallback: search all counties and hope we have readable county names somewhere
-        throw new Error(`County code mapping not available for ${county} in ${state}`);
-      }
+      // Use the county parameter directly as the FIPS code
+      // The frontend now passes the county_code (FIPS code) from the dropdown
+      query = query.eq('state_code', stateCode).eq('county_code', county);
     } else if (state) {
       // State-only search - convert state abbreviation to FIPS code
       const stateKey = state.toUpperCase() as keyof typeof STATE_CODES;
@@ -382,17 +410,8 @@ async function handleSearchTracts(supabase: SupabaseClient, params: any) {
             throw new Error(`Invalid state abbreviation: ${state}`);
           }
           // For county search, try to match county code if available
-          if (stateCode === '36') { // NY
-            const countyKey = searchValue.toUpperCase() as keyof typeof NY_COUNTY_CODES;
-            const countyCode = NY_COUNTY_CODES[countyKey];
-            if (countyCode) {
-              query = query.eq('state_code', stateCode).eq('county_code', countyCode);
-            } else {
-              throw new Error(`County code mapping not available for ${searchValue} in ${state}`);
-            }
-          } else {
-            throw new Error(`County search not implemented for state: ${state}`);
-          }
+          // Use searchValue directly as the county FIPS code
+          query = query.eq('state_code', stateCode).eq('county_code', searchValue);
         } else {
           throw new Error("State is required for county search");
         }
