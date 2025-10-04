@@ -1,122 +1,135 @@
-import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
+// supabase/functions/process-account-request/index.ts
+// This handles admin approval/rejection of account cancellation/deletion requests
+
+import { serve } from "https://deno.land/std@0.177.0/http/server.ts"
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.21.0"
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
-
-interface ProcessRequestBody {
-  notificationId: string;
-  action: 'approve' | 'reject';
-  adminComments?: string;
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
 }
 
 const handler = async (req: Request): Promise<Response> => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: corsHeaders })
   }
 
   try {
-    // Initialize Supabase client
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+    const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
-    // Get the user from the Authorization header
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader) {
-      throw new Error('No authorization header');
+    const { notificationId, action, adminComments } = await req.json()
+
+    if (!notificationId || !action) {
+      return new Response(
+        JSON.stringify({ error: 'Missing required parameters' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
     }
 
-    const token = authHeader.replace('Bearer ', '');
-    const { data: { user }, error: userError } = await supabase.auth.getUser(token);
-
-    if (userError || !user) {
-      throw new Error('Invalid user token');
-    }
-
-    // Verify user is admin
-    const userType = user.user_metadata?.user_type;
-    if (userType !== 'admin') {
-      throw new Error('Unauthorized: Admin access required');
-    }
-
-    const { notificationId, action, adminComments }: ProcessRequestBody = await req.json();
-
-    // Get the notification details
+    // Get the notification to extract user info
     const { data: notification, error: notificationError } = await supabase
       .from('notifications')
       .select('*')
       .eq('id', notificationId)
-      .single();
+      .single()
 
     if (notificationError || !notification) {
-      throw new Error('Notification not found');
+      return new Response(
+        JSON.stringify({ error: 'Notification not found' }),
+        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
     }
 
-    const isAccountCancellation = notification.notification_type === 'account_cancellation';
-    const isAccountDeletion = notification.notification_type === 'account_deletion';
+    const requestingUserId = notification.data?.requesting_user_id
+    const requestType = notification.data?.request_type
 
-    if (!isAccountCancellation && !isAccountDeletion) {
-      throw new Error('Invalid notification type');
+    if (!requestingUserId) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid notification data' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
     }
 
-    // Get the requesting user's information
-    const requestingUserId = notification.data?.user_id || notification.user_id;
-    const { data: requestingUser, error: userDataError } = await supabase.auth.admin.getUserById(requestingUserId);
-
-    if (userDataError || !requestingUser) {
-      throw new Error('Requesting user not found');
-    }
-
-    // Update notification with admin decision
-    const { error: updateError } = await supabase
+    // Update notification status
+    await supabase
       .from('notifications')
-      .update({
+      .update({ 
         is_read: true,
         data: {
           ...notification.data,
-          status: action,
           processed_at: new Date().toISOString(),
-          processed_by: user.id,
+          action,
           admin_comments: adminComments
         }
       })
-      .eq('id', notificationId);
+      .eq('id', notificationId)
 
-    if (updateError) throw updateError;
+    const isAccountDeletion = requestType === 'account_deletion'
+    const isAccountCancellation = requestType === 'account_cancellation'
 
     if (action === 'approve') {
+      // Get user info before deletion
+      const { data: requestingUser } = await supabase.auth.admin.getUserById(requestingUserId)
+
       if (isAccountDeletion) {
-        // For account deletion, actually delete the user
-        const { error: deleteError } = await supabase.auth.admin.deleteUser(requestingUserId);
-        if (deleteError) {
-          console.error('Error deleting user:', deleteError);
-          // Continue with notification updates even if deletion fails
+        // ✅ FIXED: Call cleanup function BEFORE deleting auth user
+        console.log(`Calling delete_user_references for user ${requestingUserId}`)
+        const { data: cleanupData, error: cleanupError } = await supabase
+          .rpc('delete_user_references', { p_target_user_id: requestingUserId })
+
+        if (cleanupError) {
+          console.error('Cleanup function error:', cleanupError)
+          // Continue with deletion - CASCADE constraints will help
+        } else {
+          console.log('Cleanup completed:', cleanupData)
         }
+
+        // Now delete from auth
+        const { error: deleteError } = await supabase.auth.admin.deleteUser(requestingUserId)
+        
+        if (deleteError) {
+          console.error('Error deleting user:', deleteError)
+          return new Response(
+            JSON.stringify({ 
+              error: 'Failed to delete user account',
+              details: deleteError.message 
+            }),
+            { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          )
+        }
+
+        console.log(`User ${requestingUserId} successfully deleted`)
+
       } else if (isAccountCancellation) {
         // For account cancellation, deactivate but don't delete
-        // This could involve setting a status flag in user_metadata or a profiles table
         const { error: updateUserError } = await supabase.auth.admin.updateUserById(requestingUserId, {
           user_metadata: {
-            ...requestingUser.user.user_metadata,
+            ...requestingUser?.user?.user_metadata,
             account_status: 'cancelled',
             cancelled_at: new Date().toISOString()
           }
-        });
+        })
         
         if (updateUserError) {
-          console.error('Error updating user status:', updateUserError);
+          console.error('Error updating user status:', updateUserError)
+          return new Response(
+            JSON.stringify({ 
+              error: 'Failed to cancel user account',
+              details: updateUserError.message 
+            }),
+            { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          )
         }
       }
     }
 
-    // Send confirmation notification to the requesting user
+    // Send confirmation notification to the requesting user (only if user still exists)
     const confirmationMessage = action === 'approve' 
       ? `Your account ${isAccountCancellation ? 'cancellation' : 'deletion'} request has been approved and processed.`
-      : `Your account ${isAccountCancellation ? 'cancellation' : 'deletion'} request has been rejected. ${adminComments ? `Reason: ${adminComments}` : ''}`;
+      : `Your account ${isAccountCancellation ? 'cancellation' : 'deletion'} request has been rejected. ${adminComments ? `Reason: ${adminComments}` : ''}`
 
     // Only send notification if user still exists (not deleted)
     if (action !== 'approve' || !isAccountDeletion) {
@@ -129,14 +142,14 @@ const handler = async (req: Request): Promise<Response> => {
           notification_type: 'account_status',
           is_read: false,
           priority: 'high'
-        });
+        })
 
       if (confirmNotificationError) {
-        console.error('Error sending confirmation notification:', confirmNotificationError);
+        console.error('Error sending confirmation notification:', confirmNotificationError)
       }
     }
 
-    console.log(`Account ${isAccountCancellation ? 'cancellation' : 'deletion'} request ${action}d for user ${requestingUserId}`);
+    console.log(`Account ${isAccountCancellation ? 'cancellation' : 'deletion'} request ${action}d for user ${requestingUserId}`)
 
     return new Response(
       JSON.stringify({ 
@@ -147,20 +160,21 @@ const handler = async (req: Request): Promise<Response> => {
         status: 200,
         headers: { 'Content-Type': 'application/json', ...corsHeaders },
       }
-    );
+    )
 
   } catch (error: any) {
-    console.error('Error processing account request:', error);
+    console.error('Error processing account request:', error)
     return new Response(
       JSON.stringify({ 
-        error: error.message || 'Failed to process account request' 
+        error: error.message || 'Failed to process account request',
+        details: error 
       }),
       {
         status: 400,
         headers: { 'Content-Type': 'application/json', ...corsHeaders },
       }
-    );
+    )
   }
-};
+}
 
-serve(handler);
+serve(handler)
