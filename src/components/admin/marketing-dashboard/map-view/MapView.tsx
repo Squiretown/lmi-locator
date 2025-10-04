@@ -132,7 +132,7 @@ const MapView: React.FC<MapViewProps> = ({ onExportResults }) => {
       try {
         const { data, error } = await supabase.functions.invoke('census-db', {
           body: {
-            action: 'searchBatch',
+            action: 'getCountiesForState',
             params: { state: selectedState }
           }
         });
@@ -142,26 +142,12 @@ const MapView: React.FC<MapViewProps> = ({ onExportResults }) => {
           throw error;
         }
 
-        console.log('📊 Response data:', data);
+        console.log('📊 Counties response:', data);
 
-        const countyMap = new Map<string, { fips: string; name: string }>();
-        
-        if (data && data.tracts && Array.isArray(data.tracts)) {
-          console.log(`📋 Processing ${data.tracts.length} tracts`);
-          
-          data.tracts.forEach((tract: any) => {
-            const countyCode = tract.county_code || tract.countyCode || tract.county;
-            const countyName = tract.county || null;
-            
-            if (countyCode && !countyMap.has(countyCode)) {
-              const displayName = getCountyName(countyCode, countyName, selectedState);
-              countyMap.set(countyCode, { fips: countyCode, name: displayName });
-            }
-          });
-        }
+        const counties = (data?.counties ?? [])
+          .map((c: any) => ({ fips: c.fips, name: c.name }))
+          .sort((a: any, b: any) => a.name.localeCompare(b.name));
 
-        const counties = Array.from(countyMap.values()).sort((a, b) => a.name.localeCompare(b.name));
-        
         console.log('✅ Loaded counties:', counties);
         setCountiesForState(counties);
 
