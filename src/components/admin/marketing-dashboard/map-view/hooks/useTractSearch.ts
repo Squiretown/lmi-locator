@@ -39,8 +39,19 @@ export const useTractSearch = () => {
           dataSource: 'real'
         });
         
+        // Check for missing geometry
+        const tractsWithGeometry = realData.tracts.filter(t => t.geometry && t.geometry.coordinates);
+        const missingGeometry = realData.tracts.length - tractsWithGeometry.length;
+        
+        if (missingGeometry > 0) {
+          const pct = Math.round((missingGeometry / realData.tracts.length) * 100);
+          toast.warning("Geometry data incomplete", {
+            description: `${missingGeometry} tracts (${pct}%) missing geometry. Use the Geometry Update Panel to fetch boundary data.`
+          });
+        }
+        
         toast.success("Search Complete", {
-          description: `Found ${realData.tracts.length} census tracts`
+          description: `Found ${realData.tracts.length} census tracts (${tractsWithGeometry.length} have map boundaries)`
         });
       } else {
         throw new Error('No census tract data found for the specified criteria');

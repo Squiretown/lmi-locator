@@ -35,14 +35,32 @@ export function useLmiSearch() {
 
     const fetchCounties = async () => {
       try {
-        const mockCounties = [
-          { fips: `${selectedState}001`, name: `${selectedState} County 1` },
-          { fips: `${selectedState}002`, name: `${selectedState} County 2` },
-          { fips: `${selectedState}003`, name: `${selectedState} County 3` },
-        ];
-        setCounties(mockCounties);
+        console.log(`Fetching counties for state: ${selectedState}`);
+        
+        // Fetch counties from the county_fips_codes table via edge function
+        const { data, error } = await supabase.functions.invoke('census-db', {
+          body: {
+            action: 'getCountiesForState',
+            params: { state: selectedState }
+          }
+        });
+
+        if (error) {
+          throw error;
+        }
+
+        if (data && data.success && data.counties) {
+          setCounties(data.counties);
+          console.log(`Loaded ${data.counties.length} counties for ${selectedState}`);
+        } else {
+          throw new Error(data?.error || 'No counties returned');
+        }
       } catch (error) {
         console.error("Error fetching counties:", error);
+        
+        // Set empty array on error - let user know something went wrong
+        setCounties([]);
+        
         toast.error("Error", {
           description: "Failed to load counties. Please try again."
         });

@@ -82,11 +82,21 @@ const MapContainer = forwardRef<MapRef, MapContainerProps>(
       if (!map || !isLoaded || tracts.length === 0) return;
 
       try {
+        // Filter tracts with geometry
+        const tractsWithGeometry = tracts.filter(t => t.geometry && t.geometry.coordinates);
+        
+        console.log(`MapContainer: ${tractsWithGeometry.length} of ${tracts.length} tracts have geometry`);
+        
+        if (tractsWithGeometry.length === 0) {
+          console.warn('No tracts have geometry data - map will be empty');
+          return;
+        }
+        
         // Add map layers if they don't exist
         addTractLayers(map);
         
-        // Update tract data
-        updateTractData(map, tracts.map(tract => ({
+        // Update tract data (only tracts with geometry)
+        updateTractData(map, tractsWithGeometry.map(tract => ({
           ...tract,
           isSelected: selectedTracts.some(t => t.tractId === tract.tractId)
         })));
@@ -96,8 +106,8 @@ const MapContainer = forwardRef<MapRef, MapContainerProps>(
           onTractClick(tract);
         });
         
-        // Fit map to show all tracts
-        fitBoundsToTracts(tracts);
+        // Fit map to show all tracts with geometry
+        fitBoundsToTracts(tractsWithGeometry);
         
       } catch (error) {
         console.error('Error adding tract data to map:', error);
@@ -109,8 +119,11 @@ const MapContainer = forwardRef<MapRef, MapContainerProps>(
       if (!map || !isLoaded || tracts.length === 0) return;
 
       try {
+        // Filter tracts with geometry before updating
+        const tractsWithGeometry = tracts.filter(t => t.geometry && t.geometry.coordinates);
+        
         // Update the tract data to reflect selection state
-        updateTractData(map, tracts.map(tract => ({
+        updateTractData(map, tractsWithGeometry.map(tract => ({
           ...tract,
           isSelected: selectedTracts.some(t => t.tractId === tract.tractId)
         })));
