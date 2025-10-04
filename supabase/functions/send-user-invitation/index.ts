@@ -239,7 +239,8 @@ const handler = async (req: Request): Promise<Response> => {
 
     if (requestData.sendVia === 'email' || requestData.sendVia === 'both') {
       try {
-        const inviteLink = `${Deno.env.get('SUPABASE_URL')}/auth/v1/verify?token=${invitation.invite_token}&type=invite`;
+        const appUrl = Deno.env.get('APP_URL') || 'https://lmicheck.com';
+        const inviteLink = `${appUrl}/accept-invitation/${invitation.invite_token}`;
         
         const emailResponse = await resend.emails.send({
           from: 'LMI Check <notifications@support247.solutions>',
