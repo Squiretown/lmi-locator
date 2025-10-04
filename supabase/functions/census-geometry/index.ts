@@ -309,8 +309,21 @@ async function updateStateGeometry(
       }
     }
 
-    // Check if there are more tracts to process
-    const { count: remainingCount } = await query.select('*', { count: 'exact', head: true });
+    // Check if there are more tracts to process - build fresh query with same filters
+    let countQuery = supabase
+      .from('census_tracts')
+      .select('*', { count: 'exact', head: true })
+      .is('geometry', null);
+    
+    if (county) {
+      const tractPattern = `${stateFips}${countyFips}%`;
+      countQuery = countQuery.like('tract_id', tractPattern);
+    } else {
+      const tractPattern = `${stateFips}%`;
+      countQuery = countQuery.like('tract_id', tractPattern);
+    }
+    
+    const { count: remainingCount } = await countQuery;
     const hasMore = (remainingCount || 0) > 0;
 
     console.log(`✅ Batch complete: ${updated} updated, ${failed} failed, hasMore: ${hasMore}`);
