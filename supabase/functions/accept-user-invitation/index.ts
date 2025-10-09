@@ -196,6 +196,21 @@ const handler = async (req: Request): Promise<Response> => {
 
       // Create type-specific profiles for existing user
       if (invitation.user_type === 'client') {
+        // Get the inviting professional's details
+        const { data: professional } = await supabaseClient
+          .from('professionals')
+          .select('id, professional_type')
+          .eq('user_id', invitation.invited_by_user_id)
+          .single();
+
+        if (!professional) {
+          console.error('Professional not found for invited_by_user_id:', invitation.invited_by_user_id);
+          return new Response(
+            JSON.stringify({ error: 'Invalid invitation - professional not found' }),
+            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+
         const { data: existingClient } = await supabaseClient
           .from('client_profiles')
           .select('id')
@@ -207,7 +222,7 @@ const handler = async (req: Request): Promise<Response> => {
             .from('client_profiles')
             .insert({
               user_id: targetUser.id,
-              professional_id: invitation.invited_by_user_id,
+              professional_id: professional.id,
               first_name: profileData.first_name,
               last_name: profileData.last_name,
               email: requestData.email,
@@ -217,6 +232,21 @@ const handler = async (req: Request): Promise<Response> => {
           if (clientError) {
             console.error('Failed to create client profile for existing user:', clientError);
           }
+        }
+
+        // Create client_team_assignments record
+        const { error: teamError } = await supabaseClient
+          .from('client_team_assignments')
+          .insert({
+            client_id: targetUser.id,
+            professional_id: professional.id,
+            professional_role: professional.professional_type,
+            assigned_by: invitation.invited_by_user_id,
+            status: 'active'
+          });
+
+        if (teamError) {
+          console.error('Failed to create client team assignment for existing user:', teamError);
         }
       } else if (invitation.user_type === 'realtor' || invitation.user_type === 'mortgage_professional') {
         const { data: existingProfessional } = await supabaseClient
@@ -370,11 +400,26 @@ const handler = async (req: Request): Promise<Response> => {
 
       // Create type-specific profiles for new user
       if (invitation.user_type === 'client') {
+        // Get the inviting professional's details
+        const { data: professional } = await supabaseClient
+          .from('professionals')
+          .select('id, professional_type')
+          .eq('user_id', invitation.invited_by_user_id)
+          .single();
+
+        if (!professional) {
+          console.error('Professional not found for invited_by_user_id:', invitation.invited_by_user_id);
+          return new Response(
+            JSON.stringify({ error: 'Invalid invitation - professional not found' }),
+            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+
         const { error: clientError } = await supabaseClient
           .from('client_profiles')
           .insert({
             user_id: authData.user.id,
-            professional_id: invitation.invited_by_user_id,
+            professional_id: professional.id,
             first_name: requestData.userData?.firstName || invitation.first_name,
             last_name: requestData.userData?.lastName || invitation.last_name,
             email: requestData.email,
@@ -383,6 +428,21 @@ const handler = async (req: Request): Promise<Response> => {
 
         if (clientError) {
           console.error('Failed to create client profile:', clientError);
+        }
+
+        // Create client_team_assignments record
+        const { error: teamError } = await supabaseClient
+          .from('client_team_assignments')
+          .insert({
+            client_id: authData.user.id,
+            professional_id: professional.id,
+            professional_role: professional.professional_type,
+            assigned_by: invitation.invited_by_user_id,
+            status: 'active'
+          });
+
+        if (teamError) {
+          console.error('Failed to create client team assignment:', teamError);
         }
       } else if (invitation.user_type === 'realtor' || invitation.user_type === 'mortgage_professional') {
         // Trigger already created professionals row, just update it with invitation details
