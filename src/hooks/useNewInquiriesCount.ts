@@ -31,7 +31,7 @@ export const useNewInquiriesCount = () => {
           table: 'contact_inquiries',
         },
         () => {
-          queryClient.invalidateQueries(['contact_inquiries_count', 'new']);
+          queryClient.invalidateQueries({ queryKey: ['contact_inquiries_count', 'new'] });
         }
       )
       .subscribe();

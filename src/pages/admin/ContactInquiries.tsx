@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -27,6 +28,7 @@ interface ContactInquiry {
 const ContactInquiries: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const [inquiries, setInquiries] = useState<ContactInquiry[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -72,6 +74,10 @@ const ContactInquiries: React.FC = () => {
       setInquiries(inquiries.map(inq => 
         inq.id === id ? { ...inq, status: newStatus } : inq
       ));
+      
+      // Invalidate the count query to update the sidebar badge
+      queryClient.invalidateQueries({ queryKey: ['contact_inquiries_count', 'new'] });
+      
       toast.success('Status updated');
     } catch (error) {
       console.error('Error updating status:', error);
