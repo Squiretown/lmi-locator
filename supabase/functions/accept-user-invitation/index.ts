@@ -297,26 +297,7 @@ const handler = async (req: Request): Promise<Response> => {
         );
       }
 
-      // Check if user with this email already exists via user_profiles
-      const { data: existingProfile } = await supabaseClient
-        .from('user_profiles')
-        .select('user_id')
-        .eq('email', requestData.email.toLowerCase())
-        .maybeSingle();
-      
-      if (existingProfile?.user_id) {
-        console.log('Existing profile found for email, prompting sign-in');
-        return new Response(
-          JSON.stringify({ 
-            success: false,
-            error: 'An account with this email already exists. Please sign in instead.',
-            shouldSignIn: true 
-          }),
-          { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-
-      // Double-check in Auth: see if a user already exists with this email
+      // Check if a user already exists with this email in Auth
       const { data: listData, error: listErr } = await supabaseClient.auth.admin.listUsers({ page: 1, perPage: 1000 });
       if (!listErr) {
         const existingAuthUser = listData?.users?.find((u: any) => u.email?.toLowerCase() === requestData.email.toLowerCase());
