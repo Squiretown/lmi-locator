@@ -1131,6 +1131,9 @@ export type Database = {
       }
       contact_inquiries: {
         Row: {
+          admin_notes: string | null
+          assigned_at: string | null
+          assigned_to: string | null
           created_at: string
           email: string
           id: string
@@ -1144,6 +1147,9 @@ export type Database = {
           subject: string
         }
         Insert: {
+          admin_notes?: string | null
+          assigned_at?: string | null
+          assigned_to?: string | null
           created_at?: string
           email: string
           id?: string
@@ -1157,6 +1163,9 @@ export type Database = {
           subject: string
         }
         Update: {
+          admin_notes?: string | null
+          assigned_at?: string | null
+          assigned_to?: string | null
           created_at?: string
           email?: string
           id?: string
@@ -1169,7 +1178,15 @@ export type Database = {
           status?: string
           subject?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "contact_inquiries_assigned_to_fkey"
+            columns: ["assigned_to"]
+            isOneToOne: false
+            referencedRelation: "professionals"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       contact_interactions: {
         Row: {
