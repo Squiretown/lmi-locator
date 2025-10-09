@@ -4,9 +4,7 @@ import { Helmet } from 'react-helmet';
 import Header from '@/components/Header';
 import PropertyChecker from '@/components/PropertyChecker';
 import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Home, CheckCircle, UserCheck, Users } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Home, CheckCircle } from 'lucide-react';
 
 // Constants to avoid duplication
 const PAGE_TITLE = "LMICHECK.COM - LMI Property Checker";
@@ -65,22 +63,6 @@ const Index = () => {
             Check if a property is in a Low-to-Moderate Income (LMI) census tract and 
             unlock eligibility for special programs and incentives.
           </p>
-          
-          {/* Login Options */}
-          <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
-            <Link to="/client-login">
-              <Button variant="default" className="flex items-center gap-2">
-                <UserCheck className="h-4 w-4" />
-                Client Portal
-              </Button>
-            </Link>
-            <Link to="/login">
-              <Button variant="outline" className="flex items-center gap-2">
-                <Users className="h-4 w-4" />
-                Professional Login
-              </Button>
-            </Link>
-          </div>
         </div>
         
         {/* Main card section */}
