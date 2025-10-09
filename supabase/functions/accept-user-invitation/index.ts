@@ -355,7 +355,6 @@ const handler = async (req: Request): Promise<Response> => {
         user_type: invitation.user_type,
         first_name: requestData.userData?.firstName || invitation.first_name,
         last_name: requestData.userData?.lastName || invitation.last_name,
-        email: requestData.email,
         phone: requestData.userData?.phone || invitation.phone,
       };
 
