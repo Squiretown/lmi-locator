@@ -108,6 +108,8 @@ const handler = async (req: Request): Promise<Response> => {
       notification_type: 'account_cancellation_request',
       title: 'Account Cancellation Request',
       message: `User ${user.email} has requested account cancellation. Please review and approve.`,
+      is_read: false,
+      priority: 'high',
       data: {
         requesting_user_id: user.id,
         requesting_user_email: user.email,
@@ -121,8 +123,11 @@ const handler = async (req: Request): Promise<Response> => {
 
     if (notificationError) {
       console.error('Error creating cancellation request:', notificationError);
+      console.error('Notification error details:', JSON.stringify(notificationError, null, 2));
+      console.error('Attempted to insert:', JSON.stringify(adminNotifications, null, 2));
       return new Response(JSON.stringify({ 
-        error: 'Failed to submit cancellation request. Please try again.' 
+        error: 'Failed to submit cancellation request. Please try again.',
+        details: notificationError.message
       }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
