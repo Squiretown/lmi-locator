@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible';
 import { Textarea } from '@/components/ui/textarea';
 import { InviteClientDialog } from '@/components/clients/InviteClientDialog';
+import { ContactEmailDialog } from '@/components/admin/ContactEmailDialog';
 import { useUnifiedInvitationSystem } from '@/hooks/useUnifiedInvitationSystem';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
@@ -39,6 +40,7 @@ const ContactInquiries: React.FC = () => {
   const [inquiries, setInquiries] = useState<ContactInquiry[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
+  const [emailDialogOpen, setEmailDialogOpen] = useState(false);
   const [selectedInquiry, setSelectedInquiry] = useState<ContactInquiry | null>(null);
   const { sendInvitation, isSending } = useUnifiedInvitationSystem();
 
@@ -190,18 +192,20 @@ const ContactInquiries: React.FC = () => {
     }
   };
 
-  const handleContactEmail = async (inquiry: ContactInquiry) => {
-    const subject = `Re: Your ${inquiry.inquiry_type.replace('_', ' ')} inquiry`;
-    const message = prompt(`Message to ${inquiry.name}:`, `Hi ${inquiry.name},\n\nThank you for contacting us about ${inquiry.inquiry_type.replace('_', ' ')}.\n\nWe'd be happy to help you with this.`);
-    
-    if (!message) return;
+  const handleContactEmail = (inquiry: ContactInquiry) => {
+    setSelectedInquiry(inquiry);
+    setEmailDialogOpen(true);
+  };
+
+  const handleSendEmail = async (subject: string, message: string) => {
+    if (!selectedInquiry) return;
     
     try {
       const { data: { session } } = await supabase.auth.getSession();
       
       const { data, error } = await supabase.functions.invoke('send-inquiry-email', {
         body: { 
-          inquiryId: inquiry.id,
+          inquiryId: selectedInquiry.id,
           subject,
           message
         },
@@ -212,7 +216,9 @@ const ContactInquiries: React.FC = () => {
 
       if (error) throw error;
 
-      toast.success(`Email sent to ${inquiry.email}`);
+      toast.success(`Email sent to ${selectedInquiry.email}`);
+      setEmailDialogOpen(false);
+      setSelectedInquiry(null);
       fetchInquiries();
     } catch (error) {
       console.error('Error sending email:', error);
@@ -404,14 +410,24 @@ const ContactInquiries: React.FC = () => {
         </div>
 
         {/* Invitation Dialog */}
-        {selectedInquiry && (
+      {selectedInquiry && (
+        <>
           <InviteClientDialog
             open={inviteDialogOpen}
             onOpenChange={setInviteDialogOpen}
             onSubmit={handleInviteSubmit}
             isLoading={isSending}
           />
-        )}
+          
+          <ContactEmailDialog
+            open={emailDialogOpen}
+            onOpenChange={setEmailDialogOpen}
+            inquiry={selectedInquiry}
+            onSend={handleSendEmail}
+            isLoading={false}
+          />
+        </>
+      )}
       </div>
     </div>
   );
