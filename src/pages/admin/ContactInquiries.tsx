@@ -190,10 +190,34 @@ const ContactInquiries: React.FC = () => {
     }
   };
 
-  const handleContactEmail = (inquiry: ContactInquiry) => {
-    const subject = encodeURIComponent(`Re: Your ${inquiry.inquiry_type.replace('_', ' ')} inquiry`);
-    const body = encodeURIComponent(`Hi ${inquiry.name},\n\nThank you for contacting us about ${inquiry.inquiry_type.replace('_', ' ')}.\n\n`);
-    window.location.href = `mailto:${inquiry.email}?subject=${subject}&body=${body}`;
+  const handleContactEmail = async (inquiry: ContactInquiry) => {
+    const subject = `Re: Your ${inquiry.inquiry_type.replace('_', ' ')} inquiry`;
+    const message = prompt(`Message to ${inquiry.name}:`, `Hi ${inquiry.name},\n\nThank you for contacting us about ${inquiry.inquiry_type.replace('_', ' ')}.\n\nWe'd be happy to help you with this.`);
+    
+    if (!message) return;
+    
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      const { data, error } = await supabase.functions.invoke('send-inquiry-email', {
+        body: { 
+          inquiryId: inquiry.id,
+          subject,
+          message
+        },
+        headers: {
+          Authorization: `Bearer ${session?.access_token}`
+        }
+      });
+
+      if (error) throw error;
+
+      toast.success(`Email sent to ${inquiry.email}`);
+      fetchInquiries();
+    } catch (error) {
+      console.error('Error sending email:', error);
+      toast.error('Failed to send email');
+    }
   };
 
   const handleUpdateNotes = async (inquiryId: string, notes: string) => {
