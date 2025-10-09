@@ -251,12 +251,15 @@ const handler = async (req: Request): Promise<Response> => {
       } else if (invitation.user_type === 'realtor' || invitation.user_type === 'mortgage_professional') {
         const { data: existingProfessional } = await supabaseClient
           .from('professionals')
-          .select('id')
+          .select('id, professional_type')
           .eq('user_id', targetUser.id)
           .maybeSingle();
 
+        let invitedProfessionalId = existingProfessional?.id;
+        let invitedProfessionalType = existingProfessional?.professional_type;
+
         if (!existingProfessional) {
-          const { error: professionalError } = await supabaseClient
+          const { data: newProfessional, error: professionalError } = await supabaseClient
             .from('professionals')
             .insert({
               user_id: targetUser.id,
@@ -267,10 +270,48 @@ const handler = async (req: Request): Promise<Response> => {
               phone: profileData.phone,
               email: requestData.email,
               status: invitation.requires_approval ? 'pending' : 'active',
-            });
+            })
+            .select('id, professional_type')
+            .single();
 
           if (professionalError) {
             console.error('Failed to create professional profile for existing user:', professionalError);
+          } else {
+            invitedProfessionalId = newProfessional?.id;
+            invitedProfessionalType = newProfessional?.professional_type;
+          }
+        }
+
+        // Create professional team relationship
+        if (invitedProfessionalId && invitedProfessionalType) {
+          const { data: inviterProfessional } = await supabaseClient
+            .from('professionals')
+            .select('id, professional_type')
+            .eq('user_id', invitation.invited_by_user_id)
+            .single();
+
+          if (inviterProfessional) {
+            // Only create team relationship if they're complementary types
+            const invitedType = invitedProfessionalType;
+            const inviterType = inviterProfessional.professional_type;
+
+            if (
+              (invitedType === 'realtor' && inviterType === 'mortgage_professional') ||
+              (invitedType === 'mortgage_professional' && inviterType === 'realtor')
+            ) {
+              const { error: teamError } = await supabaseClient
+                .from('professional_teams')
+                .insert({
+                  mortgage_professional_id: invitedType === 'mortgage_professional' ? invitedProfessionalId : inviterProfessional.id,
+                  realtor_id: invitedType === 'realtor' ? invitedProfessionalId : inviterProfessional.id,
+                  status: 'active',
+                  role: 'partner'
+                });
+
+              if (teamError) {
+                console.error('Failed to create professional team relationship for existing user:', teamError);
+              }
+            }
           }
         }
       }
@@ -448,7 +489,7 @@ const handler = async (req: Request): Promise<Response> => {
         // Trigger already created professionals row, just update it with invitation details
         await new Promise((resolve) => setTimeout(resolve, 500));
         
-        const { error: professionalError } = await supabaseClient
+        const { data: updatedProfessional, error: professionalError } = await supabaseClient
           .from('professionals')
           .update({
             phone: requestData.userData?.phone || invitation.phone,
@@ -457,10 +498,45 @@ const handler = async (req: Request): Promise<Response> => {
             email: invitation.email,
             status: invitation.requires_approval ? 'pending' : 'active',
           })
-          .eq('user_id', authData.user.id);
+          .eq('user_id', authData.user.id)
+          .select('id, professional_type')
+          .single();
 
         if (professionalError) {
-          console.error('Failed to create professional profile:', professionalError);
+          console.error('Failed to update professional profile:', professionalError);
+        }
+
+        // Create professional team relationship
+        if (updatedProfessional) {
+          const { data: inviterProfessional } = await supabaseClient
+            .from('professionals')
+            .select('id, professional_type')
+            .eq('user_id', invitation.invited_by_user_id)
+            .single();
+
+          if (inviterProfessional) {
+            // Only create team relationship if they're complementary types
+            const invitedType = updatedProfessional.professional_type;
+            const inviterType = inviterProfessional.professional_type;
+
+            if (
+              (invitedType === 'realtor' && inviterType === 'mortgage_professional') ||
+              (invitedType === 'mortgage_professional' && inviterType === 'realtor')
+            ) {
+              const { error: teamError } = await supabaseClient
+                .from('professional_teams')
+                .insert({
+                  mortgage_professional_id: invitedType === 'mortgage_professional' ? updatedProfessional.id : inviterProfessional.id,
+                  realtor_id: invitedType === 'realtor' ? updatedProfessional.id : inviterProfessional.id,
+                  status: 'active',
+                  role: 'partner'
+                });
+
+              if (teamError) {
+                console.error('Failed to create professional team relationship for new user:', teamError);
+              }
+            }
+          }
         }
       }
 
