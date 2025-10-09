@@ -305,13 +305,32 @@ const handler = async (req: Request): Promise<Response> => {
         .maybeSingle();
       
       if (existingProfile?.user_id) {
+        console.log('Existing profile found for email, prompting sign-in');
         return new Response(
           JSON.stringify({ 
+            success: false,
             error: 'An account with this email already exists. Please sign in instead.',
             shouldSignIn: true 
           }),
-          { status: 409, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
+      }
+
+      // Double-check in Auth: see if a user already exists with this email
+      const { data: listData, error: listErr } = await supabaseClient.auth.admin.listUsers({ page: 1, perPage: 1000 });
+      if (!listErr) {
+        const existingAuthUser = listData?.users?.find((u: any) => u.email?.toLowerCase() === requestData.email.toLowerCase());
+        if (existingAuthUser) {
+          console.log('Existing auth user found for email, prompting sign-in');
+          return new Response(
+            JSON.stringify({ 
+              success: false,
+              error: 'An account with this email already exists. Please sign in instead.',
+              shouldSignIn: true 
+            }),
+            { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
       }
 
       // Create new user account
@@ -330,6 +349,19 @@ const handler = async (req: Request): Promise<Response> => {
 
       if (signUpError || !authData.user) {
         console.error('Failed to create user:', signUpError);
+        // If user already exists in Auth, guide them to sign in
+        const { data: listData } = await supabaseClient.auth.admin.listUsers({ page: 1, perPage: 1000 });
+        const existingAuthUser = listData?.users?.find((u: any) => u.email?.toLowerCase() === requestData.email.toLowerCase());
+        if (existingAuthUser) {
+          return new Response(
+            JSON.stringify({ 
+              success: false,
+              error: 'An account with this email already exists. Please sign in instead.',
+              shouldSignIn: true 
+            }),
+            { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
         return new Response(
           JSON.stringify({ error: 'Failed to create user account' }),
           { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

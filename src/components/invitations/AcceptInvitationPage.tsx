@@ -195,6 +195,17 @@ export const AcceptInvitationPage: React.FC = () => {
       });
 
       if (error) throw error;
+
+      // Handle structured non-success responses
+      if (result && result.success === false) {
+        if (result.shouldSignIn) {
+          setShowSignIn(true);
+          toast.error('An account with this email already exists. Please sign in instead.');
+          return;
+        }
+        throw new Error(result?.error || 'Failed to accept invitation');
+      }
+
       if (!result?.success) throw new Error(result?.error || 'Failed to accept invitation');
 
       toast.success('Welcome! Your account has been created successfully.');
