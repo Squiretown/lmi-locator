@@ -44,6 +44,7 @@ import MortgageTeam from "./pages/dashboard/mortgage/Team";
 // Admin Layout and Pages
 import AdminLayout from "./components/admin/layout/AdminLayout";
 import AdminContactsPage from "./pages/admin/AdminContactsPage";
+import ContactInquiries from "./pages/admin/ContactInquiries";
 import { Dashboard as AdminDashboard } from "./components/admin/dashboard/DashboardContainer";
 import UserManagement from "./pages/auth/UserManagement";
 import AdminTools from "./pages/auth/AdminTools";
@@ -176,6 +177,7 @@ const App = () => (
               <Route path="tools" element={<AdminTools />} />
               <Route path="settings" element={<SettingsPage />} />
               <Route path="contacts" element={<AdminContactsPage />} />
+              <Route path="contact-inquiries" element={<ContactInquiries />} />
               {/* Realtor management consolidated into professionals page */}
               {/* Mortgage brokers management consolidated into professionals page */}
               

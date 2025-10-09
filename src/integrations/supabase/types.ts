@@ -1129,6 +1129,48 @@ export type Database = {
         }
         Relationships: []
       }
+      contact_inquiries: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          inquiry_type: string
+          location: string | null
+          message: string
+          name: string
+          phone: string | null
+          source: string
+          status: string
+          subject: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          inquiry_type?: string
+          location?: string | null
+          message: string
+          name: string
+          phone?: string | null
+          source?: string
+          status?: string
+          subject: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          inquiry_type?: string
+          location?: string | null
+          message?: string
+          name?: string
+          phone?: string | null
+          source?: string
+          status?: string
+          subject?: string
+        }
+        Relationships: []
+      }
       contact_interactions: {
         Row: {
           contact_id: string
@@ -4511,7 +4553,7 @@ export type Database = {
         Args:
           | { tbl_oid: unknown; use_typmod?: boolean }
           | { use_typmod?: boolean }
-        Returns: string
+        Returns: number
       }
       postgis_addbbox: {
         Args: { "": unknown }
