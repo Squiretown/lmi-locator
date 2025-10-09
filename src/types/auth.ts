@@ -11,13 +11,6 @@ export interface UserMetadata {
   [key: string]: any;
 }
 
-export interface OAuthProvider {
-  name: string;
-  provider: 'google' | 'github' | 'azure' | 'discord';
-  icon: string;
-  color: string;
-}
-
 export interface AuthContextType {
   user: User | null;
   session: Session | null;
@@ -28,5 +21,4 @@ export interface AuthContextType {
   signUp: (email: string, password: string, metadata?: UserMetadata) => Promise<{ error: Error | null, data: any }>;
   signOut: () => Promise<void>;
   deleteAccount: (currentPassword: string) => Promise<{ success: boolean; error: Error | null }>;
-  signInWithOAuth: (provider: 'google' | 'github' | 'azure' | 'discord', options?: { userType?: string }) => Promise<{ success: boolean; error: Error | null }>;
 }

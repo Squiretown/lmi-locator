@@ -8,11 +8,7 @@ import {
   signInWithEmail, 
   signUpWithEmail, 
   signOutUser,
-  deleteUserWithPassword,
-  signInWithGoogle,
-  signInWithGitHub,
-  signInWithMicrosoft,
-  signInWithDiscord
+  deleteUserWithPassword
 } from '@/lib/auth/operations';
 import AuthContext from '@/contexts/AuthContext';
 import { USER_ROLES, PROFESSIONAL_ROLES, normalizeRole } from '@/lib/constants/roles';
@@ -235,37 +231,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const signInWithOAuth = async (provider: 'google' | 'github' | 'azure' | 'discord', options: { userType?: string } = {}) => {
-    setIsLoading(true);
-    try {
-      let result;
-      
-      switch (provider) {
-        case 'google':
-          result = await signInWithGoogle({ userType: options.userType || USER_ROLES.REALTOR });
-          break;
-        case 'github':
-          result = await signInWithGitHub({ userType: options.userType || USER_ROLES.REALTOR });
-          break;
-        case 'azure':
-          result = await signInWithMicrosoft({ userType: options.userType || USER_ROLES.REALTOR });
-          break;
-        case 'discord':
-          result = await signInWithDiscord({ userType: options.userType || USER_ROLES.REALTOR });
-          break;
-        default:
-          throw new Error(`Unsupported OAuth provider: ${provider}`);
-      }
-      
-      return result;
-    } catch (error) {
-      console.error(`Error during ${provider} OAuth sign in:`, error);
-      return { success: false, error: error as Error };
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   const authContextValue: AuthContextType = {
     user, 
     session, 
@@ -275,8 +240,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     signIn, 
     signUp, 
     signOut,
-    deleteAccount,
-    signInWithOAuth
+    deleteAccount
   };
 
   return (
