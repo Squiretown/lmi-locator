@@ -1272,7 +1272,15 @@ export type Database = {
           status?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "contacts_invited_inviter_id_fkey"
+            columns: ["inviter_id"]
+            isOneToOne: false
+            referencedRelation: "professionals"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       county_fips_codes: {
         Row: {
@@ -3725,6 +3733,15 @@ export type Database = {
         }
         Relationships: []
       }
+      search_analytics: {
+        Row: {
+          anonymized_searches: number | null
+          search_date: string | null
+          total_searches: number | null
+          unique_users: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       _postgis_deprecate: {
@@ -3980,7 +3997,7 @@ export type Database = {
         Returns: string
       }
       delete_user_references: {
-        Args: { target_user_id: string }
+        Args: { p_target_user_id: string }
         Returns: Json
       }
       diagnose_user_data: {
