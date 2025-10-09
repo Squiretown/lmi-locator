@@ -170,7 +170,6 @@ const handler = async (req: Request): Promise<Response> => {
         user_type: invitation.user_type,
         first_name: requestData.userData?.firstName || invitation.first_name,
         last_name: requestData.userData?.lastName || invitation.last_name,
-        email: requestData.email,
         phone: requestData.userData?.phone || invitation.phone,
       };
 
@@ -211,7 +210,7 @@ const handler = async (req: Request): Promise<Response> => {
               professional_id: invitation.invited_by_user_id,
               first_name: profileData.first_name,
               last_name: profileData.last_name,
-              email: profileData.email,
+              email: requestData.email,
               phone: profileData.phone,
             });
 
@@ -349,27 +348,21 @@ const handler = async (req: Request): Promise<Response> => {
         );
       }
 
-      // Create user profile for new user
-      const profileData = {
-        user_id: authData.user.id,
-        user_type: invitation.user_type,
-        first_name: requestData.userData?.firstName || invitation.first_name,
-        last_name: requestData.userData?.lastName || invitation.last_name,
-        phone: requestData.userData?.phone || invitation.phone,
-      };
+      // Let the auth trigger create user_profiles, then update with latest info
+      await new Promise((resolve) => setTimeout(resolve, 500));
 
-      const { error: profileError } = await supabaseClient
+      const { error: profileUpdateError } = await supabaseClient
         .from('user_profiles')
-        .insert(profileData);
+        .update({
+          user_type: invitation.user_type,
+          first_name: requestData.userData?.firstName || invitation.first_name,
+          last_name: requestData.userData?.lastName || invitation.last_name,
+          phone: requestData.userData?.phone || invitation.phone,
+        })
+        .eq('user_id', authData.user.id);
 
-      if (profileError) {
-        console.error('Failed to create user profile:', profileError);
-        // Clean up the auth user if profile creation fails
-        await supabaseClient.auth.admin.deleteUser(authData.user.id);
-        return new Response(
-          JSON.stringify({ error: 'Failed to create user profile' }),
-          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
+      if (profileUpdateError) {
+        console.warn('Profile update warning:', profileUpdateError);
       }
 
       // Create type-specific profiles for new user
@@ -379,10 +372,10 @@ const handler = async (req: Request): Promise<Response> => {
           .insert({
             id: authData.user.id,
             professional_id: invitation.invited_by_user_id,
-            first_name: profileData.first_name,
-            last_name: profileData.last_name,
-            email: profileData.email,
-            phone: profileData.phone,
+            first_name: requestData.userData?.firstName || invitation.first_name,
+            last_name: requestData.userData?.lastName || invitation.last_name,
+            email: requestData.email,
+            phone: requestData.userData?.phone || invitation.phone,
           });
 
         if (clientError) {
