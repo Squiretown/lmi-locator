@@ -16,7 +16,6 @@ const ContactPage: React.FC = () => {
     phone: '',
     inquiry_type: 'find_professional',
     location: '',
-    subject: '',
     message: ''
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -34,8 +33,8 @@ const ContactPage: React.FC = () => {
           phone: formData.phone || null,
           inquiry_type: formData.inquiry_type,
           location: formData.location || null,
-          subject: formData.subject,
-          message: formData.message,
+          subject: `${formData.inquiry_type} inquiry`,
+          message: formData.message || 'No message provided',
           status: 'new',
           source: 'contact_form'
         }]);
@@ -51,7 +50,6 @@ const ContactPage: React.FC = () => {
         phone: '',
         inquiry_type: 'find_professional',
         location: '',
-        subject: '',
         message: ''
       });
     } catch (error) {
@@ -146,19 +144,7 @@ const ContactPage: React.FC = () => {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="subject">Subject *</Label>
-                  <Input
-                    id="subject"
-                    type="text"
-                    name="subject"
-                    placeholder="Subject"
-                    value={formData.subject}
-                    onChange={handleChange}
-                    required
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="message">Message *</Label>
+                  <Label htmlFor="message">Message</Label>
                   <Textarea
                     id="message"
                     name="message"
@@ -166,7 +152,6 @@ const ContactPage: React.FC = () => {
                     value={formData.message}
                     onChange={handleChange}
                     rows={5}
-                    required
                   />
                 </div>
                 <Button type="submit" className="w-full" disabled={isSubmitting}>
