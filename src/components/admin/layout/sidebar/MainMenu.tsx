@@ -7,17 +7,20 @@ import {
   TrendingUp, 
   MessageSquare,
   CreditCard,
-  Settings
+  Settings,
+  Mail
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAdminPermissions } from '../AdminPermissionsContext';
+import { useNewInquiriesCount } from '@/hooks/useNewInquiriesCount';
 
 const MenuLink: React.FC<{
   to: string;
   icon: React.ElementType;
   children: React.ReactNode;
   isActive?: boolean;
-}> = ({ to, icon: Icon, children, isActive }) => (
+  badge?: number;
+}> = ({ to, icon: Icon, children, isActive, badge }) => (
   <Link
     to={to}
     className={cn(
@@ -29,12 +32,18 @@ const MenuLink: React.FC<{
   >
     <Icon className="h-4 w-4" />
     <span>{children}</span>
+    {badge !== undefined && badge > 0 && (
+      <span className="ml-auto flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-white text-xs font-medium">
+        {badge > 99 ? '99+' : badge}
+      </span>
+    )}
   </Link>
 );
 
 export const AdminSidebarMainMenu: React.FC = () => {
   const location = useLocation();
   const { hasPermission } = useAdminPermissions();
+  const { count: newInquiriesCount } = useNewInquiriesCount();
   
   return (
     <div className="space-y-1">
@@ -67,6 +76,17 @@ export const AdminSidebarMainMenu: React.FC = () => {
           isActive={location.pathname === '/admin/users'}
         >
           Users
+        </MenuLink>
+      )}
+      
+      {hasPermission('view_notifications') && (
+        <MenuLink 
+          to="/admin/contact-inquiries" 
+          icon={Mail}
+          isActive={location.pathname === '/admin/contact-inquiries'}
+          badge={newInquiriesCount}
+        >
+          Contact Inquiries
         </MenuLink>
       )}
       
