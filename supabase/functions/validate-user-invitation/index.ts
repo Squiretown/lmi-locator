@@ -12,11 +12,14 @@ interface ValidateInvitationRequest {
 }
 
 const handler = async (req: Request): Promise<Response> => {
+  console.log('[validate-user-invitation] Function invoked:', req.method);
+  
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   if (req.method !== 'POST') {
+    console.log('[validate-user-invitation] Invalid method:', req.method);
     return new Response(
       JSON.stringify({ error: 'Method not allowed' }),
       { status: 405, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -24,6 +27,7 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
+    console.log('[validate-user-invitation] Processing POST request');
     // Use service role for updating invitation status (when marking as expired)
     // But anon key is fine for read operations
     const supabaseClient = createClient(
@@ -37,8 +41,14 @@ const handler = async (req: Request): Promise<Response> => {
     );
 
     const requestData: ValidateInvitationRequest = await req.json();
+    console.log('[validate-user-invitation] Request data:', { 
+      hasToken: !!requestData.token, 
+      hasCode: !!requestData.code,
+      tokenLength: requestData.token?.length 
+    });
     
     if (!requestData.token && !requestData.code) {
+      console.log('[validate-user-invitation] Missing token/code');
       return new Response(
         JSON.stringify({ error: 'Either token or code is required' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -59,6 +69,7 @@ const handler = async (req: Request): Promise<Response> => {
     const { data: invitation, error } = await query.single();
 
     if (error || !invitation) {
+      console.log('[validate-user-invitation] Invitation not found:', error);
       return new Response(
         JSON.stringify({ 
           valid: false, 
@@ -68,6 +79,12 @@ const handler = async (req: Request): Promise<Response> => {
         { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+
+    console.log('[validate-user-invitation] Found invitation:', {
+      id: invitation.id,
+      status: invitation.status,
+      userType: invitation.user_type
+    });
 
     // Check if invitation has already been accepted
     if (invitation.status === 'accepted') {
@@ -163,13 +180,14 @@ const handler = async (req: Request): Promise<Response> => {
       console.warn('Failed to log invitation validation:', rpcError);
     }
 
+    console.log('[validate-user-invitation] Returning valid invitation');
     return new Response(
       JSON.stringify(invitationDetails),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
   } catch (error) {
-    console.error('Error in validate-user-invitation function:', error);
+    console.error('[validate-user-invitation] Error:', error);
     return new Response(
       JSON.stringify({ error: 'Internal server error' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

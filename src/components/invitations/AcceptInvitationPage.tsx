@@ -70,14 +70,34 @@ export const AcceptInvitationPage: React.FC = () => {
   const validateInvitation = async () => {
     try {
       setLoading(true);
+      setError(null);
+      
+      console.log('[AcceptInvitation] Validating token:', { 
+        tokenLength: token?.length,
+        tokenStart: token?.substring(0, 8) 
+      });
       
       const { data, error } = await supabase.functions.invoke('validate-user-invitation', {
         body: { token }
       });
 
-      if (error) throw error;
+      console.log('[AcceptInvitation] Validation response:', { 
+        hasData: !!data, 
+        hasError: !!error,
+        errorDetails: error 
+      });
+
+      if (error) {
+        console.error('[AcceptInvitation] Function error:', error);
+        // Check if it's a 404 - service might be deploying
+        if (error.message?.includes('404') || error.message?.includes('not found')) {
+          throw new Error('Service temporarily unavailable. Please try again in a moment.');
+        }
+        throw error;
+      }
 
       if (data.valid && data.invitation) {
+        console.log('[AcceptInvitation] Valid invitation received');
         setInvitationData(data);
         // Pre-populate form with invitation data
         setValue('email', data.invitation.email);
@@ -85,11 +105,13 @@ export const AcceptInvitationPage: React.FC = () => {
         setValue('lastName', data.invitation.lastName || '');
         setValue('phone', data.invitation.phone || '');
       } else {
+        console.log('[AcceptInvitation] Invalid invitation:', data);
         setError(data.error || 'Invalid invitation');
       }
     } catch (err) {
-      console.error('Error validating invitation:', err);
-      setError('Failed to validate invitation');
+      console.error('[AcceptInvitation] Validation error:', err);
+      const errorMessage = err instanceof Error ? err.message : 'Failed to validate invitation';
+      setError(errorMessage + '. Please check your invitation link.');
     } finally {
       setLoading(false);
     }
