@@ -79,27 +79,8 @@ const ContactPage: React.FC = () => {
             Get in touch with our team for support or inquiries
           </p>
           
-          <div className="grid md:grid-cols-2 gap-12">
-            <div>
-              <h2 className="text-2xl font-semibold mb-6">Get in Touch</h2>
-              <div className="space-y-4">
-                <div>
-                  <h3 className="font-semibold mb-2">Email</h3>
-                  <p className="text-muted-foreground">support@lmicheck.com</p>
-                </div>
-                <div>
-                  <h3 className="font-semibold mb-2">Phone</h3>
-                  <p className="text-muted-foreground">1-800-LMI-CHECK</p>
-                </div>
-                <div>
-                  <h3 className="font-semibold mb-2">Office Hours</h3>
-                  <p className="text-muted-foreground">Monday - Friday: 9:00 AM - 6:00 PM EST</p>
-                </div>
-              </div>
-            </div>
-            
-            <div>
-              <h2 className="text-2xl font-semibold mb-6">Send us a Message</h2>
+          <div className="max-w-xl mx-auto">
+            <h2 className="text-2xl font-semibold mb-6">Send us a Message</h2>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
                   <Label htmlFor="name">Name *</Label>
@@ -192,7 +173,6 @@ const ContactPage: React.FC = () => {
                   {isSubmitting ? 'Sending...' : 'Send Message'}
                 </Button>
               </form>
-            </div>
           </div>
         </div>
       </div>
