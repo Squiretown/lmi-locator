@@ -206,7 +206,7 @@ const handler = async (req: Request): Promise<Response> => {
           const { error: clientError } = await supabaseClient
             .from('client_profiles')
             .insert({
-              id: targetUser.id,
+              user_id: targetUser.id,
               professional_id: invitation.invited_by_user_id,
               first_name: profileData.first_name,
               last_name: profileData.last_name,
@@ -222,20 +222,20 @@ const handler = async (req: Request): Promise<Response> => {
         const { data: existingProfessional } = await supabaseClient
           .from('professionals')
           .select('id')
-          .eq('id', targetUser.id)
+          .eq('user_id', targetUser.id)
           .maybeSingle();
 
         if (!existingProfessional) {
           const { error: professionalError } = await supabaseClient
             .from('professionals')
             .insert({
-              id: targetUser.id,
               user_id: targetUser.id,
-              type: invitation.professional_type,
-              name: `${profileData.first_name || ''} ${profileData.last_name || ''}`.trim(),
-              company: invitation.company_name,
-              license_number: invitation.license_number,
+              professional_type: invitation.professional_type || invitation.user_type,
+              name: `${profileData.first_name || ''} ${profileData.last_name || ''}`.trim() || targetUser.email?.split('@')[0] || 'Professional',
+              company: invitation.company_name || 'Company Name',
+              license_number: invitation.license_number || '',
               phone: profileData.phone,
+              email: requestData.email,
               status: invitation.requires_approval ? 'pending' : 'active',
             });
 
@@ -256,6 +256,9 @@ const handler = async (req: Request): Promise<Response> => {
 
       // Log acceptance for existing user (non-critical - don't fail request if logging fails)
       try {
+        const rawIp = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || '';
+        const ipForLog = rawIp.split(',')[0]?.trim() || null;
+        
         await supabaseClient.rpc('log_invitation_action', {
           p_invitation_id: invitation.id,
           p_action: 'accepted',
@@ -266,7 +269,7 @@ const handler = async (req: Request): Promise<Response> => {
             existing_user: true,
             authenticated: !!currentUser
           },
-          p_ip_address: req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip'),
+          p_ip_address: ipForLog,
           p_user_agent: req.headers.get('user-agent'),
         });
       } catch (rpcError) {
@@ -370,7 +373,7 @@ const handler = async (req: Request): Promise<Response> => {
         const { error: clientError } = await supabaseClient
           .from('client_profiles')
           .insert({
-            id: authData.user.id,
+            user_id: authData.user.id,
             professional_id: invitation.invited_by_user_id,
             first_name: requestData.userData?.firstName || invitation.first_name,
             last_name: requestData.userData?.lastName || invitation.last_name,
@@ -382,18 +385,19 @@ const handler = async (req: Request): Promise<Response> => {
           console.error('Failed to create client profile:', clientError);
         }
       } else if (invitation.user_type === 'realtor' || invitation.user_type === 'mortgage_professional') {
+        // Trigger already created professionals row, just update it with invitation details
+        await new Promise((resolve) => setTimeout(resolve, 500));
+        
         const { error: professionalError } = await supabaseClient
           .from('professionals')
-          .insert({
-            id: authData.user.id,
-            user_id: authData.user.id,
-            type: invitation.professional_type,
-            name: `${profileData.first_name || ''} ${profileData.last_name || ''}`.trim(),
+          .update({
+            phone: requestData.userData?.phone || invitation.phone,
             company: invitation.company_name,
             license_number: invitation.license_number,
-            phone: profileData.phone,
+            email: invitation.email,
             status: invitation.requires_approval ? 'pending' : 'active',
-          });
+          })
+          .eq('user_id', authData.user.id);
 
         if (professionalError) {
           console.error('Failed to create professional profile:', professionalError);
@@ -411,6 +415,9 @@ const handler = async (req: Request): Promise<Response> => {
 
       // Log acceptance for new user (non-critical - don't fail request if logging fails)
       try {
+        const rawIp = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || '';
+        const ipForLog = rawIp.split(',')[0]?.trim() || null;
+        
         await supabaseClient.rpc('log_invitation_action', {
           p_invitation_id: invitation.id,
           p_action: 'accepted',
@@ -420,7 +427,7 @@ const handler = async (req: Request): Promise<Response> => {
             user_type: invitation.user_type,
             new_user: true
           },
-          p_ip_address: req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip'),
+          p_ip_address: ipForLog,
           p_user_agent: req.headers.get('user-agent'),
         });
       } catch (rpcError) {
