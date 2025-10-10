@@ -8,12 +8,12 @@ import { RealtorOverview as RealtorOverviewComponent } from '@/components/dashbo
 import { ProfessionalTeam } from '@/components/dashboard/realtor/ProfessionalTeam';
 import { InviteClientDialog } from '@/components/clients/InviteClientDialog';
 import { useRealtorClientManagement } from '@/hooks/useRealtorClientManagement';
-import { useUnifiedClientInvitations } from '@/hooks/useUnifiedClientInvitations';
+import { useUnifiedInvitationSystem } from '@/hooks/useUnifiedInvitationSystem';
 import { toast } from 'sonner';
 
 const RealtorOverview: React.FC = () => {
   const { clients } = useRealtorClientManagement();
-  const { createInvitation, stats } = useUnifiedClientInvitations();
+  const { sendInvitation, stats } = useUnifiedInvitationSystem();
   const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
 
   const activeClients = clients.filter(client => client.status === 'active').length;
@@ -26,12 +26,8 @@ const RealtorOverview: React.FC = () => {
   };
 
   const handleInviteClient = async (data: any) => {
-    try {
-      await createInvitation(data);
-      setInviteDialogOpen(false);
-    } catch (error) {
-      console.error('Error inviting client:', error);
-    }
+    // Invitation dialog handles its own logic now
+    setInviteDialogOpen(false);
   };
 
   const actionCards = [

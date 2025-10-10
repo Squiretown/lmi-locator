@@ -3,11 +3,11 @@ import React from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { useUnifiedClientInvitations } from '@/hooks/useUnifiedClientInvitations';
+import { useUnifiedInvitationSystem } from '@/hooks/useUnifiedInvitationSystem';
 import { formatDistanceToNow } from 'date-fns';
 
 export const RecentContactsSection: React.FC = () => {
-  const { invitations: contacts, isLoading } = useUnifiedClientInvitations();
+  const { invitations: contacts, isLoadingInvitations: isLoading } = useUnifiedInvitationSystem();
 
   if (isLoading) {
     return (
@@ -34,10 +34,10 @@ export const RecentContactsSection: React.FC = () => {
               contacts.map((contact) => (
                 <ContactItem
                   key={contact.id}
-                  name={(contact.client_name || contact.client_email) as string}
+                  name={`${contact.first_name || ''} ${contact.last_name || ''}`.trim() || contact.email}
                   type="Invited"
                   status={(contact.status === 'accepted' ? 'accepted' : 'invited') as 'invited' | 'accepted' | 'registered'}
-                  date={formatDistanceToNow(new Date((contact.sent_at || contact.created_at) as string), { addSuffix: true })}
+                  date={formatDistanceToNow(new Date(contact.created_at), { addSuffix: true })}
                 />
               ))
             ) : (

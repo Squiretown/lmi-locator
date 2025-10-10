@@ -13,7 +13,6 @@ import ProtectedRoute from "./components/auth/ProtectedRoute";
 import { ClientRegistration } from "./pages/ClientRegistration";
 import { RegistrationSuccess } from "./pages/RegistrationSuccess";
 import { AcceptInvitationPage } from "./components/invitations/AcceptInvitationPage";
-import UnifiedInvitationDemo from "./pages/UnifiedInvitationDemo";
 
 // Import all page components
 import ProductPage from "./pages/ProductPage";
@@ -89,7 +88,6 @@ const App = () => (
             <Route path="/registration-success" element={<RegistrationSuccess />} />
             <Route path="/accept-invitation/:token" element={<AcceptInvitationPage />} />
             <Route path="/invitation-acceptance/:token" element={<AcceptInvitationPage />} />
-            <Route path="/unified-invitation-demo" element={<UnifiedInvitationDemo />} />
             <Route path="/product" element={<ProductPage />} />
             <Route path="/resources" element={<ResourcesPage />} />
             <Route path="/pricing" element={<PricingPage />} />

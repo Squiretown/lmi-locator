@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Plus, Send, Trash2 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { useUnifiedClientInvitations } from '@/hooks/useUnifiedClientInvitations';
+import { useUnifiedInvitationSystem } from '@/hooks/useUnifiedInvitationSystem';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 
@@ -18,12 +18,11 @@ export const InviteContact: React.FC = () => {
   
   const { 
     invitations: contacts, 
-    isLoading, 
-    isCreatingInvitation, 
-    createInvitation, 
-    resendInvitation,
-    revokeInvitation 
-  } = useUnifiedClientInvitations();
+    isLoadingInvitations: isLoading, 
+    isSending: isCreatingInvitation, 
+    sendInvitation,
+    manageInvitation
+  } = useUnifiedInvitationSystem();
 
   const handleCreate = async () => {
     if (!email.trim()) {
@@ -32,12 +31,13 @@ export const InviteContact: React.FC = () => {
     }
 
     try {
-      await createInvitation({ 
-        email: email.trim(), 
-        name: name.trim() || undefined,
-        invitationType: 'email',
+      await sendInvitation({
+        email: email.trim(),
+        userType: 'client',
+        firstName: name.trim() ||undefined,
+        sendVia: 'email',
         customMessage: customMessage.trim() || undefined
-      });
+      } as any);
       setEmail('');
       setName('');
       setCustomMessage('');
@@ -49,7 +49,7 @@ export const InviteContact: React.FC = () => {
 
   const handleSendInvitation = async (invitationId: string) => {
     try {
-      await resendInvitation({ invitationId, type: 'email' });
+      await manageInvitation({ invitationId, action: 'resend', sendVia: 'email' });
     } catch (error) {
       console.error('Error sending invitation:', error);
     }
@@ -58,7 +58,7 @@ export const InviteContact: React.FC = () => {
   const handleDeleteInvitation = async (invitationId: string) => {
     if (confirm('Are you sure you want to cancel this invitation?')) {
       try {
-        await revokeInvitation(invitationId);
+        await manageInvitation({ invitationId, action: 'cancel' });
       } catch (error) {
         console.error('Error cancelling invitation:', error);
       }
@@ -149,16 +149,16 @@ export const InviteContact: React.FC = () => {
               {contacts.slice(0, 5).map((contact) => (
                 <div key={contact.id} className="flex items-center justify-between p-3 border rounded-lg">
                   <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium">{contact.client_name}</span>
-                      {getStatusBadge(contact)}
-                    </div>
-                    <p className="text-sm text-muted-foreground">{contact.client_email}</p>
-                    {contact.sent_at && (
-                      <p className="text-xs text-muted-foreground">
-                        Sent: {new Date(contact.sent_at).toLocaleDateString()}
-                      </p>
-                    )}
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium">{`${contact.first_name || ''} ${contact.last_name || ''}`.trim() || contact.email}</span>
+                    {getStatusBadge(contact)}
+                  </div>
+                  <p className="text-sm text-muted-foreground">{contact.email}</p>
+                  {contact.created_at && (
+                    <p className="text-xs text-muted-foreground">
+                      Created: {new Date(contact.created_at).toLocaleDateString()}
+                    </p>
+                  )}
                   </div>
                   <div className="flex gap-2">
                     {!contact.email_sent && (

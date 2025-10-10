@@ -7,7 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useForm } from 'react-hook-form';
-import { useUnifiedInvitations } from '@/hooks/useUnifiedInvitations';
+import { useUnifiedInvitationSystem } from '@/hooks/useUnifiedInvitationSystem';
 import { useMortgageTeamManagement } from '@/hooks/useMortgageTeamManagement';
 import { ClientTeamShowcase } from '@/components/clients/ClientTeamShowcase';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -33,7 +33,7 @@ export const InviteClientDialog: React.FC<InviteClientDialogProps> = ({
 }) => {
   const [selectedRealtorId, setSelectedRealtorId] = React.useState<string>('none');
   const { teamMembers, realtorPartners } = useMortgageTeamManagement();
-  const { sendInvitation, isSending } = useUnifiedInvitations();
+  const { sendInvitation, isSending } = useUnifiedInvitationSystem();
   const { register, handleSubmit, reset, watch, setValue, formState: { errors } } = useForm<ClientInvitationData>({
     defaultValues: {
       invitationType: 'email',
@@ -46,17 +46,18 @@ export const InviteClientDialog: React.FC<InviteClientDialogProps> = ({
   const handleFormSubmit = async (data: ClientInvitationData) => {
     try {
       await sendInvitation({
-        target: 'client',
-        channel: data.invitationType,
         email: data.email,
-        name: data.name,
+        userType: 'client',
+        firstName: data.name?.split(' ')[0],
+        lastName: data.name?.split(' ').slice(1).join(' ') || undefined,
         phone: data.phone,
+        sendVia: data.invitationType,
         customMessage: data.customMessage,
-        templateType: data.templateType,
-        teamContext: {
-          assignedRealtorId: selectedRealtorId !== 'none' ? selectedRealtorId : undefined
-        }
-      });
+        // @ts-ignore - team_showcase is custom field
+        team_showcase: selectedRealtorId !== 'none' ? {
+          assignedRealtorId: selectedRealtorId
+        } : undefined
+      } as any);
       reset();
       setSelectedRealtorId('none');
       onOpenChange(false);

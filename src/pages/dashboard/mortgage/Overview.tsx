@@ -8,13 +8,13 @@ import { MortgageOverview as MortgageOverviewComponent } from '@/components/dash
 import { TeamVisibilityManager } from '@/components/teams/TeamVisibilityManager';
 import { InviteClientDialog } from '@/components/clients/InviteClientDialog';
 import { useMortgageClientManagement } from '@/hooks/useMortgageClientManagement';
-import { useUnifiedClientInvitations } from '@/hooks/useUnifiedClientInvitations';
+import { useUnifiedInvitationSystem } from '@/hooks/useUnifiedInvitationSystem';
 import { useMortgageTeamStats } from '@/hooks/useMortgageTeamStats';
 import { toast } from 'sonner';
 
 const MortgageOverview: React.FC = () => {
   const { clients } = useMortgageClientManagement();
-  const { createInvitation, stats: inviteStats } = useUnifiedClientInvitations();
+  const { sendInvitation, stats: inviteStats } = useUnifiedInvitationSystem();
   const { stats } = useMortgageTeamStats();
   const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
 
@@ -28,12 +28,8 @@ const MortgageOverview: React.FC = () => {
   };
 
   const handleInviteClient = async (data: any) => {
-    try {
-      await createInvitation(data);
-      setInviteDialogOpen(false);
-    } catch (error) {
-      console.error('Error inviting client:', error);
-    }
+    // Invitation dialog handles its own logic now
+    setInviteDialogOpen(false);
   };
 
   const actionCards = [

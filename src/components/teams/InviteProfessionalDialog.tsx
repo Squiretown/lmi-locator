@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useUnifiedInvitations } from '@/hooks/useUnifiedInvitations';
+import { useUnifiedInvitationSystem } from '@/hooks/useUnifiedInvitationSystem';
 import { useForm } from 'react-hook-form';
 
 interface InviteProfessionalData {
@@ -24,7 +24,7 @@ export const InviteProfessionalDialog: React.FC<InviteProfessionalDialogProps> =
   open,
   onOpenChange,
 }) => {
-  const { sendInvitation, isSending } = useUnifiedInvitations();
+  const { sendInvitation, isSending } = useUnifiedInvitationSystem();
   const { register, handleSubmit, reset, setValue, watch, formState: { errors } } = useForm<InviteProfessionalData>({
     defaultValues: {
       professionalType: 'realtor'
@@ -36,13 +36,14 @@ export const InviteProfessionalDialog: React.FC<InviteProfessionalDialogProps> =
   const onInviteProfessional = async (data: InviteProfessionalData) => {
     try {
       await sendInvitation({
-        target: 'professional',
-        channel: 'email',
         email: data.email,
-        name: data.name,
-        role: data.professionalType,
+        userType: data.professionalType === 'realtor' ? 'realtor' : 'mortgage_professional',
+        firstName: data.name?.split(' ')[0],
+        lastName: data.name?.split(' ').slice(1).join(' ') || undefined,
+        sendVia: 'email',
         customMessage: data.customMessage,
-      });
+        professionalType: data.professionalType,
+      } as any);
       onOpenChange(false);
       reset();
     } catch (error) {

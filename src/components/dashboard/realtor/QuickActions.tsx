@@ -5,7 +5,7 @@ import { UserPlus, Mail, Calculator, Search, Users, Calendar } from 'lucide-reac
 import { CreateClientDialog } from '@/components/clients/CreateClientDialog';
 import { InviteClientDialog } from '@/components/clients/InviteClientDialog';
 import { useRealtorClientManagement } from '@/hooks/useRealtorClientManagement';
-import { useUnifiedClientInvitations } from '@/hooks/useUnifiedClientInvitations';
+import { useUnifiedInvitationSystem } from '@/hooks/useUnifiedInvitationSystem';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -18,7 +18,7 @@ export const QuickActions: React.FC = () => {
   const [calculatorResult, setCalculatorResult] = useState<string>('');
 
   const { createClient, isCreating } = useRealtorClientManagement();
-  const { createInvitation, isCreatingInvitation } = useUnifiedClientInvitations();
+  const { sendInvitation, isSending } = useUnifiedInvitationSystem();
 
   const handleCreateClient = async (data: any) => {
     try {
@@ -31,13 +31,8 @@ export const QuickActions: React.FC = () => {
   };
 
   const handleInviteClient = async (data: any) => {
-    try {
-      await createInvitation(data);
-      setShowInviteClient(false);
-      toast.success('Invitation sent successfully');
-    } catch (error) {
-      toast.error('Failed to send invitation');
-    }
+    // Invitation dialog handles its own logic now
+    setShowInviteClient(false);
   };
 
   const calculateLmi = (income: number, householdSize: number) => {
