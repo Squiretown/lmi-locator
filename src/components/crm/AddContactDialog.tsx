@@ -17,6 +17,8 @@ import { useUnifiedCRM } from "@/hooks/useUnifiedCRM";
 import { useQuery } from "@tanstack/react-query";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
+import { SendRealtorInvitationForm } from "@/components/network/SendRealtorInvitationForm";
+import { SendTeamMemberInvitationForm } from "@/components/network/SendTeamMemberInvitationForm";
 
 interface AddContactDialogProps {
   open: boolean;
@@ -298,11 +300,8 @@ export function AddContactDialog({ open, onOpenChange }: AddContactDialogProps) 
                 </ScrollArea>
               </div>
             ) : (
-              <div className="flex items-center justify-center py-12 text-muted-foreground">
-                <div className="text-center space-y-2">
-                  <p>Invitation feature coming soon</p>
-                  <p className="text-sm">Use Search Existing to add realtors already in the system</p>
-                </div>
+              <div className="flex-1 overflow-auto">
+                <SendRealtorInvitationForm onSuccess={() => onOpenChange(false)} />
               </div>
             )}
           </TabsContent>
@@ -390,11 +389,8 @@ export function AddContactDialog({ open, onOpenChange }: AddContactDialogProps) 
                 </ScrollArea>
               </div>
             ) : (
-              <div className="flex items-center justify-center py-12 text-muted-foreground">
-                <div className="text-center space-y-2">
-                  <p>Invitation feature coming soon</p>
-                  <p className="text-sm">Use Search Existing to add professionals already in the system</p>
-                </div>
+              <div className="flex-1 overflow-auto">
+                <SendTeamMemberInvitationForm onSuccess={() => onOpenChange(false)} />
               </div>
             )}
           </TabsContent>

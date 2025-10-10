@@ -98,14 +98,28 @@ export function useMortgageTeamManagement() {
   });
 
   // Query explicit internal team members from team_members table
+  // CRITICAL FIX: Always include current user as account owner first
   const { data: lendingTeam = [], isLoading: isLoadingLending } = useQuery({
     queryKey: ['lending-team-unified', currentProfessional?.id, currentUser?.id],
     queryFn: async () => {
       if (!currentProfessional?.id || !currentUser?.id) return [];
 
-      console.log('Fetching explicit team members for user:', currentUser.id);
+      console.log('Fetching team members for user:', currentUser.id);
 
-      // Query team_members table for explicitly added team relationships
+      // STEP 1: Start with current user as account owner (ALWAYS)
+      const visibilitySettings = currentProfessional.visibility_settings as any;
+      const team: LendingTeamMember[] = [{
+        ...currentProfessional,
+        source: 'explicit' as const,
+        isAccountOwner: true,
+        visibility_settings: {
+          visible_to_clients: visibilitySettings?.visible_to_clients ?? true,
+          showcase_role: visibilitySettings?.showcase_role || currentProfessional.professional_type || 'Loan Officer',
+          showcase_description: visibilitySettings?.showcase_description || ''
+        }
+      }];
+
+      // STEP 2: Query team_members table for explicitly added team relationships
       const { data: teamMembers, error } = await supabase
         .from('team_members')
         .select(`
@@ -122,15 +136,15 @@ export function useMortgageTeamManagement() {
 
       if (error) {
         console.error('Error fetching team members:', error);
-        return [];
+        return team; // Return at least the account owner
       }
 
       if (!teamMembers || teamMembers.length === 0) {
-        console.log('No explicit team members found');
-        return [];
+        console.log('No additional team members found, returning account owner only');
+        return team;
       }
 
-      // Get professional details for each team member
+      // STEP 3: Get professional details for each team member
       const memberUserIds = teamMembers.map(tm => tm.team_member_id);
       
       const { data: professionals, error: profError } = await supabase
@@ -141,10 +155,10 @@ export function useMortgageTeamManagement() {
 
       if (profError) {
         console.error('Error fetching professional details:', profError);
-        return [];
+        return team; // Return at least the account owner
       }
 
-      // Combine team member data with professional details
+      // STEP 4: Combine team member data with professional details
       const enrichedTeamMembers = teamMembers.map(tm => {
         const professional = professionals?.find(p => p.user_id === tm.team_member_id);
         if (!professional) return null;
@@ -170,7 +184,9 @@ export function useMortgageTeamManagement() {
       }).filter(Boolean);
 
       console.log('Loaded explicit team members:', enrichedTeamMembers.length);
-      return enrichedTeamMembers as LendingTeamMember[];
+      
+      // STEP 5: Return account owner + team members
+      return [...team, ...enrichedTeamMembers] as LendingTeamMember[];
     },
     enabled: !!currentProfessional?.id && !!currentUser?.id,
   });
