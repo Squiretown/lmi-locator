@@ -231,6 +231,34 @@ export function useUnifiedCRM() {
     }
   });
 
+  // Remove team member from client
+  const removeTeamAssignment = useMutation({
+    mutationFn: async ({
+      clientId,
+      professionalId
+    }: {
+      clientId: string;
+      professionalId: string;
+    }) => {
+      const { error } = await supabase
+        .from('client_team_assignments')
+        .update({ status: 'inactive' })
+        .eq('client_id', clientId)
+        .eq('professional_id', professionalId)
+        .eq('status', 'active');
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['crm-contacts'] });
+      queryClient.invalidateQueries({ queryKey: ['client-team-assignments'] });
+      toast.success('Team member unassigned');
+    },
+    onError: () => {
+      toast.error('Failed to unassign team member');
+    }
+  });
+
   // Analytics
   const getCollaborationMetrics = () => {
     const totalTeamMembers = teamMembers.length;
@@ -267,6 +295,9 @@ export function useUnifiedCRM() {
     
     assignTeamMember: assignTeamMember.mutateAsync,
     isAssigningTeamMember: assignTeamMember.isPending,
+    
+    removeTeamAssignment: removeTeamAssignment.mutateAsync,
+    isRemovingTeamAssignment: removeTeamAssignment.isPending,
     
     // Analytics
     getCollaborationMetrics

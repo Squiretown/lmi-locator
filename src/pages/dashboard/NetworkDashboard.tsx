@@ -5,6 +5,8 @@ import { ClientCard } from "@/components/crm/ClientCard";
 import { TeamMemberCard } from "@/components/crm/TeamMemberCard";
 import { PartnerCard } from "@/components/crm/PartnerCard";
 import { AddContactDialog } from "@/components/crm/AddContactDialog";
+import { TeamVisibilityDialog } from "@/components/network/TeamVisibilityDialog";
+import { TeamAssignmentDialog } from "@/components/network/TeamAssignmentDialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -30,6 +32,9 @@ export default function NetworkDashboard() {
 
   const [searchQuery, setSearchQuery] = useState("");
   const [showAddDialog, setShowAddDialog] = useState(false);
+  const [visibilityDialogOpen, setVisibilityDialogOpen] = useState(false);
+  const [assignmentDialogOpen, setAssignmentDialogOpen] = useState(false);
+  const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState<"name" | "date" | "activity">("name");
 
   // Filter contacts based on search
@@ -85,7 +90,7 @@ export default function NetworkDashboard() {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline">
+          <Button variant="outline" onClick={() => setVisibilityDialogOpen(true)}>
             <Eye className="h-4 w-4 mr-2" />
             Team Visibility
           </Button>
@@ -181,7 +186,16 @@ export default function NetworkDashboard() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {filteredContacts.map((contact) => {
                 if (contact.relationship_type === "client") {
-                  return <ClientCard key={contact.id} contact={contact} />;
+                  return (
+                    <ClientCard
+                      key={contact.id}
+                      contact={contact}
+                      onAssignTeam={(clientId) => {
+                        setSelectedClientId(clientId);
+                        setAssignmentDialogOpen(true);
+                      }}
+                    />
+                  );
                 } else if (contact.relationship_type === "team_member") {
                   if (contact.contact_type === "professional") {
                     return (
@@ -206,7 +220,14 @@ export default function NetworkDashboard() {
           <ScrollArea className="h-[600px]">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {filteredClients.map((contact) => (
-                <ClientCard key={contact.id} contact={contact} />
+                <ClientCard
+                  key={contact.id}
+                  contact={contact}
+                  onAssignTeam={(clientId) => {
+                    setSelectedClientId(clientId);
+                    setAssignmentDialogOpen(true);
+                  }}
+                />
               ))}
             </div>
           </ScrollArea>
@@ -242,6 +263,17 @@ export default function NetworkDashboard() {
         open={showAddDialog}
         onOpenChange={setShowAddDialog}
         onSelectType={handleAddContact}
+      />
+
+      <TeamVisibilityDialog
+        open={visibilityDialogOpen}
+        onOpenChange={setVisibilityDialogOpen}
+      />
+
+      <TeamAssignmentDialog
+        open={assignmentDialogOpen}
+        onOpenChange={setAssignmentDialogOpen}
+        clientId={selectedClientId}
       />
     </div>
   );

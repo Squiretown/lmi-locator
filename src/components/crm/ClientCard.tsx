@@ -1,3 +1,5 @@
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -35,6 +37,25 @@ export function ClientCard({ contact, onView, onAssignTeam, onShare, onMessage }
       .toUpperCase()
       .slice(0, 2);
   };
+
+  // Fetch real team assignments
+  const { data: assignments = [] } = useQuery({
+    queryKey: ["client-assignments", contact.id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("client_team_assignments")
+        .select(`
+          professional_id,
+          professionals!client_team_assignments_professional_id_fkey (
+            id,
+            name
+          )
+        `)
+        .eq("client_id", contact.id)
+        .eq("status", "active");
+      return data || [];
+    },
+  });
 
   // Mock tags - in real implementation these would come from contact data
   const tags = ["First-time buyer", "LMI eligible"];
@@ -122,10 +143,19 @@ export function ClientCard({ contact, onView, onAssignTeam, onShare, onMessage }
               Assign Team
             </Button>
           </div>
-          <div className="flex flex-wrap gap-2">
-            <Badge variant="secondary" className="text-xs">John Smith</Badge>
-            <Badge variant="secondary" className="text-xs">Sarah Johnson</Badge>
-          </div>
+          {assignments.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {assignments.map((assignment: any) => (
+                <Badge
+                  key={assignment.professional_id}
+                  variant="secondary"
+                  className="text-xs"
+                >
+                  {assignment.professionals?.name}
+                </Badge>
+              ))}
+            </div>
+          )}
         </div>
       </CardContent>
     </Card>
