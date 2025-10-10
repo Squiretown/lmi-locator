@@ -3750,6 +3750,29 @@ export type Database = {
       }
     }
     Views: {
+      crm_contacts_view: {
+        Row: {
+          company: string | null
+          contact_type: string | null
+          created_at: string | null
+          email: string | null
+          first_name: string | null
+          full_name: string | null
+          id: string | null
+          last_name: string | null
+          notes: string | null
+          phone: string | null
+          professional_type: string | null
+          related_to_professional_id: string | null
+          relationship_id: string | null
+          relationship_type: string | null
+          status: string | null
+          updated_at: string | null
+          user_id: string | null
+          visibility_settings: Json | null
+        }
+        Relationships: []
+      }
       geography_columns: {
         Row: {
           coord_dimension: number | null
@@ -3789,6 +3812,26 @@ export type Database = {
           f_table_schema?: unknown | null
           srid?: number | null
           type?: string | null
+        }
+        Relationships: []
+      }
+      invitations_unified: {
+        Row: {
+          accepted_at: string | null
+          created_at: string | null
+          email: string | null
+          expires_at: string | null
+          first_name: string | null
+          id: string | null
+          invitation_source: string | null
+          invite_code: string | null
+          invited_by: string | null
+          last_name: string | null
+          metadata: Json | null
+          phone: string | null
+          send_via: string | null
+          status: string | null
+          user_type: string | null
         }
         Relationships: []
       }
