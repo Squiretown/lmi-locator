@@ -7,8 +7,10 @@ import { Users, UserPlus, Mail, Phone, Building, AlertCircle, RefreshCw, Search,
 import { useMortgageTeamStats } from '@/hooks/useMortgageTeamStats';
 import { useMortgageTeamManagement } from '@/hooks/useMortgageTeamManagement';
 import { useUnifiedInvitationSystem } from '@/hooks/useUnifiedInvitationSystem';
+import { useUnifiedCRM } from '@/hooks/useUnifiedCRM';
 import { InviteProfessionalDialog } from '@/components/teams/InviteProfessionalDialog';
 import { AddManualProfessionalDialog } from '@/components/teams/AddManualProfessionalDialog';
+import { UnifiedContactsView } from '@/components/crm/UnifiedContactsView';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 
@@ -150,7 +152,59 @@ const MortgageTeam: React.FC = () => {
         </Card>
       </div>
 
-      {/* Lending Team */}
+      {/* Professional Invitations Section */}
+      {pendingInvitations.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Pending Invitations</CardTitle>
+            <CardDescription>
+              Invitations sent to professionals
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {pendingInvitations.map((inv) => (
+                <div key={inv.id} className="flex items-center justify-between p-3 border rounded-lg">
+                  <div>
+                    <div className="font-medium">
+                      {inv.first_name && inv.last_name ? 
+                        `${inv.first_name} ${inv.last_name}` : 
+                        inv.email}
+                    </div>
+                    <div className="text-sm text-muted-foreground">{inv.email}</div>
+                    <Badge variant="outline" className="mt-1 text-xs">
+                      {inv.user_type === 'realtor' ? 'Realtor' : 'Mortgage Pro'}
+                    </Badge>
+                  </div>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="sm">
+                        <Send className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem
+                        onClick={() => manageInvitation({ invitationId: inv.id, action: 'resend', sendVia: 'email' })}
+                        disabled={isManaging}
+                      >
+                        <RefreshCw className="h-4 w-4 mr-2" />
+                        Resend
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => manageInvitation({ invitationId: inv.id, action: 'cancel' })}
+                        disabled={isManaging}
+                        className="text-destructive"
+                      >
+                        Cancel
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
       <Card>
         <CardHeader>
           <CardTitle>Lending Team</CardTitle>

@@ -42,16 +42,16 @@ export const ClientRegistration: React.FC = () => {
   const loadInvitation = async () => {
     try {
       const { data, error } = await supabase
-        .from('client_invitations')
+        .from('user_invitations')
         .select(`
           *,
-          user_profiles!client_invitations_professional_id_fkey(
+          invited_by:user_profiles!user_invitations_invited_by_user_id_fkey(
             company_name,
             user_type
           )
         `)
-        .eq('invitation_code', invitationCode)
-        .eq('status', 'sent')
+        .eq('invite_code', invitationCode)
+        .in('status', ['pending', 'sent'])
         .single();
 
       if (error || !data) {
@@ -66,18 +66,17 @@ export const ClientRegistration: React.FC = () => {
       setInvitation(data);
       
       // Pre-fill form with invitation data
-      if (data.client_name) {
-        const nameParts = data.client_name.split(' ');
-        setValue('first_name', nameParts[0]);
-        if (nameParts.length > 1) {
-          setValue('last_name', nameParts.slice(1).join(' '));
-        }
+      if (data.first_name) {
+        setValue('first_name', data.first_name);
       }
-      if (data.client_email) {
-        setValue('email', data.client_email);
+      if (data.last_name) {
+        setValue('last_name', data.last_name);
       }
-      if (data.client_phone) {
-        setValue('phone', data.client_phone);
+      if (data.email) {
+        setValue('email', data.email);
+      }
+      if (data.phone) {
+        setValue('phone', data.phone);
       }
       
     } catch (error: any) {
@@ -95,7 +94,7 @@ export const ClientRegistration: React.FC = () => {
       const { data: clientProfile, error: profileError } = await supabase
         .from('client_profiles')
         .insert({
-          professional_id: invitation.professional_id,
+          professional_id: invitation.invited_by_user_id,
           first_name: formData.first_name,
           last_name: formData.last_name,
           email: formData.email,
@@ -110,12 +109,10 @@ export const ClientRegistration: React.FC = () => {
 
       // Update invitation status
       const { error: updateError } = await supabase
-        .from('client_invitations')
+        .from('user_invitations')
         .update({
           status: 'accepted',
           accepted_at: new Date().toISOString(),
-          client_id: clientProfile.id,
-          updated_at: new Date().toISOString(),
         })
         .eq('id', invitation.id);
 
