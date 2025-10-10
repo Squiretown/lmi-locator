@@ -19,6 +19,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { SendRealtorInvitationForm } from "@/components/network/SendRealtorInvitationForm";
 import { SendTeamMemberInvitationForm } from "@/components/network/SendTeamMemberInvitationForm";
+import { SendClientInvitationForm } from "@/components/network/SendClientInvitationForm";
 
 interface AddContactDialogProps {
   open: boolean;
@@ -144,82 +145,109 @@ export function AddContactDialog({ open, onOpenChange }: AddContactDialogProps) 
           </TabsList>
 
           <TabsContent value="client" className="flex-1 overflow-hidden flex flex-col mt-4">
-            <div className="space-y-4 flex-1 overflow-auto">
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="firstName">First Name *</Label>
-                    <Input
-                      id="firstName"
-                      value={clientForm.firstName}
-                      onChange={(e) => setClientForm(prev => ({ ...prev, firstName: e.target.value }))}
-                      placeholder="John"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="lastName">Last Name *</Label>
-                    <Input
-                      id="lastName"
-                      value={clientForm.lastName}
-                      onChange={(e) => setClientForm(prev => ({ ...prev, lastName: e.target.value }))}
-                      placeholder="Doe"
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={clientForm.email}
-                    onChange={(e) => setClientForm(prev => ({ ...prev, email: e.target.value }))}
-                    placeholder="john@example.com"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="phone">Phone</Label>
-                  <Input
-                    id="phone"
-                    type="tel"
-                    value={clientForm.phone}
-                    onChange={(e) => setClientForm(prev => ({ ...prev, phone: e.target.value }))}
-                    placeholder="(555) 123-4567"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="notes">Notes</Label>
-                  <Textarea
-                    id="notes"
-                    value={clientForm.notes}
-                    onChange={(e) => setClientForm(prev => ({ ...prev, notes: e.target.value }))}
-                    placeholder="Add any relevant notes..."
-                    rows={3}
-                  />
-                </div>
-              </div>
-
-              <div className="flex justify-end pt-4 border-t">
-                <Button
-                  onClick={handleAddClient}
-                  disabled={!isFormValid || isAddingClient}
-                >
-                  {isAddingClient ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Adding...
-                    </>
-                  ) : (
-                    <>
-                      <Plus className="mr-2 h-4 w-4" />
-                      Add Client
-                    </>
-                  )}
-                </Button>
-              </div>
+            <div className="flex gap-2 mb-4">
+              <Button
+                variant={addMode === 'search' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setAddMode('search')}
+                className="gap-2"
+              >
+                <Plus className="h-4 w-4" />
+                Add Manually
+              </Button>
+              <Button
+                variant={addMode === 'new' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setAddMode('new')}
+                className="gap-2"
+              >
+                <Plus className="h-4 w-4" />
+                Send Invitation
+              </Button>
             </div>
+
+            {addMode === 'search' ? (
+              <div className="space-y-4 flex-1 overflow-auto">
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="firstName">First Name *</Label>
+                      <Input
+                        id="firstName"
+                        value={clientForm.firstName}
+                        onChange={(e) => setClientForm(prev => ({ ...prev, firstName: e.target.value }))}
+                        placeholder="John"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="lastName">Last Name *</Label>
+                      <Input
+                        id="lastName"
+                        value={clientForm.lastName}
+                        onChange={(e) => setClientForm(prev => ({ ...prev, lastName: e.target.value }))}
+                        placeholder="Doe"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="email">Email</Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      value={clientForm.email}
+                      onChange={(e) => setClientForm(prev => ({ ...prev, email: e.target.value }))}
+                      placeholder="john@example.com"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="phone">Phone</Label>
+                    <Input
+                      id="phone"
+                      type="tel"
+                      value={clientForm.phone}
+                      onChange={(e) => setClientForm(prev => ({ ...prev, phone: e.target.value }))}
+                      placeholder="(555) 123-4567"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="notes">Notes</Label>
+                    <Textarea
+                      id="notes"
+                      value={clientForm.notes}
+                      onChange={(e) => setClientForm(prev => ({ ...prev, notes: e.target.value }))}
+                      placeholder="Add any relevant notes..."
+                      rows={3}
+                    />
+                  </div>
+                </div>
+
+                <div className="flex justify-end pt-4 border-t">
+                  <Button
+                    onClick={handleAddClient}
+                    disabled={!isFormValid || isAddingClient}
+                  >
+                    {isAddingClient ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Adding...
+                      </>
+                    ) : (
+                      <>
+                        <Plus className="mr-2 h-4 w-4" />
+                        Add Client
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div className="flex-1 overflow-auto">
+                <SendClientInvitationForm onSuccess={() => onOpenChange(false)} />
+              </div>
+            )}
           </TabsContent>
 
           <TabsContent value="realtor" className="flex-1 overflow-hidden flex flex-col mt-4">
