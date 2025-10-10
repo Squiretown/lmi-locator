@@ -135,6 +135,9 @@ export function TeamMemberCard({
               <span className="font-medium">{contact.company}</span>
             </div>
           )}
+          <div className="text-sm text-muted-foreground">
+            <span className="font-medium">License:</span> #123456789
+          </div>
         </div>
 
         <div className="pt-3 border-t space-y-3">

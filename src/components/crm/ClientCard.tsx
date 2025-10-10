@@ -114,13 +114,17 @@ export function ClientCard({ contact, onView, onAssignTeam, onShare, onMessage }
           ))}
         </div>
 
-        <div className="pt-3 border-t">
+        <div className="pt-3 border-t space-y-2">
           <div className="flex items-center justify-between">
-            <span className="text-sm text-muted-foreground">Assigned Team</span>
+            <span className="text-sm font-medium">Assigned Team</span>
             <Button variant="outline" size="sm" onClick={() => onAssignTeam?.(contact.id)}>
               <Users className="h-4 w-4 mr-1" />
               Assign Team
             </Button>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Badge variant="secondary" className="text-xs">John Smith</Badge>
+            <Badge variant="secondary" className="text-xs">Sarah Johnson</Badge>
           </div>
         </div>
       </CardContent>
