@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useMortgageTeamManagement } from '@/hooks/useMortgageTeamManagement';
+import { useUnifiedInvitations } from '@/hooks/useUnifiedInvitations';
 import { useForm } from 'react-hook-form';
 
 interface InviteProfessionalData {
@@ -24,7 +24,7 @@ export const InviteProfessionalDialog: React.FC<InviteProfessionalDialogProps> =
   open,
   onOpenChange,
 }) => {
-  const { inviteProfessional, isInviting } = useMortgageTeamManagement();
+  const { sendInvitation, isSending } = useUnifiedInvitations();
   const { register, handleSubmit, reset, setValue, watch, formState: { errors } } = useForm<InviteProfessionalData>({
     defaultValues: {
       professionalType: 'realtor'
@@ -35,17 +35,18 @@ export const InviteProfessionalDialog: React.FC<InviteProfessionalDialogProps> =
 
   const onInviteProfessional = async (data: InviteProfessionalData) => {
     try {
-      await inviteProfessional({
+      await sendInvitation({
+        target: 'professional',
+        channel: 'email',
         email: data.email,
-        role: data.professionalType === 'realtor' ? 'realtor' : 'team_member',
-        professionalType: data.professionalType,
-        message: data.customMessage,
+        name: data.name,
+        role: data.professionalType,
+        customMessage: data.customMessage,
       });
       onOpenChange(false);
       reset();
     } catch (error) {
       console.error('Failed to invite professional:', error);
-      // Error is handled by the mutation's onError callback
     }
   };
 
@@ -134,8 +135,8 @@ export const InviteProfessionalDialog: React.FC<InviteProfessionalDialogProps> =
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={isInviting}>
-              {isInviting ? 'Sending...' : 'Send Invitation'}
+            <Button type="submit" disabled={isSending}>
+              {isSending ? 'Sending...' : 'Send Invitation'}
             </Button>
           </div>
         </form>

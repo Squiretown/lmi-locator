@@ -120,7 +120,6 @@ const RealtorOverview: React.FC = () => {
       <InviteClientDialog 
         open={inviteDialogOpen}
         onOpenChange={setInviteDialogOpen}
-        onSubmit={handleInviteClient}
       />
     </div>
   );

@@ -132,8 +132,6 @@ export const QuickActions: React.FC = () => {
       <InviteClientDialog
         open={showInviteClient}
         onOpenChange={setShowInviteClient}
-        onSubmit={handleInviteClient}
-        isLoading={isCreatingInvitation}
       />
 
       {/* LMI Calculator Dialog */}

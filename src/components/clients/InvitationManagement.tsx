@@ -360,21 +360,6 @@ export const InvitationManagement: React.FC = () => {
       <InviteClientDialog
         open={showInviteDialog}
         onOpenChange={setShowInviteDialog}
-        onSubmit={(data) => {
-          // Adapt legacy dialog format to unified system format
-          return createInvitation({
-            email: data.email,
-            userType: 'client',
-            firstName: data.name?.split(' ')[0],
-            lastName: data.name?.split(' ').slice(1).join(' ') || undefined,
-            phone: data.phone,
-            sendVia: data.invitationType,
-            customMessage: data.customMessage,
-            propertyInterest: 'buying', // Default value required by unified system
-            preferredContact: 'email',
-          });
-        }}
-        isLoading={isCreatingInvitation}
       />
     </div>
   );

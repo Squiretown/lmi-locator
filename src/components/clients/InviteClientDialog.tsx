@@ -7,28 +7,34 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useForm } from 'react-hook-form';
-import { CreateClientInvitationData } from '@/hooks/useUnifiedClientInvitations';
+import { useUnifiedInvitations } from '@/hooks/useUnifiedInvitations';
 import { useMortgageTeamManagement } from '@/hooks/useMortgageTeamManagement';
 import { ClientTeamShowcase } from '@/components/clients/ClientTeamShowcase';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Mail, MessageSquare, Users, Eye } from 'lucide-react';
 
+interface ClientInvitationData {
+  name?: string;
+  email: string;
+  phone?: string;
+  invitationType: 'email' | 'sms' | 'both';
+  templateType?: string;
+  customMessage?: string;
+}
+
 interface InviteClientDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSubmit: (data: CreateClientInvitationData) => Promise<any>;
-  isLoading?: boolean;
 }
 
 export const InviteClientDialog: React.FC<InviteClientDialogProps> = ({
   open,
   onOpenChange,
-  onSubmit,
-  isLoading = false,
 }) => {
   const [selectedRealtorId, setSelectedRealtorId] = React.useState<string>('none');
   const { teamMembers, realtorPartners } = useMortgageTeamManagement();
-  const { register, handleSubmit, reset, watch, setValue, formState: { errors } } = useForm<CreateClientInvitationData>({
+  const { sendInvitation, isSending } = useUnifiedInvitations();
+  const { register, handleSubmit, reset, watch, setValue, formState: { errors } } = useForm<ClientInvitationData>({
     defaultValues: {
       invitationType: 'email',
       templateType: 'default',
@@ -37,17 +43,25 @@ export const InviteClientDialog: React.FC<InviteClientDialogProps> = ({
 
   const invitationType = watch('invitationType');
 
-  const handleFormSubmit = async (data: CreateClientInvitationData) => {
+  const handleFormSubmit = async (data: ClientInvitationData) => {
     try {
-      await onSubmit({
-        ...data,
-        assignedRealtorId: selectedRealtorId !== 'none' ? selectedRealtorId : undefined
+      await sendInvitation({
+        target: 'client',
+        channel: data.invitationType,
+        email: data.email,
+        name: data.name,
+        phone: data.phone,
+        customMessage: data.customMessage,
+        templateType: data.templateType,
+        teamContext: {
+          assignedRealtorId: selectedRealtorId !== 'none' ? selectedRealtorId : undefined
+        }
       });
       reset();
       setSelectedRealtorId('none');
       onOpenChange(false);
     } catch (error) {
-      // Error handling is done in the hook
+      // Error handled by hook
     }
   };
 
@@ -240,8 +254,8 @@ export const InviteClientDialog: React.FC<InviteClientDialogProps> = ({
                 <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
                   Cancel
                 </Button>
-                <Button type="submit" disabled={isLoading}>
-                  {isLoading ? 'Creating...' : 'Create Invitation'}
+                <Button type="submit" disabled={isSending}>
+                  {isSending ? 'Sending...' : 'Send Invitation'}
                 </Button>
               </div>
             </form>

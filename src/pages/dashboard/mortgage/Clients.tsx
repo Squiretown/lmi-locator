@@ -271,8 +271,6 @@ const MortgageClients: React.FC = () => {
       <InviteClientDialog
         open={showInviteDialog}
         onOpenChange={setShowInviteDialog}
-        onSubmit={createInvitation}
-        isLoading={isCreatingInvitation}
       />
     </div>
   );

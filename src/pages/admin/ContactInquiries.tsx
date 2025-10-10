@@ -415,8 +415,6 @@ const ContactInquiries: React.FC = () => {
           <InviteClientDialog
             open={inviteDialogOpen}
             onOpenChange={setInviteDialogOpen}
-            onSubmit={handleInviteSubmit}
-            isLoading={isSending}
           />
           
           <ContactEmailDialog
