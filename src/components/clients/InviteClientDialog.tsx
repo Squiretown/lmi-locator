@@ -26,7 +26,8 @@ export const InviteClientDialog: React.FC<InviteClientDialogProps> = ({
   onSubmit,
   isLoading = false,
 }) => {
-  const { teamMembers } = useMortgageTeamManagement();
+  const [selectedRealtorId, setSelectedRealtorId] = React.useState<string>('none');
+  const { teamMembers, realtorPartners } = useMortgageTeamManagement();
   const { register, handleSubmit, reset, watch, setValue, formState: { errors } } = useForm<CreateClientInvitationData>({
     defaultValues: {
       invitationType: 'email',
@@ -38,12 +39,43 @@ export const InviteClientDialog: React.FC<InviteClientDialogProps> = ({
 
   const handleFormSubmit = async (data: CreateClientInvitationData) => {
     try {
-      await onSubmit(data);
+      await onSubmit({
+        ...data,
+        assignedRealtorId: selectedRealtorId !== 'none' ? selectedRealtorId : undefined
+      });
       reset();
+      setSelectedRealtorId('none');
       onOpenChange(false);
     } catch (error) {
       // Error handling is done in the hook
     }
+  };
+
+  const getFilteredTeam = () => {
+    const team = teamMembers.filter(m => m.type === 'mortgage_professional');
+    
+    if (selectedRealtorId && selectedRealtorId !== 'none') {
+      const realtor = realtorPartners?.find(r => r.realtor.id === selectedRealtorId);
+      if (realtor) {
+        team.push({
+          id: realtor.realtor.id,
+          name: realtor.realtor.name,
+          company: realtor.realtor.company,
+          email: realtor.realtor.email,
+          phone: realtor.realtor.phone,
+          type: 'realtor' as const,
+          professional_type: 'realtor',
+          source: 'explicit' as const,
+          visibility_settings: {
+            visible_to_clients: true,
+            showcase_role: 'Realtor Partner',
+            showcase_description: `Real Estate Agent at ${realtor.realtor.company}`
+          }
+        });
+      }
+    }
+    
+    return team;
   };
 
   return (
@@ -116,6 +148,30 @@ export const InviteClientDialog: React.FC<InviteClientDialogProps> = ({
                 )}
                 <p className="text-xs text-muted-foreground">
                   Required for SMS invitations
+                </p>
+              </div>
+
+              {/* Realtor Assignment */}
+              <div className="space-y-2">
+                <Label htmlFor="assignedRealtor">Assign Realtor (Optional)</Label>
+                <Select 
+                  value={selectedRealtorId} 
+                  onValueChange={setSelectedRealtorId}
+                >
+                  <SelectTrigger id="assignedRealtor">
+                    <SelectValue placeholder="Select a realtor for this client" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">No realtor assigned yet</SelectItem>
+                    {realtorPartners?.map((partner) => (
+                      <SelectItem key={partner.realtor.id} value={partner.realtor.id}>
+                        {partner.realtor.name} - {partner.realtor.company}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  Only the selected realtor will appear in this client's team
                 </p>
               </div>
 
@@ -197,7 +253,7 @@ export const InviteClientDialog: React.FC<InviteClientDialogProps> = ({
                 This is how your team will appear to the client:
               </div>
               <ClientTeamShowcase 
-                teamMembers={teamMembers} 
+                teamMembers={getFilteredTeam()} 
                 title="Meet Your Professional Team"
                 compact={true}
               />

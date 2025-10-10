@@ -15,6 +15,14 @@ export function useUnifiedClientInvitations() {
 
   // Adapt legacy create invitation function
   const createInvitation = async (data: CreateClientInvitationData) => {
+    // Build team_showcase with only assigned professionals
+    const teamShowcase: any = {};
+    
+    // Add assigned realtor to showcase if selected
+    if (data.assignedRealtorId) {
+      teamShowcase.assignedRealtorId = data.assignedRealtorId;
+    }
+    
     return sendInvitation({
       email: data.email,
       userType: 'client',
@@ -25,6 +33,8 @@ export function useUnifiedClientInvitations() {
       customMessage: data.customMessage,
       propertyInterest: 'buying', // Default value
       preferredContact: 'email',
+      // @ts-ignore - adding custom field
+      teamShowcase: teamShowcase
     } as ClientInvitationData);
   };
 
@@ -71,4 +81,5 @@ export interface CreateClientInvitationData {
   invitationType: 'email' | 'sms' | 'both';
   templateType?: string;
   customMessage?: string;
+  assignedRealtorId?: string;
 }
