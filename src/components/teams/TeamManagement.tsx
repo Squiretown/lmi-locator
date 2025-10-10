@@ -3,18 +3,21 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Users, UserPlus, Phone, Building, ArrowLeft } from 'lucide-react';
+import { Users, UserPlus, Phone, Building, ArrowLeft, Search, Send, ChevronDown } from 'lucide-react';
 import { useTeamManagement } from '@/hooks/useTeamManagement';
 import { TeamActionsDropdown } from './TeamActionsDropdown';
 import { TeamMemberDetailsDialog } from './TeamMemberDetailsDialog';
 import { TeamMemberEditDialog } from './TeamMemberEditDialog';
 import { TeamMemberCommunicationDialog } from './TeamMemberCommunicationDialog';
 import { InviteProfessionalDialog } from './InviteProfessionalDialog';
+import { AddManualProfessionalDialog } from './AddManualProfessionalDialog';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useNavigate } from 'react-router-dom';
 
 export const TeamManagement: React.FC = () => {
   const navigate = useNavigate();
   const [showInviteDialog, setShowInviteDialog] = useState(false);
+  const [showManualAddDialog, setShowManualAddDialog] = useState(false);
   const [selectedMember, setSelectedMember] = useState<any>(null);
   const [showDetailsDialog, setShowDetailsDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
@@ -133,10 +136,25 @@ export const TeamManagement: React.FC = () => {
             Back to Dashboard
           </Button>
         </div>
-        <Button onClick={() => setShowInviteDialog(true)} className="bg-primary">
-          <UserPlus className="mr-2 h-4 w-4" />
-          Invite Professional
-        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button className="bg-primary">
+              <UserPlus className="mr-2 h-4 w-4" />
+              Add Professional
+              <ChevronDown className="ml-2 h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={() => setShowManualAddDialog(true)}>
+              <Search className="mr-2 h-4 w-4" />
+              Add Existing {currentProfessional?.professionalType === 'mortgage_professional' ? 'Realtor' : 'Mortgage Professional'}
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setShowInviteDialog(true)}>
+              <Send className="mr-2 h-4 w-4" />
+              Send Invitation
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       {/* Team Members Grid */}
@@ -217,6 +235,12 @@ export const TeamManagement: React.FC = () => {
       <InviteProfessionalDialog 
         open={showInviteDialog} 
         onOpenChange={setShowInviteDialog} 
+      />
+
+      <AddManualProfessionalDialog
+        open={showManualAddDialog}
+        onOpenChange={setShowManualAddDialog}
+        professionalType={currentProfessional?.professionalType === 'mortgage_professional' ? 'realtor' : 'mortgage_professional'}
       />
 
       {selectedMember && (

@@ -3,15 +3,18 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Users, UserPlus, Mail, Phone, Building, AlertCircle, RefreshCw } from "lucide-react";
+import { Users, UserPlus, Mail, Phone, Building, AlertCircle, RefreshCw, Search, Send, ChevronDown } from "lucide-react";
 import { useMortgageTeamStats } from '@/hooks/useMortgageTeamStats';
 import { useMortgageTeamManagement } from '@/hooks/useMortgageTeamManagement';
 import { useUnifiedInvitationSystem } from '@/hooks/useUnifiedInvitationSystem';
 import { InviteProfessionalDialog } from '@/components/teams/InviteProfessionalDialog';
+import { AddManualProfessionalDialog } from '@/components/teams/AddManualProfessionalDialog';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 
 const MortgageTeam: React.FC = () => {
   const [showInviteDialog, setShowInviteDialog] = useState(false);
+  const [showManualAddDialog, setShowManualAddDialog] = useState(false);
   const { teamStats, performanceMetrics, isLoading: isLoadingStats } = useMortgageTeamStats();
   const { 
     lendingTeam, 
@@ -92,10 +95,25 @@ const MortgageTeam: React.FC = () => {
             Manage your lending team and realtor partnerships
           </p>
         </div>
-        <Button onClick={() => setShowInviteDialog(true)}>
-          <UserPlus className="mr-2 h-4 w-4" />
-          Invite Partner
-        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button>
+              <UserPlus className="mr-2 h-4 w-4" />
+              Add Partner
+              <ChevronDown className="ml-2 h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={() => setShowManualAddDialog(true)}>
+              <Search className="mr-2 h-4 w-4" />
+              Add Existing Realtor
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setShowInviteDialog(true)}>
+              <Send className="mr-2 h-4 w-4" />
+              Send Invitation
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       {/* Team Stats */}
@@ -394,6 +412,13 @@ const MortgageTeam: React.FC = () => {
       <InviteProfessionalDialog
         open={showInviteDialog}
         onOpenChange={setShowInviteDialog}
+      />
+
+      {/* Manual Add Dialog */}
+      <AddManualProfessionalDialog
+        open={showManualAddDialog}
+        onOpenChange={setShowManualAddDialog}
+        professionalType="realtor"
       />
     </div>
   );

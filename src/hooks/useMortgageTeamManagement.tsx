@@ -342,6 +342,41 @@ export function useMortgageTeamManagement() {
     })),
   ];
 
+  // Manual add existing professional mutation
+  const addExistingProfessionalMutation = useMutation({
+    mutationFn: async ({ professionalId, notes }: { professionalId: string; notes?: string }) => {
+      if (!currentProfessional) throw new Error('Professional not loaded');
+
+      const { data, error } = await supabase
+        .from('professional_teams')
+        .insert({
+          mortgage_professional_id: currentProfessional.id,
+          realtor_id: professionalId,
+          status: 'active',
+          notes
+        })
+        .select()
+        .single();
+
+      if (error) {
+        if (error.code === '23505') {
+          throw new Error('This realtor is already on your team');
+        }
+        throw error;
+      }
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['realtor-partners-unified'] });
+      queryClient.invalidateQueries({ queryKey: ['mortgage-realtor-partners'] });
+      queryClient.invalidateQueries({ queryKey: ['team-members'] });
+      toast.success('Realtor added to your team');
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || 'Failed to add realtor');
+    }
+  });
+
   // Enable real-time updates
   useRealtimeTeamUpdates(currentProfessional?.id);
 
@@ -387,10 +422,12 @@ export function useMortgageTeamManagement() {
     contactProfessional: contactProfessionalMutation.mutate,
     updateProfessionalVisibility: updateVisibilityMutation.mutate,
     refetchRealtorPartners, // Add manual refresh capability
+    addExistingProfessional: addExistingProfessionalMutation.mutateAsync,
     
     // Loading states for actions
     isInviting: inviteProfessionalMutation.isPending,
     isContacting: contactProfessionalMutation.isPending,
     isUpdatingVisibility: updateVisibilityMutation.isPending,
+    isAddingExisting: addExistingProfessionalMutation.isPending,
   };
 }
