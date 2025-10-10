@@ -3171,6 +3171,42 @@ export type Database = {
         }
         Relationships: []
       }
+      team_members: {
+        Row: {
+          added_at: string | null
+          added_by: string | null
+          id: string
+          notes: string | null
+          permissions: Json | null
+          role: Database["public"]["Enums"]["team_member_role"] | null
+          status: string
+          team_member_id: string
+          team_owner_id: string
+        }
+        Insert: {
+          added_at?: string | null
+          added_by?: string | null
+          id?: string
+          notes?: string | null
+          permissions?: Json | null
+          role?: Database["public"]["Enums"]["team_member_role"] | null
+          status?: string
+          team_member_id: string
+          team_owner_id: string
+        }
+        Update: {
+          added_at?: string | null
+          added_by?: string | null
+          id?: string
+          notes?: string | null
+          permissions?: Json | null
+          role?: Database["public"]["Enums"]["team_member_role"] | null
+          status?: string
+          team_member_id?: string
+          team_owner_id?: string
+        }
+        Relationships: []
+      }
       testimonials: {
         Row: {
           avatar: string
@@ -5846,6 +5882,13 @@ export type Database = {
         | "client"
         | "realtor"
         | "mortgage_professional"
+      team_member_role:
+        | "loan_officer"
+        | "processor"
+        | "underwriter"
+        | "manager"
+        | "assistant"
+        | "coordinator"
     }
     CompositeTypes: {
       geometry_dump: {
@@ -5987,6 +6030,14 @@ export const Constants = {
         "client",
         "realtor",
         "mortgage_professional",
+      ],
+      team_member_role: [
+        "loan_officer",
+        "processor",
+        "underwriter",
+        "manager",
+        "assistant",
+        "coordinator",
       ],
     },
   },

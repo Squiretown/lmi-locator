@@ -3,7 +3,9 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Users, UserPlus, Mail, Phone, Building, AlertCircle, RefreshCw, Search, Send, ChevronDown } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Users, UserPlus, Mail, Phone, Building, AlertCircle, RefreshCw, Search, Send, ChevronDown, Info } from "lucide-react";
+import { Link } from "react-router-dom";
 import { useMortgageTeamStats } from '@/hooks/useMortgageTeamStats';
 import { useMortgageTeamManagement } from '@/hooks/useMortgageTeamManagement';
 import { useUnifiedInvitationSystem } from '@/hooks/useUnifiedInvitationSystem';
@@ -117,6 +119,24 @@ const MortgageTeam: React.FC = () => {
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
+
+      {/* Security Update Alert */}
+      <Alert className="bg-blue-50 border-blue-200">
+        <Info className="h-4 w-4 text-blue-600" />
+        <AlertTitle className="text-blue-900">Team Management Updated</AlertTitle>
+        <AlertDescription className="text-blue-800">
+          <p className="mb-2">
+            Team visibility has been updated for security. You now need to explicitly add team members.
+          </p>
+          <p>
+            Visit{" "}
+            <Link to="/dashboard/network" className="font-semibold underline hover:text-blue-600">
+              My Network
+            </Link>
+            {" "}→ <strong>Add Contact</strong> → <strong>Team Member</strong> to build your internal team.
+          </p>
+        </AlertDescription>
+      </Alert>
 
       {/* Team Stats */}
       <div className="grid gap-4 md:grid-cols-3">

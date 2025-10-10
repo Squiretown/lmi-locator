@@ -328,6 +328,70 @@ export function useUnifiedCRM() {
     return (data || []).filter(p => !existingIds.has(p.id));
   };
 
+  // Add Team Member mutation
+  const addTeamMember = useMutation({
+    mutationFn: async ({
+      memberId,
+      role,
+      permissions
+    }: {
+      memberId: string;
+      role: string;
+      permissions?: any;
+    }) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      // Verify the member is a mortgage professional
+      const { data: professional } = await supabase
+        .from('professionals')
+        .select('id, professional_type')
+        .eq('user_id', memberId)
+        .single();
+
+      if (!professional) {
+        throw new Error('User is not a registered professional');
+      }
+
+      if (professional.professional_type !== 'mortgage_professional') {
+        throw new Error('Only mortgage professionals can be added as team members');
+      }
+
+      // Insert team member relationship
+      const { error } = await supabase
+        .from('team_members')
+        .insert([{
+          team_owner_id: user.id,
+          team_member_id: memberId,
+          role: role as any,
+          permissions: permissions || {
+            view_clients: true,
+            edit_clients: false,
+            send_communications: false,
+            view_pipeline: true,
+            manage_documents: false
+          },
+          added_by: user.id,
+          status: 'active'
+        }]);
+
+      if (error) {
+        if (error.code === '23505') { // Unique constraint violation
+          throw new Error('This team member has already been added');
+        }
+        throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['crm-contacts'] });
+      queryClient.invalidateQueries({ queryKey: ['lending-team-unified'] });
+      toast.success('Team member added successfully');
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || 'Failed to add team member');
+    }
+  });
+
   // Analytics
   const getCollaborationMetrics = () => {
     const totalTeamMembers = teamMembers.length;
@@ -371,6 +435,9 @@ export function useUnifiedCRM() {
     
     removeTeamAssignment: removeTeamAssignment.mutateAsync,
     isRemovingTeamAssignment: removeTeamAssignment.isPending,
+    
+    addTeamMember: addTeamMember.mutateAsync,
+    isAddingTeamMember: addTeamMember.isPending,
     
     // Analytics
     getCollaborationMetrics

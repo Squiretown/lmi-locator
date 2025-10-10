@@ -36,20 +36,22 @@ const DashboardHeader: React.FC = () => {
           { title: "Saved Properties", url: "/dashboard/client/saved-properties", icon: Heart },
         ];
       
-      case 'realtor':
-        return [
-          { title: "Dashboard", url: "/dashboard/realtor", icon: Home },
-          { title: "Clients", url: "/dashboard/realtor/clients", icon: Users },
-          { title: "Team", url: "/dashboard/realtor/team", icon: UserCheck },
-        ];
+    case 'realtor':
+      return [
+        { title: "Dashboard", url: "/dashboard/realtor", icon: Home },
+        { title: "My Network", url: "/dashboard/network", icon: Users },
+        { title: "Clients", url: "/dashboard/realtor/clients", icon: Users },
+        { title: "Team", url: "/dashboard/realtor/team", icon: UserCheck },
+      ];
       
-      case 'mortgage_professional':
-      case 'mortgage':
-        return [
-          { title: "Dashboard", url: "/dashboard/mortgage", icon: Home },
-          { title: "Clients", url: "/dashboard/mortgage/clients", icon: Users },
-          { title: "Team", url: "/dashboard/mortgage/team", icon: UserCheck },
-        ];
+    case 'mortgage_professional':
+    case 'mortgage':
+      return [
+        { title: "Dashboard", url: "/dashboard/mortgage", icon: Home },
+        { title: "My Network", url: "/dashboard/network", icon: Users },
+        { title: "Clients", url: "/dashboard/mortgage/clients", icon: Users },
+        { title: "Team", url: "/dashboard/mortgage/team", icon: UserCheck },
+      ];
       
       default:
         return [

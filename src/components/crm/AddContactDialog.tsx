@@ -45,6 +45,8 @@ export function AddContactDialog({ open, onOpenChange }: AddContactDialogProps) 
     isAddingProfessional,
     addClientManually,
     isAddingClient,
+    addTeamMember,
+    isAddingTeamMember,
     searchAvailableProfessionals
   } = useUnifiedCRM();
 
@@ -60,9 +62,23 @@ export function AddContactDialog({ open, onOpenChange }: AddContactDialogProps) 
     enabled: addMode === 'search' && activeTab !== 'client' && searchQuery.length > 0
   });
 
-  const handleAddExisting = async (professionalId: string) => {
+  const handleAddExisting = async (professionalId: string, professionalUserId: string) => {
     try {
-      await addExistingProfessional({ professionalId });
+      // For team members, add to internal team table
+      if (activeTab === 'team') {
+        await addTeamMember({ 
+          memberId: professionalUserId,
+          role: 'loan_officer', // Default role
+          permissions: {
+            view_clients: true,
+            edit_clients: false,
+            send_communications: false
+          }
+        });
+      } else {
+        // For realtors, add to professional_teams
+        await addExistingProfessional({ professionalId });
+      }
       onOpenChange(false);
       resetForm();
     } catch (error) {
@@ -258,7 +274,7 @@ export function AddContactDialog({ open, onOpenChange }: AddContactDialogProps) 
                           </div>
                           <Button
                             size="sm"
-                            onClick={() => handleAddExisting(professional.id)}
+                            onClick={() => handleAddExisting(professional.id, professional.user_id)}
                             disabled={isAddingProfessional}
                           >
                             {isAddingProfessional ? (
@@ -350,10 +366,10 @@ export function AddContactDialog({ open, onOpenChange }: AddContactDialogProps) 
                           </div>
                           <Button
                             size="sm"
-                            onClick={() => handleAddExisting(professional.id)}
-                            disabled={isAddingProfessional}
+                            onClick={() => handleAddExisting(professional.id, professional.user_id)}
+                            disabled={isAddingTeamMember || isAddingProfessional}
                           >
-                            {isAddingProfessional ? (
+                            {(isAddingTeamMember || isAddingProfessional) ? (
                               <Loader2 className="h-4 w-4 animate-spin" />
                             ) : (
                               'Add'

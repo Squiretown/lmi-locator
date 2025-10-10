@@ -38,6 +38,7 @@ import RealtorTeam from "./pages/dashboard/realtor/Team";
 import MortgageOverview from "./pages/dashboard/mortgage/Overview";
 import MortgageClients from "./pages/dashboard/mortgage/Clients";
 import MortgageTeam from "./pages/dashboard/mortgage/Team";
+import NetworkDashboard from "./pages/dashboard/NetworkDashboard";
 // removed import MortgageAnalytics from "./pages/dashboard/mortgage/Analytics";
 
 // Admin Layout and Pages
@@ -157,6 +158,13 @@ const App = () => (
               <Route path="mortgage/team" element={
                 <ProtectedRoute allowedUserTypes={['mortgage_professional']}>
                   <MortgageTeam />
+                </ProtectedRoute>
+              } />
+              
+              {/* Unified Network Dashboard */}
+              <Route path="network" element={
+                <ProtectedRoute allowedUserTypes={['realtor', 'mortgage_professional']}>
+                  <NetworkDashboard />
                 </ProtectedRoute>
               } />
             </Route>

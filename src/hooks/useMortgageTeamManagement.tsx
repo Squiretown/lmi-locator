@@ -97,43 +97,82 @@ export function useMortgageTeamManagement() {
     enabled: !!currentUser?.id,
   });
 
-  // Fetch unified lending team (company-based only for now)
+  // Query explicit internal team members from team_members table
   const { data: lendingTeam = [], isLoading: isLoadingLending } = useQuery({
-    queryKey: ['lending-team-unified', currentProfessional?.id],
+    queryKey: ['lending-team-unified', currentProfessional?.id, currentUser?.id],
     queryFn: async () => {
-      if (!currentProfessional?.id) return [];
+      if (!currentProfessional?.id || !currentUser?.id) return [];
 
-      // Fetch company-based team members
-      const { data: companyTeam, error: companyError } = await supabase
-        .from('professionals')
-        .select('*')
-        .eq('professional_type', 'mortgage_professional')
-        .eq('company', currentProfessional.company)
+      console.log('Fetching explicit team members for user:', currentUser.id);
+
+      // Query team_members table for explicitly added team relationships
+      const { data: teamMembers, error } = await supabase
+        .from('team_members')
+        .select(`
+          id,
+          role,
+          permissions,
+          status,
+          added_at,
+          team_member_id
+        `)
+        .eq('team_owner_id', currentUser.id)
         .eq('status', 'active')
-        .order('name');
+        .order('added_at', { ascending: false });
 
-      if (companyError) {
-        console.error('Error fetching company team:', companyError);
+      if (error) {
+        console.error('Error fetching team members:', error);
         return [];
       }
 
-      // For now, just use company-based teams
-      return (companyTeam || []).map(member => ({
-        ...member,
-        source: 'company' as const,
-        isAccountOwner: member.id === currentProfessional.id,
-        visibility_settings: (typeof member.visibility_settings === 'object' && member.visibility_settings && !Array.isArray(member.visibility_settings)) ? {
-          visible_to_clients: (member.visibility_settings as any).visible_to_clients || true,
-          showcase_role: (member.visibility_settings as any).showcase_role || member.name,
-          showcase_description: (member.visibility_settings as any).showcase_description || `${member.professional_type} at ${member.company}`
-        } : {
-          visible_to_clients: true,
-          showcase_role: member.name,
-          showcase_description: `${member.professional_type} at ${member.company}`
-        }
-      })) as LendingTeamMember[];
+      if (!teamMembers || teamMembers.length === 0) {
+        console.log('No explicit team members found');
+        return [];
+      }
+
+      // Get professional details for each team member
+      const memberUserIds = teamMembers.map(tm => tm.team_member_id);
+      
+      const { data: professionals, error: profError } = await supabase
+        .from('professionals')
+        .select('*')
+        .in('user_id', memberUserIds)
+        .eq('status', 'active');
+
+      if (profError) {
+        console.error('Error fetching professional details:', profError);
+        return [];
+      }
+
+      // Combine team member data with professional details
+      const enrichedTeamMembers = teamMembers.map(tm => {
+        const professional = professionals?.find(p => p.user_id === tm.team_member_id);
+        if (!professional) return null;
+
+        return {
+          ...professional,
+          source: 'explicit' as const,
+          isAccountOwner: false,
+          team_member_role: tm.role,
+          permissions: tm.permissions,
+          visibility_settings: (typeof professional.visibility_settings === 'object' && 
+            professional.visibility_settings && 
+            !Array.isArray(professional.visibility_settings)) ? {
+            visible_to_clients: (professional.visibility_settings as any).visible_to_clients || false,
+            showcase_role: (professional.visibility_settings as any).showcase_role || '',
+            showcase_description: (professional.visibility_settings as any).showcase_description || ''
+          } : {
+            visible_to_clients: false,
+            showcase_role: '',
+            showcase_description: ''
+          }
+        };
+      }).filter(Boolean);
+
+      console.log('Loaded explicit team members:', enrichedTeamMembers.length);
+      return enrichedTeamMembers as LendingTeamMember[];
     },
-    enabled: !!currentProfessional?.id,
+    enabled: !!currentProfessional?.id && !!currentUser?.id,
   });
 
   // Fetch realtor partners from professional_teams
