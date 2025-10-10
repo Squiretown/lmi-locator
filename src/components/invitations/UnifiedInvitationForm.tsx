@@ -34,7 +34,7 @@ const clientInvitationSchema = baseInvitationSchema.extend({
 
 const professionalInvitationSchema = baseInvitationSchema.extend({
   userType: z.enum(['realtor', 'mortgage_professional']),
-  professionalType: z.enum(['realtor', 'mortgage_broker', 'lender']),
+  professionalType: z.enum(['realtor', 'mortgage_broker', 'lender', 'attorney']),
   licenseNumber: z.string().optional(),
   licenseState: z.string().length(2).optional(),
   companyName: z.string().optional(),
@@ -66,7 +66,7 @@ type UnifiedFormData = {
   preferredContact?: 'email' | 'phone' | 'text';
   
   // Professional fields (optional - only present when userType is professional)
-  professionalType?: 'realtor' | 'mortgage_broker' | 'lender';
+  professionalType?: 'realtor' | 'mortgage_broker' | 'lender' | 'attorney';
   licenseNumber?: string;
   licenseState?: string;
   companyName?: string;
@@ -306,7 +306,7 @@ export const UnifiedInvitationForm: React.FC<UnifiedInvitationFormProps> = ({
 
                 <div>
                   <Label htmlFor="professionalType">Professional Type *</Label>
-                  <Select onValueChange={(value: ProfessionalType) => setValue('professionalType', value)}>
+                  <Select onValueChange={(value) => setValue('professionalType', value as ProfessionalType)}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select professional type" />
                     </SelectTrigger>
@@ -314,6 +314,7 @@ export const UnifiedInvitationForm: React.FC<UnifiedInvitationFormProps> = ({
                       <SelectItem value="realtor">Realtor</SelectItem>
                       <SelectItem value="mortgage_broker">Mortgage Broker</SelectItem>
                       <SelectItem value="lender">Lender</SelectItem>
+                      <SelectItem value="attorney">Attorney</SelectItem>
                     </SelectContent>
                   </Select>
                   {getFieldError('professionalType') && (

@@ -1,6 +1,9 @@
-
-export type ProfessionalType = 'realtor' | 'mortgage_professional';
+// This represents USER roles for professionals
+export type ProfessionalUserRole = 'realtor' | 'mortgage_professional';
 export type ProfessionalStatus = 'active' | 'pending' | 'inactive';
+
+// For database operations, import from unified-invitations
+export type { ProfessionalType } from '@/types/unified-invitations';
 
 export interface ProfessionalDTO {
   id: string;
@@ -26,7 +29,7 @@ export interface ProfessionalDTO {
 export interface Professional {
   id: string;
   userId: string;
-  professionalType: ProfessionalType;
+  professionalType: ProfessionalUserRole;
   name: string;
   company: string;
   licenseNumber: string;

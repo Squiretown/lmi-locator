@@ -1,10 +1,20 @@
 // Unified Invitation System Types
 
+/**
+ * Professional type for database records and invitations
+ * These values MUST match the database constraint on user_invitations.professional_type
+ * 
+ * Constraint allows: 'realtor', 'mortgage_broker', 'lender', 'attorney', or NULL
+ * 
+ * NOTE: This is DIFFERENT from user authentication roles!
+ * - User role 'mortgage_professional' maps to database type 'mortgage_broker'
+ * - User role 'realtor' maps to database type 'realtor'
+ */
 export type UserType = 'client' | 'realtor' | 'mortgage_professional';
 export type InvitationStatus = 'pending' | 'sent' | 'accepted' | 'expired' | 'cancelled';
 export type SendVia = 'email' | 'sms' | 'both';
 export type PropertyInterest = 'buying' | 'selling' | 'refinancing';
-export type ProfessionalType = 'realtor' | 'mortgage_broker' | 'lender';
+export type ProfessionalType = 'realtor' | 'mortgage_broker' | 'lender' | 'attorney';
 export type PreferredContact = 'email' | 'phone' | 'text';
 
 export interface BaseInvitationData {

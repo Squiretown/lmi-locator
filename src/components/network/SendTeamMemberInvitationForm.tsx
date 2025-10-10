@@ -96,7 +96,7 @@ export function SendTeamMemberInvitationForm({ onSuccess }: SendTeamMemberInvita
           user_type: 'mortgage_professional',
           first_name: formData.firstName || null,
           last_name: formData.lastName || null,
-          professional_type: 'mortgage_professional',
+          professional_type: 'mortgage_broker',
           custom_message: formData.notes || null,
           invited_by_user_id: user.id,
           send_via: 'email',

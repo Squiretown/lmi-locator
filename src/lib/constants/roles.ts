@@ -11,10 +11,24 @@ export const USER_ROLES = {
   CLIENT: 'client'
 } as const;
 
-// Professional types for database consistency
+// User role types (for authentication and permissions)
 export const PROFESSIONAL_TYPES = {
   REALTOR: 'realtor',
   MORTGAGE_PROFESSIONAL: 'mortgage_professional'
+} as const;
+
+// Database professional types (for invitations and database records)
+export const DATABASE_PROFESSIONAL_TYPES = {
+  REALTOR: 'realtor',
+  MORTGAGE_BROKER: 'mortgage_broker',
+  LENDER: 'lender',
+  ATTORNEY: 'attorney'
+} as const;
+
+// Mapping between user types and database types
+export const USER_TYPE_TO_DB_TYPE_MAPPING = {
+  'mortgage_professional': 'mortgage_broker',
+  'realtor': 'realtor'
 } as const;
 
 // Legacy role mappings for backwards compatibility
@@ -52,8 +66,12 @@ export const ROLE_DASHBOARD_ROUTES = {
 
 // TypeScript types
 export type UserRole = typeof USER_ROLES[keyof typeof USER_ROLES];
-export type ProfessionalType = typeof PROFESSIONAL_TYPES[keyof typeof PROFESSIONAL_TYPES];
+export type ProfessionalUserType = typeof PROFESSIONAL_TYPES[keyof typeof PROFESSIONAL_TYPES];
+export type DatabaseProfessionalType = typeof DATABASE_PROFESSIONAL_TYPES[keyof typeof DATABASE_PROFESSIONAL_TYPES];
 export type LegacyRole = keyof typeof LEGACY_ROLE_MAPPING;
+
+// Legacy type alias for backward compatibility
+export type ProfessionalType = ProfessionalUserType;
 
 // Validation functions
 export function isValidUserRole(role: string): role is UserRole {
@@ -146,6 +164,29 @@ export function getRoleDescription(role: string | null | undefined): string {
 export function getDashboardRoute(role: string | null | undefined): string {
   const normalizedRole = normalizeRole(role);
   return ROLE_DASHBOARD_ROUTES[normalizedRole] || '/';
+}
+
+/**
+ * Converts user role type to database professional_type
+ * Used when creating invitations or database records
+ */
+export function convertUserTypeToDatabaseType(
+  userType: 'realtor' | 'mortgage_professional'
+): DatabaseProfessionalType {
+  return USER_TYPE_TO_DB_TYPE_MAPPING[userType] || 'mortgage_broker';
+}
+
+/**
+ * Converts database professional_type to user role type
+ * Used when reading from database
+ */
+export function convertDatabaseTypeToUserType(
+  dbType: string
+): ProfessionalUserType {
+  if (dbType === 'mortgage_broker' || dbType === 'lender') {
+    return 'mortgage_professional';
+  }
+  return 'realtor';
 }
 
 // Export arrays for select options
