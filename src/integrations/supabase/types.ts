@@ -1229,6 +1229,7 @@ export type Database = {
       contacts: {
         Row: {
           address: string | null
+          company_name: string | null
           created_at: string
           custom_fields: Json | null
           email: string | null
@@ -1239,10 +1240,15 @@ export type Database = {
           notes: string | null
           owner_id: string
           phone: string | null
+          professional_type: string | null
+          requires_system_access: boolean | null
+          role_title: string | null
           status: string
+          visible_to_clients: boolean | null
         }
         Insert: {
           address?: string | null
+          company_name?: string | null
           created_at?: string
           custom_fields?: Json | null
           email?: string | null
@@ -1253,10 +1259,15 @@ export type Database = {
           notes?: string | null
           owner_id: string
           phone?: string | null
+          professional_type?: string | null
+          requires_system_access?: boolean | null
+          role_title?: string | null
           status?: string
+          visible_to_clients?: boolean | null
         }
         Update: {
           address?: string | null
+          company_name?: string | null
           created_at?: string
           custom_fields?: Json | null
           email?: string | null
@@ -1267,7 +1278,11 @@ export type Database = {
           notes?: string | null
           owner_id?: string
           phone?: string | null
+          professional_type?: string | null
+          requires_system_access?: boolean | null
+          role_title?: string | null
           status?: string
+          visible_to_clients?: boolean | null
         }
         Relationships: [
           {

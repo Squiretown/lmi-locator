@@ -392,6 +392,133 @@ export function useUnifiedCRM() {
     }
   });
 
+  // Add manual contact (supporting professionals without system access)
+  const addManualContact = useMutation({
+    mutationFn: async (contact: {
+      firstName: string;
+      lastName: string;
+      email?: string;
+      phone?: string;
+      companyName: string;
+      professionalType: string;
+      roleTitle?: string;
+      notes?: string;
+      visibleToClients?: boolean;
+    }) => {
+      if (!userContext) throw new Error('User context not loaded');
+
+      const { data, error } = await supabase
+        .from('contacts')
+        .insert({
+          owner_id: userContext.professionalId,
+          first_name: contact.firstName,
+          last_name: contact.lastName,
+          email: contact.email,
+          phone: contact.phone,
+          company_name: contact.companyName,
+          professional_type: contact.professionalType,
+          role_title: contact.roleTitle,
+          notes: contact.notes,
+          visible_to_clients: contact.visibleToClients ?? true,
+          requires_system_access: false,
+          status: 'active'
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['crm-contacts'] });
+      queryClient.invalidateQueries({ queryKey: ['manual-contacts'] });
+      toast.success(`${data.first_name} ${data.last_name} added to your network`, {
+        description: 'They will appear in your team showcase',
+        action: {
+          label: 'Add Another',
+          onClick: () => {
+            // This will be handled by the form component
+          }
+        }
+      });
+    },
+    onError: (error: Error) => {
+      toast.error('Failed to add contact', {
+        description: error.message
+      });
+    }
+  });
+
+  // Update manual contact
+  const updateManualContact = useMutation({
+    mutationFn: async (contact: {
+      id: string;
+      firstName?: string;
+      lastName?: string;
+      email?: string;
+      phone?: string;
+      companyName?: string;
+      professionalType?: string;
+      roleTitle?: string;
+      notes?: string;
+      visibleToClients?: boolean;
+    }) => {
+      const { id, ...updates } = contact;
+      
+      const { data, error } = await supabase
+        .from('contacts')
+        .update({
+          first_name: updates.firstName,
+          last_name: updates.lastName,
+          email: updates.email,
+          phone: updates.phone,
+          company_name: updates.companyName,
+          professional_type: updates.professionalType,
+          role_title: updates.roleTitle,
+          notes: updates.notes,
+          visible_to_clients: updates.visibleToClients,
+        })
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['crm-contacts'] });
+      queryClient.invalidateQueries({ queryKey: ['manual-contacts'] });
+      toast.success('Contact updated successfully');
+    },
+    onError: (error: Error) => {
+      toast.error('Failed to update contact', {
+        description: error.message
+      });
+    }
+  });
+
+  // Remove manual contact
+  const removeManualContact = useMutation({
+    mutationFn: async (contactId: string) => {
+      const { error } = await supabase
+        .from('contacts')
+        .update({ status: 'inactive' })
+        .eq('id', contactId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['crm-contacts'] });
+      queryClient.invalidateQueries({ queryKey: ['manual-contacts'] });
+      toast.success('Contact removed from your network');
+    },
+    onError: (error: Error) => {
+      toast.error('Failed to remove contact', {
+        description: error.message
+      });
+    }
+  });
+
   // Analytics
   const getCollaborationMetrics = () => {
     const totalTeamMembers = teamMembers.length;
@@ -438,6 +565,14 @@ export function useUnifiedCRM() {
     
     addTeamMember: addTeamMember.mutateAsync,
     isAddingTeamMember: addTeamMember.isPending,
+    
+    // Manual contacts
+    addManualContact: addManualContact.mutateAsync,
+    isAddingManualContact: addManualContact.isPending,
+    updateManualContact: updateManualContact.mutateAsync,
+    isUpdatingManualContact: updateManualContact.isPending,
+    removeManualContact: removeManualContact.mutateAsync,
+    isRemovingManualContact: removeManualContact.isPending,
     
     // Analytics
     getCollaborationMetrics

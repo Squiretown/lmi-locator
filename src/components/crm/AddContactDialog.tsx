@@ -17,9 +17,9 @@ import { useUnifiedCRM } from "@/hooks/useUnifiedCRM";
 import { useQuery } from "@tanstack/react-query";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
-import { SendRealtorInvitationForm } from "@/components/network/SendRealtorInvitationForm";
-import { SendTeamMemberInvitationForm } from "@/components/network/SendTeamMemberInvitationForm";
-import { SendClientInvitationForm } from "@/components/network/SendClientInvitationForm";
+import { UnifiedInvitationForm } from "@/components/invitations/UnifiedInvitationForm";
+import { useUnifiedInvitationSystem } from "@/hooks/useUnifiedInvitationSystem";
+import { ManualContactForm } from "@/components/network/ManualContactForm";
 
 interface AddContactDialogProps {
   open: boolean;
@@ -27,7 +27,7 @@ interface AddContactDialogProps {
 }
 
 type ContactTab = "client" | "realtor" | "team";
-type AddMode = "search" | "new";
+type AddMode = "search" | "invite" | "manual";
 
 export function AddContactDialog({ open, onOpenChange }: AddContactDialogProps) {
   const [activeTab, setActiveTab] = useState<ContactTab>("client");
@@ -50,8 +50,12 @@ export function AddContactDialog({ open, onOpenChange }: AddContactDialogProps) 
     isAddingClient,
     addTeamMember,
     isAddingTeamMember,
-    searchAvailableProfessionals
+    searchAvailableProfessionals,
+    addManualContact,
+    isAddingManualContact
   } = useUnifiedCRM();
+
+  const { sendInvitation, isSending } = useUnifiedInvitationSystem();
 
   // Search available professionals
   const { data: searchResults = [], isLoading: isSearching } = useQuery({
@@ -156,9 +160,18 @@ export function AddContactDialog({ open, onOpenChange }: AddContactDialogProps) 
                 Add Manually
               </Button>
               <Button
-                variant={addMode === 'new' ? 'default' : 'outline'}
+                variant={addMode === 'manual' ? 'default' : 'outline'}
                 size="sm"
-                onClick={() => setAddMode('new')}
+                onClick={() => setAddMode('manual')}
+                className="gap-2"
+              >
+                <Plus className="h-4 w-4" />
+                Add Supporting Professional
+              </Button>
+              <Button
+                variant={addMode === 'invite' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setAddMode('invite')}
                 className="gap-2"
               >
                 <Plus className="h-4 w-4" />
@@ -243,9 +256,26 @@ export function AddContactDialog({ open, onOpenChange }: AddContactDialogProps) 
                   </Button>
                 </div>
               </div>
+            ) : addMode === 'manual' ? (
+              <div className="flex-1 overflow-auto">
+                <ManualContactForm
+                  onSubmit={async (data) => {
+                    await addManualContact(data);
+                    onOpenChange(false);
+                  }}
+                  isLoading={isAddingManualContact}
+                />
+              </div>
             ) : (
               <div className="flex-1 overflow-auto">
-                <SendClientInvitationForm onSuccess={() => onOpenChange(false)} />
+                <UnifiedInvitationForm 
+                  onSubmit={async (data) => {
+                    await sendInvitation(data);
+                    onOpenChange(false);
+                  }}
+                  isLoading={isSending}
+                  defaultUserType="client"
+                />
               </div>
             )}
           </TabsContent>
@@ -262,9 +292,18 @@ export function AddContactDialog({ open, onOpenChange }: AddContactDialogProps) 
                 Search Existing
               </Button>
               <Button
-                variant={addMode === 'new' ? 'default' : 'outline'}
+                variant={addMode === 'manual' ? 'default' : 'outline'}
                 size="sm"
-                onClick={() => setAddMode('new')}
+                onClick={() => setAddMode('manual')}
+                className="gap-2"
+              >
+                <Plus className="h-4 w-4" />
+                Add Manually
+              </Button>
+              <Button
+                variant={addMode === 'invite' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setAddMode('invite')}
                 className="gap-2"
               >
                 <Plus className="h-4 w-4" />
@@ -327,9 +366,26 @@ export function AddContactDialog({ open, onOpenChange }: AddContactDialogProps) 
                   )}
                 </ScrollArea>
               </div>
+            ) : addMode === 'manual' ? (
+              <div className="flex-1 overflow-auto">
+                <ManualContactForm
+                  onSubmit={async (data) => {
+                    await addManualContact(data);
+                    onOpenChange(false);
+                  }}
+                  isLoading={isAddingManualContact}
+                />
+              </div>
             ) : (
               <div className="flex-1 overflow-auto">
-                <SendRealtorInvitationForm onSuccess={() => onOpenChange(false)} />
+                <UnifiedInvitationForm 
+                  onSubmit={async (data) => {
+                    await sendInvitation(data);
+                    onOpenChange(false);
+                  }}
+                  isLoading={isSending}
+                  defaultUserType="realtor"
+                />
               </div>
             )}
           </TabsContent>
@@ -346,9 +402,18 @@ export function AddContactDialog({ open, onOpenChange }: AddContactDialogProps) 
                 Search Existing
               </Button>
               <Button
-                variant={addMode === 'new' ? 'default' : 'outline'}
+                variant={addMode === 'manual' ? 'default' : 'outline'}
                 size="sm"
-                onClick={() => setAddMode('new')}
+                onClick={() => setAddMode('manual')}
+                className="gap-2"
+              >
+                <Plus className="h-4 w-4" />
+                Add Manually
+              </Button>
+              <Button
+                variant={addMode === 'invite' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setAddMode('invite')}
                 className="gap-2"
               >
                 <Plus className="h-4 w-4" />
@@ -416,9 +481,26 @@ export function AddContactDialog({ open, onOpenChange }: AddContactDialogProps) 
                   )}
                 </ScrollArea>
               </div>
+            ) : addMode === 'manual' ? (
+              <div className="flex-1 overflow-auto">
+                <ManualContactForm
+                  onSubmit={async (data) => {
+                    await addManualContact(data);
+                    onOpenChange(false);
+                  }}
+                  isLoading={isAddingManualContact}
+                />
+              </div>
             ) : (
               <div className="flex-1 overflow-auto">
-                <SendTeamMemberInvitationForm onSuccess={() => onOpenChange(false)} />
+                <UnifiedInvitationForm 
+                  onSubmit={async (data) => {
+                    await sendInvitation(data);
+                    onOpenChange(false);
+                  }}
+                  isLoading={isSending}
+                  defaultUserType="mortgage_professional"
+                />
               </div>
             )}
           </TabsContent>

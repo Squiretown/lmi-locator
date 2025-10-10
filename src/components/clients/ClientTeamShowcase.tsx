@@ -12,11 +12,15 @@ interface TeamMember {
   phone?: string;
   website?: string;
   photo_url?: string;
-  visibility_settings: {
+  visibility_settings?: {
     visible_to_clients: boolean;
     showcase_role?: string;
     showcase_description?: string;
   };
+  // For manual contacts
+  visible_to_clients?: boolean;
+  role_title?: string;
+  is_manual_contact?: boolean;
 }
 
 interface ClientTeamShowcaseProps {
@@ -30,7 +34,10 @@ export const ClientTeamShowcase: React.FC<ClientTeamShowcaseProps> = ({
   title = "Your Professional Team",
   compact = false 
 }) => {
-  const visibleMembers = teamMembers.filter(member => member.visibility_settings.visible_to_clients);
+  const visibleMembers = teamMembers.filter(member => 
+    (member.visibility_settings?.visible_to_clients === true) ||
+    (member.visible_to_clients === true)
+  );
 
   if (visibleMembers.length === 0) {
     return null;
@@ -65,13 +72,13 @@ export const ClientTeamShowcase: React.FC<ClientTeamShowcaseProps> = ({
                 <div className="flex-1 min-w-0">
                   <h4 className="font-semibold text-foreground">{member.name}</h4>
                   <p className="text-sm font-medium text-primary">
-                    {member.visibility_settings.showcase_role || member.professional_type}
+                    {member.visibility_settings?.showcase_role || member.role_title || member.professional_type}
                   </p>
                   <p className="text-sm text-muted-foreground">{member.company}</p>
                 </div>
               </div>
 
-              {member.visibility_settings.showcase_description && (
+              {member.visibility_settings?.showcase_description && (
                 <p className="text-sm text-muted-foreground">
                   {member.visibility_settings.showcase_description}
                 </p>
@@ -79,8 +86,18 @@ export const ClientTeamShowcase: React.FC<ClientTeamShowcaseProps> = ({
 
               <div className="flex flex-wrap gap-2">
                 <Badge variant="secondary" className="text-xs">
-                  {member.professional_type === 'mortgage_professional' ? 'Mortgage Professional' : 'Realtor'}
+                  {member.professional_type === 'mortgage_professional' 
+                    ? 'Mortgage Professional' 
+                    : member.professional_type === 'realtor' 
+                    ? 'Realtor'
+                    : member.professional_type?.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())
+                  }
                 </Badge>
+                {member.is_manual_contact && (
+                  <Badge variant="outline" className="text-xs">
+                    Partner
+                  </Badge>
+                )}
               </div>
 
               {!compact && (
