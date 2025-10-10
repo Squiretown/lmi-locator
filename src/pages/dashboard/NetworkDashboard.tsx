@@ -53,12 +53,7 @@ export default function NetworkDashboard() {
     (m) => m.visibility_settings?.visible_to_clients
   ).length;
   const sharedClientsCount = 0; // TODO: Calculate from collaboration data
-  const activeDealsCount = 0; // TODO: Calculate from deals data
-
-  const handleAddContact = (type: "client" | "realtor" | "team") => {
-    // TODO: Open appropriate form/dialog based on type
-    console.log("Add contact:", type);
-  };
+  const activeDealsCount = 0; // TODO: Calculate from deals data;
 
   const handleToggleVisibility = async (id: string, visible: boolean) => {
     try {
@@ -94,25 +89,10 @@ export default function NetworkDashboard() {
             <Eye className="h-4 w-4 mr-2" />
             Team Visibility
           </Button>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button>
-                <Plus className="h-4 w-4 mr-2" />
-                Add Contact
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => handleAddContact("client")}>
-                Add Client
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleAddContact("realtor")}>
-                Add Realtor Partner
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleAddContact("team")}>
-                Add Team Member
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <Button onClick={() => setShowAddDialog(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            Add Contact
+          </Button>
         </div>
       </div>
 
@@ -262,7 +242,6 @@ export default function NetworkDashboard() {
       <AddContactDialog
         open={showAddDialog}
         onOpenChange={setShowAddDialog}
-        onSelectType={handleAddContact}
       />
 
       <TeamVisibilityDialog

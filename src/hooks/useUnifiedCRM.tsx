@@ -259,6 +259,75 @@ export function useUnifiedCRM() {
     }
   });
 
+  // Add client manually
+  const addClientManually = useMutation({
+    mutationFn: async (clientData: {
+      firstName: string;
+      lastName: string;
+      email?: string;
+      phone?: string;
+      notes?: string;
+    }) => {
+      if (!userContext) throw new Error('User context not loaded');
+
+      const { data, error } = await supabase
+        .from('client_profiles')
+        .insert({
+          professional_id: userContext.professionalId,
+          first_name: clientData.firstName,
+          last_name: clientData.lastName,
+          email: clientData.email,
+          phone: clientData.phone,
+          notes: clientData.notes,
+          status: 'active'
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['crm-contacts'] });
+      toast.success('Client added successfully');
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || 'Failed to add client');
+    }
+  });
+
+  // Search available professionals (not yet in network)
+  const searchAvailableProfessionals = async (query: string, professionalType?: string) => {
+    if (!userContext) return [];
+
+    let queryBuilder = supabase
+      .from('professionals')
+      .select('*')
+      .neq('id', userContext.professionalId)
+      .eq('status', 'active');
+
+    if (professionalType) {
+      queryBuilder = queryBuilder.eq('professional_type', professionalType);
+    }
+
+    if (query.trim()) {
+      queryBuilder = queryBuilder.or(`name.ilike.%${query}%,company.ilike.%${query}%,email.ilike.%${query}%`);
+    }
+
+    const { data, error } = await queryBuilder.limit(10);
+
+    if (error) throw error;
+
+    // Filter out professionals already in network
+    const existingIds = new Set(
+      allContacts
+        .filter(c => c.contact_type === 'professional')
+        .map(c => c.id)
+    );
+
+    return (data || []).filter(p => !existingIds.has(p.id));
+  };
+
   // Analytics
   const getCollaborationMetrics = () => {
     const totalTeamMembers = teamMembers.length;
@@ -285,10 +354,14 @@ export function useUnifiedCRM() {
     
     // Search
     searchContacts,
+    searchAvailableProfessionals,
     
     // Actions
     addExistingProfessional: addExistingProfessional.mutateAsync,
     isAddingProfessional: addExistingProfessional.isPending,
+    
+    addClientManually: addClientManually.mutateAsync,
+    isAddingClient: addClientManually.isPending,
     
     updateVisibility: updateVisibility.mutateAsync,
     isUpdatingVisibility: updateVisibility.isPending,
