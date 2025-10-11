@@ -28,6 +28,7 @@ export default function NetworkDashboard() {
     isLoading,
     searchContacts,
     updateVisibility,
+    removeManualContact,
   } = useUnifiedCRM();
 
   const [searchQuery, setSearchQuery] = useState("");
@@ -63,6 +64,14 @@ export default function NetworkDashboard() {
       });
     } catch (error) {
       console.error("Failed to update visibility:", error);
+    }
+  };
+
+  const handleRemoveContact = async (contactId: string) => {
+    try {
+      await removeManualContact(contactId);
+    } catch (error) {
+      console.error("Failed to remove contact:", error);
     }
   };
 
@@ -179,7 +188,11 @@ export default function NetworkDashboard() {
                 } else if (contact.relationship_type === "team_member") {
                   if (contact.contact_type === "professional") {
                     return (
-                      <PartnerCard key={contact.id} contact={contact} />
+                      <PartnerCard 
+                        key={contact.id} 
+                        contact={contact}
+                        onRemove={handleRemoveContact}
+                      />
                     );
                   }
                   return (
@@ -218,7 +231,13 @@ export default function NetworkDashboard() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {filteredTeam.map((contact) => {
                 if (contact.contact_type === "professional") {
-                  return <PartnerCard key={contact.id} contact={contact} />;
+                  return (
+                    <PartnerCard 
+                      key={contact.id} 
+                      contact={contact}
+                      onRemove={handleRemoveContact}
+                    />
+                  );
                 }
                 return (
                   <TeamMemberCard

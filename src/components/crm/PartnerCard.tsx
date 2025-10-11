@@ -5,9 +5,21 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Mail, Phone, MoreVertical, Users, MessageSquare, TrendingUp, Award } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { Mail, Phone, MoreVertical, Users, MessageSquare, TrendingUp, Award, Trash2 } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 interface PartnerCardProps {
@@ -24,6 +36,7 @@ interface PartnerCardProps {
   onViewClients?: (id: string) => void;
   onMessage?: (id: string) => void;
   onViewPerformance?: (id: string) => void;
+  onRemove?: (id: string) => void;
 }
 
 export function PartnerCard({
@@ -31,6 +44,7 @@ export function PartnerCard({
   onViewClients,
   onMessage,
   onViewPerformance,
+  onRemove,
 }: PartnerCardProps) {
   const getInitials = (name: string) => {
     return name
@@ -90,6 +104,33 @@ export function PartnerCard({
                 <TrendingUp className="h-4 w-4 mr-2" />
                 View Performance
               </DropdownMenuItem>
+              {onRemove && (
+                <>
+                  <DropdownMenuSeparator />
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Remove Contact
+                      </DropdownMenuItem>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Remove Contact</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Are you sure you want to remove {contact.full_name}? This will set their status to inactive.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={() => onRemove(contact.id)}>
+                          Remove
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
