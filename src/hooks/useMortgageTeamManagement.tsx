@@ -36,6 +36,11 @@ interface RealtorPartner {
   };
   role?: string;
   source: 'company' | 'explicit';
+  visibility_settings?: {
+    visible_to_clients: boolean;
+    showcase_role?: string;
+    showcase_description?: string;
+  };
 }
 
 interface TeamInvitation {
@@ -119,7 +124,22 @@ export function useMortgageTeamManagement() {
         }
       }];
 
-      // STEP 2: Query team_members table for explicitly added team relationships
+      // STEP 2: Fetch team-specific visibility settings
+      const { data: visibilityData, error: visError } = await supabase
+        .from('team_member_visibility')
+        .select('*')
+        .eq('team_owner_id', currentUser.id);
+
+      if (visError) {
+        console.error('Error fetching visibility settings:', visError);
+      }
+
+      // Create visibility lookup map
+      const visibilityMap = new Map(
+        (visibilityData || []).map(v => [v.professional_id, v])
+      );
+
+      // STEP 3: Query team_members table for explicitly added team relationships
       const { data: teamMembers, error } = await supabase
         .from('team_members')
         .select(`
@@ -144,7 +164,7 @@ export function useMortgageTeamManagement() {
         return team;
       }
 
-      // STEP 3: Get professional details for each team member
+      // STEP 4: Get professional details for each team member
       const memberUserIds = teamMembers.map(tm => tm.team_member_id);
       
       const { data: professionals, error: profError } = await supabase
@@ -158,34 +178,36 @@ export function useMortgageTeamManagement() {
         return team; // Return at least the account owner
       }
 
-      // STEP 4: Combine team member data with professional details
+      // STEP 5: Combine team member data with professional details and custom visibility
       const enrichedTeamMembers = teamMembers.map(tm => {
         const professional = professionals?.find(p => p.user_id === tm.team_member_id);
         if (!professional) return null;
 
+        // Check for custom team-specific visibility settings first
+        const customVisibility = visibilityMap.get(professional.id);
+        
         return {
           ...professional,
           source: 'explicit' as const,
           isAccountOwner: false,
           team_member_role: tm.role,
           permissions: tm.permissions,
-          visibility_settings: (typeof professional.visibility_settings === 'object' && 
-            professional.visibility_settings && 
-            !Array.isArray(professional.visibility_settings)) ? {
-            visible_to_clients: (professional.visibility_settings as any).visible_to_clients || false,
-            showcase_role: (professional.visibility_settings as any).showcase_role || '',
-            showcase_description: (professional.visibility_settings as any).showcase_description || ''
+          visibility_settings: customVisibility ? {
+            visible_to_clients: customVisibility.visible_to_clients,
+            showcase_role: customVisibility.showcase_role || professional.professional_type,
+            showcase_description: customVisibility.showcase_description || ''
           } : {
-            visible_to_clients: false,
-            showcase_role: '',
-            showcase_description: ''
+            // Fallback to professional's own settings or defaults
+            visible_to_clients: (professional.visibility_settings as any)?.visible_to_clients ?? true,
+            showcase_role: (professional.visibility_settings as any)?.showcase_role || professional.professional_type,
+            showcase_description: (professional.visibility_settings as any)?.showcase_description || ''
           }
         };
       }).filter(Boolean);
 
       console.log('Loaded explicit team members:', enrichedTeamMembers.length);
       
-      // STEP 5: Return account owner + team members
+      // STEP 6: Return account owner + team members
       return [...team, ...enrichedTeamMembers] as LendingTeamMember[];
     },
     enabled: !!currentProfessional?.id && !!currentUser?.id,
@@ -193,14 +215,28 @@ export function useMortgageTeamManagement() {
 
   // Fetch realtor partners from professional_teams
   const { data: realtorPartners = [], isLoading: isLoadingRealtors, refetch: refetchRealtorPartners } = useQuery({
-    queryKey: ['realtor-partners-unified', currentProfessional?.id],
+    queryKey: ['realtor-partners-unified', currentProfessional?.id, currentUser?.id],
     queryFn: async () => {
-      if (!currentProfessional?.id) {
+      if (!currentProfessional?.id || !currentUser?.id) {
         console.log('❌ No current professional ID for realtor partners query');
         return [];
       }
 
       console.log('🔍 Fetching realtor partners for professional:', currentProfessional.id);
+
+      // Fetch team-specific visibility settings
+      const { data: visibilityData, error: visError } = await supabase
+        .from('team_member_visibility')
+        .select('*')
+        .eq('team_owner_id', currentUser.id);
+
+      if (visError) {
+        console.error('Error fetching visibility settings:', visError);
+      }
+
+      const visibilityMap = new Map(
+        (visibilityData || []).map(v => [v.professional_id, v])
+      );
 
       // First get team relationships
       const { data: teamData, error: teamError } = await supabase
@@ -238,13 +274,15 @@ export function useMortgageTeamManagement() {
         throw realtorsError;
       }
 
-      // Combine team and realtor data
+      // Combine team and realtor data with custom visibility
       const result = teamData.map(team => {
         const realtor = realtorsData?.find(r => r.id === team.realtor_id);
         if (!realtor) {
           console.warn('⚠️ No realtor found for ID:', team.realtor_id);
           return null;
         }
+        
+        const customVisibility = visibilityMap.get(realtor.id);
         
         console.log('✅ Creating realtor partner:', { team, realtor });
         
@@ -259,14 +297,19 @@ export function useMortgageTeamManagement() {
             license_number: realtor.license_number,
           },
           role: team.role,
-          source: 'explicit' as const
+          source: 'explicit' as const,
+          visibility_settings: customVisibility ? {
+            visible_to_clients: customVisibility.visible_to_clients,
+            showcase_role: customVisibility.showcase_role,
+            showcase_description: customVisibility.showcase_description
+          } : undefined
         };
       }).filter(Boolean) as RealtorPartner[];
 
       console.log('🎉 Final realtor partners result:', result);
       return result;
     },
-    enabled: !!currentProfessional?.id,
+    enabled: !!currentProfessional?.id && !!currentUser?.id,
     staleTime: 0, // Always refetch to ensure fresh data
     retry: 3,
   });
@@ -349,17 +392,40 @@ export function useMortgageTeamManagement() {
         showcase_description?: string;
       } 
     }) => {
-      const { data, error } = await supabase
-        .from('professionals')
-        .update({ 
-          visibility_settings: visibilitySettings
-        })
-        .eq('id', professionalId)
-        .select()
-        .single();
+      if (!currentUser?.id) throw new Error('User not authenticated');
 
-      if (error) throw error;
-      return data;
+      // Check if this is the user's own profile
+      const isOwnProfile = currentProfessional?.id === professionalId;
+      
+      if (isOwnProfile) {
+        // Update own professional profile directly
+        const { data, error } = await supabase
+          .from('professionals')
+          .update({ visibility_settings: visibilitySettings })
+          .eq('id', professionalId)
+          .select()
+          .single();
+        if (error) throw error;
+        return data;
+      } else {
+        // Use upsert for team member visibility
+        const { data, error } = await supabase
+          .from('team_member_visibility')
+          .upsert({
+            team_owner_id: currentUser.id,
+            professional_id: professionalId,
+            visible_to_clients: visibilitySettings.visible_to_clients,
+            showcase_role: visibilitySettings.showcase_role,
+            showcase_description: visibilitySettings.showcase_description,
+            updated_at: new Date().toISOString()
+          }, {
+            onConflict: 'team_owner_id,professional_id'
+          })
+          .select()
+          .single();
+        if (error) throw error;
+        return data;
+      }
     },
     onSuccess: () => {
       toast.success('Visibility settings updated successfully');
@@ -389,7 +455,7 @@ export function useMortgageTeamManagement() {
       source: partner.source,
       role: partner.role,
       isAccountOwner: false,
-      visibility_settings: {
+      visibility_settings: partner.visibility_settings || {
         visible_to_clients: true,
         showcase_role: 'Realtor Partner',
         showcase_description: `Realtor at ${partner.realtor.company}`

@@ -3186,6 +3186,47 @@ export type Database = {
         }
         Relationships: []
       }
+      team_member_visibility: {
+        Row: {
+          created_at: string
+          id: string
+          professional_id: string
+          showcase_description: string | null
+          showcase_role: string | null
+          team_owner_id: string
+          updated_at: string
+          visible_to_clients: boolean
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          professional_id: string
+          showcase_description?: string | null
+          showcase_role?: string | null
+          team_owner_id: string
+          updated_at?: string
+          visible_to_clients?: boolean
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          professional_id?: string
+          showcase_description?: string | null
+          showcase_role?: string | null
+          team_owner_id?: string
+          updated_at?: string
+          visible_to_clients?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_member_visibility_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: false
+            referencedRelation: "professionals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       team_members: {
         Row: {
           added_at: string | null
