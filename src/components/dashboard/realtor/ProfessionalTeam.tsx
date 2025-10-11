@@ -8,7 +8,7 @@ import { useTeamManagement } from '@/hooks/useTeamManagement';
 import { useNavigate } from 'react-router-dom';
 
 export const ProfessionalTeam: React.FC = () => {
-  const { teamMembers, isLoadingTeam } = useTeamManagement();
+  const { teamMembers, isLoadingTeam, currentProfessional } = useTeamManagement();
   const navigate = useNavigate();
 
   const handleManageTeam = () => {
@@ -46,7 +46,9 @@ export const ProfessionalTeam: React.FC = () => {
           Your Professional Team
         </CardTitle>
         <p className="text-sm text-muted-foreground">
-          Collaborate with mortgage professionals and other experts
+          {currentProfessional?.professionalType === 'realtor'
+            ? 'Your mortgage lending partners'
+            : 'Collaborate with mortgage professionals and other experts'}
         </p>
       </CardHeader>
       <CardContent>
@@ -54,7 +56,9 @@ export const ProfessionalTeam: React.FC = () => {
           <div className="text-center py-6">
             <Users className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
             <p className="text-sm text-muted-foreground mb-4">
-              No team members yet. Start building your professional network.
+              {currentProfessional?.professionalType === 'realtor'
+                ? 'No mortgage professionals yet. Connect with lending partners.'
+                : 'No team members yet. Start building your professional network.'}
             </p>
             <Button onClick={handleManageTeam} variant="outline" size="sm">
               <ArrowRight className="h-4 w-4 mr-2" />
@@ -63,29 +67,44 @@ export const ProfessionalTeam: React.FC = () => {
           </div>
         ) : (
           <div className="space-y-4">
-            {teamMembers.slice(0, 3).map((member) => (
-              <div key={member.id} className="flex items-start justify-between p-3 rounded-lg border">
-                <div className="flex-1">
-                  <div className="font-medium text-sm">
-                    {member.realtor?.name || 'Unknown'}
+            {teamMembers.slice(0, 3).map((member) => {
+              const displayedProfessional = currentProfessional?.professionalType === 'realtor'
+                ? member.mortgageProfessional
+                : member.realtor;
+              
+              const roleLabel = currentProfessional?.professionalType === 'realtor'
+                ? 'Mortgage Professional'
+                : 'Realtor';
+
+              return (
+                <div key={member.id} className="flex items-start justify-between p-3 rounded-lg border">
+                  <div className="flex-1">
+                    <div className="font-medium text-sm">
+                      {displayedProfessional?.name || 'Unknown'}
+                    </div>
+                    <div className="text-xs text-muted-foreground mb-2">
+                      {displayedProfessional?.company || 'No company listed'}
+                    </div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <Badge variant="outline" className="text-xs">
+                        {roleLabel}
+                      </Badge>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      {displayedProfessional?.phone && (
+                        <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                          <Phone className="h-3 w-3" />
+                          {displayedProfessional.phone}
+                        </div>
+                      )}
+                    </div>
                   </div>
-                  <div className="text-xs text-muted-foreground mb-2">
-                    {member.realtor?.company || 'No company listed'}
-                  </div>
-                  <div className="flex items-center gap-3">
-                    {member.realtor?.phone && (
-                      <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                        <Phone className="h-3 w-3" />
-                        {member.realtor.phone}
-                      </div>
-                    )}
-                  </div>
+                  <Badge variant="secondary" className="text-xs">
+                    {member.status}
+                  </Badge>
                 </div>
-                <Badge variant="secondary" className="text-xs">
-                  {member.status}
-                </Badge>
-              </div>
-            ))}
+              );
+            })}
             
             <div className="text-center pt-2">
               <Button onClick={handleManageTeam} variant="ghost" size="sm">
