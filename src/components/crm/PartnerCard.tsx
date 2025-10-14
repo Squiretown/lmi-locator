@@ -19,7 +19,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Mail, Phone, MoreVertical, Users, MessageSquare, TrendingUp, Award, Trash2 } from "lucide-react";
+import { Mail, Phone, MoreVertical, Users, MessageSquare, Trash2 } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 interface PartnerCardProps {
@@ -33,17 +33,17 @@ interface PartnerCardProps {
     status: string;
     professional_type?: string;
   };
+  sharedClientsCount?: number;
   onViewClients?: (id: string) => void;
   onMessage?: (id: string) => void;
-  onViewPerformance?: (id: string) => void;
   onRemove?: (id: string) => void;
 }
 
 export function PartnerCard({
   contact,
+  sharedClientsCount,
   onViewClients,
   onMessage,
-  onViewPerformance,
   onRemove,
 }: PartnerCardProps) {
   const getInitials = (name: string) => {
@@ -54,11 +54,6 @@ export function PartnerCard({
       .toUpperCase()
       .slice(0, 2);
   };
-
-  // Mock metrics - in real implementation these would come from analytics
-  const sharedClients = 8;
-  const closeRate = 72;
-  const pipelineValue = "1.2M";
 
   return (
     <Card className="hover:shadow-md transition-shadow">
@@ -99,10 +94,6 @@ export function PartnerCard({
               <DropdownMenuItem onClick={() => onMessage?.(contact.id)}>
                 <MessageSquare className="h-4 w-4 mr-2" />
                 Send Message
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => onViewPerformance?.(contact.id)}>
-                <TrendingUp className="h-4 w-4 mr-2" />
-                View Performance
               </DropdownMenuItem>
               {onRemove && (
                 <>
@@ -153,32 +144,13 @@ export function PartnerCard({
               <span className="font-medium">{contact.company}</span>
             </div>
           )}
-          <div className="text-sm text-muted-foreground">
-            <span className="font-medium">License:</span> #987654321
-          </div>
         </div>
 
-        <div className="pt-3 border-t space-y-3">
-          <div className="text-sm font-medium">Partnership Metrics</div>
-          
-          <div className="grid grid-cols-3 gap-2 text-sm">
-            <div>
-              <span className="text-muted-foreground">Shared</span>
-              <p className="font-semibold">{sharedClients}</p>
-            </div>
-            <div>
-              <span className="text-muted-foreground">Close Rate</span>
-              <p className="font-semibold">{closeRate}%</p>
-            </div>
-            <div>
-              <span className="text-muted-foreground">Pipeline</span>
-              <p className="font-semibold">${pipelineValue}</p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <Award className="h-4 w-4 text-green-600" />
-            <span className="text-sm font-medium text-green-600">Top Performer</span>
+        <div className="pt-3 border-t">
+          <div className="flex items-center gap-2 text-sm">
+            <Users className="h-4 w-4 text-muted-foreground" />
+            <span className="text-muted-foreground">Shared Clients:</span>
+            <span className="font-semibold">{sharedClientsCount || 0}</span>
           </div>
         </div>
       </CardContent>

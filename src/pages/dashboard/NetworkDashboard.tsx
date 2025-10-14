@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import { useUnifiedCRM } from "@/hooks/useUnifiedCRM";
+import { supabase } from "@/integrations/supabase/client";
 import { NetworkStats } from "@/components/crm/NetworkStats";
 import { ClientCard } from "@/components/crm/ClientCard";
 import { TeamMemberCard } from "@/components/crm/TeamMemberCard";
@@ -73,6 +74,42 @@ export default function NetworkDashboard() {
       console.error("Failed to remove contact:", error);
     }
   };
+
+  // Get shared clients count for a professional
+  const getSharedClientsCount = async (professionalId: string) => {
+    try {
+      const { count } = await supabase
+        .from('client_team_assignments')
+        .select('client_id', { count: 'exact', head: true })
+        .eq('professional_id', professionalId)
+        .eq('status', 'active');
+      
+      return count || 0;
+    } catch (error) {
+      console.error("Failed to get shared clients count:", error);
+      return 0;
+    }
+  };
+
+  // Memoize shared clients counts
+  const [sharedClientsCounts, setSharedClientsCounts] = useState<Record<string, number>>({});
+
+  useMemo(() => {
+    const loadCounts = async () => {
+      const counts: Record<string, number> = {};
+      const professionalContacts = filteredContacts.filter(
+        c => c.relationship_type === "team_member" && c.contact_type === "professional"
+      );
+      
+      for (const contact of professionalContacts) {
+        counts[contact.id] = await getSharedClientsCount(contact.id);
+      }
+      
+      setSharedClientsCounts(counts);
+    };
+    
+    loadCounts();
+  }, [filteredContacts]);
 
   if (isLoading) {
     return (
@@ -189,6 +226,7 @@ export default function NetworkDashboard() {
                       <PartnerCard 
                         key={contact.id} 
                         contact={contact}
+                        sharedClientsCount={sharedClientsCounts[contact.id]}
                         onRemove={handleRemoveContact}
                       />
                     );
@@ -233,6 +271,7 @@ export default function NetworkDashboard() {
                     <PartnerCard 
                       key={contact.id} 
                       contact={contact}
+                      sharedClientsCount={sharedClientsCounts[contact.id]}
                       onRemove={handleRemoveContact}
                     />
                   );
