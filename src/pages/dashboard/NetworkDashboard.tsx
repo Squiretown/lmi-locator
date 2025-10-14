@@ -54,7 +54,6 @@ export default function NetworkDashboard() {
     (m) => m.visibility_settings?.visible_to_clients
   ).length;
   const sharedClientsCount = 0; // TODO: Calculate from collaboration data
-  const activeDealsCount = 0; // TODO: Calculate from deals data;
 
   const handleToggleVisibility = async (id: string, visible: boolean) => {
     try {
@@ -114,7 +113,6 @@ export default function NetworkDashboard() {
         teamMembersCount={teamMembers.length}
         visibleTeamCount={visibleTeamCount}
         sharedClientsCount={sharedClientsCount}
-        activeDealsCount={activeDealsCount}
       />
 
       {/* Search & Filter */}

@@ -49,7 +49,6 @@ export function TeamMemberCard({
 
   // Mock metrics - in real implementation these would come from analytics
   const sharedClients = 5;
-  const activeDeals = 3;
 
   return (
     <Card className="hover:shadow-md transition-shadow">
@@ -149,15 +148,9 @@ export function TeamMemberCard({
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-2 text-sm">
-            <div>
-              <span className="text-muted-foreground">Shared Clients</span>
-              <p className="font-semibold">{sharedClients}</p>
-            </div>
-            <div>
-              <span className="text-muted-foreground">Active Deals</span>
-              <p className="font-semibold">{activeDeals}</p>
-            </div>
+          <div className="text-sm">
+            <span className="text-muted-foreground">Shared Clients</span>
+            <p className="font-semibold">{sharedClients}</p>
           </div>
 
           <div className="flex flex-wrap gap-1">

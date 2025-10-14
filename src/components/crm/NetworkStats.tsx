@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, UserCheck, Briefcase, UsersRound, Handshake, TrendingUp } from "lucide-react";
+import { Users, UserCheck, Briefcase, UsersRound, Handshake } from "lucide-react";
 
 interface NetworkStatsProps {
   totalContacts: number;
@@ -9,8 +9,6 @@ interface NetworkStatsProps {
   teamMembersCount: number;
   visibleTeamCount: number;
   sharedClientsCount: number;
-  activeDealsCount: number;
-  pipelineValue?: string;
 }
 
 export function NetworkStats({
@@ -21,8 +19,6 @@ export function NetworkStats({
   teamMembersCount,
   visibleTeamCount,
   sharedClientsCount,
-  activeDealsCount,
-  pipelineValue,
 }: NetworkStatsProps) {
   const stats = [
     {
@@ -54,12 +50,6 @@ export function NetworkStats({
       value: sharedClientsCount,
       icon: Handshake,
       subtitle: "Collaborative cases",
-    },
-    {
-      title: "Active Deals",
-      value: activeDealsCount,
-      icon: TrendingUp,
-      subtitle: pipelineValue ? `$${pipelineValue}` : null,
     },
   ];
 
