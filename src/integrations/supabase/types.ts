@@ -2216,8 +2216,10 @@ export type Database = {
       }
       professionals: {
         Row: {
+          access_code: string | null
           address: string | null
           bio: string | null
+          brand_color: string | null
           company: string
           created_at: string
           email: string | null
@@ -2226,6 +2228,7 @@ export type Database = {
           is_verified: boolean | null
           last_updated: string
           license_number: string
+          logo_url: string | null
           name: string
           notes: string | null
           phone: string | null
@@ -2236,10 +2239,13 @@ export type Database = {
           user_id: string
           visibility_settings: Json | null
           website: string | null
+          welcome_message: string | null
         }
         Insert: {
+          access_code?: string | null
           address?: string | null
           bio?: string | null
+          brand_color?: string | null
           company: string
           created_at?: string
           email?: string | null
@@ -2248,6 +2254,7 @@ export type Database = {
           is_verified?: boolean | null
           last_updated?: string
           license_number: string
+          logo_url?: string | null
           name: string
           notes?: string | null
           phone?: string | null
@@ -2258,10 +2265,13 @@ export type Database = {
           user_id: string
           visibility_settings?: Json | null
           website?: string | null
+          welcome_message?: string | null
         }
         Update: {
+          access_code?: string | null
           address?: string | null
           bio?: string | null
+          brand_color?: string | null
           company?: string
           created_at?: string
           email?: string | null
@@ -2270,6 +2280,7 @@ export type Database = {
           is_verified?: boolean | null
           last_updated?: string
           license_number?: string
+          logo_url?: string | null
           name?: string
           notes?: string | null
           phone?: string | null
@@ -2280,6 +2291,7 @@ export type Database = {
           user_id?: string
           visibility_settings?: Json | null
           website?: string | null
+          welcome_message?: string | null
         }
         Relationships: []
       }
@@ -3412,6 +3424,48 @@ export type Database = {
           },
         ]
       }
+      user_devices: {
+        Row: {
+          browser: string | null
+          device_fingerprint: string
+          device_name: string | null
+          device_type: string | null
+          first_registered: string | null
+          id: string
+          ip_address: string | null
+          is_trusted: boolean | null
+          last_used: string | null
+          os: string | null
+          user_id: string | null
+        }
+        Insert: {
+          browser?: string | null
+          device_fingerprint: string
+          device_name?: string | null
+          device_type?: string | null
+          first_registered?: string | null
+          id?: string
+          ip_address?: string | null
+          is_trusted?: boolean | null
+          last_used?: string | null
+          os?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          browser?: string | null
+          device_fingerprint?: string
+          device_name?: string | null
+          device_type?: string | null
+          first_registered?: string | null
+          id?: string
+          ip_address?: string | null
+          is_trusted?: boolean | null
+          last_used?: string | null
+          os?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       user_invitations: {
         Row: {
           accepted_at: string | null
@@ -4272,6 +4326,10 @@ export type Database = {
           tract_median_family_income: number
         }[]
       }
+      generate_access_code: {
+        Args: { p_name: string }
+        Returns: string
+      }
       generate_invitation_code: {
         Args: Record<PropertyKey, never>
         Returns: string
@@ -4705,7 +4763,7 @@ export type Database = {
         Args:
           | { tbl_oid: unknown; use_typmod?: boolean }
           | { use_typmod?: boolean }
-        Returns: number
+        Returns: string
       }
       postgis_addbbox: {
         Args: { "": unknown }
