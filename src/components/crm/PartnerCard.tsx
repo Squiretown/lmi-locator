@@ -19,7 +19,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Mail, Phone, MoreVertical, Users, MessageSquare, Trash2 } from "lucide-react";
+import { Mail, Phone, MoreVertical, Users, MessageSquare, Trash2, Edit } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 interface PartnerCardProps {
@@ -34,6 +34,7 @@ interface PartnerCardProps {
     professional_type?: string;
   };
   sharedClientsCount?: number;
+  onEdit?: (id: string) => void;
   onViewClients?: (id: string) => void;
   onMessage?: (id: string) => void;
   onRemove?: (id: string) => void;
@@ -42,6 +43,7 @@ interface PartnerCardProps {
 export function PartnerCard({
   contact,
   sharedClientsCount,
+  onEdit,
   onViewClients,
   onMessage,
   onRemove,
@@ -87,6 +89,12 @@ export function PartnerCard({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
+              {onEdit && (
+                <DropdownMenuItem onClick={() => onEdit(contact.id)}>
+                  <Edit className="h-4 w-4 mr-2" />
+                  Edit Contact
+                </DropdownMenuItem>
+              )}
               <DropdownMenuItem onClick={() => onViewClients?.(contact.id)}>
                 <Users className="h-4 w-4 mr-2" />
                 View Shared Clients

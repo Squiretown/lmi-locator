@@ -1,6 +1,10 @@
 import { useState, useMemo, useEffect } from "react";
 import { useUnifiedCRM } from "@/hooks/useUnifiedCRM";
 import { supabase } from "@/integrations/supabase/client";
+import ContactDialog from "@/components/contacts/ContactDialog";
+import { ContactFormValues } from "@/lib/api/types";
+import { updateContact } from "@/lib/api/contacts/mutations";
+import { toast } from "sonner";
 import { NetworkStats } from "@/components/crm/NetworkStats";
 import { ClientCard } from "@/components/crm/ClientCard";
 import { TeamMemberCard } from "@/components/crm/TeamMemberCard";
@@ -93,6 +97,8 @@ export default function NetworkDashboard() {
 
   // Load shared clients counts
   const [sharedClientsCounts, setSharedClientsCounts] = useState<Record<string, number>>({});
+  const [editingContact, setEditingContact] = useState<any>(null);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
   useEffect(() => {
     const loadCounts = async () => {
@@ -110,6 +116,28 @@ export default function NetworkDashboard() {
     
     loadCounts();
   }, [teamMembers]);
+
+  const handleEditContact = (contactId: string) => {
+    const contact = allContacts.find(c => c.id === contactId);
+    if (contact) {
+      setEditingContact(contact);
+      setIsEditDialogOpen(true);
+    }
+  };
+
+  const handleSaveContact = async (data: ContactFormValues) => {
+    if (!editingContact) return;
+    
+    try {
+      await updateContact(editingContact.id, data);
+      toast.success("Contact updated successfully");
+      setIsEditDialogOpen(false);
+      setEditingContact(null);
+    } catch (error) {
+      console.error("Error updating contact:", error);
+      toast.error("Failed to update contact");
+    }
+  };
 
   if (isLoading) {
     return (
@@ -223,12 +251,13 @@ export default function NetworkDashboard() {
                 } else if (contact.relationship_type === "team_member") {
                   if (contact.contact_type === "professional") {
                     return (
-                      <PartnerCard 
-                        key={contact.id} 
-                        contact={contact}
-                        sharedClientsCount={sharedClientsCounts[contact.id]}
-                        onRemove={handleRemoveContact}
-                      />
+                <PartnerCard 
+                  key={contact.id} 
+                  contact={contact}
+                  sharedClientsCount={sharedClientsCounts[contact.id]}
+                  onEdit={handleEditContact}
+                  onRemove={handleRemoveContact}
+                />
                     );
                   }
                   return (
@@ -268,12 +297,13 @@ export default function NetworkDashboard() {
               {filteredTeam.map((contact) => {
                 if (contact.contact_type === "professional") {
                   return (
-                    <PartnerCard 
-                      key={contact.id} 
-                      contact={contact}
-                      sharedClientsCount={sharedClientsCounts[contact.id]}
-                      onRemove={handleRemoveContact}
-                    />
+                <PartnerCard 
+                  key={contact.id} 
+                  contact={contact}
+                  sharedClientsCount={sharedClientsCounts[contact.id]}
+                  onEdit={handleEditContact}
+                  onRemove={handleRemoveContact}
+                />
                   );
                 }
                 return (
@@ -309,6 +339,26 @@ export default function NetworkDashboard() {
         open={assignmentDialogOpen}
         onOpenChange={setAssignmentDialogOpen}
         clientId={selectedClientId}
+      />
+
+      <ContactDialog
+        isOpen={isEditDialogOpen}
+        onClose={() => {
+          setIsEditDialogOpen(false);
+          setEditingContact(null);
+        }}
+        onSave={handleSaveContact}
+        isEditMode={true}
+        initialValues={editingContact ? {
+          firstName: editingContact.first_name,
+          lastName: editingContact.last_name || "",
+          email: editingContact.email || "",
+          phone: editingContact.phone || "",
+          address: "",
+          notes: editingContact.notes || "",
+          status: editingContact.status,
+        } : undefined}
+        title="Edit Contact"
       />
     </div>
   );
