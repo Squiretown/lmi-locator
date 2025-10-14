@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useUnifiedCRM } from "@/hooks/useUnifiedCRM";
 import { supabase } from "@/integrations/supabase/client";
 import { NetworkStats } from "@/components/crm/NetworkStats";
@@ -91,14 +91,14 @@ export default function NetworkDashboard() {
     }
   };
 
-  // Memoize shared clients counts
+  // Load shared clients counts
   const [sharedClientsCounts, setSharedClientsCounts] = useState<Record<string, number>>({});
 
-  useMemo(() => {
+  useEffect(() => {
     const loadCounts = async () => {
       const counts: Record<string, number> = {};
-      const professionalContacts = filteredContacts.filter(
-        c => c.relationship_type === "team_member" && c.contact_type === "professional"
+      const professionalContacts = teamMembers.filter(
+        c => c.contact_type === "professional"
       );
       
       for (const contact of professionalContacts) {
@@ -109,7 +109,7 @@ export default function NetworkDashboard() {
     };
     
     loadCounts();
-  }, [filteredContacts]);
+  }, [teamMembers]);
 
   if (isLoading) {
     return (
