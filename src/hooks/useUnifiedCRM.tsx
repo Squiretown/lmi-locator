@@ -70,7 +70,6 @@ export function useUnifiedCRM() {
       const { data, error } = await supabase
         .from('crm_contacts_view')
         .select('*')
-        .eq('related_to_professional_id', userContext.professionalId)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
