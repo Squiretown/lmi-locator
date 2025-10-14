@@ -110,11 +110,13 @@ const SignupForm: React.FC = () => {
     if (user && userType && signupSuccess) {
       const timer = setTimeout(() => {
         if (userType === 'realtor') {
-          navigate('/realtor');
+          navigate('/dashboard/realtor');
         } else if (userType === 'mortgage_professional') {
-          navigate('/mortgage-professional');
+          navigate('/dashboard/mortgage');
+        } else if (userType === 'client') {
+          navigate('/dashboard/client');
         } else {
-          navigate('/dashboard');
+          navigate('/dashboard/client');
         }
       }, 3000); // 3 second delay to show success message
 
