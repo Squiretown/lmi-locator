@@ -82,10 +82,15 @@ export function useMortgageTeamManagement() {
   });
 
   // Get current professional
-  const { data: currentProfessional } = useQuery({
+  const { data: currentProfessional, isLoading: isLoadingProfessional } = useQuery({
     queryKey: ['current-professional'],
     queryFn: async () => {
-      if (!currentUser?.id) return null;
+      if (!currentUser?.id) {
+        console.log('❌ No current user for professional query');
+        return null;
+      }
+      
+      console.log('🔍 Fetching current professional for user:', currentUser.id);
       
       const { data, error } = await supabase
         .from('professionals')
@@ -94,12 +99,15 @@ export function useMortgageTeamManagement() {
         .single();
 
       if (error) {
-        console.error('Error fetching current professional:', error);
+        console.error('❌ Error fetching current professional:', error);
         return null;
       }
+      
+      console.log('✅ Current professional loaded:', data);
       return data;
     },
     enabled: !!currentUser?.id,
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
 
   // Query explicit internal team members from team_members table
@@ -508,12 +516,25 @@ export function useMortgageTeamManagement() {
     }
   });
 
-  // Enable real-time updates
+  // Enable real-time updates - with improved logging
+  useEffect(() => {
+    if (currentProfessional?.id) {
+      console.log('🔄 Initializing realtime updates for professional:', currentProfessional.id);
+    } else {
+      console.log('⏸️ Waiting for professional to load before setting up realtime updates');
+    }
+  }, [currentProfessional?.id]);
+  
   useRealtimeTeamUpdates(currentProfessional?.id);
 
   // Also listen for professional_teams changes specifically for immediate updates
   useEffect(() => {
-    if (!currentProfessional?.id) return;
+    if (!currentProfessional?.id) {
+      console.log('⏸️ Skipping direct team-changes subscription - no professional ID');
+      return;
+    }
+
+    console.log('🔄 Setting up direct team-changes subscription');
 
     const channel = supabase
       .channel('team-changes')
@@ -525,18 +546,32 @@ export function useMortgageTeamManagement() {
           table: 'professional_teams'
         },
         (payload) => {
-          console.log('Professional teams change detected:', payload);
+          console.log('✅ Professional teams change detected (direct subscription):', payload);
           // Invalidate queries when team relationships change
           queryClient.invalidateQueries({ queryKey: ['lending-team-unified'] });
           queryClient.invalidateQueries({ queryKey: ['realtor-partners-unified'] });
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log('📡 Team-changes channel subscription status:', status);
+      });
 
     return () => {
+      console.log('🧹 Cleaning up team-changes subscription');
       supabase.removeChannel(channel);
     };
   }, [currentProfessional?.id, queryClient]);
+
+  // Log combined team members for debugging
+  useEffect(() => {
+    console.log('📊 Team members combined:', {
+      lendingTeam: lendingTeam.length,
+      realtorPartners: realtorPartners.length,
+      totalTeamMembers: teamMembers.length,
+      professionalLoaded: !!currentProfessional,
+      teamMembers
+    });
+  }, [lendingTeam, realtorPartners, teamMembers, currentProfessional]);
 
   return {
     // Data
@@ -546,7 +581,7 @@ export function useMortgageTeamManagement() {
     currentProfessional,
     
     // Loading states
-    isLoading: isLoadingLending || isLoadingRealtors,
+    isLoading: isLoadingProfessional || isLoadingLending || isLoadingRealtors,
     
     // Enhanced actions
     inviteProfessional: inviteProfessionalMutation.mutate,
