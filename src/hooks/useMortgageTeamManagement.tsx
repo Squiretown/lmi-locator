@@ -463,25 +463,35 @@ export function useMortgageTeamManagement() {
     })),
   ];
 
-  // Manual add existing professional mutation
+  // Manual add existing professional mutation (handles both mortgage pros and realtors)
   const addExistingProfessionalMutation = useMutation({
     mutationFn: async ({ professionalId, notes }: { professionalId: string; notes?: string }) => {
       if (!currentProfessional) throw new Error('Professional not loaded');
 
+      // Determine which field should have the current user's ID based on their type
+      const insertData = currentProfessional.professional_type === 'mortgage_professional'
+        ? {
+            mortgage_professional_id: currentProfessional.id,
+            realtor_id: professionalId,
+            status: 'active' as const,
+            notes
+          }
+        : {
+            mortgage_professional_id: professionalId,
+            realtor_id: currentProfessional.id,
+            status: 'active' as const,
+            notes
+          };
+
       const { data, error } = await supabase
         .from('professional_teams')
-        .insert({
-          mortgage_professional_id: currentProfessional.id,
-          realtor_id: professionalId,
-          status: 'active',
-          notes
-        })
+        .insert(insertData)
         .select()
         .single();
 
       if (error) {
         if (error.code === '23505') {
-          throw new Error('This realtor is already on your team');
+          throw new Error('This professional is already on your team');
         }
         throw error;
       }

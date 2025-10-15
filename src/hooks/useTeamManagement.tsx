@@ -222,7 +222,7 @@ export const useTeamManagement = () => {
     },
   });
 
-  // Add realtor to team (when they accept invitation)
+  // Add team member (handles both mortgage pros adding realtors and realtors adding mortgage pros)
   const addTeamMemberMutation = useMutation({
     mutationFn: async (data: {
       realtorId: string;
@@ -232,13 +232,22 @@ export const useTeamManagement = () => {
         throw new Error('No professional profile found');
       }
 
+      // Determine which field should have the current user's ID based on their type
+      const insertData = currentProfessional.professionalType === 'mortgage_professional'
+        ? {
+            mortgage_professional_id: currentProfessional.id,
+            realtor_id: data.realtorId,
+            notes: data.notes,
+          }
+        : {
+            mortgage_professional_id: data.realtorId,
+            realtor_id: currentProfessional.id,
+            notes: data.notes,
+          };
+
       const { data: team, error } = await supabase
         .from('professional_teams')
-        .insert({
-          realtor_id: data.realtorId,
-          notes: data.notes,
-          mortgage_professional_id: currentProfessional.id,
-        })
+        .insert(insertData)
         .select()
         .single();
 
