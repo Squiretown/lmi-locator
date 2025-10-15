@@ -1,14 +1,57 @@
 import React from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Phone, Mail, Users, Calendar } from 'lucide-react';
-import { useTeamManagement } from '@/hooks/useTeamManagement';
 import { format } from 'date-fns';
 
 export const YourTeamCard = () => {
-  const { clientTeams, isLoadingClientTeams } = useTeamManagement();
+  // Fetch client's team assignments
+  const { data: clientTeams = [], isLoading: isLoadingClientTeams } = useQuery({
+    queryKey: ['client-team-assignments'],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      // First get the client profile for this user
+      const { data: clientProfile, error: profileError } = await supabase
+        .from('client_profiles')
+        .select('id')
+        .eq('user_id', user.id)
+        .single();
+
+      if (profileError || !clientProfile) {
+        console.log('No client profile found for user');
+        return [];
+      }
+
+      // Then get team assignments for this client
+      const { data, error } = await supabase
+        .from('client_team_assignments')
+        .select(`
+          id,
+          professional_id,
+          professional_role,
+          assigned_at,
+          professionals!inner (
+            id,
+            name,
+            company_name,
+            email,
+            phone,
+            type
+          )
+        `)
+        .eq('client_id', clientProfile.id)
+        .eq('status', 'active');
+
+      if (error) throw error;
+      return data || [];
+    },
+  });
 
   if (isLoadingClientTeams) {
     return (
@@ -66,49 +109,52 @@ export const YourTeamCard = () => {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        {clientTeams.map((assignment) => (
-          <div key={assignment.id} className="border-l-4 border-l-primary/20 pl-4 space-y-2">
-            <div className="flex items-start justify-between">
-              <div>
-                <h4 className="font-medium text-sm">{assignment.professional_name}</h4>
-                <p className="text-xs text-muted-foreground">{assignment.professional_company}</p>
+        {clientTeams.map((assignment: any) => {
+          const professional = assignment.professionals;
+          return (
+            <div key={assignment.id} className="border-l-4 border-l-primary/20 pl-4 space-y-2">
+              <div className="flex items-start justify-between">
+                <div>
+                  <h4 className="font-medium text-sm">{professional.name}</h4>
+                  <p className="text-xs text-muted-foreground">{professional.company_name}</p>
+                </div>
+                <Badge variant="secondary" className="text-xs">
+                  {assignment.professional_role === 'mortgage_professional' ? 'Mortgage' : 'Realtor'}
+                </Badge>
               </div>
-              <Badge variant="secondary" className="text-xs">
-                {assignment.professional_role === 'mortgage_professional' ? 'Mortgage' : 'Realtor'}
-              </Badge>
+              
+              <div className="space-y-1">
+                {professional.phone && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 px-2 justify-start text-xs"
+                    onClick={() => window.open(`tel:${professional.phone}`)}
+                  >
+                    <Phone className="h-3 w-3 mr-1" />
+                    {professional.phone}
+                  </Button>
+                )}
+                {professional.email && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 px-2 justify-start text-xs"
+                    onClick={() => window.open(`mailto:${professional.email}`)}
+                  >
+                    <Mail className="h-3 w-3 mr-1" />
+                    {professional.email}
+                  </Button>
+                )}
+              </div>
+              
+              <div className="flex items-center text-xs text-muted-foreground">
+                <Calendar className="h-3 w-3 mr-1" />
+                Assigned {format(new Date(assignment.assigned_at), 'MMM d, yyyy')}
+              </div>
             </div>
-            
-            <div className="space-y-1">
-              {assignment.professional_phone && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-8 px-2 justify-start text-xs"
-                  onClick={() => window.open(`tel:${assignment.professional_phone}`)}
-                >
-                  <Phone className="h-3 w-3 mr-1" />
-                  {assignment.professional_phone}
-                </Button>
-              )}
-              {assignment.professional_email && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-8 px-2 justify-start text-xs"
-                  onClick={() => window.open(`mailto:${assignment.professional_email}`)}
-                >
-                  <Mail className="h-3 w-3 mr-1" />
-                  {assignment.professional_email}
-                </Button>
-              )}
-            </div>
-            
-            <div className="flex items-center text-xs text-muted-foreground">
-              <Calendar className="h-3 w-3 mr-1" />
-              Assigned {format(new Date(assignment.assigned_at), 'MMM d, yyyy')}
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </CardContent>
     </Card>
   );
