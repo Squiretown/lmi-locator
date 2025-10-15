@@ -48,6 +48,8 @@ export const YourTeamCard = () => {
       }
 
       // Get team assignments with professional details
+      console.log('🔍 Fetching team assignments for client:', clientProfile.id);
+      
       const { data, error } = await supabase
         .from('client_team_assignments')
         .select(`
@@ -55,7 +57,7 @@ export const YourTeamCard = () => {
           professional_id,
           professional_role,
           assigned_at,
-          professionals!inner (
+          professionals!client_team_assignments_professional_id_fkey (
             id,
             name,
             company,
@@ -65,6 +67,8 @@ export const YourTeamCard = () => {
         `)
         .eq('client_id', clientProfile.id)
         .eq('status', 'active');
+      
+      console.log('📊 Team assignments result:', { data, error });
 
       if (error) throw error;
       return data || [];

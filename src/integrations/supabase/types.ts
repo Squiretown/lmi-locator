@@ -4239,6 +4239,10 @@ export type Database = {
         Args: { permission_name: string; user_uuid: string }
         Returns: boolean
       }
+      client_can_view_assigned_professional: {
+        Args: { p_professional_id: string }
+        Returns: boolean
+      }
       comprehensive_security_check: {
         Args: Record<PropertyKey, never>
         Returns: Json
