@@ -90,11 +90,22 @@ export const ClientRegistration: React.FC = () => {
   const handleRegistration = async (formData: ClientRegistrationData) => {
     setIsSubmitting(true);
     try {
-      // Create client profile
+      // Get the inviter's professional record (not their auth user_id)
+      const { data: inviterProfessional, error: professionalError } = await supabase
+        .from('professionals')
+        .select('id')
+        .eq('user_id', invitation.invited_by_user_id)
+        .single();
+
+      if (professionalError || !inviterProfessional) {
+        throw new Error('Could not find inviter professional profile');
+      }
+
+      // Create client profile with proper professional_id
       const { data: clientProfile, error: profileError } = await supabase
         .from('client_profiles')
         .insert({
-          professional_id: invitation.invited_by_user_id,
+          professional_id: inviterProfessional.id,
           first_name: formData.first_name,
           last_name: formData.last_name,
           email: formData.email,
@@ -106,6 +117,69 @@ export const ClientRegistration: React.FC = () => {
         .single();
 
       if (profileError) throw profileError;
+
+      // Get the inviter's professional details to determine their role
+      const { data: inviterDetails } = await supabase
+        .from('professionals')
+        .select('id')
+        .eq('id', inviterProfessional.id)
+        .single();
+
+      // Create team assignment for the inviter
+      // Determine role from professional_teams table
+      const { data: asRealtor } = await supabase
+        .from('professional_teams')
+        .select('id')
+        .eq('realtor_id', inviterProfessional.id)
+        .eq('status', 'active')
+        .maybeSingle();
+
+      const { data: asMortgage } = await supabase
+        .from('professional_teams')
+        .select('id')
+        .eq('mortgage_professional_id', inviterProfessional.id)
+        .eq('status', 'active')
+        .maybeSingle();
+
+      const inviterRole = asRealtor ? 'realtor' : (asMortgage ? 'mortgage_professional' : 'realtor');
+
+      // Create team assignment for the inviter
+      if (inviterDetails) {
+        await supabase.from('client_team_assignments').insert({
+          client_id: clientProfile.id,
+          professional_id: inviterProfessional.id,
+          professional_role: inviterRole,
+          status: 'active',
+          assigned_by: inviterProfessional.id,
+        });
+
+        // Check if inviter has a team partner and add them too
+        const { data: teamPartner } = await supabase
+          .from('professional_teams')
+          .select('mortgage_professional_id, realtor_id')
+          .or(`realtor_id.eq.${inviterProfessional.id},mortgage_professional_id.eq.${inviterProfessional.id}`)
+          .eq('status', 'active')
+          .maybeSingle();
+
+        if (teamPartner) {
+          const partnerId = inviterRole === 'realtor' 
+            ? teamPartner.mortgage_professional_id 
+            : teamPartner.realtor_id;
+          const partnerRole = inviterRole === 'realtor' 
+            ? 'mortgage_professional' 
+            : 'realtor';
+
+          if (partnerId) {
+            await supabase.from('client_team_assignments').insert({
+              client_id: clientProfile.id,
+              professional_id: partnerId,
+              professional_role: partnerRole,
+              status: 'active',
+              assigned_by: inviterProfessional.id,
+            });
+          }
+        }
+      }
 
       // Update invitation status
       const { error: updateError } = await supabase

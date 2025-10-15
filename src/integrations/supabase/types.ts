@@ -4160,6 +4160,10 @@ export type Database = {
         Args: { target_user_id: string }
         Returns: Json
       }
+      backfill_client_user_ids: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       box: {
         Args: { "": unknown } | { "": unknown }
         Returns: unknown

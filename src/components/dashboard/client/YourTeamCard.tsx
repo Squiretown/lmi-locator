@@ -16,19 +16,38 @@ export const YourTeamCard = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
-      // First get the client profile for this user
-      const { data: clientProfile, error: profileError } = await supabase
+      // Try to get client profile by user_id first
+      let { data: clientProfile } = await supabase
         .from('client_profiles')
         .select('id')
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
 
-      if (profileError || !clientProfile) {
+      // Fallback: try by email if not found by user_id
+      if (!clientProfile && user.email) {
+        const { data: profileByEmail } = await supabase
+          .from('client_profiles')
+          .select('id')
+          .eq('email', user.email)
+          .maybeSingle();
+
+        if (profileByEmail) {
+          // Update the profile with user_id for future queries
+          await supabase
+            .from('client_profiles')
+            .update({ user_id: user.id })
+            .eq('id', profileByEmail.id);
+
+          clientProfile = profileByEmail;
+        }
+      }
+
+      if (!clientProfile) {
         console.log('No client profile found for user');
         return [];
       }
 
-      // Then get team assignments for this client
+      // Get team assignments with professional details
       const { data, error } = await supabase
         .from('client_team_assignments')
         .select(`
@@ -39,10 +58,9 @@ export const YourTeamCard = () => {
           professionals!inner (
             id,
             name,
-            company_name,
+            company,
             email,
-            phone,
-            type
+            phone
           )
         `)
         .eq('client_id', clientProfile.id)
@@ -116,7 +134,7 @@ export const YourTeamCard = () => {
               <div className="flex items-start justify-between">
                 <div>
                   <h4 className="font-medium text-sm">{professional.name}</h4>
-                  <p className="text-xs text-muted-foreground">{professional.company_name}</p>
+                  <p className="text-xs text-muted-foreground">{professional.company || 'Independent'}</p>
                 </div>
                 <Badge variant="secondary" className="text-xs">
                   {assignment.professional_role === 'mortgage_professional' ? 'Mortgage' : 'Realtor'}
