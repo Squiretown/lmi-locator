@@ -1046,6 +1046,13 @@ export type Database = {
             referencedRelation: "client_profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "client_team_assignments_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: false
+            referencedRelation: "professionals"
+            referencedColumns: ["id"]
+          },
         ]
       }
       clients: {
