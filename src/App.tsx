@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import LoginPage from "./pages/auth/LoginPage";
 import ClientLoginPage from "./pages/auth/ClientLoginPage";
+import ResetPasswordPage from "./pages/auth/ResetPasswordPage";
 import { AuthProvider } from "@/providers/AuthProvider";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 
@@ -85,6 +86,7 @@ const App = () => (
             <Route path="/test-broker-invitation" element={<TestBrokerInvitation />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/client-login" element={<ClientLoginPage />} />
+            <Route path="/reset-password" element={<ResetPasswordPage />} />
             <Route path="/client-registration" element={<ClientRegistration />} />
             <Route path="/registration-success" element={<RegistrationSuccess />} />
             <Route path="/accept-invitation/:token" element={<AcceptInvitationPage />} />

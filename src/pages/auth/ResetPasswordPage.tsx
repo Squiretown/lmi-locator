@@ -33,6 +33,7 @@ const ResetPasswordPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [hasValidSession, setHasValidSession] = useState(false);
+  const [urlError, setUrlError] = useState<{ type: string; description: string } | null>(null);
   const navigate = useNavigate();
   
   const form = useForm<ResetPasswordFormValues>({
@@ -46,10 +47,40 @@ const ResetPasswordPage: React.FC = () => {
   // Check if user has valid password reset session
   useEffect(() => {
     const checkSession = async () => {
-      // Get session from URL
-      const { data, error } = await supabase.auth.getSession();
+      // Parse URL hash for error parameters
+      const hash = window.location.hash.substring(1);
+      const params = new URLSearchParams(hash);
+      const errorCode = params.get('error_code');
+      const errorDesc = params.get('error_description');
+      const error = params.get('error');
       
-      if (error || !data.session) {
+      if (errorCode || error) {
+        console.log('Password reset URL error:', { errorCode, error, errorDesc });
+        
+        // Set specific error messages based on error codes
+        if (errorCode === 'otp_expired') {
+          setUrlError({ 
+            type: 'expired', 
+            description: 'Your password reset link has expired. Password reset links are only valid for 1 hour and can only be used once.' 
+          });
+        } else if (error === 'access_denied') {
+          setUrlError({ 
+            type: 'denied', 
+            description: 'Access denied. This password reset link is invalid or has already been used.' 
+          });
+        } else {
+          setUrlError({ 
+            type: 'unknown', 
+            description: errorDesc ? decodeURIComponent(errorDesc) : 'An error occurred with your password reset link.' 
+          });
+        }
+        return;
+      }
+      
+      // Get session from URL
+      const { data, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError || !data.session) {
         setFormError("Invalid or expired password reset link. Please request a new reset link.");
         return;
       }
@@ -94,8 +125,11 @@ const ResetPasswordPage: React.FC = () => {
           </p>
         </div>
         
-        {formError && (
-          <FormErrorDisplay error={formError} title="Password Reset Error" />
+        {(formError || urlError) && (
+          <FormErrorDisplay 
+            error={urlError?.description || formError || ''} 
+            title={urlError ? "Link Invalid or Expired" : "Password Reset Error"} 
+          />
         )}
         
         {hasValidSession ? (
@@ -136,17 +170,35 @@ const ResetPasswordPage: React.FC = () => {
             </form>
           </Form>
         ) : (
-          <div className="text-center">
-            <p className="text-red-600">
-              Invalid or expired password reset link. Please request a new one.
-            </p>
-            <Button 
-              variant="outline" 
-              className="mt-4"
-              onClick={() => navigate('/login?tab=reset')}
-            >
-              Request New Reset Link
-            </Button>
+          <div className="text-center space-y-4">
+            {urlError ? (
+              <div className="bg-amber-50 border border-amber-200 rounded-md p-4">
+                <h3 className="font-semibold text-amber-800 mb-2">
+                  {urlError.type === 'expired' ? '⏰ Link Expired' : '🔒 Access Denied'}
+                </h3>
+                <p className="text-amber-700 text-sm mb-4">
+                  {urlError.description}
+                </p>
+              </div>
+            ) : (
+              <p className="text-red-600">
+                Invalid or expired password reset link. Please request a new one.
+              </p>
+            )}
+            <div className="space-x-2">
+              <Button 
+                variant="default" 
+                onClick={() => navigate('/client-login?tab=reset')}
+              >
+                Request New Reset Link
+              </Button>
+              <Button 
+                variant="outline" 
+                onClick={() => navigate('/client-login')}
+              >
+                Back to Login
+              </Button>
+            </div>
           </div>
         )}
       </div>

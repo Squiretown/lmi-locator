@@ -126,9 +126,13 @@ const PasswordResetForm: React.FC = () => {
       
       {emailSent ? (
         <div className="bg-green-50 border border-green-200 rounded-md p-4 text-center">
-          <h3 className="font-medium text-green-800">Reset Instructions Sent!</h3>
+          <h3 className="font-medium text-green-800">✓ Reset Instructions Sent!</h3>
           <p className="text-green-700 mt-2">
-            Check your email for password reset instructions. It may take a few minutes to arrive.
+            Check your email for password reset instructions. 
+          </p>
+          <p className="text-green-600 text-sm mt-3">
+            <strong>Important:</strong> The reset link will expire in 1 hour and can only be used once. 
+            If you don't see the email, check your spam folder.
           </p>
         </div>
       ) : (
