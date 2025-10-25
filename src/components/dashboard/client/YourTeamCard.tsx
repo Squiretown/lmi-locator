@@ -9,73 +9,85 @@ import { Phone, Mail, Users, Calendar } from 'lucide-react';
 import { format } from 'date-fns';
 
 export const YourTeamCard = () => {
-  // Fetch client's team assignments
-  const { data: clientTeams = [], isLoading: isLoadingClientTeams } = useQuery({
-    queryKey: ['client-team-assignments'],
+  // Stage 1: Get client profile by user_id
+  const { data: clientProfile, isLoading: isLoadingProfile } = useQuery({
+    queryKey: ['client-profile-by-user'],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
+      
+      console.log('🔍 Looking up client profile for user:', user.id);
 
-      // Try to get client profile by user_id first
-      let { data: clientProfile } = await supabase
+      const { data, error } = await supabase
         .from('client_profiles')
         .select('id')
         .eq('user_id', user.id)
         .maybeSingle();
 
-      // Fallback: try by email if not found by user_id
-      if (!clientProfile && user.email) {
-        const { data: profileByEmail } = await supabase
-          .from('client_profiles')
-          .select('id')
-          .eq('email', user.email)
-          .maybeSingle();
-
-        if (profileByEmail) {
-          // Update the profile with user_id for future queries
-          await supabase
-            .from('client_profiles')
-            .update({ user_id: user.id })
-            .eq('id', profileByEmail.id);
-
-          clientProfile = profileByEmail;
-        }
-      }
-
-      if (!clientProfile) {
-        console.log('No client profile found for user');
-        return [];
-      }
-
-      // Get team assignments with professional details
-      console.log('🔍 Fetching team assignments for client:', clientProfile.id);
-      
-      const { data, error } = await supabase
-        .from('client_team_assignments')
-        .select(`
-          id,
-          professional_id,
-          professional_role,
-          assigned_at,
-          professionals (
-            id,
-            name,
-            company,
-            email,
-            phone
-          )
-        `)
-        .eq('client_id', clientProfile.id)
-        .eq('status', 'active');
-      
-      console.log('📊 Team assignments result:', { data, error });
-
       if (error) throw error;
-      return data || [];
+      
+      console.log('📋 Client profile found:', data?.id || 'none');
+      return data;
     },
   });
 
-  if (isLoadingClientTeams) {
+  // Stage 2: Get team assignments (without embedded professionals)
+  const { data: assignments = [], isLoading: isLoadingAssignments, error: assignmentsError } = useQuery({
+    queryKey: ['client-assignments', clientProfile?.id],
+    queryFn: async () => {
+      if (!clientProfile?.id) return [];
+      
+      console.log('🔍 Fetching assignments for client:', clientProfile.id);
+
+      const { data, error } = await supabase
+        .from('client_team_assignments')
+        .select('id, professional_id, professional_role, assigned_at, status')
+        .eq('client_id', clientProfile.id)
+        .eq('status', 'active');
+
+      if (error) throw error;
+      
+      console.log('📊 Assignments loaded:', data?.length || 0);
+      return data || [];
+    },
+    enabled: !!clientProfile?.id,
+  });
+
+  // Stage 3: Get professionals by IDs
+  const professionalIds = Array.from(new Set(assignments.map(a => a.professional_id)));
+  
+  const { data: professionals = [], isLoading: isLoadingProfessionals, error: professionalsError } = useQuery({
+    queryKey: ['professionals-by-ids', professionalIds.join(',')],
+    queryFn: async () => {
+      if (professionalIds.length === 0) return [];
+      
+      console.log('🔍 Fetching professionals:', professionalIds);
+
+      const { data, error } = await supabase
+        .from('professionals')
+        .select('id, name, company, email, phone')
+        .in('id', professionalIds);
+
+      if (error) throw error;
+      
+      console.log('👥 Professionals loaded:', data?.length || 0);
+      return data || [];
+    },
+    enabled: professionalIds.length > 0,
+    staleTime: 30000,
+    retry: 2,
+  });
+
+  // Merge assignments with professionals
+  const clientTeams = assignments.map(assignment => ({
+    ...assignment,
+    professionals: professionals.find(p => p.id === assignment.professional_id),
+  }));
+
+  const isLoading = isLoadingProfile || isLoadingAssignments || isLoadingProfessionals;
+  const hasError = assignmentsError || professionalsError;
+
+  if (isLoading) {
     return (
       <Card className="h-fit">
         <CardHeader>
@@ -92,6 +104,24 @@ export const YourTeamCard = () => {
               <Skeleton className="h-8 w-16" />
             </div>
           ))}
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (hasError) {
+    return (
+      <Card className="h-fit">
+        <CardHeader>
+          <div className="flex items-center space-x-2">
+            <Users className="h-5 w-5 text-primary" />
+            <CardTitle className="text-lg">Your Team</CardTitle>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-6 text-destructive">
+            <p className="text-sm">Unable to load team data. Please refresh the page.</p>
+          </div>
         </CardContent>
       </Card>
     );
@@ -133,6 +163,25 @@ export const YourTeamCard = () => {
       <CardContent className="space-y-4">
         {clientTeams.map((assignment: any) => {
           const professional = assignment.professionals;
+          if (!professional) {
+            return (
+              <div key={assignment.id} className="border-l-4 border-l-primary/20 pl-4 space-y-2">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <h4 className="font-medium text-sm text-muted-foreground">Contact info unavailable</h4>
+                  </div>
+                  <Badge variant="secondary" className="text-xs">
+                    {assignment.professional_role === 'mortgage_professional' ? 'Mortgage' : 'Realtor'}
+                  </Badge>
+                </div>
+                <div className="flex items-center text-xs text-muted-foreground">
+                  <Calendar className="h-3 w-3 mr-1" />
+                  Assigned {format(new Date(assignment.assigned_at), 'MMM d, yyyy')}
+                </div>
+              </div>
+            );
+          }
+          
           return (
             <div key={assignment.id} className="border-l-4 border-l-primary/20 pl-4 space-y-2">
               <div className="flex items-start justify-between">
