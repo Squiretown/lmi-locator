@@ -57,7 +57,7 @@ export const YourTeamCard = () => {
           professional_id,
           professional_role,
           assigned_at,
-          professionals!client_team_assignments_professional_id_fkey (
+          professionals (
             id,
             name,
             company,
