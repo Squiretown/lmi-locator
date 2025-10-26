@@ -1,23 +1,23 @@
-import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Switch } from '@/components/ui/switch';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
-import { Eye, EyeOff, Edit2, Save, X } from 'lucide-react';
-import { useMortgageTeamManagement } from '@/hooks/useMortgageTeamManagement';
-import { toast } from 'sonner';
+import React, { useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { Eye, EyeOff, Edit2, Save, X } from "lucide-react";
+import { useMortgageTeamManagement } from "@/hooks/useMortgageTeamManagement";
+import { toast } from "sonner";
 
 interface TeamMember {
   id: string;
   name: string;
-  type: 'mortgage_professional' | 'realtor';
+  type: "mortgage_professional" | "realtor";
   professional_type?: string;
   company: string;
   photo_url?: string;
   isAccountOwner?: boolean;
-  source?: 'company' | 'explicit';
+  source?: "company" | "explicit";
   role?: string;
   visibility_settings?: {
     visible_to_clients: boolean;
@@ -29,17 +29,17 @@ interface TeamMember {
 export const TeamVisibilityManager: React.FC = () => {
   const { teamMembers, isLoading, updateProfessionalVisibility } = useMortgageTeamManagement();
   const [editingMember, setEditingMember] = useState<string | null>(null);
-  const [editData, setEditData] = useState<{ role: string; description: string }>({ role: '', description: '' });
+  const [editData, setEditData] = useState<{ role: string; description: string }>({ role: "", description: "" });
 
   const handleVisibilityToggle = async (memberId: string, visible: boolean) => {
     try {
-      await updateProfessionalVisibility({ 
-        professionalId: memberId, 
-        visibilitySettings: { visible_to_clients: visible }
+      await updateProfessionalVisibility({
+        professionalId: memberId,
+        visibilitySettings: { visible_to_clients: visible },
       });
       toast.success(`Team member visibility updated`);
     } catch (error) {
-      toast.error('Failed to update visibility');
+      toast.error("Failed to update visibility");
     }
   };
 
@@ -47,30 +47,30 @@ export const TeamVisibilityManager: React.FC = () => {
     setEditingMember(member.id);
     setEditData({
       role: member.visibility_settings?.showcase_role || member.professional_type || member.type,
-      description: member.visibility_settings?.showcase_description || ''
+      description: member.visibility_settings?.showcase_description || "",
     });
   };
 
   const handleEditSave = async (memberId: string) => {
     try {
-      await updateProfessionalVisibility({ 
-        professionalId: memberId, 
+      await updateProfessionalVisibility({
+        professionalId: memberId,
         visibilitySettings: {
           visible_to_clients: true,
           showcase_role: editData.role,
-          showcase_description: editData.description
-        }
+          showcase_description: editData.description,
+        },
       });
       setEditingMember(null);
-      toast.success('Team member showcase updated');
+      toast.success("Team member showcase updated");
     } catch (error) {
-      toast.error('Failed to update showcase');
+      toast.error("Failed to update showcase");
     }
   };
 
   const handleEditCancel = () => {
     setEditingMember(null);
-    setEditData({ role: '', description: '' });
+    setEditData({ role: "", description: "" });
   };
 
   if (isLoading) {
@@ -120,16 +120,32 @@ export const TeamVisibilityManager: React.FC = () => {
                         <span className="ml-2 text-sm font-normal text-muted-foreground">(You)</span>
                       )}
                     </h4>
-                    <p className="text-sm text-muted-foreground">{member.company}</p>
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm text-muted-foreground">{member.company}</p>
+                      {member.type === "realtor" && (
+                        <Badge variant="outline" className="text-xs">
+                          Realtor Partner
+                        </Badge>
+                      )}
+                      {member.type === "mortgage_professional" && !member.isAccountOwner && (
+                        <Badge variant="outline" className="text-xs">
+                          Team Member
+                        </Badge>
+                      )}
+                    </div>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Badge variant={member.visibility_settings?.visible_to_clients ? 'default' : 'secondary'}>
-                    {member.visibility_settings?.visible_to_clients ? 'Visible' : 'Hidden'}
+                  <Badge variant={member.visibility_settings?.visible_to_clients ? "default" : "secondary"}>
+                    {member.visibility_settings?.visible_to_clients ? "Visible" : "Hidden"}
                   </Badge>
                   <Switch
                     checked={member.visibility_settings?.visible_to_clients || false}
                     onCheckedChange={(checked) => handleVisibilityToggle(member.id, checked)}
+                    disabled={member.isAccountOwner}
+                    title={
+                      member.isAccountOwner ? "You cannot hide yourself from clients" : "Toggle visibility to clients"
+                    }
                   />
                 </div>
               </div>
