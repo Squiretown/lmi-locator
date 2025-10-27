@@ -5,7 +5,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Phone, Mail, Users } from "lucide-react";
+import { Phone, Mail, Users, Calendar } from "lucide-react";
+import { format } from "date-fns";
 
 export const YourTeamCard = () => {
   // Stage 1: Get client profile by user_id
@@ -18,7 +19,9 @@ export const YourTeamCard = () => {
       if (!user) throw new Error("Not authenticated");
 
       console.log("🔍 Looking up client profile for user:", user.id);
+
       const { data, error } = await supabase.from("client_profiles").select("id").eq("user_id", user.id).maybeSingle();
+
       if (error) throw error;
 
       console.log("📋 Client profile found:", data?.id || "none");
@@ -37,11 +40,13 @@ export const YourTeamCard = () => {
       if (!clientProfile?.id) return [];
 
       console.log("🔍 Fetching assignments for client:", clientProfile.id);
+
       const { data, error } = await supabase
         .from("client_team_assignments")
-        .select("id, professional_id, professional_role, status")
+        .select("id, professional_id, professional_role, assigned_at, status")
         .eq("client_id", clientProfile.id)
         .eq("status", "active");
+
       if (error) throw error;
 
       console.log("📊 Assignments loaded:", data?.length || 0);
@@ -63,10 +68,12 @@ export const YourTeamCard = () => {
       if (professionalIds.length === 0) return [];
 
       console.log("🔍 Fetching professionals:", professionalIds);
+
       const { data, error } = await supabase
         .from("professionals")
         .select("id, name, company, email, phone")
         .in("id", professionalIds);
+
       if (error) throw error;
 
       console.log("👥 Professionals loaded:", data?.length || 0);
@@ -153,7 +160,7 @@ export const YourTeamCard = () => {
           <Users className="h-5 w-5 text-primary" />
           <CardTitle className="text-lg">Your Team</CardTitle>
         </div>
-        <CardDescription>Your assigned professionals</CardDescription>
+        <CardDescription>Your professionals</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         {clientTeams.map((assignment: any) => {
@@ -168,6 +175,10 @@ export const YourTeamCard = () => {
                   <Badge variant="secondary" className="text-xs">
                     {assignment.professional_role === "mortgage_professional" ? "Mortgage" : "Realtor"}
                   </Badge>
+                </div>
+                <div className="flex items-center text-xs text-muted-foreground">
+                  <Calendar className="h-3 w-3 mr-1" />
+                  Assigned {format(new Date(assignment.assigned_at), "MMM d, yyyy")}
                 </div>
               </div>
             );
@@ -208,6 +219,11 @@ export const YourTeamCard = () => {
                     {professional.email}
                   </Button>
                 )}
+              </div>
+
+              <div className="flex items-center text-xs text-muted-foreground">
+                <Calendar className="h-3 w-3 mr-1" />
+                Assigned {format(new Date(assignment.assigned_at), "MMM d, yyyy")}
               </div>
             </div>
           );
