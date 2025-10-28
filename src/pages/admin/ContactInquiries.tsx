@@ -44,14 +44,13 @@ const ContactInquiries: React.FC = () => {
   const [selectedInquiry, setSelectedInquiry] = useState<ContactInquiry | null>(null);
   const { sendInvitation, isSending } = useUnifiedInvitationSystem();
 
-  // Fetch active professionals for assignment dropdown
+  // Fetch active professionals for assignment dropdown (excludes admin users)
   const { data: professionals = [] } = useQuery({
     queryKey: ['active-professionals'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('professionals')
+        .from('active_professionals_view')
         .select('id, name, professional_type, email')
-        .eq('status', 'active')
         .order('name');
       
       if (error) throw error;

@@ -1005,6 +1005,13 @@ export type Database = {
             foreignKeyName: "client_profiles_professional_id_fkey"
             columns: ["professional_id"]
             isOneToOne: false
+            referencedRelation: "active_professionals_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_profiles_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: false
             referencedRelation: "professionals"
             referencedColumns: ["id"]
           },
@@ -1044,6 +1051,13 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "client_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_team_assignments_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: false
+            referencedRelation: "active_professionals_view"
             referencedColumns: ["id"]
           },
           {
@@ -1193,6 +1207,13 @@ export type Database = {
             foreignKeyName: "contact_inquiries_assigned_to_fkey"
             columns: ["assigned_to"]
             isOneToOne: false
+            referencedRelation: "active_professionals_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contact_inquiries_assigned_to_fkey"
+            columns: ["assigned_to"]
+            isOneToOne: false
             referencedRelation: "professionals"
             referencedColumns: ["id"]
           },
@@ -1299,6 +1320,13 @@ export type Database = {
             foreignKeyName: "contacts_owner_id_fkey"
             columns: ["owner_id"]
             isOneToOne: false
+            referencedRelation: "active_professionals_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contacts_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
             referencedRelation: "professionals"
             referencedColumns: ["id"]
           },
@@ -1357,6 +1385,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "contacts_invited_inviter_id_fkey"
+            columns: ["inviter_id"]
+            isOneToOne: false
+            referencedRelation: "active_professionals_view"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "contacts_invited_inviter_id_fkey"
             columns: ["inviter_id"]
@@ -2185,6 +2220,13 @@ export type Database = {
           professional_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "professional_permissions_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: false
+            referencedRelation: "active_professionals_view"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "professional_permissions_professional_id_fkey"
             columns: ["professional_id"]
@@ -3244,6 +3286,13 @@ export type Database = {
             foreignKeyName: "team_member_visibility_professional_id_fkey"
             columns: ["professional_id"]
             isOneToOne: false
+            referencedRelation: "active_professionals_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "team_member_visibility_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: false
             referencedRelation: "professionals"
             referencedColumns: ["id"]
           },
@@ -3906,6 +3955,35 @@ export type Database = {
       }
     }
     Views: {
+      active_professionals_view: {
+        Row: {
+          access_code: string | null
+          address: string | null
+          bio: string | null
+          brand_color: string | null
+          company: string | null
+          created_at: string | null
+          email: string | null
+          id: string | null
+          is_flagged: boolean | null
+          is_verified: boolean | null
+          last_updated: string | null
+          license_number: string | null
+          logo_url: string | null
+          name: string | null
+          notes: string | null
+          phone: string | null
+          photo_url: string | null
+          professional_type: string | null
+          social_media: Json | null
+          status: string | null
+          user_id: string | null
+          visibility_settings: Json | null
+          website: string | null
+          welcome_message: string | null
+        }
+        Relationships: []
+      }
       crm_contacts_view: {
         Row: {
           company: string | null

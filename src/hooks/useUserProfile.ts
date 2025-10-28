@@ -78,6 +78,21 @@ export const useUserProfile = () => {
 
   const ensureProfessionalProfile = async (userProfile: UserProfile) => {
     try {
+      // CRITICAL: Skip professional profile creation for admins and clients
+      if (!userProfile.user_type || 
+          userProfile.user_type === 'admin' || 
+          userProfile.user_type === 'client') {
+        console.log('Skipping professional profile creation for user_type:', userProfile.user_type);
+        return;
+      }
+
+      // Only create for actual professional roles
+      if (userProfile.user_type !== 'realtor' && 
+          userProfile.user_type !== 'mortgage_professional') {
+        console.log('User type not eligible for professional profile:', userProfile.user_type);
+        return;
+      }
+
       // Check if professional profile already exists
       const { data: existingProfessional } = await supabase
         .from('professionals')
