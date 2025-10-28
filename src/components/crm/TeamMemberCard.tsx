@@ -6,9 +6,21 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Mail, Phone, MoreVertical, User, Eye, EyeOff, Shield, Users } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { Mail, Phone, MoreVertical, User, Eye, EyeOff, Shield, Users, Trash2 } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 interface TeamMemberCardProps {
@@ -27,6 +39,7 @@ interface TeamMemberCardProps {
   onToggleVisibility?: (id: string, visible: boolean) => void;
   onManagePermissions?: (id: string) => void;
   onViewClients?: (id: string) => void;
+  onRemove?: (id: string) => void;
 }
 
 export function TeamMemberCard({
@@ -35,6 +48,7 @@ export function TeamMemberCard({
   onToggleVisibility,
   onManagePermissions,
   onViewClients,
+  onRemove,
 }: TeamMemberCardProps) {
   const getInitials = (name: string) => {
     return name
@@ -112,6 +126,36 @@ export function TeamMemberCard({
                 <Users className="h-4 w-4 mr-2" />
                 View Clients
               </DropdownMenuItem>
+              {onRemove && (
+                <>
+                  <DropdownMenuSeparator />
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <DropdownMenuItem 
+                        onSelect={(e) => e.preventDefault()}
+                        className="text-destructive focus:text-destructive"
+                      >
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Remove Contact
+                      </DropdownMenuItem>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Remove Team Member</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Are you sure you want to remove {contact.full_name} from your team? This will set their status to inactive.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={() => onRemove(contact.id)}>
+                          Remove
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         </div>

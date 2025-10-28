@@ -246,6 +246,7 @@ export default function NetworkDashboard() {
                         setSelectedClientId(clientId);
                         setAssignmentDialogOpen(true);
                       }}
+                      onRemove={handleRemoveContact}
                     />
                   );
                 } else if (contact.relationship_type === "team_member") {
@@ -265,6 +266,7 @@ export default function NetworkDashboard() {
                       key={contact.id}
                       contact={contact}
                       onToggleVisibility={handleToggleVisibility}
+                      onRemove={handleRemoveContact}
                     />
                   );
                 }
@@ -285,6 +287,7 @@ export default function NetworkDashboard() {
                     setSelectedClientId(clientId);
                     setAssignmentDialogOpen(true);
                   }}
+                  onRemove={handleRemoveContact}
                 />
               ))}
             </div>
@@ -311,6 +314,7 @@ export default function NetworkDashboard() {
                     key={contact.id}
                     contact={contact}
                     onToggleVisibility={handleToggleVisibility}
+                    onRemove={handleRemoveContact}
                   />
                 );
               })}
