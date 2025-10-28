@@ -241,18 +241,34 @@ const AdminSettingsPage: React.FC = () => {
                   setIsProfileLoading(true);
                   try {
                     const { saveAdminProfile } = await import('@/lib/supabase/admin-settings');
+                    const emailChanged = updatedProfile.email !== originalEmail;
                     const result = await saveAdminProfile(updatedProfile, originalEmail, password);
                     
                     if (result.success) {
-                      toast.success('Profile updated successfully!');
-                      setOriginalEmail(updatedProfile.email);
-                      setProfile(updatedProfile);
+                      if (emailChanged) {
+                        toast.success('Profile saved. Check your new email inbox to confirm the email change.', {
+                          duration: 6000
+                        });
+                      } else {
+                        toast.success('Profile updated successfully!');
+                      }
+                      
+                      // Reload profile to get latest data
+                      const { loadAdminProfile } = await import('@/lib/supabase/admin-settings');
+                      const updatedProfileData = await loadAdminProfile();
+                      setProfile(updatedProfileData);
+                      setOriginalEmail(updatedProfileData.email);
+                      return { success: true };
                     } else {
-                      toast.error(result.error?.message || 'Failed to update profile');
+                      toast.error('Failed to update profile', {
+                        description: result.error?.message
+                      });
+                      return { success: false, error: result.error };
                     }
                   } catch (error) {
                     console.error('Failed to save profile:', error);
                     toast.error('Failed to update profile. Please try again.');
+                    return { success: false, error: error as Error };
                   } finally {
                     setIsProfileLoading(false);
                   }

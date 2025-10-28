@@ -210,15 +210,20 @@ export async function saveAdminProfile(
       });
       
       if (signInError) {
-        throw new Error('Current password is incorrect');
+        throw new Error('Current password is incorrect. Please verify and try again.');
       }
       
-      // Update email
-      const { error: emailError } = await supabase.auth.updateUser({
-        email: profile.email,
-      });
+      // Update email with redirect URL
+      const redirectUrl = `${window.location.origin}/admin/settings`;
+      const { error: emailError } = await supabase.auth.updateUser(
+        { email: profile.email },
+        { emailRedirectTo: redirectUrl }
+      );
       
       if (emailError) {
+        if (emailError.message.includes('already registered')) {
+          throw new Error('This email address is already in use.');
+        }
         throw new Error(`Failed to update email: ${emailError.message}`);
       }
     }

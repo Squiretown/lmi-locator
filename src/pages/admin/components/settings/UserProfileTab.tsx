@@ -29,7 +29,7 @@ interface UserProfileTabProps {
     bio: string;
     timezone: string;
     language: string;
-  }, password?: string) => Promise<void>;
+  }, password?: string) => Promise<{ success: boolean; error?: Error }>;
 }
 
 export const UserProfileTab: React.FC<UserProfileTabProps> = ({
@@ -41,6 +41,7 @@ export const UserProfileTab: React.FC<UserProfileTabProps> = ({
 }) => {
   const [password, setPassword] = useState('');
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [passwordError, setPasswordError] = useState('');
   const emailChanged = profile.email !== originalEmail;
 
   const handleSaveClick = () => {
@@ -57,8 +58,13 @@ export const UserProfileTab: React.FC<UserProfileTabProps> = ({
 
   const handleConfirmSave = async () => {
     setShowConfirmDialog(false);
-    await onSave(profile, emailChanged ? password : undefined);
-    setPassword('');
+    setPasswordError('');
+    const result = await onSave(profile, emailChanged ? password : undefined);
+    if (result?.success) {
+      setPassword('');
+    } else if (result?.error) {
+      setPasswordError(result.error.message);
+    }
   };
 
   return (
@@ -124,19 +130,28 @@ export const UserProfileTab: React.FC<UserProfileTabProps> = ({
           </div>
 
           {emailChanged && (
-            <div>
-              <Label htmlFor="password">Current Password</Label>
+            <div className="space-y-2">
+              <Label htmlFor="password">Current Password *</Label>
               <Input
                 id="password"
                 type="password"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Enter your current password to update email"
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  if (passwordError) setPasswordError('');
+                }}
+                placeholder="Enter your current password to change email"
                 required
+                className={passwordError ? 'border-destructive' : ''}
               />
-              <p className="text-sm text-muted-foreground mt-1">
-                Password is required to update your email address for security.
-              </p>
+              {passwordError && (
+                <p className="text-sm text-destructive">{passwordError}</p>
+              )}
+              {!passwordError && (
+                <p className="text-sm text-muted-foreground">
+                  Password is required to change your email address
+                </p>
+              )}
             </div>
           )}
 
