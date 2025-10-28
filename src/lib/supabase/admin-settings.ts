@@ -129,3 +129,103 @@ export async function saveSystemSettings(
     throw new Error(`Failed to update settings:\n${errors.join('\n')}`);
   }
 }
+
+export interface AdminProfile {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  bio: string;
+  timezone: string;
+  language: string;
+}
+
+export async function loadAdminProfile(): Promise<AdminProfile> {
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  
+  if (authError || !user) {
+    throw new Error('Authentication required. Please log in again.');
+  }
+
+  // Get user profile data (only fields that exist in the table)
+  const { data: profile, error: profileError } = await supabase
+    .from('user_profiles')
+    .select('first_name, last_name, phone, bio')
+    .eq('user_id', user.id)
+    .single();
+
+  if (profileError) {
+    throw new Error(`Failed to load profile: ${profileError.message}`);
+  }
+
+  return {
+    firstName: profile?.first_name || '',
+    lastName: profile?.last_name || '',
+    email: user.email || '',
+    phone: profile?.phone || '',
+    bio: profile?.bio || '',
+    timezone: 'America/New_York', // Default value since it's not in DB
+    language: 'en' // Default value since it's not in DB
+  };
+}
+
+export async function saveAdminProfile(
+  profile: AdminProfile,
+  originalEmail: string,
+  password?: string
+): Promise<{ success: boolean; error?: Error }> {
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  
+  if (authError || !user) {
+    return { success: false, error: new Error('Authentication required. Please log in again.') };
+  }
+
+  try {
+    // Update user_profiles table (only fields that exist)
+    const { error: profileError } = await supabase
+      .from('user_profiles')
+      .update({
+        first_name: profile.firstName,
+        last_name: profile.lastName,
+        phone: profile.phone,
+        bio: profile.bio
+        // Note: timezone and language are not in the DB schema yet
+      })
+      .eq('user_id', user.id);
+
+    if (profileError) {
+      throw new Error(`Failed to update profile: ${profileError.message}`);
+    }
+
+    // If email changed, update it with password verification
+    if (profile.email !== originalEmail) {
+      if (!password) {
+        throw new Error('Password is required to update email');
+      }
+
+      // Verify password by attempting sign in
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: originalEmail,
+        password: password,
+      });
+      
+      if (signInError) {
+        throw new Error('Current password is incorrect');
+      }
+      
+      // Update email
+      const { error: emailError } = await supabase.auth.updateUser({
+        email: profile.email,
+      });
+      
+      if (emailError) {
+        throw new Error(`Failed to update email: ${emailError.message}`);
+      }
+    }
+
+    return { success: true };
+  } catch (err) {
+    console.error('Error saving admin profile:', err);
+    return { success: false, error: err as Error };
+  }
+}

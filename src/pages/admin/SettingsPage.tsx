@@ -4,7 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Settings, Save, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { loadSystemSettings, saveSystemSettings, type GeneralSettings, type ContactInfo } from '@/lib/supabase/admin-settings';
+import { loadSystemSettings, saveSystemSettings, loadAdminProfile, type GeneralSettings, type ContactInfo, type AdminProfile } from '@/lib/supabase/admin-settings';
+import { useAuth } from '@/hooks/useAuth';
 import { GeneralSettingsTab } from './components/settings/GeneralSettingsTab';
 import { SecuritySettingsTab } from './components/settings/SecuritySettingsTab';
 import { NotificationsSettingsTab } from './components/settings/NotificationsSettingsTab';
@@ -15,8 +16,10 @@ import { ApiKeysTab } from './components/settings/ApiKeysTab';
 import { ThemeSettingsTab } from './components/settings/ThemeSettingsTab';
 
 const AdminSettingsPage: React.FC = () => {
+  const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [isInitialLoading, setIsInitialLoading] = useState(true);
+  const [isProfileLoading, setIsProfileLoading] = useState(false);
 
   // Settings state
   const [settings, setSettings] = useState<GeneralSettings>({
@@ -40,17 +43,17 @@ const AdminSettingsPage: React.FC = () => {
     businessHours: 'Monday - Friday: 9:00 AM - 5:00 PM EST'
   });
 
-  // Mock profile state
-  const [profile, setProfile] = useState({
-    firstName: 'John',
-    lastName: 'Doe',
-    email: 'admin@example.com',
-    phone: '+1 (555) 123-4567',
-    bio: 'System Administrator',
-    avatar: '',
+  // Admin profile state
+  const [profile, setProfile] = useState<AdminProfile>({
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+    bio: '',
     timezone: 'America/New_York',
     language: 'en'
   });
+  const [originalEmail, setOriginalEmail] = useState('');
 
   // Mock personal settings state
   const [personalSettings, setPersonalSettings] = useState({
@@ -71,7 +74,7 @@ const AdminSettingsPage: React.FC = () => {
     hudApiKey: ''
   });
 
-  // Load settings on component mount
+  // Load settings and profile on component mount
   useEffect(() => {
     const loadSettings = async () => {
       try {
@@ -86,7 +89,19 @@ const AdminSettingsPage: React.FC = () => {
       }
     };
 
+    const loadProfile = async () => {
+      try {
+        const profileData = await loadAdminProfile();
+        setProfile(profileData);
+        setOriginalEmail(profileData.email);
+      } catch (error) {
+        console.error('Failed to load profile:', error);
+        toast.error('Failed to load profile data.');
+      }
+    };
+
     loadSettings();
+    loadProfile();
   }, []);
 
   const handleSaveSettings = async () => {
@@ -219,7 +234,29 @@ const AdminSettingsPage: React.FC = () => {
             <TabsContent value="profile" className="space-y-4">
               <UserProfileTab
                 profile={profile}
+                originalEmail={originalEmail}
                 onProfileChange={handleProfileChange}
+                isLoading={isProfileLoading}
+                onSave={async (updatedProfile, password) => {
+                  setIsProfileLoading(true);
+                  try {
+                    const { saveAdminProfile } = await import('@/lib/supabase/admin-settings');
+                    const result = await saveAdminProfile(updatedProfile, originalEmail, password);
+                    
+                    if (result.success) {
+                      toast.success('Profile updated successfully!');
+                      setOriginalEmail(updatedProfile.email);
+                      setProfile(updatedProfile);
+                    } else {
+                      toast.error(result.error?.message || 'Failed to update profile');
+                    }
+                  } catch (error) {
+                    console.error('Failed to save profile:', error);
+                    toast.error('Failed to update profile. Please try again.');
+                  } finally {
+                    setIsProfileLoading(false);
+                  }
+                }}
               />
             </TabsContent>
 

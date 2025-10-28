@@ -1,12 +1,12 @@
-
-import React from 'react';
+import React, { useState } from 'react';
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { User } from "lucide-react";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { User, Save, Loader2 } from "lucide-react";
 
 interface UserProfileTabProps {
   profile: {
@@ -15,40 +15,76 @@ interface UserProfileTabProps {
     email: string;
     phone: string;
     bio: string;
-    avatar: string;
     timezone: string;
     language: string;
   };
+  originalEmail: string;
   onProfileChange: (key: string, value: any) => void;
+  isLoading?: boolean;
+  onSave: (profile: {
+    firstName: string;
+    lastName: string;
+    email: string;
+    phone: string;
+    bio: string;
+    timezone: string;
+    language: string;
+  }, password?: string) => Promise<void>;
 }
 
 export const UserProfileTab: React.FC<UserProfileTabProps> = ({
   profile,
+  originalEmail,
   onProfileChange,
+  isLoading = false,
+  onSave,
 }) => {
+  const [password, setPassword] = useState('');
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const emailChanged = profile.email !== originalEmail;
+
+  const handleSaveClick = () => {
+    if (emailChanged && !password) {
+      return; // Password validation will show error
+    }
+    
+    if (emailChanged) {
+      setShowConfirmDialog(true);
+    } else {
+      handleConfirmSave();
+    }
+  };
+
+  const handleConfirmSave = async () => {
+    setShowConfirmDialog(false);
+    await onSave(profile, emailChanged ? password : undefined);
+    setPassword('');
+  };
+
   return (
-    <div className="space-y-4">
-      <div className="flex items-center gap-2 mb-4">
-        <User className="h-5 w-5 text-primary" />
-        <h3 className="text-lg font-medium">User Profile</h3>
-      </div>
-      <div className="grid gap-4">
-        <div className="flex items-center space-x-4">
-          <Avatar className="h-20 w-20">
-            <AvatarImage src={profile.avatar} />
-            <AvatarFallback className="text-lg">
-              {profile.firstName.charAt(0)}{profile.lastName.charAt(0)}
-            </AvatarFallback>
-          </Avatar>
-          <div>
-            <Button variant="outline" size="sm">
-              Change Avatar
-            </Button>
-            <p className="text-sm text-muted-foreground mt-1">
-              JPG, PNG or GIF. Max size 2MB.
-            </p>
-          </div>
+    <>
+      <div className="space-y-4">
+        <div className="flex items-center gap-2 mb-4">
+          <User className="h-5 w-5 text-primary" />
+          <h3 className="text-lg font-medium">User Profile</h3>
         </div>
+        <div className="grid gap-4">
+          <div className="flex items-center space-x-4">
+            <Avatar className="h-20 w-20">
+              <AvatarImage src="" />
+              <AvatarFallback className="text-lg">
+                {profile.firstName?.charAt(0) || 'A'}{profile.lastName?.charAt(0) || 'D'}
+              </AvatarFallback>
+            </Avatar>
+            <div>
+              <Button variant="outline" size="sm" disabled>
+                Change Avatar
+              </Button>
+              <p className="text-sm text-muted-foreground mt-1">
+                JPG, PNG or GIF. Max size 2MB.
+              </p>
+            </div>
+          </div>
         
         <div className="grid grid-cols-2 gap-4">
           <div>
@@ -71,16 +107,38 @@ export const UserProfileTab: React.FC<UserProfileTabProps> = ({
           </div>
         </div>
 
-        <div>
-          <Label htmlFor="email">Email Address</Label>
-          <Input
-            id="email"
-            type="email"
-            value={profile.email}
-            onChange={(e) => onProfileChange('email', e.target.value)}
-            placeholder="Enter email address"
-          />
-        </div>
+          <div>
+            <Label htmlFor="email">Email Address</Label>
+            <Input
+              id="email"
+              type="email"
+              value={profile.email}
+              onChange={(e) => onProfileChange('email', e.target.value)}
+              placeholder="Enter email address"
+            />
+            {emailChanged && (
+              <p className="text-sm text-muted-foreground mt-1">
+                Email will be updated. You may need to verify the new email address.
+              </p>
+            )}
+          </div>
+
+          {emailChanged && (
+            <div>
+              <Label htmlFor="password">Current Password</Label>
+              <Input
+                id="password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Enter your current password to update email"
+                required
+              />
+              <p className="text-sm text-muted-foreground mt-1">
+                Password is required to update your email address for security.
+              </p>
+            </div>
+          )}
 
         <div>
           <Label htmlFor="phone">Phone Number</Label>
@@ -139,7 +197,46 @@ export const UserProfileTab: React.FC<UserProfileTabProps> = ({
             </Select>
           </div>
         </div>
+        </div>
+
+        <div className="flex justify-end pt-4 border-t">
+          <Button 
+            onClick={handleSaveClick} 
+            disabled={isLoading || (emailChanged && !password)}
+          >
+            {isLoading ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Saving...
+              </>
+            ) : (
+              <>
+                <Save className="h-4 w-4 mr-2" />
+                Save Profile
+              </>
+            )}
+          </Button>
+        </div>
       </div>
-    </div>
+
+      <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirm Email Update</AlertDialogTitle>
+            <AlertDialogDescription>
+              You are about to change your email from <strong>{originalEmail}</strong> to <strong>{profile.email}</strong>.
+              <br /><br />
+              You may need to verify your new email address. Are you sure you want to continue?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmSave}>
+              Update Email
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 };
