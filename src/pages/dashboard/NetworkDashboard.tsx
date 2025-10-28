@@ -33,7 +33,7 @@ export default function NetworkDashboard() {
     isLoading,
     searchContacts,
     updateVisibility,
-    removeManualContact,
+    removeContact,
   } = useUnifiedCRM();
 
   const [searchQuery, setSearchQuery] = useState("");
@@ -73,7 +73,11 @@ export default function NetworkDashboard() {
 
   const handleRemoveContact = async (contactId: string) => {
     try {
-      await removeManualContact(contactId);
+      // Find the full contact object to pass to removeContact
+      const contact = allContacts.find(c => c.id === contactId);
+      if (contact) {
+        await removeContact(contact);
+      }
     } catch (error) {
       console.error("Failed to remove contact:", error);
     }

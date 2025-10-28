@@ -496,7 +496,57 @@ export function useUnifiedCRM() {
     }
   });
 
-  // Remove manual contact
+  // Unified contact removal - handles all contact types
+  const removeContact = useMutation({
+    mutationFn: async (contact: UnifiedContact) => {
+      if (!userContext) throw new Error('User context not loaded');
+
+      // Professional team member from professional_teams
+      if (contact.contact_type === 'professional' && contact.relationship_type === 'team_member') {
+        // Find and update the professional_teams relationship
+        const { error } = await supabase
+          .from('professional_teams')
+          .update({ status: 'inactive' })
+          .or(`mortgage_professional_id.eq.${contact.id},realtor_id.eq.${contact.id}`)
+          .or(`mortgage_professional_id.eq.${userContext.professionalId},realtor_id.eq.${userContext.professionalId}`)
+          .eq('status', 'active');
+
+        if (error) throw error;
+      }
+      // Client from client_profiles
+      else if (contact.contact_type === 'client' && contact.relationship_type === 'client') {
+        const { error } = await supabase
+          .from('client_profiles')
+          .update({ status: 'inactive' })
+          .eq('id', contact.id);
+
+        if (error) throw error;
+      }
+      // Manual contact from contacts table
+      else {
+        const { error } = await supabase
+          .from('contacts')
+          .update({ status: 'inactive' })
+          .eq('id', contact.id);
+
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['crm-contacts'] });
+      queryClient.invalidateQueries({ queryKey: ['manual-contacts'] });
+      queryClient.invalidateQueries({ queryKey: ['team-members'] });
+      queryClient.invalidateQueries({ queryKey: ['mortgage-realtor-partners'] });
+      toast.success('Contact removed from your network');
+    },
+    onError: (error: Error) => {
+      toast.error('Failed to remove contact', {
+        description: error.message
+      });
+    }
+  });
+
+  // Remove manual contact (legacy - keeping for backward compatibility)
   const removeManualContact = useMutation({
     mutationFn: async (contactId: string) => {
       const { error } = await supabase
@@ -572,6 +622,10 @@ export function useUnifiedCRM() {
     isUpdatingManualContact: updateManualContact.isPending,
     removeManualContact: removeManualContact.mutateAsync,
     isRemovingManualContact: removeManualContact.isPending,
+    
+    // Unified contact removal
+    removeContact: removeContact.mutateAsync,
+    isRemovingContact: removeContact.isPending,
     
     // Analytics
     getCollaborationMetrics
