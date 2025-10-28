@@ -150,7 +150,7 @@ export const YourTeamCard = () => {
           <CardTitle className="text-lg">Your Team</CardTitle>
         </div>
         <CardDescription>
-          Contact your team for assistance
+          Contact your team for assistance😁
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
