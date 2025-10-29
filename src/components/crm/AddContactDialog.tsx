@@ -136,15 +136,15 @@ export function AddContactDialog({ open, onOpenChange }: AddContactDialogProps) 
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="client" className="gap-2">
               <UserPlus className="h-4 w-4" />
-              Client
+              Clients
             </TabsTrigger>
             <TabsTrigger value="realtor" className="gap-2">
               <Briefcase className="h-4 w-4" />
-              Realtor Partner
+              Professional Partners
             </TabsTrigger>
             <TabsTrigger value="team" className="gap-2">
               <Users className="h-4 w-4" />
-              Team Member
+              My Team
             </TabsTrigger>
           </TabsList>
 
@@ -157,16 +157,7 @@ export function AddContactDialog({ open, onOpenChange }: AddContactDialogProps) 
                 className="gap-2"
               >
                 <Plus className="h-4 w-4" />
-                Add Manually
-              </Button>
-              <Button
-                variant={addMode === 'manual' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setAddMode('manual')}
-                className="gap-2"
-              >
-                <Plus className="h-4 w-4" />
-                Add Supporting Professional
+                Add Client
               </Button>
               <Button
                 variant={addMode === 'invite' ? 'default' : 'outline'}
@@ -256,16 +247,6 @@ export function AddContactDialog({ open, onOpenChange }: AddContactDialogProps) 
                   </Button>
                 </div>
               </div>
-            ) : addMode === 'manual' ? (
-              <div className="flex-1 overflow-auto">
-                <ManualContactForm
-                  onSubmit={async (data) => {
-                    await addManualContact(data);
-                    onOpenChange(false);
-                  }}
-                  isLoading={isAddingManualContact}
-                />
-              </div>
             ) : (
               <div className="flex-1 overflow-auto">
                 <UnifiedInvitationForm 
@@ -298,7 +279,7 @@ export function AddContactDialog({ open, onOpenChange }: AddContactDialogProps) 
                 className="gap-2"
               >
                 <Plus className="h-4 w-4" />
-                Add Manually
+                Add Professional
               </Button>
               <Button
                 variant={addMode === 'invite' ? 'default' : 'outline'}
@@ -399,7 +380,7 @@ export function AddContactDialog({ open, onOpenChange }: AddContactDialogProps) 
                 className="gap-2"
               >
                 <Search className="h-4 w-4" />
-                Search Existing
+                Search Colleague
               </Button>
               <Button
                 variant={addMode === 'manual' ? 'default' : 'outline'}
@@ -408,7 +389,7 @@ export function AddContactDialog({ open, onOpenChange }: AddContactDialogProps) 
                 className="gap-2"
               >
                 <Plus className="h-4 w-4" />
-                Add Manually
+                Add Team Member
               </Button>
               <Button
                 variant={addMode === 'invite' ? 'default' : 'outline'}
@@ -417,7 +398,7 @@ export function AddContactDialog({ open, onOpenChange }: AddContactDialogProps) 
                 className="gap-2"
               >
                 <Plus className="h-4 w-4" />
-                Send Invitation
+                Invite Colleague
               </Button>
             </div>
 
