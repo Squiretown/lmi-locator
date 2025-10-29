@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
@@ -25,7 +24,10 @@ const LoginForm: React.FC = () => {
   const [authError, setAuthError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [isAdminAttempt, setIsAdminAttempt] = useState(false);
-  const { signIn, isLoading, userType } = useAuth();
+  
+  // ✅ FIX: Added signOut to the destructured values from useAuth
+  // This ensures signOut is available at the top level of the component
+  const { signIn, signOut, isLoading, userType } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -92,8 +94,9 @@ const LoginForm: React.FC = () => {
         if (adminError || !isAdmin) {
           console.error('Admin verification failed:', adminError);
           setAuthError('Admin access verification failed. You may not have admin privileges.');
-          // Sign out as this user doesn't have admin access
-          const { signOut } = useAuth();
+          
+          // ✅ FIX: Removed the illegal useAuth() call from inside the async function
+          // Now using the signOut function that was destructured at the top level
           await signOut();
           return;
         }
