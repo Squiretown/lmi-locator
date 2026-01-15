@@ -14,9 +14,20 @@ interface UnifiedContact {
   company?: string;
   professional_type?: string;
   status: string;
-  relationship_type: 'team_member' | 'client' | 'realtor_partner' | 'lending_team' | 'attorney' | 'title_company' | 'inspector' | 'appraiser' | 'insurance' | 'contractor' | 'other';
+  relationship_type: 
+    | 'team_member' 
+    | 'client' 
+    | 'realtor_partner' 
+    | 'lending_team' 
+    | 'attorney' 
+    | 'title_company' 
+    | 'inspector' 
+    | 'appraiser' 
+    | 'insurance' 
+    | 'contractor' 
+    | 'other';
   related_to_professional_id?: string;
-  relationship_id?: string;
+  relationship_id?: string;  // Important: Used for professional_teams deletion
   visibility_settings?: any;
   created_at: string;
   updated_at: string;
@@ -80,13 +91,22 @@ export function useUnifiedCRM() {
   });
 
   // Derived data - categorized contacts
-  const teamMembers = allContacts.filter(c => c.relationship_type === 'team_member' || c.relationship_type === 'lending_team');
+  const teamMembers = allContacts.filter(c => c.relationship_type === 'team_member');
   const clients = allContacts.filter(c => c.relationship_type === 'client');
-  const realtorPartners = allContacts.filter(c => c.relationship_type === 'team_member' || c.relationship_type === 'realtor_partner');
-  const partners = allContacts.filter(c => c.contact_type === 'professional' || c.contact_type === 'manual');
-  const supportingProfessionals = allContacts.filter(c => 
-    c.contact_type === 'manual' && 
+  const realtorPartners = allContacts.filter(c => 
+    c.relationship_type === 'realtor_partner' || 
+    (c.relationship_type === 'team_member' && c.professional_type === 'realtor')
+  );
+  const lendingTeam = allContacts.filter(c => 
+    c.relationship_type === 'lending_team' ||
+    (c.relationship_type === 'team_member' && c.professional_type === 'mortgage_professional')
+  );
+  const vendors = allContacts.filter(c => 
     ['attorney', 'title_company', 'inspector', 'appraiser', 'insurance', 'contractor', 'other'].includes(c.relationship_type)
+  );
+  // Legacy: partners combines team_members and realtor_partners for backward compatibility
+  const partners = allContacts.filter(c => 
+    c.contact_type === 'professional' || c.contact_type === 'manual'
   );
 
   // Search function
@@ -135,17 +155,19 @@ export function useUnifiedCRM() {
       // Determine the relationship direction
       const isCurrentUserMortgage = userContext.professionalType === 'mortgage_professional';
       
-      const insertData = isCurrentUserMortgage ? {
-        mortgage_professional_id: userContext.professionalId,
-        realtor_id: professionalId,
-        status: 'active',
-        notes
-      } : {
-        mortgage_professional_id: professionalId,
-        realtor_id: userContext.professionalId,
-        status: 'active',
-        notes
-      };
+      const insertData = isCurrentUserMortgage 
+        ? {
+            mortgage_professional_id: userContext.professionalId,
+            realtor_id: professionalId,
+            status: 'active',
+            notes
+          }
+        : {
+            mortgage_professional_id: professionalId,
+            realtor_id: userContext.professionalId,
+            status: 'active',
+            notes
+          };
 
       const { data, error } = await supabase
         .from('professional_teams')
@@ -153,34 +175,28 @@ export function useUnifiedCRM() {
         .select()
         .single();
 
-      if (error) {
-        if (error.code === '23505') {
-          throw new Error('This professional is already on your team');
-        }
-        throw error;
-      }
-
+      if (error) throw error;
       return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['crm-contacts'] });
-      queryClient.invalidateQueries({ queryKey: ['team-members'] });
-      queryClient.invalidateQueries({ queryKey: ['mortgage-realtor-partners'] });
       toast.success('Professional added to your team');
     },
     onError: (error: Error) => {
-      toast.error(error.message || 'Failed to add professional');
+      toast.error('Failed to add professional', {
+        description: error.message
+      });
     }
   });
 
-  // Update visibility settings
+  // Update visibility settings for a team member
   const updateVisibility = useMutation({
-    mutationFn: async ({ 
-      professionalId, 
-      settings 
-    }: { 
-      professionalId: string; 
-      settings: any 
+    mutationFn: async ({
+      professionalId,
+      settings
+    }: {
+      professionalId: string;
+      settings: { visible_to_clients: boolean };
     }) => {
       const { error } = await supabase
         .from('professionals')
@@ -202,12 +218,12 @@ export function useUnifiedCRM() {
   const assignTeamMember = useMutation({
     mutationFn: async ({
       clientId,
-      memberId,
+      professionalId,
       role
     }: {
       clientId: string;
-      memberId: string;
-      role: string;
+      professionalId: string;
+      role?: string;
     }) => {
       if (!userContext) throw new Error('User context not loaded');
 
@@ -215,9 +231,9 @@ export function useUnifiedCRM() {
         .from('client_team_assignments')
         .insert({
           client_id: clientId,
-          professional_id: memberId,
-          professional_role: role,
+          professional_id: professionalId,
           assigned_by: userContext.professionalId,
+          professional_role: role || 'team_member',
           status: 'active'
         })
         .select()
@@ -304,11 +320,11 @@ export function useUnifiedCRM() {
   // Search available professionals (not yet in network)
   const searchAvailableProfessionals = async (query: string, professionalType?: string) => {
     if (!userContext) return [];
-
+    
     let queryBuilder = supabase
       .from('professionals')
-      .select('*')
-      .neq('id', userContext.professionalId)
+      .select('id, user_id, name, company, professional_type, phone, email')
+      .neq('user_id', userContext.userId)
       .eq('status', 'active');
 
     if (professionalType) {
@@ -319,92 +335,59 @@ export function useUnifiedCRM() {
       queryBuilder = queryBuilder.or(`name.ilike.%${query}%,company.ilike.%${query}%,email.ilike.%${query}%`);
     }
 
-    const { data, error } = await queryBuilder.limit(10);
-
+    const { data, error } = await queryBuilder.limit(20);
+    
     if (error) throw error;
-
+    
     // Filter out professionals already in network
-    const existingIds = new Set(
-      allContacts
-        .filter(c => c.contact_type === 'professional')
-        .map(c => c.id)
-    );
-
+    const existingIds = new Set(allContacts.map(c => c.id));
     return (data || []).filter(p => !existingIds.has(p.id));
   };
 
-  // Add Team Member mutation
+  // Add team member (for internal team members)
   const addTeamMember = useMutation({
-    mutationFn: async ({
-      memberId,
-      role,
-      permissions
-    }: {
-      memberId: string;
-      role: string;
-      permissions?: any;
+    mutationFn: async ({ professionalId, role, notes }: { 
+      professionalId: string; 
+      role?: 'assistant' | 'coordinator' | 'loan_officer' | 'manager' | 'processor' | 'underwriter';
+      notes?: string;
     }) => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Not authenticated');
+      if (!userContext) throw new Error('User context not loaded');
 
-      // Verify the member is a mortgage professional
-      const { data: professional } = await supabase
-        .from('professionals')
-        .select('id, professional_type')
-        .eq('user_id', memberId)
-        .single();
-
-      if (!professional) {
-        throw new Error('User is not a registered professional');
-      }
-
-      if (professional.professional_type !== 'mortgage_professional') {
-        throw new Error('Only mortgage professionals can be added as team members');
-      }
-
-      // Insert team member relationship
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('team_members')
         .insert([{
-          team_owner_id: user.id,
-          team_member_id: memberId,
-          role: role as any,
-          permissions: permissions || {
-            view_clients: true,
-            edit_clients: false,
-            send_communications: false,
-            view_pipeline: true,
-            manage_documents: false
-          },
-          added_by: user.id,
-          status: 'active'
-        }]);
+          team_owner_id: userContext.userId,
+          team_member_id: professionalId,
+          role: role || 'loan_officer',
+          notes,
+          status: 'active',
+          added_by: userContext.userId
+        }])
+        .select()
+        .single();
 
-      if (error) {
-        if (error.code === '23505') { // Unique constraint violation
-          throw new Error('This team member has already been added');
-        }
-        throw error;
-      }
+      if (error) throw error;
+      return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['crm-contacts'] });
-      queryClient.invalidateQueries({ queryKey: ['lending-team-unified'] });
-      toast.success('Team member added successfully');
+      toast.success('Team member added');
     },
     onError: (error: Error) => {
-      toast.error(error.message || 'Failed to add team member');
+      toast.error('Failed to add team member', {
+        description: error.message
+      });
     }
   });
 
-  // Add manual contact (supporting professionals without system access)
+  // Add manual contact (for attorneys, title companies, etc.)
   const addManualContact = useMutation({
     mutationFn: async (contact: {
       firstName: string;
-      lastName: string;
+      lastName?: string;
       email?: string;
       phone?: string;
-      companyName: string;
+      companyName?: string;
       professionalType: string;
       roleTitle?: string;
       notes?: string;
@@ -417,7 +400,7 @@ export function useUnifiedCRM() {
         .insert({
           owner_id: userContext.professionalId,
           first_name: contact.firstName,
-          last_name: contact.lastName,
+          last_name: contact.lastName || '',
           email: contact.email,
           phone: contact.phone,
           company_name: contact.companyName,
@@ -434,18 +417,10 @@ export function useUnifiedCRM() {
       if (error) throw error;
       return data;
     },
-    onSuccess: (data) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['crm-contacts'] });
       queryClient.invalidateQueries({ queryKey: ['manual-contacts'] });
-      toast.success(`${data.first_name} ${data.last_name} added to your network`, {
-        description: 'They will appear in your team showcase',
-        action: {
-          label: 'Add Another',
-          onClick: () => {
-            // This will be handled by the form component
-          }
-        }
-      });
+      toast.success('Contact added successfully');
     },
     onError: (error: Error) => {
       toast.error('Failed to add contact', {
@@ -502,60 +477,97 @@ export function useUnifiedCRM() {
     }
   });
 
-  // Unified contact removal - handles all contact types
+  // ============================================================
+  // FIXED: Unified contact removal - handles all contact types
+  // ============================================================
   const removeContact = useMutation({
     mutationFn: async (contact: UnifiedContact) => {
       if (!userContext) throw new Error('User context not loaded');
 
-      // Professional team member from professional_teams (has relationship_id)
-      if (contact.contact_type === 'professional' && 
-          contact.relationship_type === 'team_member' && 
-          contact.relationship_id) {
-        // Use relationship_id directly - much simpler and more reliable
+      console.log('Removing contact:', {
+        id: contact.id,
+        contact_type: contact.contact_type,
+        relationship_type: contact.relationship_type,
+        relationship_id: contact.relationship_id,
+        professional_type: contact.professional_type
+      });
+
+      // Case 1: Professional team member from professional_teams table
+      // These have a relationship_id that references the professional_teams record
+      if (contact.relationship_id && contact.relationship_type === 'team_member') {
+        console.log('Removing via professional_teams using relationship_id:', contact.relationship_id);
+        
         const { error } = await supabase
           .from('professional_teams')
           .update({ status: 'inactive' })
-          .eq('id', contact.relationship_id)
-          .eq('status', 'active');
+          .eq('id', contact.relationship_id);
 
-        if (error) throw error;
+        if (error) {
+          console.error('Error removing from professional_teams:', error);
+          throw error;
+        }
+        return;
       }
-      // Client from client_profiles
-      else if (contact.contact_type === 'client' && contact.relationship_type === 'client') {
+
+      // Case 2: Client from client_profiles
+      if (contact.contact_type === 'client' || contact.relationship_type === 'client') {
+        console.log('Removing client from client_profiles:', contact.id);
+        
         const { error } = await supabase
           .from('client_profiles')
           .update({ status: 'inactive' })
           .eq('id', contact.id);
 
-        if (error) throw error;
+        if (error) {
+          console.error('Error removing from client_profiles:', error);
+          throw error;
+        }
+        return;
       }
-      // Manual contact from contacts table (contact_type === 'manual')
-      else if (contact.contact_type === 'manual') {
+
+      // Case 3: Manual contact from contacts table
+      // This includes attorneys, title companies, inspectors, etc.
+      // These have contact_type === 'manual' and no relationship_id
+      if (contact.contact_type === 'manual' || !contact.relationship_id) {
+        console.log('Removing manual contact from contacts table:', contact.id);
+        
         const { error } = await supabase
           .from('contacts')
           .update({ status: 'inactive' })
           .eq('id', contact.id);
 
-        if (error) throw error;
+        if (error) {
+          console.error('Error removing from contacts:', error);
+          throw error;
+        }
+        return;
       }
-      // Fallback - use contacts table
-      else {
-        const { error } = await supabase
-          .from('contacts')
-          .update({ status: 'inactive' })
-          .eq('id', contact.id);
 
-        if (error) throw error;
+      // Case 4: Fallback - try contacts table
+      console.log('Fallback: Removing from contacts table:', contact.id);
+      
+      const { error } = await supabase
+        .from('contacts')
+        .update({ status: 'inactive' })
+        .eq('id', contact.id);
+
+      if (error) {
+        console.error('Error in fallback removal:', error);
+        throw error;
       }
     },
     onSuccess: () => {
+      // Invalidate all relevant queries to refresh the UI
       queryClient.invalidateQueries({ queryKey: ['crm-contacts'] });
       queryClient.invalidateQueries({ queryKey: ['manual-contacts'] });
       queryClient.invalidateQueries({ queryKey: ['team-members'] });
       queryClient.invalidateQueries({ queryKey: ['mortgage-realtor-partners'] });
+      queryClient.invalidateQueries({ queryKey: ['lending-team-unified'] });
+      queryClient.invalidateQueries({ queryKey: ['realtor-partners-unified'] });
       toast.success('Contact removed from your network');
     },
     onError: (error: Error) => {
+      console.error('removeContact mutation error:', error);
       toast.error('Failed to remove contact', {
         description: error.message
       });
@@ -593,6 +605,9 @@ export function useUnifiedCRM() {
       totalTeamMembers,
       totalClients,
       totalPartners: partners.length,
+      totalVendors: vendors.length,
+      totalRealtorPartners: realtorPartners.length,
+      totalLendingTeam: lendingTeam.length,
       collaborationRate: 0 // Placeholder - would need client_team_assignments query
     };
   };
@@ -606,8 +621,9 @@ export function useUnifiedCRM() {
     teamMembers,
     clients,
     partners,
+    vendors,
     realtorPartners,
-    supportingProfessionals,
+    lendingTeam,
     isLoading: isLoadingContext || isLoadingContacts,
     
     // Search

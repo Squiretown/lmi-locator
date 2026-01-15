@@ -69,18 +69,13 @@ export function AddContactDialog({ open, onOpenChange }: AddContactDialogProps) 
     enabled: addMode === 'search' && activeTab !== 'client' && searchQuery.length > 0
   });
 
-  const handleAddExisting = async (professionalId: string, professionalUserId: string) => {
+  const handleAddExisting = async (professionalId: string, professionalUserId?: string) => {
     try {
       // For team members, add to internal team table
       if (activeTab === 'team') {
         await addTeamMember({ 
-          memberId: professionalUserId,
-          role: 'loan_officer', // Default role
-          permissions: {
-            view_clients: true,
-            edit_clients: false,
-            send_communications: false
-          }
+          professionalId: professionalUserId || professionalId,
+          role: 'loan_officer'
         });
       } else {
         // For realtors, add to professional_teams
