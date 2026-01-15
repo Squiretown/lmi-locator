@@ -145,13 +145,19 @@ serve(async (req) => {
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + 7);
 
-    // Normalize professional type if applicable
-    const normalizedProfessionalType = requestData.userType !== 'client' 
+    // Determine if this is a client or professional invitation
+    const isClientInvitation = requestData.userType === 'client';
+    
+    // Normalize professional type if applicable - must be set for professional invites
+    const normalizedProfessionalType = !isClientInvitation 
       ? normalizeProfessionalType(requestData.professionalType || requestData.userType)
       : null;
 
-    // Create invitation record
-    const invitationData = {
+    // Log for debugging
+    console.log(`[${requestId}] Invitation type: ${isClientInvitation ? 'client' : 'professional'}, userType: ${requestData.userType}, professionalType: ${normalizedProfessionalType}`);
+
+    // Build base invitation data
+    const invitationData: Record<string, any> = {
       email: inviteeEmail,
       invited_by_user_id: user.id,
       invited_by_name: inviterName,
@@ -165,19 +171,26 @@ serve(async (req) => {
       invite_code: inviteCode,
       status: 'pending',
       expires_at: expiresAt.toISOString(),
-      // Client-specific fields
-      ...(requestData.userType === 'client' && {
-        property_interest: requestData.propertyInterest || null,
-        estimated_budget: requestData.estimatedBudget || null,
-        preferred_contact: requestData.preferredContact || 'email',
-      }),
-      // Professional-specific fields
-      ...(requestData.userType !== 'client' && {
-        professional_type: normalizedProfessionalType,
-        license_number: requestData.licenseNumber || null,
-        company_name: requestData.companyName || null,
-      }),
     };
+
+    // Add type-specific fields based on CHECK constraint requirements
+    if (isClientInvitation) {
+      // Client requires property_interest to be NOT NULL per constraint
+      invitationData.property_interest = requestData.propertyInterest || 'General inquiry';
+      invitationData.estimated_budget = requestData.estimatedBudget || null;
+      invitationData.preferred_contact = requestData.preferredContact || 'email';
+      // Ensure professional_type is null for clients
+      invitationData.professional_type = null;
+    } else {
+      // Professional requires professional_type to be NOT NULL per constraint
+      invitationData.professional_type = normalizedProfessionalType;
+      invitationData.license_number = requestData.licenseNumber || null;
+      invitationData.company_name = requestData.companyName || null;
+      // Ensure property_interest is null for professionals
+      invitationData.property_interest = null;
+    }
+
+    console.log(`[${requestId}] Invitation data:`, JSON.stringify(invitationData));
 
     const { data: invitation, error: insertError } = await supabaseClient
       .from('user_invitations')
