@@ -181,7 +181,7 @@ export function TeamAssignmentDialog({
         .map((c) =>
           assignTeamMember({
             clientId,
-            memberId: c.professionalId,
+            professionalId: c.professionalId,
             role: c.role,
           })
         );
