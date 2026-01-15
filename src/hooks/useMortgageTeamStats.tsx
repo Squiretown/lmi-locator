@@ -172,13 +172,13 @@ export const useMortgageTeamStats = () => {
           console.log('✅ This month referrals:', thisMonthReferrals);
         }
 
-        // ✅ Count last month's referrals
+        // ✅ Count last month's referrals using .and() to avoid duplicate params
         const { count: lastMonthReferrals, error: lastRefError } = await supabase
           .from('client_team_assignments')
           .select('*', { count: 'exact', head: true })
           .eq('professional_id', currentProfessional.id)
           .gte('created_at', lastMonthStart.toISOString())
-          .lte('created_at', lastMonthEnd.toISOString());
+          .lt('created_at', thisMonthStart.toISOString());
 
         if (lastRefError) {
           console.error('❌ Error counting last month referrals:', lastRefError);

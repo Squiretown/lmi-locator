@@ -262,11 +262,26 @@ const MortgageClients: React.FC = () => {
                 onView={handleViewClient}
                 onEdit={handleEditClient}
                 onResendInvitation={handleResendInvitation}
-                onCancelInvitation={cancelInvitation}
-                onDeleteInvitation={deleteInvitation}
-                onDeactivateClient={deactivateClient}
-                onReactivateClient={reactivateClient}
-                onDeleteClient={deleteClient}
+                onCancelInvitation={async (id) => {
+                  await cancelInvitation(id);
+                  setSelectedClient(null);
+                }}
+                onDeleteInvitation={async (id) => {
+                  await deleteInvitation(id);
+                  setSelectedClient(null);
+                }}
+                onDeactivateClient={async (id) => {
+                  await deactivateClient(id);
+                  setSelectedClient(null);
+                }}
+                onReactivateClient={async (id) => {
+                  await reactivateClient(id);
+                  setSelectedClient(null);
+                }}
+                onDeleteClient={async (id) => {
+                  await deleteClient(id);
+                  setSelectedClient(null);
+                }}
                 onReInvite={handleReInvite}
                 isDeleting={isDeleting}
                 isReactivating={isReactivating}
