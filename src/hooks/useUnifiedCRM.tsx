@@ -5,7 +5,7 @@ import { toast } from 'sonner';
 // Types
 interface UnifiedContact {
   id: string;
-  contact_type: 'professional' | 'client';
+  contact_type: 'professional' | 'client' | 'manual';
   full_name: string;
   first_name: string;
   last_name?: string;
@@ -14,7 +14,7 @@ interface UnifiedContact {
   company?: string;
   professional_type?: string;
   status: string;
-  relationship_type: 'team_member' | 'client' | 'partner' | 'vendor' | 'contact';
+  relationship_type: 'team_member' | 'client' | 'realtor_partner' | 'lending_team' | 'attorney' | 'title_company' | 'inspector' | 'appraiser' | 'insurance' | 'contractor' | 'other';
   related_to_professional_id?: string;
   relationship_id?: string;
   visibility_settings?: any;
@@ -30,8 +30,8 @@ interface UserContext {
 }
 
 interface SearchFilters {
-  contactType?: 'all' | 'professional' | 'client';
-  relationshipType?: 'all' | 'team_member' | 'client';
+  contactType?: 'all' | 'professional' | 'client' | 'manual';
+  relationshipType?: 'all' | 'team_member' | 'client' | 'realtor_partner' | 'lending_team' | 'attorney' | 'title_company' | 'inspector' | 'appraiser' | 'insurance' | 'contractor' | 'other';
   status?: string;
   professionalType?: string;
 }
@@ -80,9 +80,14 @@ export function useUnifiedCRM() {
   });
 
   // Derived data - categorized contacts
-  const teamMembers = allContacts.filter(c => c.relationship_type === 'team_member');
+  const teamMembers = allContacts.filter(c => c.relationship_type === 'team_member' || c.relationship_type === 'lending_team');
   const clients = allContacts.filter(c => c.relationship_type === 'client');
-  const partners = teamMembers.filter(c => c.contact_type === 'professional');
+  const realtorPartners = allContacts.filter(c => c.relationship_type === 'team_member' || c.relationship_type === 'realtor_partner');
+  const partners = allContacts.filter(c => c.contact_type === 'professional' || c.contact_type === 'manual');
+  const supportingProfessionals = allContacts.filter(c => 
+    c.contact_type === 'manual' && 
+    ['attorney', 'title_company', 'inspector', 'appraiser', 'insurance', 'contractor', 'other'].includes(c.relationship_type)
+  );
 
   // Search function
   const searchContacts = (query: string, filters: SearchFilters = {}) => {
@@ -524,8 +529,8 @@ export function useUnifiedCRM() {
 
         if (error) throw error;
       }
-      // Manual contact from contacts table (no relationship_id means it's from contacts table)
-      else if (!contact.relationship_id) {
+      // Manual contact from contacts table (contact_type === 'manual')
+      else if (contact.contact_type === 'manual') {
         const { error } = await supabase
           .from('contacts')
           .update({ status: 'inactive' })
@@ -533,7 +538,7 @@ export function useUnifiedCRM() {
 
         if (error) throw error;
       }
-      // Fallback for professional_teams without relationship_id (shouldn't happen)
+      // Fallback - use contacts table
       else {
         const { error } = await supabase
           .from('contacts')
@@ -601,6 +606,8 @@ export function useUnifiedCRM() {
     teamMembers,
     clients,
     partners,
+    realtorPartners,
+    supportingProfessionals,
     isLoading: isLoadingContext || isLoadingContacts,
     
     // Search
