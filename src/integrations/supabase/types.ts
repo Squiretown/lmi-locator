@@ -2281,6 +2281,7 @@ export type Database = {
           last_updated: string
           license_number: string
           logo_url: string | null
+          mortgage_subtype: string | null
           name: string
           notes: string | null
           phone: string | null
@@ -2307,6 +2308,7 @@ export type Database = {
           last_updated?: string
           license_number: string
           logo_url?: string | null
+          mortgage_subtype?: string | null
           name: string
           notes?: string | null
           phone?: string | null
@@ -2333,6 +2335,7 @@ export type Database = {
           last_updated?: string
           license_number?: string
           logo_url?: string | null
+          mortgage_subtype?: string | null
           name?: string
           notes?: string | null
           phone?: string | null
