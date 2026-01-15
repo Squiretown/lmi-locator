@@ -1,176 +1,266 @@
-
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ListFilter, Plus, Search, Users, Mail } from 'lucide-react';
+import { Plus, Search, Users, Clock, CheckCircle, XCircle, Mail } from 'lucide-react';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { ChevronDown, UserPlus } from 'lucide-react';
 import { useRealtorClientManagement } from '@/hooks/useRealtorClientManagement';
+import { useUnifiedClientData, UnifiedClient } from '@/hooks/useUnifiedClientData';
 import { useUnifiedInvitationSystem } from '@/hooks/useUnifiedInvitationSystem';
-import { ClientTable } from '@/components/clients/ClientTable';
+import { UnifiedClientTable } from '@/components/clients/UnifiedClientTable';
 import { CreateClientDialog } from '@/components/clients/CreateClientDialog';
 import { ClientDetailsDialog } from '@/components/clients/ClientDetailsDialog';
-import { InvitationManagement } from '@/components/clients/InvitationManagement';
+import { EditClientDialog } from '@/components/clients/EditClientDialog';
+import { InviteClientDialog } from '@/components/clients/InviteClientDialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+
+type StatusFilter = 'all' | 'invited' | 'active' | 'inactive';
 
 export const ClientList = () => {
   const {
-    clients,
-    isLoadingClients,
-    selectedClient,
-    setSelectedClient,
     createClient,
-    deleteClient,
+    updateClient,
     isCreating,
-    isDeleting,
-    refetch,
+    isUpdating,
   } = useRealtorClientManagement();
 
-  const { stats } = useUnifiedInvitationSystem();
+  const {
+    unifiedClients,
+    isLoading,
+    stats,
+    refetch,
+    deleteInvitation,
+    reactivateClient,
+    deactivateClient,
+    deleteClient,
+    cancelInvitation,
+    isDeleting,
+    isReactivating,
+    isDeactivating,
+    isCancelling,
+  } = useUnifiedClientData();
+
+  const { 
+    manageInvitation, 
+    isManaging: isResendingInvitation 
+  } = useUnifiedInvitationSystem();
 
   const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [showEditDialog, setShowEditDialog] = useState(false);
   const [showDetailsDialog, setShowDetailsDialog] = useState(false);
-  const [activeTab, setActiveTab] = useState('clients');
+  const [showInviteDialog, setShowInviteDialog] = useState(false);
+  const [selectedClient, setSelectedClient] = useState<UnifiedClient | null>(null);
 
-  // Filter clients based on search query
-  const filteredClients = clients.filter(client => {
-    const searchLower = searchQuery.toLowerCase();
-    return (
-      client.first_name.toLowerCase().includes(searchLower) ||
-      client.last_name.toLowerCase().includes(searchLower) ||
-      client.email?.toLowerCase().includes(searchLower) ||
-      client.phone?.includes(searchQuery)
-    );
-  });
+  // Filter clients based on search query and status filter
+  const filteredClients = useMemo(() => {
+    return unifiedClients.filter(client => {
+      // Search filter
+      const searchLower = searchQuery.toLowerCase();
+      const matchesSearch = searchQuery === '' || (
+        client.firstName?.toLowerCase().includes(searchLower) ||
+        client.lastName?.toLowerCase().includes(searchLower) ||
+        client.email?.toLowerCase().includes(searchLower) ||
+        client.phone?.includes(searchQuery)
+      );
 
-  const handleEdit = (client: any) => {
-    setSelectedClient(client);
-    setShowCreateDialog(true); // Reuse create dialog for editing
-  };
-
-  const handleDelete = async (clientId: string) => {
-    if (window.confirm('Are you sure you want to delete this client?')) {
-      try {
-        await deleteClient(clientId);
-      } catch (error) {
-        // Error handling is done in the hook
+      // Status filter
+      let matchesStatus = true;
+      switch (statusFilter) {
+        case 'invited':
+          matchesStatus = client.status === 'invited';
+          break;
+        case 'active':
+          matchesStatus = client.status === 'active';
+          break;
+        case 'inactive':
+          matchesStatus = ['deactivated', 'expired', 'cancelled'].includes(client.status);
+          break;
+        case 'all':
+        default:
+          matchesStatus = true;
       }
-    }
-  };
 
-  const handleView = (client: any) => {
+      return matchesSearch && matchesStatus;
+    });
+  }, [unifiedClients, searchQuery, statusFilter]);
+
+  const handleViewClient = (client: UnifiedClient) => {
     setSelectedClient(client);
     setShowDetailsDialog(true);
   };
 
-  const handleInvitedClientsClick = () => {
-    setActiveTab('invitations');
+  const handleEditClient = (client: UnifiedClient) => {
+    setSelectedClient(client);
+    setShowEditDialog(true);
   };
 
-  const clientStats = {
-    total: clients.length,
-    active: clients.filter(c => c.status === 'active').length,
-    leads: clients.filter(c => c.status === 'lead').length,
-    invitedClients: stats.total,
+  const handleResendInvitation = async (client: UnifiedClient) => {
+    try {
+      await manageInvitation({ 
+        invitationId: client.id, 
+        action: 'resend', 
+        sendVia: (client.sendVia as any) || 'email' 
+      });
+    } catch (error) {
+      // Error handled by hook
+    }
+  };
+
+  const handleReInvite = (client: UnifiedClient) => {
+    setShowInviteDialog(true);
+  };
+
+  // Map UnifiedClient to the format expected by EditClientDialog
+  const getClientForEdit = () => {
+    if (!selectedClient || selectedClient.source !== 'client_profile') return null;
+    return {
+      id: selectedClient.id,
+      first_name: selectedClient.firstName || '',
+      last_name: selectedClient.lastName || '',
+      email: selectedClient.email,
+      phone: selectedClient.phone || '',
+      income: selectedClient.income,
+      household_size: selectedClient.householdSize,
+      military_status: selectedClient.militaryStatus,
+      timeline: selectedClient.timeline,
+      first_time_buyer: selectedClient.firstTimeBuyer,
+      notes: selectedClient.notes,
+    };
   };
 
   return (
     <div className="space-y-6">
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
+        <Card 
+          className={`cursor-pointer transition-all ${statusFilter === 'all' ? 'ring-2 ring-primary' : 'hover:shadow-md'}`}
+          onClick={() => setStatusFilter('all')}
+        >
           <div className="flex flex-row items-center justify-between space-y-0 p-4">
             <div className="text-sm font-medium">Total Clients</div>
             <Users className="h-4 w-4 text-muted-foreground" />
           </div>
           <div className="px-4 pb-4">
-            <div className="text-2xl font-bold">{clientStats.total}</div>
-          </div>
-        </Card>
-
-        <Card>
-          <div className="flex flex-row items-center justify-between space-y-0 p-4">
-            <div className="text-sm font-medium">Active Clients</div>
-            <div className="h-2 w-2 bg-green-500 rounded-full" />
-          </div>
-          <div className="px-4 pb-4">
-            <div className="text-2xl font-bold">{clientStats.active}</div>
-          </div>
-        </Card>
-
-        <Card>
-          <div className="flex flex-row items-center justify-between space-y-0 p-4">
-            <div className="text-sm font-medium">Leads</div>
-            <div className="h-2 w-2 bg-blue-500 rounded-full" />
-          </div>
-          <div className="px-4 pb-4">
-            <div className="text-2xl font-bold">{clientStats.leads}</div>
+            <div className="text-2xl font-bold">{stats.total}</div>
           </div>
         </Card>
 
         <Card 
-          className="cursor-pointer hover:shadow-md transition-shadow"
-          onClick={handleInvitedClientsClick}
+          className={`cursor-pointer transition-all ${statusFilter === 'invited' ? 'ring-2 ring-primary' : 'hover:shadow-md'}`}
+          onClick={() => setStatusFilter('invited')}
         >
           <div className="flex flex-row items-center justify-between space-y-0 p-4">
-            <div className="text-sm font-medium">Invited Clients</div>
-            <Mail className="h-4 w-4 text-amber-500" />
+            <div className="text-sm font-medium">Invited</div>
+            <Clock className="h-4 w-4 text-amber-500" />
           </div>
           <div className="px-4 pb-4">
-            <div className="text-2xl font-bold text-amber-500">{clientStats.invitedClients}</div>
-            <p className="text-xs text-muted-foreground mt-1">Click to manage</p>
+            <div className="text-2xl font-bold text-amber-600">{stats.invited}</div>
+          </div>
+        </Card>
+
+        <Card 
+          className={`cursor-pointer transition-all ${statusFilter === 'active' ? 'ring-2 ring-primary' : 'hover:shadow-md'}`}
+          onClick={() => setStatusFilter('active')}
+        >
+          <div className="flex flex-row items-center justify-between space-y-0 p-4">
+            <div className="text-sm font-medium">Active</div>
+            <CheckCircle className="h-4 w-4 text-green-500" />
+          </div>
+          <div className="px-4 pb-4">
+            <div className="text-2xl font-bold text-green-600">{stats.active}</div>
+          </div>
+        </Card>
+
+        <Card 
+          className={`cursor-pointer transition-all ${statusFilter === 'inactive' ? 'ring-2 ring-primary' : 'hover:shadow-md'}`}
+          onClick={() => setStatusFilter('inactive')}
+        >
+          <div className="flex flex-row items-center justify-between space-y-0 p-4">
+            <div className="text-sm font-medium">Inactive</div>
+            <XCircle className="h-4 w-4 text-muted-foreground" />
+          </div>
+          <div className="px-4 pb-4">
+            <div className="text-2xl font-bold text-muted-foreground">{stats.inactive}</div>
           </div>
         </Card>
       </div>
 
-      {/* Tabs for Client Management and Invitations */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList>
-          <TabsTrigger value="clients">Client Management</TabsTrigger>
-          <TabsTrigger value="invitations">Invitations</TabsTrigger>
-        </TabsList>
+      {/* Status Filter Tabs with Actions Bar */}
+      <Tabs value={statusFilter} onValueChange={(v) => setStatusFilter(v as StatusFilter)} className="w-full">
+        <div className="flex justify-between items-center mb-4">
+          <TabsList>
+            <TabsTrigger value="all">All ({stats.total})</TabsTrigger>
+            <TabsTrigger value="invited" className="text-amber-600">Invited ({stats.invited})</TabsTrigger>
+            <TabsTrigger value="active" className="text-green-600">Active ({stats.active})</TabsTrigger>
+            <TabsTrigger value="inactive">Inactive ({stats.inactive})</TabsTrigger>
+          </TabsList>
 
-        <TabsContent value="clients" className="space-y-4">
-          {/* Actions Bar */}
-          <div className="flex justify-between items-center">
-            <div className="flex items-center gap-2 flex-1 max-w-md">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-                <Input
-                  placeholder="Search clients..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
+          <div className="flex items-center gap-2">
+            <div className="relative max-w-sm">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+              <Input
+                placeholder="Search clients..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10 w-[200px]"
+              />
             </div>
             
-            <Button onClick={() => setShowCreateDialog(true)}>
-              <Plus className="mr-2 h-4 w-4" />
-              Add Client
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Add Client
+                  <ChevronDown className="ml-2 h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => setShowCreateDialog(true)}>
+                  <UserPlus className="mr-2 h-4 w-4" />
+                  Create Manually
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setShowInviteDialog(true)}>
+                  <Mail className="mr-2 h-4 w-4" />
+                  Send Invitation
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
+        </div>
 
-          {/* Client Table */}
+        <TabsContent value={statusFilter} className="space-y-4">
           <Card>
             <div className="flex justify-between items-center p-6 pb-0">
-              <h2 className="text-xl font-semibold">Clients ({filteredClients.length})</h2>
+              <h2 className="text-xl font-semibold">
+                {statusFilter === 'all' && `All Clients (${filteredClients.length})`}
+                {statusFilter === 'invited' && `Invited Clients (${filteredClients.length})`}
+                {statusFilter === 'active' && `Active Clients (${filteredClients.length})`}
+                {statusFilter === 'inactive' && `Inactive Clients (${filteredClients.length})`}
+              </h2>
             </div>
             <CardContent>
-              <ClientTable
+              <UnifiedClientTable
                 clients={filteredClients}
-                onEdit={handleEdit}
-                onDelete={handleDelete}
-                onView={handleView}
-                onRefresh={() => refetch()}
-                isLoading={isLoadingClients}
+                isLoading={isLoading}
+                onView={handleViewClient}
+                onEdit={handleEditClient}
+                onResendInvitation={handleResendInvitation}
+                onCancelInvitation={cancelInvitation}
+                onDeleteInvitation={deleteInvitation}
+                onDeactivateClient={deactivateClient}
+                onReactivateClient={reactivateClient}
+                onDeleteClient={deleteClient}
+                onReInvite={handleReInvite}
+                isDeleting={isDeleting}
+                isReactivating={isReactivating}
+                isDeactivating={isDeactivating}
+                isCancelling={isCancelling}
               />
             </CardContent>
           </Card>
-        </TabsContent>
-
-        <TabsContent value="invitations">
-          <InvitationManagement />
         </TabsContent>
       </Tabs>
 
@@ -183,10 +273,37 @@ export const ClientList = () => {
         userType="realtor"
       />
 
+      <EditClientDialog
+        open={showEditDialog}
+        onOpenChange={setShowEditDialog}
+        client={getClientForEdit() as any}
+        onSubmit={updateClient}
+        isLoading={isUpdating}
+      />
+
       <ClientDetailsDialog
         open={showDetailsDialog}
         onOpenChange={setShowDetailsDialog}
-        client={selectedClient}
+        client={selectedClient ? {
+          id: selectedClient.id,
+          first_name: selectedClient.firstName || '',
+          last_name: selectedClient.lastName || '',
+          email: selectedClient.email,
+          phone: selectedClient.phone,
+          income: selectedClient.income,
+          household_size: selectedClient.householdSize,
+          military_status: selectedClient.militaryStatus,
+          timeline: selectedClient.timeline,
+          first_time_buyer: selectedClient.firstTimeBuyer,
+          notes: selectedClient.notes,
+          status: selectedClient.status,
+          created_at: selectedClient.createdAt,
+        } as any : null}
+      />
+
+      <InviteClientDialog
+        open={showInviteDialog}
+        onOpenChange={setShowInviteDialog}
       />
     </div>
   );

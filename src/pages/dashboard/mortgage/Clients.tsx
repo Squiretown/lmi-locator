@@ -1,19 +1,20 @@
-
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Users, UserPlus, Mail, Phone, Calendar, ChevronDown, Search, AlertCircle } from "lucide-react";
+import { Users, UserPlus, Mail, Phone, Calendar, ChevronDown, Search, Clock, CheckCircle, XCircle } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useClientManagement } from '@/hooks/useClientManagement';
+import { useUnifiedClientData, UnifiedClient, UnifiedClientStatus } from '@/hooks/useUnifiedClientData';
 import { useUnifiedInvitationSystem } from '@/hooks/useUnifiedInvitationSystem';
-import { ClientTable } from '@/components/clients/ClientTable';
+import { UnifiedClientTable } from '@/components/clients/UnifiedClientTable';
 import { CreateClientDialog } from '@/components/clients/CreateClientDialog';
 import { EditClientDialog } from '@/components/clients/EditClientDialog';
 import { ClientDetailsDialog } from '@/components/clients/ClientDetailsDialog';
 import { InviteClientDialog } from '@/components/clients/InviteClientDialog';
-import { InvitationManagement } from '@/components/clients/InvitationManagement';
+
+type StatusFilter = 'all' | 'invited' | 'active' | 'inactive';
 
 const MortgageClients: React.FC = () => {
   const [showCreateDialog, setShowCreateDialog] = useState(false);
@@ -21,64 +22,113 @@ const MortgageClients: React.FC = () => {
   const [showDetailsDialog, setShowDetailsDialog] = useState(false);
   const [showInviteDialog, setShowInviteDialog] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
+  const [selectedClient, setSelectedClient] = useState<UnifiedClient | null>(null);
 
   const {
-    clients,
-    isLoadingClients,
-    selectedClient,
-    setSelectedClient,
     createClient,
     updateClient,
-    deleteClient,
     isCreating,
     isUpdating,
-    refetch,
   } = useClientManagement();
 
   const {
-    invitations,
+    unifiedClients,
+    isLoading,
     stats,
-    sendInvitation,
-    isSending: isCreatingInvitation,
+    refetch,
+    deleteInvitation,
+    reactivateClient,
+    deactivateClient,
+    deleteClient,
+    cancelInvitation,
+    isDeleting,
+    isReactivating,
+    isDeactivating,
+    isCancelling,
+  } = useUnifiedClientData();
+
+  const { 
+    manageInvitation, 
+    isManaging: isResendingInvitation 
   } = useUnifiedInvitationSystem();
 
-  // Filter clients based on search query
-  const filteredClients = clients.filter(client => {
-    const searchLower = searchQuery.toLowerCase();
-    return (
-      client.first_name.toLowerCase().includes(searchLower) ||
-      client.last_name.toLowerCase().includes(searchLower) ||
-      client.email?.toLowerCase().includes(searchLower) ||
-      client.phone?.includes(searchQuery)
-    );
-  });
+  // Filter clients based on search query and status filter
+  const filteredClients = useMemo(() => {
+    return unifiedClients.filter(client => {
+      // Search filter
+      const searchLower = searchQuery.toLowerCase();
+      const matchesSearch = searchQuery === '' || (
+        client.firstName?.toLowerCase().includes(searchLower) ||
+        client.lastName?.toLowerCase().includes(searchLower) ||
+        client.email?.toLowerCase().includes(searchLower) ||
+        client.phone?.includes(searchQuery)
+      );
 
-  // Calculate statistics
-  const totalClients = clients.length;
-  const activeApplications = clients.filter(c => c.status === 'active').length;
-  const lmiEligible = clients.filter(c => 
-    c.income && c.household_size && c.income < 80000 // Example LMI criteria
-  ).length;
-  const recentlyAdded = clients.filter(c => {
-    const weekAgo = new Date();
-    weekAgo.setDate(weekAgo.getDate() - 7);
-    return new Date(c.created_at) > weekAgo;
-  }).length;
+      // Status filter
+      let matchesStatus = true;
+      switch (statusFilter) {
+        case 'invited':
+          matchesStatus = client.status === 'invited';
+          break;
+        case 'active':
+          matchesStatus = client.status === 'active';
+          break;
+        case 'inactive':
+          matchesStatus = ['deactivated', 'expired', 'cancelled'].includes(client.status);
+          break;
+        case 'all':
+        default:
+          matchesStatus = true;
+      }
 
-  const handleEditClient = (client: any) => {
-    setSelectedClient(client);
-    setShowEditDialog(true);
-  };
+      return matchesSearch && matchesStatus;
+    });
+  }, [unifiedClients, searchQuery, statusFilter]);
 
-  const handleViewClient = (client: any) => {
+  const handleViewClient = (client: UnifiedClient) => {
     setSelectedClient(client);
     setShowDetailsDialog(true);
   };
 
-  const handleDeleteClient = async (clientId: string) => {
-    if (window.confirm('Are you sure you want to delete this client?')) {
-      await deleteClient(clientId);
+  const handleEditClient = (client: UnifiedClient) => {
+    setSelectedClient(client);
+    setShowEditDialog(true);
+  };
+
+  const handleResendInvitation = async (client: UnifiedClient) => {
+    try {
+      await manageInvitation({ 
+        invitationId: client.id, 
+        action: 'resend', 
+        sendVia: (client.sendVia as any) || 'email' 
+      });
+    } catch (error) {
+      // Error handled by hook
     }
+  };
+
+  const handleReInvite = (client: UnifiedClient) => {
+    // Open invite dialog with pre-filled data
+    setShowInviteDialog(true);
+  };
+
+  // Map UnifiedClient to the format expected by EditClientDialog
+  const getClientForEdit = () => {
+    if (!selectedClient || selectedClient.source !== 'client_profile') return null;
+    return {
+      id: selectedClient.id,
+      first_name: selectedClient.firstName || '',
+      last_name: selectedClient.lastName || '',
+      email: selectedClient.email,
+      phone: selectedClient.phone || '',
+      income: selectedClient.income,
+      household_size: selectedClient.householdSize,
+      military_status: selectedClient.militaryStatus,
+      timeline: selectedClient.timeline,
+      first_time_buyer: selectedClient.firstTimeBuyer,
+      notes: selectedClient.notes,
+    };
   };
 
   return (
@@ -87,7 +137,7 @@ const MortgageClients: React.FC = () => {
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Client Management</h1>
           <p className="text-muted-foreground">
-            Manage your mortgage clients and their applications
+            Manage your mortgage clients and invitations in one place
           </p>
         </div>
         <DropdownMenu>
@@ -126,87 +176,105 @@ const MortgageClients: React.FC = () => {
 
       {/* Client Stats */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
+        <Card 
+          className={`cursor-pointer transition-all ${statusFilter === 'all' ? 'ring-2 ring-primary' : 'hover:shadow-md'}`}
+          onClick={() => setStatusFilter('all')}
+        >
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Clients</CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{totalClients}</div>
-            <p className="text-xs text-muted-foreground">+{recentlyAdded} from last week</p>
+            <div className="text-2xl font-bold">{stats.total}</div>
+            <p className="text-xs text-muted-foreground">All clients and invitations</p>
           </CardContent>
         </Card>
-        <Card>
+        <Card 
+          className={`cursor-pointer transition-all ${statusFilter === 'invited' ? 'ring-2 ring-primary' : 'hover:shadow-md'}`}
+          onClick={() => setStatusFilter('invited')}
+        >
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Applications</CardTitle>
-            <Calendar className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Invited</CardTitle>
+            <Clock className="h-4 w-4 text-amber-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{activeApplications}</div>
-            <p className="text-xs text-muted-foreground">In process</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">LMI Eligible</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{lmiEligible}</div>
-            <p className="text-xs text-muted-foreground">
-              {totalClients > 0 ? Math.round((lmiEligible / totalClients) * 100) : 0}% of clients
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Pending Invitations</CardTitle>
-            <AlertCircle className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats?.pending || 0}</div>
+            <div className="text-2xl font-bold text-amber-600">{stats.invited}</div>
             <p className="text-xs text-muted-foreground">Awaiting response</p>
+          </CardContent>
+        </Card>
+        <Card 
+          className={`cursor-pointer transition-all ${statusFilter === 'active' ? 'ring-2 ring-primary' : 'hover:shadow-md'}`}
+          onClick={() => setStatusFilter('active')}
+        >
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Active</CardTitle>
+            <CheckCircle className="h-4 w-4 text-green-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-green-600">{stats.active}</div>
+            <p className="text-xs text-muted-foreground">Current clients</p>
+          </CardContent>
+        </Card>
+        <Card 
+          className={`cursor-pointer transition-all ${statusFilter === 'inactive' ? 'ring-2 ring-primary' : 'hover:shadow-md'}`}
+          onClick={() => setStatusFilter('inactive')}
+        >
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Inactive</CardTitle>
+            <XCircle className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-muted-foreground">{stats.inactive}</div>
+            <p className="text-xs text-muted-foreground">Deactivated / Expired</p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Client Management Tabs */}
-      <Tabs defaultValue="clients" className="space-y-4">
+      {/* Status Filter Tabs */}
+      <Tabs value={statusFilter} onValueChange={(v) => setStatusFilter(v as StatusFilter)} className="space-y-4">
         <TabsList>
-          <TabsTrigger value="clients">Clients</TabsTrigger>
-          <TabsTrigger value="invitations" className="relative">
-            Invitations
-            {stats?.pending > 0 && (
-              <span className="ml-1 bg-destructive text-destructive-foreground text-xs rounded-full px-1.5 py-0.5">
-                {stats.pending}
-              </span>
-            )}
-          </TabsTrigger>
+          <TabsTrigger value="all">All ({stats.total})</TabsTrigger>
+          <TabsTrigger value="invited" className="text-amber-600">Invited ({stats.invited})</TabsTrigger>
+          <TabsTrigger value="active" className="text-green-600">Active ({stats.active})</TabsTrigger>
+          <TabsTrigger value="inactive">Inactive ({stats.inactive})</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="clients" className="space-y-4">
+        <TabsContent value={statusFilter} className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>All Clients</CardTitle>
+              <CardTitle>
+                {statusFilter === 'all' && 'All Clients'}
+                {statusFilter === 'invited' && 'Invited Clients'}
+                {statusFilter === 'active' && 'Active Clients'}
+                {statusFilter === 'inactive' && 'Inactive Clients'}
+              </CardTitle>
               <CardDescription>
-                Manage your client relationships and track their progress
+                {statusFilter === 'all' && 'Complete view of all clients and invitations'}
+                {statusFilter === 'invited' && 'Clients who have received an invitation but haven\'t accepted yet'}
+                {statusFilter === 'active' && 'Clients currently working with you'}
+                {statusFilter === 'inactive' && 'Deactivated, expired, or cancelled clients'}
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <ClientTable
+              <UnifiedClientTable
                 clients={filteredClients}
-                onEdit={handleEditClient}
-                onDelete={handleDeleteClient}
+                isLoading={isLoading}
                 onView={handleViewClient}
-                onRefresh={refetch}
-                isLoading={isLoadingClients}
+                onEdit={handleEditClient}
+                onResendInvitation={handleResendInvitation}
+                onCancelInvitation={cancelInvitation}
+                onDeleteInvitation={deleteInvitation}
+                onDeactivateClient={deactivateClient}
+                onReactivateClient={reactivateClient}
+                onDeleteClient={deleteClient}
+                onReInvite={handleReInvite}
+                isDeleting={isDeleting}
+                isReactivating={isReactivating}
+                isDeactivating={isDeactivating}
+                isCancelling={isCancelling}
               />
             </CardContent>
           </Card>
-        </TabsContent>
-
-        <TabsContent value="invitations">
-          <InvitationManagement />
         </TabsContent>
       </Tabs>
 
@@ -257,7 +325,7 @@ const MortgageClients: React.FC = () => {
       <EditClientDialog
         open={showEditDialog}
         onOpenChange={setShowEditDialog}
-        client={selectedClient}
+        client={getClientForEdit() as any}
         onSubmit={updateClient}
         isLoading={isUpdating}
       />
@@ -265,7 +333,21 @@ const MortgageClients: React.FC = () => {
       <ClientDetailsDialog
         open={showDetailsDialog}
         onOpenChange={setShowDetailsDialog}
-        client={selectedClient}
+        client={selectedClient ? {
+          id: selectedClient.id,
+          first_name: selectedClient.firstName || '',
+          last_name: selectedClient.lastName || '',
+          email: selectedClient.email,
+          phone: selectedClient.phone,
+          income: selectedClient.income,
+          household_size: selectedClient.householdSize,
+          military_status: selectedClient.militaryStatus,
+          timeline: selectedClient.timeline,
+          first_time_buyer: selectedClient.firstTimeBuyer,
+          notes: selectedClient.notes,
+          status: selectedClient.status,
+          created_at: selectedClient.createdAt,
+        } as any : null}
       />
 
       <InviteClientDialog
