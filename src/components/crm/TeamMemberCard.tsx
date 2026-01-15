@@ -42,6 +42,31 @@ interface TeamMemberCardProps {
   onRemove?: (id: string) => void;
 }
 
+// Helper function to get display badge based on professional_type
+const getProfessionalTypeBadge = (professionalType?: string): string => {
+  if (!professionalType) return 'Team Member';
+  
+  const labels: Record<string, string> = {
+    'realtor': 'Realtor Partner',
+    'mortgage_professional': 'Lending Team',
+    'attorney': 'Attorney',
+    'title_company': 'Title Company',
+    'inspector': 'Inspector',
+    'appraiser': 'Appraiser',
+    'insurance': 'Insurance',
+    'contractor': 'Contractor',
+    'escrow': 'Escrow',
+    'surveyor': 'Surveyor',
+    'home_warranty': 'Home Warranty',
+    'moving_company': 'Moving Company',
+    'photographer': 'Photographer',
+    'stager': 'Stager',
+    'other': 'Professional'
+  };
+  
+  return labels[professionalType] || professionalType.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+};
+
 export function TeamMemberCard({
   contact,
   onViewProfile,
@@ -78,7 +103,7 @@ export function TeamMemberCard({
               <h3 className="font-semibold text-base">{contact.full_name}</h3>
               <div className="flex gap-2 mt-1">
                 <Badge variant="secondary" className="text-xs">
-                  Team Member
+                  {getProfessionalTypeBadge(contact.professional_type)}
                 </Badge>
                 <Badge
                   variant={isVisible ? "default" : "outline"}
