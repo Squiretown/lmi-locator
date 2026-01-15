@@ -1,10 +1,8 @@
-
 import React from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { UserManagement, ApiKeys, SystemLogs, DatabaseTools } from "@/components/admin/tools";
-import { Database, FileText, Key, Users, Trash2, TestTube } from "lucide-react";
-import RemoveAllUsers from '@/components/admin/RemoveAllUsers';
+import { Database, FileText, Key, Users, TestTube } from "lucide-react";
 import ConnectionTester from '@/components/development/ConnectionTester';
 
 const AdminTools: React.FC = () => {
@@ -20,7 +18,7 @@ const AdminTools: React.FC = () => {
         
         <CardContent>
           <Tabs defaultValue="users" className="w-full">
-            <TabsList className="grid w-full grid-cols-6 mb-4">
+            <TabsList className="grid w-full grid-cols-5 mb-4">
               <TabsTrigger value="users" className="flex items-center gap-1">
                 <Users className="h-4 w-4" />
                 Users
@@ -40,10 +38,6 @@ const AdminTools: React.FC = () => {
               <TabsTrigger value="testing" className="flex items-center gap-1">
                 <TestTube className="h-4 w-4" />
                 Testing
-              </TabsTrigger>
-              <TabsTrigger value="danger-zone" className="flex items-center gap-1 text-red-600">
-                <Trash2 className="h-4 w-4" />
-                Danger
               </TabsTrigger>
             </TabsList>
             
@@ -70,13 +64,6 @@ const AdminTools: React.FC = () => {
             {/* Testing Tab */}
             <TabsContent value="testing">
               <ConnectionTester />
-            </TabsContent>
-            
-            {/* Danger Zone Tab */}
-            <TabsContent value="danger-zone">
-              <div className="space-y-6">
-                <RemoveAllUsers />
-              </div>
             </TabsContent>
           </Tabs>
         </CardContent>

@@ -1,7 +1,9 @@
 import { supabase } from "@/integrations/supabase/client";
+import { getTemporaryPermissions } from "./temporary-permissions";
 
 /**
  * Get the current user's permissions
+ * Uses temporary implementation based on user metadata
  * @returns Array of permission names
  */
 export async function getCurrentUserPermissions(): Promise<string[]> {
@@ -10,19 +12,30 @@ export async function getCurrentUserPermissions(): Promise<string[]> {
     
     if (!user) return [];
     
-    // First check if user is admin - gets all permissions
-    const { data: isAdmin } = await supabase.rpc('user_is_admin');
-    if (isAdmin) {
-      const { data } = await supabase.functions.invoke('get-all-permissions');
-      return data && Array.isArray(data) ? data.map((p: any) => p.permission_name) : [];
+    // Use temporary implementation based on user type from metadata
+    const userType = user.user_metadata?.user_type as string || 'client';
+    
+    // Check if user is admin
+    if (userType === 'admin') {
+      // Return all possible permissions for admin
+      return [
+        'admin_access',
+        'user_management',
+        'data_export',
+        'system_logs',
+        'view_clients',
+        'manage_clients',
+        'view_team',
+        'manage_team',
+        'view_properties',
+        'manage_properties',
+        'view_reports',
+        'manage_reports'
+      ];
     }
     
-    // Otherwise get the user's specific permissions
-    const { data } = await supabase.functions.invoke('get-user-permissions', {
-      body: { userId: user.id }
-    });
-    
-    return data && Array.isArray(data) ? data.map((p: any) => p.permission_name) : [];
+    // Return permissions based on user type
+    return getTemporaryPermissions(userType);
   } catch (error) {
     console.error('Error fetching user permissions:', error);
     return [];
