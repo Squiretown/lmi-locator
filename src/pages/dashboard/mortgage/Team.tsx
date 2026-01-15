@@ -1,61 +1,116 @@
-
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Users, UserPlus, Mail, Phone, Building, AlertCircle, RefreshCw, Search, Send, ChevronDown, Info } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Input } from "@/components/ui/input";
+import { Users, UserPlus, Search, Send, ChevronDown, Clock, CheckCircle, XCircle, Building } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useMortgageTeamStats } from '@/hooks/useMortgageTeamStats';
-import { useMortgageTeamManagement } from '@/hooks/useMortgageTeamManagement';
+import { useUnifiedTeamData, UnifiedTeamMember } from '@/hooks/useUnifiedTeamData';
 import { useUnifiedInvitationSystem } from '@/hooks/useUnifiedInvitationSystem';
-import { useUnifiedCRM } from '@/hooks/useUnifiedCRM';
+import { UnifiedTeamTable } from '@/components/teams/UnifiedTeamTable';
 import { InviteProfessionalDialog } from '@/components/teams/InviteProfessionalDialog';
 import { AddManualProfessionalDialog } from '@/components/teams/AddManualProfessionalDialog';
-import { UnifiedContactsView } from '@/components/crm/UnifiedContactsView';
+import { TeamMemberDetailsDialog } from '@/components/teams/TeamMemberDetailsDialog';
+import { TeamMemberCommunicationDialog } from '@/components/teams/TeamMemberCommunicationDialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
+type StatusFilter = 'all' | 'invited' | 'active' | 'inactive';
 
 const MortgageTeam: React.FC = () => {
   const [showInviteDialog, setShowInviteDialog] = useState(false);
   const [showManualAddDialog, setShowManualAddDialog] = useState(false);
-  const { teamStats, performanceMetrics, isLoading: isLoadingStats } = useMortgageTeamStats();
-  const { 
-    lendingTeam, 
-    realtorPartners, 
-    isLoading: isLoadingTeam, 
-    contactProfessional,
-    isContacting,
-    refetchRealtorPartners
-  } = useMortgageTeamManagement();
+  const [showDetailsDialog, setShowDetailsDialog] = useState(false);
+  const [showCommunicationDialog, setShowCommunicationDialog] = useState(false);
+  const [selectedMember, setSelectedMember] = useState<UnifiedTeamMember | null>(null);
+  const [communicationType, setCommunicationType] = useState<'email' | 'sms'>('email');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
+
+  const { performanceMetrics, isLoading: isLoadingStats } = useMortgageTeamStats();
   
   const {
-    invitations: allInvitations,
-    stats: professionalStats,
-    manageInvitation,
-    isManaging
-  } = useUnifiedInvitationSystem();
+    unifiedTeam,
+    isLoading: isLoadingTeam,
+    stats,
+    getPartnerTypeLabel,
+    deleteInvitation,
+    cancelInvitation,
+    removeTeamMember,
+    isDeleting,
+    isCancelling,
+    isRemoving,
+  } = useUnifiedTeamData();
 
-  // Filter for professional invitations only
-  const professionalInvitations = allInvitations.filter(inv => 
-    inv.user_type?.toLowerCase() === 'professional'
-  );
-  const pendingInvitations = professionalInvitations.filter(inv => 
-    inv.status === 'pending' || inv.status === 'sent'
-  );
-  const acceptedInvitations = professionalInvitations.filter(inv => 
-    inv.status === 'accepted'
-  );
+  const { manageInvitation, isManaging } = useUnifiedInvitationSystem();
 
-  const handleContactProfessional = async (professionalId: string, type: 'email' | 'sms') => {
+  // Filter team members based on search query and status filter
+  const filteredMembers = useMemo(() => {
+    return unifiedTeam.filter(member => {
+      // Search filter
+      const searchLower = searchQuery.toLowerCase();
+      const matchesSearch = searchQuery === '' || (
+        member.name?.toLowerCase().includes(searchLower) ||
+        member.email?.toLowerCase().includes(searchLower) ||
+        member.company?.toLowerCase().includes(searchLower)
+      );
+
+      // Status filter
+      let matchesStatus = true;
+      switch (statusFilter) {
+        case 'invited':
+          matchesStatus = member.status === 'invited';
+          break;
+        case 'active':
+          matchesStatus = member.status === 'active';
+          break;
+        case 'inactive':
+          matchesStatus = ['inactive', 'expired', 'cancelled'].includes(member.status);
+          break;
+        case 'all':
+        default:
+          matchesStatus = true;
+      }
+
+      return matchesSearch && matchesStatus;
+    });
+  }, [unifiedTeam, searchQuery, statusFilter]);
+
+  const handleViewMember = (member: UnifiedTeamMember) => {
+    setSelectedMember(member);
+    setShowDetailsDialog(true);
+  };
+
+  const handleEmailMember = (member: UnifiedTeamMember) => {
+    setSelectedMember(member);
+    setCommunicationType('email');
+    setShowCommunicationDialog(true);
+  };
+
+  const handleSMSMember = (member: UnifiedTeamMember) => {
+    setSelectedMember(member);
+    setCommunicationType('sms');
+    setShowCommunicationDialog(true);
+  };
+
+  const handleResendInvitation = async (member: UnifiedTeamMember) => {
     try {
-      await contactProfessional({ professionalId, type });
+      await manageInvitation({
+        invitationId: member.id,
+        action: 'resend',
+        sendVia: (member.sendVia as any) || 'email'
+      });
     } catch (error) {
-      console.error('Failed to contact professional:', error);
+      // Error handled by hook
     }
   };
 
-  if (isLoadingStats || isLoadingTeam) {
+  const handleReInvite = (member: UnifiedTeamMember) => {
+    setShowInviteDialog(true);
+  };
+
+  const isLoading = isLoadingStats || isLoadingTeam;
+
+  if (isLoading) {
     return (
       <div className="p-6 space-y-6">
         <div className="flex justify-between items-center">
@@ -67,13 +122,12 @@ const MortgageTeam: React.FC = () => {
           </div>
           <Button disabled>
             <UserPlus className="mr-2 h-4 w-4" />
-            Invite Partner
+            Add Partner
           </Button>
         </div>
 
-        {/* Loading skeletons */}
-        <div className="grid gap-4 md:grid-cols-3">
-          {[1, 2, 3].map((i) => (
+        <div className="grid gap-4 md:grid-cols-4">
+          {[1, 2, 3, 4].map((i) => (
             <Card key={i}>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <div className="h-4 bg-muted rounded w-24 animate-pulse"></div>
@@ -96,7 +150,7 @@ const MortgageTeam: React.FC = () => {
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Team & Partners</h1>
           <p className="text-muted-foreground">
-            Manage your lending team and realtor partnerships
+            Manage your {getPartnerTypeLabel().toLowerCase()} partnerships in one place
           </p>
         </div>
         <DropdownMenu>
@@ -110,7 +164,7 @@ const MortgageTeam: React.FC = () => {
           <DropdownMenuContent align="end">
             <DropdownMenuItem onClick={() => setShowManualAddDialog(true)}>
               <Search className="mr-2 h-4 w-4" />
-              Add Existing Realtor
+              Add Existing {getPartnerTypeLabel()}
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => setShowInviteDialog(true)}>
               <Send className="mr-2 h-4 w-4" />
@@ -120,319 +174,120 @@ const MortgageTeam: React.FC = () => {
         </DropdownMenu>
       </div>
 
-      {/* Security Update Alert */}
-      <Alert className="bg-blue-50 border-blue-200">
-        <Info className="h-4 w-4 text-blue-600" />
-        <AlertTitle className="text-blue-900">Team Management Updated</AlertTitle>
-        <AlertDescription className="text-blue-800">
-          <p className="mb-2">
-            Team visibility has been updated for security. You now need to explicitly add team members.
-          </p>
-          <p>
-            Visit{" "}
-            <Link to="/dashboard/network" className="font-semibold underline hover:text-blue-600">
-              My Network
-            </Link>
-            {" "}→ <strong>Add Contact</strong> → <strong>Team Member</strong> to build your internal team.
-          </p>
-        </AlertDescription>
-      </Alert>
+      {/* Search Bar */}
+      <div className="flex items-center space-x-2">
+        <div className="relative flex-1 max-w-sm">
+          <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Search partners..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-8"
+          />
+        </div>
+      </div>
 
       {/* Team Stats */}
-      <div className="grid gap-4 md:grid-cols-3">
-        <Card>
+      <div className="grid gap-4 md:grid-cols-4">
+        <Card 
+          className={`cursor-pointer transition-all ${statusFilter === 'all' ? 'ring-2 ring-primary' : 'hover:shadow-md'}`}
+          onClick={() => setStatusFilter('all')}
+        >
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Team Members</CardTitle>
+            <CardTitle className="text-sm font-medium">Total Partners</CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{teamStats?.teamMembers || 0}</div>
-            <p className="text-xs text-muted-foreground">Loan officers and staff</p>
+            <div className="text-2xl font-bold">{stats.total}</div>
+            <p className="text-xs text-muted-foreground">All partners and invitations</p>
           </CardContent>
         </Card>
-        <Card>
+        <Card 
+          className={`cursor-pointer transition-all ${statusFilter === 'invited' ? 'ring-2 ring-primary' : 'hover:shadow-md'}`}
+          onClick={() => setStatusFilter('invited')}
+        >
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Partner Realtors</CardTitle>
-            <Building className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Invited</CardTitle>
+            <Clock className="h-4 w-4 text-amber-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{teamStats?.partnerRealtors || 0}</div>
-            <p className="text-xs text-muted-foreground">Active partnerships</p>
+            <div className="text-2xl font-bold text-amber-600">{stats.invited}</div>
+            <p className="text-xs text-muted-foreground">Awaiting response</p>
           </CardContent>
         </Card>
-        <Card>
+        <Card 
+          className={`cursor-pointer transition-all ${statusFilter === 'active' ? 'ring-2 ring-primary' : 'hover:shadow-md'}`}
+          onClick={() => setStatusFilter('active')}
+        >
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Pending Invitations</CardTitle>
-            <AlertCircle className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Active</CardTitle>
+            <CheckCircle className="h-4 w-4 text-green-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{pendingInvitations.length}</div>
-            <p className="text-xs text-muted-foreground">Pending invites only</p>
+            <div className="text-2xl font-bold text-green-600">{stats.active}</div>
+            <p className="text-xs text-muted-foreground">Current partners</p>
+          </CardContent>
+        </Card>
+        <Card 
+          className={`cursor-pointer transition-all ${statusFilter === 'inactive' ? 'ring-2 ring-primary' : 'hover:shadow-md'}`}
+          onClick={() => setStatusFilter('inactive')}
+        >
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Inactive</CardTitle>
+            <XCircle className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-muted-foreground">{stats.inactive}</div>
+            <p className="text-xs text-muted-foreground">Removed / Expired</p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Professional Invitations Section */}
-      {pendingInvitations.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Pending Invitations</CardTitle>
-            <CardDescription>
-              Invitations sent to professionals
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {pendingInvitations.map((inv) => (
-                <div key={inv.id} className="flex items-center justify-between p-3 border rounded-lg">
-                  <div>
-                    <div className="font-medium">
-                      {inv.first_name && inv.last_name ? 
-                        `${inv.first_name} ${inv.last_name}` : 
-                        inv.email}
-                    </div>
-                    <div className="text-sm text-muted-foreground">{inv.email}</div>
-                    <Badge variant="outline" className="mt-1 text-xs">
-                      {inv.user_type === 'realtor' ? 'Realtor' : 'Mortgage Pro'}
-                    </Badge>
-                  </div>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="sm">
-                        <Send className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem
-                        onClick={() => manageInvitation({ invitationId: inv.id, action: 'resend', sendVia: 'email' })}
-                        disabled={isManaging}
-                      >
-                        <RefreshCw className="h-4 w-4 mr-2" />
-                        Resend
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={() => manageInvitation({ invitationId: inv.id, action: 'cancel' })}
-                        disabled={isManaging}
-                        className="text-destructive"
-                      >
-                        Cancel
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-      <Card>
-        <CardHeader>
-          <CardTitle>Lending Team</CardTitle>
-          <CardDescription>
-            Your internal lending team members
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {lendingTeam.length === 0 ? (
-            <div className="text-center py-8">
-              <Users className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
-              <p className="text-sm text-muted-foreground mb-4">
-                No team members found. Invite colleagues to join your lending team.
-              </p>
-              <Button onClick={() => setShowInviteDialog(true)} variant="outline">
-                <UserPlus className="mr-2 h-4 w-4" />
-                Invite Team Member
-              </Button>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {lendingTeam.map((member) => (
-                <div key={member.id} className="flex items-center justify-between p-4 border rounded-lg">
-                  <div className="flex items-center space-x-4">
-                    <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
-                      <span className="text-primary font-semibold">
-                        {member.name.split(' ').map(n => n[0]).join('').toUpperCase()}
-                      </span>
-                    </div>
-                    <div>
-                      <h4 className="font-semibold">{member.name}</h4>
-                      <p className="text-sm text-muted-foreground">{member.company}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Badge variant="secondary">Active</Badge>
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => handleContactProfessional(member.id, 'email')}
-                      disabled={isContacting}
-                    >
-                      <Mail className="h-4 w-4" />
-                    </Button>
-                    {member.phone && (
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => handleContactProfessional(member.id, 'sms')}
-                        disabled={isContacting}
-                      >
-                        <Phone className="h-4 w-4" />
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      {/* Status Filter Tabs */}
+      <Tabs value={statusFilter} onValueChange={(v) => setStatusFilter(v as StatusFilter)} className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="all">All ({stats.total})</TabsTrigger>
+          <TabsTrigger value="invited" className="text-amber-600">Invited ({stats.invited})</TabsTrigger>
+          <TabsTrigger value="active" className="text-green-600">Active ({stats.active})</TabsTrigger>
+          <TabsTrigger value="inactive">Inactive ({stats.inactive})</TabsTrigger>
+        </TabsList>
 
-      {/* Realtor Partners */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center justify-between">
-            <span>Realtor Partners</span>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={() => refetchRealtorPartners()}
-              disabled={isLoadingTeam}
-            >
-              <RefreshCw className="h-4 w-4 mr-2" />
-              Refresh
-            </Button>
-          </CardTitle>
-          <CardDescription>
-            Your trusted realtor partners for client referrals
-            {acceptedInvitations.length > 0 && (
-              <span className="block text-xs text-muted-foreground mt-1">
-                Debug: {acceptedInvitations.length} accepted invitation(s) should appear here
-              </span>
-            )}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {realtorPartners.length === 0 ? (
-            <div className="text-center py-8">
-              <Building className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
-              <p className="text-sm text-muted-foreground mb-4">
-                No realtor partners yet. Start building your referral network.
-              </p>
-              <Button onClick={() => setShowInviteDialog(true)} variant="outline">
-                <UserPlus className="mr-2 h-4 w-4" />
-                Invite Realtor Partner
-              </Button>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {realtorPartners.map((partner) => (
-                <div key={partner.id} className="flex items-center justify-between p-4 border rounded-lg">
-                  <div className="flex items-center space-x-4">
-                    <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                      <span className="text-blue-600 font-semibold">
-                        {partner.realtor?.name?.split(' ').map(n => n[0]).join('').toUpperCase() || 'R'}
-                      </span>
-                    </div>
-                    <div>
-                      <h4 className="font-semibold">{partner.realtor?.name || 'Unknown'}</h4>
-                      <p className="text-sm text-muted-foreground">
-                        {partner.realtor?.company || 'No company'} • License: {partner.realtor?.license_number || 'N/A'}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Badge variant="outline" className="text-blue-600 border-blue-600">Partner</Badge>
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                        onClick={() => handleContactProfessional(partner.realtor.id, 'email')}
-                      disabled={isContacting}
-                    >
-                      <Mail className="h-4 w-4" />
-                    </Button>
-                    {partner.realtor?.phone && (
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => handleContactProfessional(partner.realtor.id, 'sms')}
-                        disabled={isContacting}
-                      >
-                        <Phone className="h-4 w-4" />
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Pending Professional Invitations */}
-      {pendingInvitations.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              Pending Professional Invitations
-              <Badge variant="destructive">{pendingInvitations.length}</Badge>
-            </CardTitle>
-            <CardDescription>
-              Invitations sent to professionals awaiting response (pending/sent only)
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {pendingInvitations.map((invitation) => (
-                <div key={invitation.id} className="flex items-center justify-between p-4 border rounded-lg">
-                  <div className="flex items-center space-x-4">
-                    <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center">
-                      <span className="text-orange-600 font-semibold">
-                        {invitation.first_name?.charAt(0)?.toUpperCase() || invitation.email.charAt(0).toUpperCase()}
-                      </span>
-                    </div>
-                    <div>
-                      <h4 className="font-semibold">{invitation.first_name && invitation.last_name ? `${invitation.first_name} ${invitation.last_name}` : invitation.email}</h4>
-                      <p className="text-sm text-muted-foreground">
-                        {invitation.email} • {invitation.professional_type || 'Professional'}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        Sent {new Date(invitation.created_at).toLocaleDateString()}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Badge variant="outline" className="text-orange-600 border-orange-600">
-                      {invitation.status}
-                    </Badge>
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => manageInvitation({ 
-                        invitationId: invitation.id, 
-                        action: 'resend' 
-                      })}
-                      disabled={isManaging}
-                    >
-                      Resend
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={() => manageInvitation({ 
-                        invitationId: invitation.id, 
-                        action: 'cancel' 
-                      })}
-                      disabled={isManaging}
-                    >
-                      Cancel
-                    </Button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
+        <TabsContent value={statusFilter} className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>
+                {statusFilter === 'all' && 'All Partners'}
+                {statusFilter === 'invited' && 'Invited Partners'}
+                {statusFilter === 'active' && 'Active Partners'}
+                {statusFilter === 'inactive' && 'Inactive Partners'}
+              </CardTitle>
+              <CardDescription>
+                {statusFilter === 'all' && `Complete view of all ${getPartnerTypeLabel().toLowerCase()} partnerships`}
+                {statusFilter === 'invited' && `${getPartnerTypeLabel()}s who have received an invitation but haven't accepted yet`}
+                {statusFilter === 'active' && `${getPartnerTypeLabel()}s currently in your network`}
+                {statusFilter === 'inactive' && 'Removed, expired, or cancelled partnerships'}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <UnifiedTeamTable
+                members={filteredMembers}
+                isLoading={isLoadingTeam}
+                onView={handleViewMember}
+                onEmail={handleEmailMember}
+                onSMS={handleSMSMember}
+                onResendInvitation={handleResendInvitation}
+                onCancelInvitation={cancelInvitation}
+                onDeleteInvitation={deleteInvitation}
+                onRemoveTeamMember={removeTeamMember}
+                onReInvite={handleReInvite}
+                isDeleting={isDeleting}
+                isCancelling={isCancelling}
+                isRemoving={isRemoving}
+              />
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
 
       {/* Partnership Performance */}
       <Card>
@@ -482,18 +337,59 @@ const MortgageTeam: React.FC = () => {
         </CardContent>
       </Card>
 
-      {/* Invite Dialog */}
+      {/* Dialogs */}
       <InviteProfessionalDialog
         open={showInviteDialog}
         onOpenChange={setShowInviteDialog}
       />
 
-      {/* Manual Add Dialog */}
       <AddManualProfessionalDialog
         open={showManualAddDialog}
         onOpenChange={setShowManualAddDialog}
         professionalType="realtor"
       />
+
+      {selectedMember && (
+        <>
+          <TeamMemberDetailsDialog
+            member={{
+              id: selectedMember.id,
+              realtor: {
+                id: selectedMember.id,
+                name: selectedMember.name,
+                company: selectedMember.company || '',
+                email: selectedMember.email,
+                phone: selectedMember.phone,
+                license_number: selectedMember.licenseNumber || '',
+              },
+              created_at: selectedMember.createdAt,
+              status: selectedMember.status,
+              notes: selectedMember.notes,
+            }}
+            open={showDetailsDialog}
+            onOpenChange={setShowDetailsDialog}
+          />
+
+          <TeamMemberCommunicationDialog
+            member={{
+              id: selectedMember.id,
+              realtor: {
+                id: selectedMember.id,
+                name: selectedMember.name,
+                company: selectedMember.company || '',
+                email: selectedMember.email,
+                phone: selectedMember.phone,
+                license_number: selectedMember.licenseNumber || '',
+              },
+              created_at: selectedMember.createdAt,
+              status: selectedMember.status,
+            }}
+            type={communicationType}
+            open={showCommunicationDialog}
+            onOpenChange={setShowCommunicationDialog}
+          />
+        </>
+      )}
     </div>
   );
 };
