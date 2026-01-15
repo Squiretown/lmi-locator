@@ -79,6 +79,36 @@ export const useClientActions = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
+      // For deactivation, check if current user created this client
+      if (newStatus === 'deactivated') {
+        // Fetch the client to check who created it
+        const { data: client, error: fetchError } = await supabase
+          .from('client_profiles')
+          .select('professional_id')
+          .eq('id', clientId)
+          .single();
+
+        if (fetchError) throw fetchError;
+
+        // If the current user created this client, DELETE it instead of deactivating
+        if (client.professional_id === user.id) {
+          const { error: deleteError } = await supabase
+            .from('client_profiles')
+            .delete()
+            .eq('id', clientId);
+
+          if (deleteError) throw deleteError;
+
+          // Invalidate cache
+          queryClient.invalidateQueries({ queryKey: ['client-profiles'] });
+          queryClient.invalidateQueries({ queryKey: ['realtor-client-profiles'] });
+
+          toast.success('Client deleted successfully');
+          return;
+        }
+      }
+
+      // For reactivation or deactivating clients created by others, update status
       const updateData: any = { status: newStatus };
       
       if (newStatus === 'deactivated') {
