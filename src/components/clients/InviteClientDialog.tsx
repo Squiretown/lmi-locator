@@ -31,8 +31,8 @@ export const InviteClientDialog: React.FC<InviteClientDialogProps> = ({
   open,
   onOpenChange,
 }) => {
-  const [selectedRealtorId, setSelectedRealtorId] = React.useState<string>('none');
-  const { teamMembers, realtorPartners } = useMortgageTeamManagement();
+  const [selectedPartnerId, setSelectedPartnerId] = React.useState<string>('none');
+  const { currentProfessional, teamMembers, realtorPartners } = useMortgageTeamManagement();
   const { sendInvitation, isSending } = useUnifiedInvitationSystem();
   const { register, handleSubmit, reset, watch, setValue, formState: { errors } } = useForm<ClientInvitationData>({
     defaultValues: {
@@ -40,6 +40,16 @@ export const InviteClientDialog: React.FC<InviteClientDialogProps> = ({
       templateType: 'default',
     }
   });
+
+  // Determine if current user is a realtor or mortgage professional
+  const isRealtor = currentProfessional?.professional_type === 'realtor';
+  const partnerLabel = isRealtor ? 'Assign Mortgage Professional (Optional)' : 'Assign Realtor (Optional)';
+  const partnerPlaceholder = isRealtor ? 'Select a mortgage professional for this client' : 'Select a realtor for this client';
+  
+  // Get available partners based on current user type
+  const availablePartners = isRealtor 
+    ? teamMembers.filter(m => m.type === 'mortgage_professional' && !m.isAccountOwner)
+    : realtorPartners;
 
   const invitationType = watch('invitationType');
 
@@ -54,12 +64,12 @@ export const InviteClientDialog: React.FC<InviteClientDialogProps> = ({
         sendVia: data.invitationType,
         customMessage: data.customMessage,
         // @ts-ignore - team_showcase is custom field
-        team_showcase: selectedRealtorId !== 'none' ? {
-          assignedRealtorId: selectedRealtorId
+        team_showcase: selectedPartnerId !== 'none' ? {
+          assignedPartnerId: selectedPartnerId
         } : undefined
       } as any);
       reset();
-      setSelectedRealtorId('none');
+      setSelectedPartnerId('none');
       onOpenChange(false);
     } catch (error) {
       // Error handled by hook
@@ -69,24 +79,33 @@ export const InviteClientDialog: React.FC<InviteClientDialogProps> = ({
   const getFilteredTeam = () => {
     const team = teamMembers.filter(m => m.type === 'mortgage_professional');
     
-    if (selectedRealtorId && selectedRealtorId !== 'none') {
-      const realtor = realtorPartners?.find(r => r.realtor.id === selectedRealtorId);
-      if (realtor) {
-        team.push({
-          id: realtor.realtor.id,
-          name: realtor.realtor.name,
-          company: realtor.realtor.company,
-          email: realtor.realtor.email,
-          phone: realtor.realtor.phone,
-          type: 'realtor' as const,
-          professional_type: 'realtor',
-          source: 'explicit' as const,
-          visibility_settings: {
-            visible_to_clients: true,
-            showcase_role: 'Realtor Partner',
-            showcase_description: `Real Estate Agent at ${realtor.realtor.company}`
-          }
-        });
+    if (selectedPartnerId && selectedPartnerId !== 'none') {
+      // For mortgage professionals, find the realtor partner
+      // For realtors, find the mortgage professional partner
+      if (isRealtor) {
+        const mortgagePro = teamMembers.find(m => m.id === selectedPartnerId && m.type === 'mortgage_professional');
+        if (mortgagePro) {
+          // Already in team array from filter above
+        }
+      } else {
+        const realtor = realtorPartners?.find(r => r.realtor.id === selectedPartnerId);
+        if (realtor) {
+          team.push({
+            id: realtor.realtor.id,
+            name: realtor.realtor.name,
+            company: realtor.realtor.company,
+            email: realtor.realtor.email,
+            phone: realtor.realtor.phone,
+            type: 'realtor' as const,
+            professional_type: 'realtor',
+            source: 'explicit' as const,
+            visibility_settings: {
+              visible_to_clients: true,
+              showcase_role: 'Realtor Partner',
+              showcase_description: `Real Estate Agent at ${realtor.realtor.company}`
+            }
+          });
+        }
       }
     }
     
@@ -166,27 +185,37 @@ export const InviteClientDialog: React.FC<InviteClientDialogProps> = ({
                 </p>
               </div>
 
-              {/* Realtor Assignment */}
+              {/* Partner Assignment - Dynamic based on user type */}
               <div className="space-y-2">
-                <Label htmlFor="assignedRealtor">Assign Realtor (Optional)</Label>
+                <Label htmlFor="assignedPartner">{partnerLabel}</Label>
                 <Select 
-                  value={selectedRealtorId} 
-                  onValueChange={setSelectedRealtorId}
+                  value={selectedPartnerId} 
+                  onValueChange={setSelectedPartnerId}
                 >
-                  <SelectTrigger id="assignedRealtor">
-                    <SelectValue placeholder="Select a realtor for this client" />
+                  <SelectTrigger id="assignedPartner">
+                    <SelectValue placeholder={partnerPlaceholder} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="none">No realtor assigned yet</SelectItem>
-                    {realtorPartners?.map((partner) => (
-                      <SelectItem key={partner.realtor.id} value={partner.realtor.id}>
-                        {partner.realtor.name} - {partner.realtor.company}
-                      </SelectItem>
-                    ))}
+                    <SelectItem value="none">No partner assigned yet</SelectItem>
+                    {isRealtor ? (
+                      // For realtors, show mortgage professionals from team
+                      availablePartners?.map((partner: any) => (
+                        <SelectItem key={partner.id} value={partner.id}>
+                          {partner.name} - {partner.company}
+                        </SelectItem>
+                      ))
+                    ) : (
+                      // For mortgage professionals, show realtor partners
+                      (availablePartners as any)?.map((partner: any) => (
+                        <SelectItem key={partner.realtor.id} value={partner.realtor.id}>
+                          {partner.realtor.name} - {partner.realtor.company}
+                        </SelectItem>
+                      ))
+                    )}
                   </SelectContent>
                 </Select>
                 <p className="text-xs text-muted-foreground">
-                  Only the selected realtor will appear in this client's team
+                  Only the selected {isRealtor ? 'mortgage professional' : 'realtor'} will appear in this client's team
                 </p>
               </div>
 
