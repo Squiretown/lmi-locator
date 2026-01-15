@@ -87,12 +87,14 @@ export const useMortgageTeamStats = () => {
           }
         }
 
-        // ✅ Count shared clients from client_team_assignments
-        const { count: sharedClientsCount, error: clientsError } = await supabase
+        // ✅ Count shared clients from client_team_assignments (fetch data to avoid 400 errors)
+        const { data: sharedClientsData, error: clientsError } = await supabase
           .from('client_team_assignments')
-          .select('*', { count: 'exact', head: true })
+          .select('id')
           .eq('professional_id', currentProfessional.id)
           .eq('status', 'active');
+
+        const sharedClientsCount = sharedClientsData?.length ?? 0;
 
         if (clientsError) {
           console.error('❌ Error counting shared clients:', clientsError);
@@ -159,12 +161,14 @@ export const useMortgageTeamStats = () => {
 
         console.log('✅ Professional for metrics:', currentProfessional.id);
 
-        // ✅ Count this month's referrals (new client assignments)
-        const { count: thisMonthReferrals, error: thisRefError } = await supabase
+        // ✅ Count this month's referrals (fetch data to avoid 400 errors)
+        const { data: thisMonthData, error: thisRefError } = await supabase
           .from('client_team_assignments')
-          .select('*', { count: 'exact', head: true })
+          .select('id')
           .eq('professional_id', currentProfessional.id)
           .gte('created_at', thisMonthStart.toISOString());
+
+        const thisMonthReferrals = thisMonthData?.length ?? 0;
 
         if (thisRefError) {
           console.error('❌ Error counting this month referrals:', thisRefError);
@@ -172,13 +176,15 @@ export const useMortgageTeamStats = () => {
           console.log('✅ This month referrals:', thisMonthReferrals);
         }
 
-        // ✅ Count last month's referrals using .and() to avoid duplicate params
-        const { count: lastMonthReferrals, error: lastRefError } = await supabase
+        // ✅ Count last month's referrals (fetch data to avoid 400 errors)
+        const { data: lastMonthData, error: lastRefError } = await supabase
           .from('client_team_assignments')
-          .select('*', { count: 'exact', head: true })
+          .select('id')
           .eq('professional_id', currentProfessional.id)
           .gte('created_at', lastMonthStart.toISOString())
           .lt('created_at', thisMonthStart.toISOString());
+
+        const lastMonthReferrals = lastMonthData?.length ?? 0;
 
         if (lastRefError) {
           console.error('❌ Error counting last month referrals:', lastRefError);
