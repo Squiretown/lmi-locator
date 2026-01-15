@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Mail, Phone, MoreVertical, User, Eye, EyeOff, Shield, Users, Trash2 } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { ContactBadge } from "@/lib/contact-utils";
 
 interface TeamMemberCardProps {
   contact: {
@@ -33,6 +34,7 @@ interface TeamMemberCardProps {
     company?: string;
     status: string;
     professional_type?: string;
+    relationship_type?: string;
     visibility_settings?: any;
   };
   onViewProfile?: (id: string) => void;
@@ -41,31 +43,6 @@ interface TeamMemberCardProps {
   onViewClients?: (id: string) => void;
   onRemove?: (id: string) => void;
 }
-
-// Helper function to get display badge based on professional_type
-const getProfessionalTypeBadge = (professionalType?: string): string => {
-  if (!professionalType) return 'Team Member';
-  
-  const labels: Record<string, string> = {
-    'realtor': 'Realtor Partner',
-    'mortgage_professional': 'Lending Team',
-    'attorney': 'Attorney',
-    'title_company': 'Title Company',
-    'inspector': 'Inspector',
-    'appraiser': 'Appraiser',
-    'insurance': 'Insurance',
-    'contractor': 'Contractor',
-    'escrow': 'Escrow',
-    'surveyor': 'Surveyor',
-    'home_warranty': 'Home Warranty',
-    'moving_company': 'Moving Company',
-    'photographer': 'Photographer',
-    'stager': 'Stager',
-    'other': 'Professional'
-  };
-  
-  return labels[professionalType] || professionalType.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-};
 
 export function TeamMemberCard({
   contact,
@@ -102,9 +79,11 @@ export function TeamMemberCard({
             <div>
               <h3 className="font-semibold text-base">{contact.full_name}</h3>
               <div className="flex gap-2 mt-1">
-                <Badge variant="secondary" className="text-xs">
-                  {getProfessionalTypeBadge(contact.professional_type)}
-                </Badge>
+                <ContactBadge 
+                  relationshipType={contact.relationship_type}
+                  professionalType={contact.professional_type}
+                  className="text-xs"
+                />
                 <Badge
                   variant={isVisible ? "default" : "outline"}
                   className="text-xs"
