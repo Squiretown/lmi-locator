@@ -42,20 +42,33 @@ export function AddManualProfessionalDialog({ open, onOpenChange, professionalTy
         notes: notes.trim() || undefined
       });
       
-      // Reset and close
+      // Reset state BEFORE closing dialog
       setSearchQuery('');
       setSelectedProfessional(null);
       setNotes('');
       onOpenChange(false);
     } catch (error) {
-      // Error handling in hook
+      // Error is handled by the mutation's onError
+      // But reset selectedProfessional to prevent freeze
+      setSelectedProfessional(null);
     }
+  };
+
+  // Cleanup when dialog closes
+  const handleOpenChange = (open: boolean) => {
+    if (!open) {
+      // Reset all state when dialog closes
+      setSearchQuery('');
+      setSelectedProfessional(null);
+      setNotes('');
+    }
+    onOpenChange(open);
   };
 
   const typeLabel = professionalType === 'realtor' ? 'Realtor' : 'Mortgage Professional';
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Add Existing {typeLabel}</DialogTitle>

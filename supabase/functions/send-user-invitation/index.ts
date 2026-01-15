@@ -175,8 +175,13 @@ serve(async (req) => {
 
     // Add type-specific fields based on CHECK constraint requirements
     if (isClientInvitation) {
-      // Client requires property_interest to be NOT NULL per constraint
-      invitationData.property_interest = requestData.propertyInterest || 'General inquiry';
+      // Client invitations: property_interest must be a valid enum value or null
+      // Valid values per constraint: 'buying', 'selling', 'refinancing' (or null)
+      const validPropertyInterests = ['buying', 'selling', 'refinancing'];
+      const requestedInterest = requestData.propertyInterest?.toLowerCase();
+      invitationData.property_interest = validPropertyInterests.includes(requestedInterest) 
+        ? requestedInterest 
+        : 'buying';  // Default to 'buying' instead of invalid 'General inquiry'
       invitationData.estimated_budget = requestData.estimatedBudget || null;
       invitationData.preferred_contact = requestData.preferredContact || 'email';
       // Ensure professional_type is null for clients
