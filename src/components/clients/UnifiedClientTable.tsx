@@ -331,17 +331,17 @@ export const UnifiedClientTable: React.FC<UnifiedClientTableProps> = ({
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              {deleteDialog.client?.source === 'invitation' ? (
+            {deleteDialog.client?.source === 'invitation' ? (
                 <>
                   Are you sure you want to delete this invitation for <strong>{deleteDialog.client?.email}</strong>?
                   This will permanently remove the invitation and they will no longer be able to accept it.
                 </>
-              ) : (
+              ) : deleteDialog.client ? (
                 <>
-                  Are you sure you want to delete <strong>{getDisplayName(deleteDialog.client!)}</strong>?
+                  Are you sure you want to delete <strong>{getDisplayName(deleteDialog.client)}</strong>?
                   This will permanently remove their profile and all associated data. This action cannot be undone.
                 </>
-              )}
+              ) : null}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
