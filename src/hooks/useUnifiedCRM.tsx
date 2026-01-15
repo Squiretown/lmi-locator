@@ -180,9 +180,14 @@ export function useUnifiedCRM() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['crm-contacts'] });
+      queryClient.invalidateQueries({ queryKey: ['unified-team'] });
+      queryClient.invalidateQueries({ queryKey: ['realtor-partners-unified'] });
+      queryClient.invalidateQueries({ queryKey: ['lending-team-unified'] });
+      queryClient.invalidateQueries({ queryKey: ['mortgage-team-stats'] });
       toast.success('Professional added to your team');
     },
     onError: (error: Error) => {
+      console.error('Add professional error:', error);
       toast.error('Failed to add professional', {
         description: error.message
       });
