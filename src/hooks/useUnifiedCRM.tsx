@@ -14,8 +14,9 @@ interface UnifiedContact {
   company?: string;
   professional_type?: string;
   status: string;
-  relationship_type: 'team_member' | 'client';
+  relationship_type: 'team_member' | 'client' | 'partner' | 'vendor' | 'contact';
   related_to_professional_id?: string;
+  relationship_id?: string;
   visibility_settings?: any;
   created_at: string;
   updated_at: string;
@@ -501,14 +502,15 @@ export function useUnifiedCRM() {
     mutationFn: async (contact: UnifiedContact) => {
       if (!userContext) throw new Error('User context not loaded');
 
-      // Professional team member from professional_teams
-      if (contact.contact_type === 'professional' && contact.relationship_type === 'team_member') {
-        // Find and update the professional_teams relationship
+      // Professional team member from professional_teams (has relationship_id)
+      if (contact.contact_type === 'professional' && 
+          contact.relationship_type === 'team_member' && 
+          contact.relationship_id) {
+        // Use relationship_id directly - much simpler and more reliable
         const { error } = await supabase
           .from('professional_teams')
           .update({ status: 'inactive' })
-          .or(`mortgage_professional_id.eq.${contact.id},realtor_id.eq.${contact.id}`)
-          .or(`mortgage_professional_id.eq.${userContext.professionalId},realtor_id.eq.${userContext.professionalId}`)
+          .eq('id', contact.relationship_id)
           .eq('status', 'active');
 
         if (error) throw error;
@@ -522,7 +524,16 @@ export function useUnifiedCRM() {
 
         if (error) throw error;
       }
-      // Manual contact from contacts table
+      // Manual contact from contacts table (no relationship_id means it's from contacts table)
+      else if (!contact.relationship_id) {
+        const { error } = await supabase
+          .from('contacts')
+          .update({ status: 'inactive' })
+          .eq('id', contact.id);
+
+        if (error) throw error;
+      }
+      // Fallback for professional_teams without relationship_id (shouldn't happen)
       else {
         const { error } = await supabase
           .from('contacts')
