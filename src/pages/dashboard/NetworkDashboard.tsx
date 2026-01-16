@@ -50,7 +50,8 @@ export default function NetworkDashboard() {
 
   // Filter by type
   const filteredClients = filteredContacts.filter(c => c.relationship_type === "client");
-  const filteredTeam = filteredContacts.filter(c => c.relationship_type === "team_member");
+  // Team includes all non-client contacts (realtor_partner, lending_team, attorney, vendor, team_member, etc.)
+  const filteredTeam = filteredContacts.filter(c => c.relationship_type !== "client");
   const pendingInvites = []; // TODO: Add pending invitations from useUnifiedCRM
 
   // Calculate stats
@@ -241,6 +242,7 @@ export default function NetworkDashboard() {
           <ScrollArea className="h-[600px]">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {filteredContacts.map((contact) => {
+                // Handle clients
                 if (contact.relationship_type === "client") {
                   return (
                     <ClientCard
@@ -253,28 +255,40 @@ export default function NetworkDashboard() {
                       onRemove={handleRemoveContact}
                     />
                   );
-                } else if (contact.relationship_type === "team_member") {
-                  if (contact.contact_type === "professional") {
-                    return (
-                <PartnerCard 
-                  key={contact.id} 
-                  contact={contact}
-                  sharedClientsCount={sharedClientsCounts[contact.id]}
-                  onEdit={handleEditContact}
-                  onRemove={handleRemoveContact}
-                />
-                    );
-                  }
+                }
+                
+                // Handle all other contacts (realtor_partner, lending_team, attorney, vendors, team_member, etc.)
+                // Use PartnerCard for professional contacts and most relationship types
+                if (contact.contact_type === "professional" || 
+                    contact.relationship_type === "realtor_partner" ||
+                    contact.relationship_type === "lending_team" ||
+                    contact.relationship_type === "attorney" ||
+                    contact.relationship_type === "appraiser" ||
+                    contact.relationship_type === "contractor" ||
+                    contact.relationship_type === "inspector" ||
+                    contact.relationship_type === "insurance" ||
+                    contact.relationship_type === "title_company" ||
+                    contact.relationship_type === "other") {
                   return (
-                    <TeamMemberCard
-                      key={contact.id}
+                    <PartnerCard 
+                      key={contact.id} 
                       contact={contact}
-                      onToggleVisibility={handleToggleVisibility}
+                      sharedClientsCount={sharedClientsCounts[contact.id]}
+                      onEdit={handleEditContact}
                       onRemove={handleRemoveContact}
                     />
                   );
                 }
-                return null;
+                
+                // Fallback to TeamMemberCard for internal team members
+                return (
+                  <TeamMemberCard
+                    key={contact.id}
+                    contact={contact}
+                    onToggleVisibility={handleToggleVisibility}
+                    onRemove={handleRemoveContact}
+                  />
+                );
               })}
             </div>
           </ScrollArea>
