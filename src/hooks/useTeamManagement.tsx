@@ -35,7 +35,7 @@ interface ClientTeamAssignment {
     email?: string;
     phone?: string;
     company: string;
-    type: string;
+    professional_type: string;
   };
 }
 
@@ -167,7 +167,7 @@ export const useTeamManagement = () => {
             name,
             phone,
             company,
-            type,
+            professional_type,
             user_id
           )
         `)
@@ -176,6 +176,9 @@ export const useTeamManagement = () => {
       if (error) throw error;
       return data as any[];
     },
+    retry: 1,
+    staleTime: 30000,
+    refetchOnWindowFocus: false,
   });
 
   // Get team members for a specific client

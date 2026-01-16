@@ -1022,6 +1022,7 @@ export type Database = {
           assigned_at: string
           assigned_by: string | null
           client_id: string
+          created_at: string | null
           id: string
           professional_id: string
           professional_role: string
@@ -1031,6 +1032,7 @@ export type Database = {
           assigned_at?: string
           assigned_by?: string | null
           client_id: string
+          created_at?: string | null
           id?: string
           professional_id: string
           professional_role: string
@@ -1040,6 +1042,7 @@ export type Database = {
           assigned_at?: string
           assigned_by?: string | null
           client_id?: string
+          created_at?: string | null
           id?: string
           professional_id?: string
           professional_role?: string
