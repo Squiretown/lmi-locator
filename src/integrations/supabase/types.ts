@@ -3125,6 +3125,59 @@ export type Database = {
         }
         Relationships: []
       }
+      subscriptions: {
+        Row: {
+          cancel_at_period_end: boolean | null
+          canceled_at: string | null
+          created_at: string | null
+          current_period_end: string | null
+          current_period_start: string | null
+          id: string
+          plan_id: string | null
+          status: string
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          cancel_at_period_end?: boolean | null
+          canceled_at?: string | null
+          created_at?: string | null
+          current_period_end?: string | null
+          current_period_start?: string | null
+          id?: string
+          plan_id?: string | null
+          status?: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          cancel_at_period_end?: boolean | null
+          canceled_at?: string | null
+          created_at?: string | null
+          current_period_end?: string | null
+          current_period_start?: string | null
+          id?: string
+          plan_id?: string | null
+          status?: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscriptions_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "subscription_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       system_settings: {
         Row: {
           created_at: string
@@ -3664,6 +3717,7 @@ export type Database = {
           referred_by_name: string | null
           referred_by_type: string | null
           state: string | null
+          status: string | null
           subscription_end_date: string | null
           subscription_ends_at: string | null
           subscription_start_date: string | null
@@ -3700,6 +3754,7 @@ export type Database = {
           referred_by_name?: string | null
           referred_by_type?: string | null
           state?: string | null
+          status?: string | null
           subscription_end_date?: string | null
           subscription_ends_at?: string | null
           subscription_start_date?: string | null
@@ -3736,6 +3791,7 @@ export type Database = {
           referred_by_name?: string | null
           referred_by_type?: string | null
           state?: string | null
+          status?: string | null
           subscription_end_date?: string | null
           subscription_ends_at?: string | null
           subscription_start_date?: string | null
@@ -3828,22 +3884,40 @@ export type Database = {
         Row: {
           assigned_at: string | null
           assigned_by: string | null
+          grant_expires_at: string | null
+          grant_reason: string | null
+          granted_at: string | null
+          granted_by: string | null
           id: string
+          is_admin_grant: boolean | null
           role: Database["public"]["Enums"]["app_role"]
+          updated_at: string | null
           user_id: string
         }
         Insert: {
           assigned_at?: string | null
           assigned_by?: string | null
+          grant_expires_at?: string | null
+          grant_reason?: string | null
+          granted_at?: string | null
+          granted_by?: string | null
           id?: string
+          is_admin_grant?: boolean | null
           role: Database["public"]["Enums"]["app_role"]
+          updated_at?: string | null
           user_id: string
         }
         Update: {
           assigned_at?: string | null
           assigned_by?: string | null
+          grant_expires_at?: string | null
+          grant_reason?: string | null
+          granted_at?: string | null
+          granted_by?: string | null
           id?: string
+          is_admin_grant?: boolean | null
           role?: Database["public"]["Enums"]["app_role"]
+          updated_at?: string | null
           user_id?: string
         }
         Relationships: []
