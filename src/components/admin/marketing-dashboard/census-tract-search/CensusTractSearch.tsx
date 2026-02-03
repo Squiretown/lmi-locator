@@ -364,7 +364,7 @@ export const CensusTractSearch: React.FC = () => {
                         <span className="font-medium">{tract.amiPercentage?.toFixed(1) || '0.0'}%</span>
                       </TableCell>
                       <TableCell>
-                        <Badge variant="outline">{tract.incomeCategory}</Badge>
+                        <Badge variant="outline">{tract.incomeCategory || 'Unknown'}</Badge>
                       </TableCell>
                       <TableCell className="text-right">
                         {tract.population?.toLocaleString() || 'N/A'}
